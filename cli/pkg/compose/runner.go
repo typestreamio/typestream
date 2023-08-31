@@ -37,7 +37,7 @@ func (runner *Runner) RunCommand(arg ...string) error {
 		log.Fatal("💥 failed to parse compose template: %v", err)
 	}
 
-	err = tmpl.Execute(tmpFile, struct{ Version string }{Version: version.Version})
+	err = tmpl.Execute(tmpFile, struct{ Version string }{Version: version.DockerVersion()})
 	if err != nil {
 		log.Fatal("💥 failed to execute compose template: %v", err)
 	}
