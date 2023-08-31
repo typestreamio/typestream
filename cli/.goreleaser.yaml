@@ -3,16 +3,17 @@ project_name: typestream
 before:
   hooks:
     - go mod tidy
+
 builds:
-  - env:
+  - ldflags:
+      - -X github.com/typestreamio/typestream/cli/pkg/version.Version={{.Version}}
+      - -X github.com/typestreamio/typestream/cli/pkg/version.CommitHash={{.Commit}}
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
       - windows
       - darwin
-    binary: typestream
-    ldflags:
-      - -s -w -X github.com/typestreamio/typestream/cli/pkg/version.version={{.Version}} -X github.com/tyepstreamio/typestream/cli/pkg/version.CommitHash={{.Commit}}
 
 release:
   github:
@@ -29,18 +30,18 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
     format_overrides:
-    - goos: windows
-      format: zip
+      - goos: windows
+        format: zip
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"
 
 brews:
   - name: typestream
@@ -51,7 +52,6 @@ brews:
       name: homebrew-tap
     folder: Formula
     skip_upload: auto
-
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json

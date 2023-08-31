@@ -11,19 +11,21 @@ import (
 func generateVersion() string {
 	currentDate := time.Now().Format("2006.01.02")
 
-	cmd := exec.Command("git", "tag", "--list", currentDate+".*")
+	cmd := exec.Command("git", "tag", "--list", currentDate+"*")
 	output, err := cmd.Output()
 	if err != nil {
 		fmt.Println("Error checking existing tags:", err)
 		os.Exit(1)
 	}
 
-	existingTags := strings.Split(string(output), "\n")
-	highestMicro := 0
+	existingTags := strings.Split(strings.TrimSuffix(string(output), "\n"), "\n")
+
+	highestMicro := -1
+	//TODO we only need to check the last tag
 	for _, tag := range existingTags {
-		parts := strings.Split(tag, ".")
-		if len(parts) == 4 {
-			micro := parts[3]
+		parts := strings.Split(tag, "+")
+		if len(parts) == 2 {
+			micro := parts[1]
 			microInt := 0
 			_, err := fmt.Sscanf(micro, "%d", &microInt)
 			if err == nil && microInt > highestMicro {
@@ -32,7 +34,13 @@ func generateVersion() string {
 		}
 	}
 
-	return fmt.Sprintf("%s.%d", currentDate, highestMicro+1)
+	if highestMicro == -1 {
+		highestMicro = 0
+	} else {
+		highestMicro++
+	}
+
+	return fmt.Sprintf("%s+%d", currentDate, highestMicro)
 }
 
 func updateChangelog(version string) {
@@ -48,7 +56,8 @@ func gitTag(version string) {
 }
 
 func buildServerImage(version string) {
-	cmd := exec.Command("./gradlew", "-Pversion="+version, ":server:jibDockerBuild")
+	dockerVersion := strings.Replace(version, "+", ".", -1)
+	cmd := exec.Command("./gradlew", "-Pversion="+dockerVersion, ":server:jibDockerBuild")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -57,7 +66,7 @@ func buildServerImage(version string) {
 	}
 
 	// Push the Docker image
-	pushCmd := exec.Command("docker", "push", "typestream/server:"+version)
+	pushCmd := exec.Command("docker", "push", "typestream/server:"+dockerVersion)
 	pushCmd.Stdout = os.Stdout
 	pushCmd.Stderr = os.Stderr
 	if err := pushCmd.Run(); err != nil {
@@ -67,7 +76,8 @@ func buildServerImage(version string) {
 }
 
 func buildSeederImage(version string) {
-	cmd := exec.Command("./gradlew", "-Pversion="+version, ":tools:jibDockerBuild")
+	dockerVersion := strings.Replace(version, "+", ".", -1)
+	cmd := exec.Command("./gradlew", "-Pversion="+dockerVersion, ":tools:jibDockerBuild")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -76,7 +86,7 @@ func buildSeederImage(version string) {
 	}
 
 	// Push the Docker image
-	pushCmd := exec.Command("docker", "push", "typestream/tools-seeder:"+version)
+	pushCmd := exec.Command("docker", "push", "typestream/tools-seeder:"+dockerVersion)
 	pushCmd.Stdout = os.Stdout
 	pushCmd.Stderr = os.Stderr
 	if err := pushCmd.Run(); err != nil {
@@ -89,7 +99,7 @@ func buildSeederImage(version string) {
 func releaseClient(version string) {
 	cliPath := "./cli"
 
-	cmd := exec.Command("goreleaser")
+	cmd := exec.Command("goreleaser", "--clean")
 	cmd.Dir = cliPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
