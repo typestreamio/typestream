@@ -4,8 +4,11 @@
 
 <!-- marker -->
 
-- [2023.08.31+2](#202308312)
-- [2023.08.31+1](#202308311)
+## 2023.08.31+3
+
+### Bug fixes
+
+- [fix: use docker version in seeder as well](https://github.com/typestreamio/typestream/commit/3efe1de)
 
 ## 2023.08.31+2
 
