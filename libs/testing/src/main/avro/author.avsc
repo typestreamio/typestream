@@ -1,0 +1,18 @@
+{
+  "namespace": "io.typestream.testing.avro",
+  "type": "record",
+  "name": "Author",
+  "fields": [
+    {
+      "name": "id",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "name",
+      "type": "string"
+    }
+  ]
+}

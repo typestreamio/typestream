@@ -1,0 +1,29 @@
+{
+  "namespace": "io.typestream.testing.avro",
+  "type": "record",
+  "name": "Book",
+  "fields": [
+    {
+      "name": "id",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "word_count",
+      "type": "int"
+    },
+    {
+      "name": "author_id",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    }
+  ]
+}

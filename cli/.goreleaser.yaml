@@ -1,0 +1,58 @@
+project_name: typestream
+
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    binary: typestream
+    ldflags:
+      - -s -w -X github.com/typestreamio/typestream/cli/pkg/version.version={{.Version}} -X github.com/tyepstreamio/typestream/cli/pkg/version.CommitHash={{.Commit}}
+
+release:
+  github:
+    owner: typestreamio
+    name: homebrew-tap
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+    - goos: windows
+      format: zip
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+brews:
+  - name: typestream
+    homepage: "https://typestream.io"
+    description: "TypeStream CLI & toolbox"
+    repository:
+      owner: typestreamio
+      name: homebrew-tap
+    folder: Formula
+    skip_upload: auto
+
+# The lines beneath this are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj

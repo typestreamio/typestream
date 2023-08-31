@@ -1,0 +1,95 @@
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 500;
+  font-size: normal;
+}
+
+:root {
+  --ifm-color-primary: #154782;
+  --ifm-color-primary-dark: #134075;
+  --ifm-color-primary-darker: #123c6f;
+  --ifm-color-primary-darkest: #0f325b;
+  --ifm-color-primary-light: #174e8f;
+  --ifm-color-primary-lighter: #185295;
+  --ifm-color-primary-lightest: #1b5ca9;
+  --ifm-color-accent: #feacc6;
+  --ifm-background-color: #fcffff;
+  --ifm-background-color-darker: #efecec;
+  --ifm-font-family-monospace: "JetBrains Mono";
+  --ifm-font-family-base: system-ui, -apple-system, sans-serif;
+  --ifm-navbar-link-hover-color: var(--ifm-color-primary-dark);
+}
+
+.main-wrapper {
+  max-width: 100%;
+  width: 100%;
+  align-self: center;
+  font-weight: 300;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #feacc6;
+  --ifm-color-primary-dark: #fd82a9;
+  --ifm-color-primary-darker: #fd6d9b;
+  --ifm-color-primary-darkest: #fc2e6f;
+  --ifm-color-primary-light: #ffd6e3;
+  --ifm-color-primary-lighter: #ffebf1;
+  --ifm-color-primary-lightest: #ffffff;
+  --ifm-navbar-background-color: #1a1a1a;
+  --ifm-color-accent: #164782;
+  --ifm-background-color: #1a1a1a;
+  --ifm-background-color-darker: #efecec;
+}
+
+.navbar {
+  &.navbar--dark {
+    background-color: var(--ifm-background-color);
+  }
+
+  .navbar__inner {
+    max-width: 1360px;
+    margin: 0 auto;
+  }
+
+  .navbar__title {
+    font-weight: 600;
+    font-size: 18px;
+  }
+
+  .navbar__item {
+    &.navbar__link {
+      font-weight: 400;
+      font-size: 17px;
+      user-select: none;
+    }
+
+    &.dropdown:not(.dropdown--right) {
+      a {
+        font-weight: 400;
+        font-size: 14px;
+      }
+      ul {
+        top: calc(100% + 0px);
+        left: 0;
+      }
+    }
+
+    &.dropdown--right {
+      .dropdown__menu {
+        min-width: 168px;
+      }
+    }
+  }
+
+  .dropdown > .navbar__link:after {
+    margin-left: 8px;
+    top: 1px;
+    opacity: 0.75;
+  }
+
+  .clean-btn:hover {
+    background: var(--ifm-color-emphasis-800);
+  }
+}

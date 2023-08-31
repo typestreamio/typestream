@@ -1,0 +1,22 @@
+name: Welcome New Contributor
+
+on:
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Welcome Message
+        uses: actions/first-interaction@v1
+        continue-on-error: true
+        with:
+          repo-token: ${{ github.token }}
+          pr-message: |-
+            Congrats on making your first PR and thank you for contributing to TypeStream! :tada: :heart:
+
+            We hope to see you in our [discord](https://discord.gg/Ha9sJWXb) community too!

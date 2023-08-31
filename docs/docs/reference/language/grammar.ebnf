@@ -1,0 +1,35 @@
+<program> ::= <statement>+
+
+<statement> ::= (<pipeline> | <shell_command> | <var_decl>) <linebreak>
+
+<pipeline> ::= <data_command> ("|" <data_command>)* <redirection_list>?
+
+<data_command> ::= <cat> | <cut> | <grep> | <join> | <wc>
+
+<wc> ::= "wc" (<word>)+
+
+<join> ::= "join" (<word>)+
+
+<grep> ::= "grep" (<word>)+
+
+<cut> ::= "cut" (<word>)+
+
+<cat> ::= "cat" (<word>)+
+
+<redirection_list> ::= <redirection>+
+
+<redirection> ::=  (">" | "<<" | ">>" | "<") <word>
+
+<shell_command> ::= (<word>)+
+
+<var_decl> ::= "let" <var> "=" <string>
+
+<string> ::= ("\"" <word> "\"") | ("'" <word> "'")
+
+<var> ::= (<char>)+
+
+<word> ::= (<char>)+
+
+<linebreak> ::= ";" | "\n"
+
+<char> ::= [a-z] | [A-Z] | [0-9] | "-" | "_" | "/"

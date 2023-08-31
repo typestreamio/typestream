@@ -1,0 +1,37 @@
+package io.typestream.kafka
+
+import io.typestream.kafka.schemaregistry.SchemaRegistryClient
+import io.typestream.testing.RedpandaContainerWrapper
+import io.typestream.testing.avro.buildUser
+import io.typestream.kafka.schemaregistry.SchemaType.AVRO
+import org.apache.avro.Schema.Parser
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+
+@Testcontainers
+internal class SchemaRegistryClientTest {
+
+    @Container
+    private val testKafka = RedpandaContainerWrapper()
+
+    @Test
+    fun `fetches schemas`() {
+        testKafka.produceRecords("users", buildUser("Margaret Hamilton"))
+
+        val schemaRegistryClient = SchemaRegistryClient(testKafka.schemaRegistryAddress)
+
+        val subjects = schemaRegistryClient.subjects()
+        assertThat(subjects).hasSize(1).containsKey("users-value")
+
+        val schema = subjects["users-value"]
+
+        assertThat(schema).extracting("subject", "schemaType").containsExactly("users-value", AVRO)
+
+        val avroSchema = Parser().parse(schema?.schema)
+
+        assertThat(avroSchema).isEqualTo(io.typestream.testing.avro.User.`SCHEMA$`)
+    }
+
+}
