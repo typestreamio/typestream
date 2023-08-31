@@ -31,7 +31,7 @@ var seedCmd = &cobra.Command{
 
 		cli.NegotiateAPIVersion(ctx)
 
-		out, err := cli.ImagePull(ctx, fmt.Sprintf("%s:%s", imageName, version.Version), types.ImagePullOptions{})
+		out, err := cli.ImagePull(ctx, fmt.Sprintf("%s:%s", imageName, version.DockerVersion()), types.ImagePullOptions{})
 		if err != nil {
 			log.Fatalf("💥 image pull failed: %v", err)
 		}
