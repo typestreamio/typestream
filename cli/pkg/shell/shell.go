@@ -82,10 +82,16 @@ func Run() {
 		if err != nil || input == "exit" {
 			break
 		}
+		if len(input) == 0 {
+			continue
+		}
+
 		runProgramResponse, err := s.client.RunProgram(ctx, &program_service.RunProgramRequest{Source: input})
 		if err != nil {
 			println("💥 failed to run program: %v", err)
+			continue
 		}
+
 		if runProgramResponse.StdOut != "" {
 			println(runProgramResponse.StdOut)
 		}
