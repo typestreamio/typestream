@@ -18,8 +18,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.util.stream.Stream
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -91,22 +95,29 @@ internal class FileSystemTest {
         }
     }
 
-    @Nested
-    inner class CompletePath {
-        @Test
-        fun `completes correctly`() = runTest(testDispatcher) {
-            fileSystem.use {
-                assertThat(fileSystem.completePath("d", "/")).containsExactly("/dev")
-                assertThat(fileSystem.completePath("/d", "/")).containsExactly("/dev")
-                assertThat(fileSystem.completePath("ka", "/dev")).containsExactly("/dev/kafka")
-                assertThat(fileSystem.completePath("/dev/kafka/local/", "/")).containsExactly(
+    companion object {
+        @JvmStatic
+        fun incompletePaths(): Stream<Arguments> = Stream.of(
+            Arguments.of("d", "/", listOf("dev")),
+            Arguments.of("/d", "/", listOf("/dev")),
+            Arguments.of("ka", "/dev", listOf("kafka")),
+            Arguments.of(
+                "/dev/kafka/local/", "/", listOf(
                     "/dev/kafka/local/brokers",
                     "/dev/kafka/local/consumer-groups",
                     "/dev/kafka/local/topics",
                     "/dev/kafka/local/schemas"
                 )
+            ),
+        )
+    }
+
+    @ParameterizedTest
+    @MethodSource("incompletePaths")
+    fun `completes correctly`(incompletePath: String, pwd: String, suggestions: List<String>) =
+        runTest(testDispatcher) {
+            fileSystem.use {
+                assertThat(fileSystem.completePath(incompletePath, pwd)).contains(*suggestions.toTypedArray())
             }
         }
-
-    }
 }

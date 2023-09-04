@@ -146,6 +146,7 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
     }
 
     fun completePath(incompletePath: String, pwd: String) = buildList {
+        val isAbsolute = incompletePath.startsWith("/")
         val targetPath = if (incompletePath.startsWith("/")) {
             incompletePath
         } else {
@@ -161,7 +162,11 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
         children?.forEach {
             val currentNodePath = it.path()
             if (currentNodePath.startsWith(targetPath)) {
-                add(currentNodePath)
+                if (isAbsolute) {
+                    add(currentNodePath)
+                } else {
+                    add(it.name)
+                }
             }
         }
     }
