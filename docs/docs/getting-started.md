@@ -34,7 +34,7 @@ If you want to follow along, make sure you [install](tutorial/installation.md)
 ## Run TypeStream locally
 
 To help you get started, we created a few `local` commands to help you run a
-(surprise 😄) local `TypeStream` server.
+local (surprise 😄) `TypeStream` server.
 
 You can start it by running:
 
