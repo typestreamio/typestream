@@ -78,7 +78,7 @@ internal class ProgramServiceTest {
             )
 
             assertThat(stub.runProgram("whatever")).extracting("stdOut", "stdErr", "hasMoreOutput")
-                .containsExactly("", "franz: whatever not found", false)
+                .containsExactly("", "typestream: whatever not found", false)
         }
     }
 

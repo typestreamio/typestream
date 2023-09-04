@@ -28,7 +28,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
         val command = ShellCommand.find(shellCommand.token.lexeme)
 
         if (command == null) {
-            errors.add("franz: ${shellCommand.token.lexeme} not found")
+            errors.add("typestream: ${shellCommand.token.lexeme} not found")
             return
         }
 
@@ -36,7 +36,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
             when (val arg = evaluate(expr)) {
                 is Value.String -> shellCommand.boundArgs.add(arg.value)
                 is DataStream -> shellCommand.boundArgs.add(arg.path)
-                else -> error("franz: $shellCommand does not support $arg")
+                else -> error("typestream: $shellCommand does not support $arg")
             }
         }
 
@@ -56,7 +56,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
                 is Value.List -> TODO("cannot evaluate lists yet")
                 is Value.Number -> dataCommand.boundArgs.add(arg.value.toString())
                 is Value.Predicate -> {
-                    require(dataCommand is Grep) { "franz: $dataCommand does not support predicates" }
+                    require(dataCommand is Grep) { "typestream: $dataCommand does not support predicates" }
                     dataCommand.predicates.add(arg.value)
                 }
 
@@ -74,7 +74,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
 
                 is Value.FieldAccess -> dataCommand.boundArgs.add(arg.value)
                 is Value.Block -> {
-                    require(dataCommand is Enrich) { "franz: $dataCommand does not support blocks" }
+                    require(dataCommand is Enrich) { "typestream: $dataCommand does not support blocks" }
                     dataCommand.block = arg
                 }
             }

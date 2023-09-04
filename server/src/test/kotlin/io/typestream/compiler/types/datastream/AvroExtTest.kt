@@ -71,7 +71,7 @@ internal class AvroExtTest {
                 {
                   "type": "record",
                   "name": "_dev_kafka_local_topics_authors",
-                  "namespace": "franz.avro",
+                  "namespace": "io.typestream.avro",
                   "fields": [ 
                       {
                         "name": "id",

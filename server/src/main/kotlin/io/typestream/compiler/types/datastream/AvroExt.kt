@@ -39,7 +39,7 @@ fun DataStream.toAvroSchema(): AvroSchema {
         {
             "type": "record",
             "name": "${path.replace("/", "_")}",
-            "namespace": "franz.avro",
+            "namespace": "io.typestream.avro",
             "fields": [${fields}]
         }
         """.trimIndent()
