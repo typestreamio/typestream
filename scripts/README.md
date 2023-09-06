@@ -1,7 +1,3 @@
 # Scripts
 
-In this directory, we have mostly dev scripts that help local development.
-
-It's a bunch of hacky scripts at the moment because we're waiting for [this
-issue](https://github.com/redpanda-data/redpanda/pull/4966) to be merged and
-released.
+This directory contains a variety of support scripts for the project. Check out the README of each subdirectory for more information.

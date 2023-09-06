@@ -58,19 +58,19 @@ You can build the `TypeStream` by running :
 ```
 
 If you use IntelliJ IDEA, we provide a run configuration that you can use to run
-the server. It uses the script `scripts/kafkastart.sh` to start a local Redpanda
-cluster.
+the server. It uses the script `scripts/dev/kafkastart.sh` to start a local
+Redpanda cluster.
 
 Otherwise, you can run the server with:
 
 ```sh
-./scripts/devserver.sh
+./scripts/dev/server.sh
 ```
 
 and then, from another window terminal, the CLI with:
 
 ```sh
-./scripts/devshell.sh
+./scripts/dev/shell.sh
 ```
 
 ## Testing
@@ -81,7 +81,7 @@ contributing to the project!
 
 ### Running the tests
 
-Once you are [set up](#setup-your-machine), you can run the test suite with one
+Once you are [set up](#set-up-your-machine), you can run the test suite with one
 command:
 
 ```sh
@@ -90,8 +90,8 @@ command:
 
 ## Test your change
 
-You can create a branch for your changes and try to build from the source as
-you go:
+You can create a branch for your changes and try to build from the source as you
+go:
 
 ```sh
 ./gradlew build
