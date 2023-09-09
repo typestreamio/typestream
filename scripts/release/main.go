@@ -195,7 +195,7 @@ func updateChangelog(r *release) error {
 	}
 
 	funcMap := template.FuncMap{
-		"replace":    strings.ReplaceAll,
+		"tocLink":    strings.NewReplacer(".", "", "+", "").Replace,
 		"formatKind": formatKind,
 	}
 
