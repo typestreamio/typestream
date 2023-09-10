@@ -57,7 +57,7 @@ internal class CompilerTest {
             val compiler = Compiler(environment)
             val suggestions = compiler.complete(source, CursorPosition(0, 7))
 
-            assertThat(suggestions).containsExactly("/dev")
+            assertThat(suggestions).containsExactly("/dev/")
         }
 
         @Disabled("TODO need to rethink how to handle this")
@@ -77,7 +77,7 @@ internal class CompilerTest {
             val compiler = Compiler(environment)
             val suggestions = compiler.complete(source, CursorPosition(0, 6))
 
-            assertThat(suggestions).containsExactly("/dev")
+            assertThat(suggestions).containsExactly("/dev/")
         }
 
         @Test

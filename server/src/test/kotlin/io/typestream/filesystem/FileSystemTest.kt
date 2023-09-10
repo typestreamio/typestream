@@ -98,15 +98,16 @@ internal class FileSystemTest {
     companion object {
         @JvmStatic
         fun incompletePaths(): Stream<Arguments> = Stream.of(
-            Arguments.of("d", "/", listOf("dev")),
-            Arguments.of("/d", "/", listOf("/dev")),
-            Arguments.of("ka", "/dev", listOf("kafka")),
+            Arguments.of("d", "/", listOf("dev/")),
+            Arguments.of("/d", "/", listOf("/dev/")),
+            Arguments.of("ka", "/dev", listOf("kafka/")),
+            Arguments.of("kafka/lo", "/dev", listOf("kafka/local/")),
             Arguments.of(
                 "/dev/kafka/local/", "/", listOf(
-                    "/dev/kafka/local/brokers",
-                    "/dev/kafka/local/consumer-groups",
-                    "/dev/kafka/local/topics",
-                    "/dev/kafka/local/schemas"
+                    "/dev/kafka/local/brokers/",
+                    "/dev/kafka/local/consumer-groups/",
+                    "/dev/kafka/local/topics/",
+                    "/dev/kafka/local/schemas/"
                 )
             ),
         )
