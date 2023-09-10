@@ -153,21 +153,28 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
             if (pwd == "/") "/$incompletePath" else "$pwd/$incompletePath"
         }
 
+        val isSubPath = !isAbsolute && incompletePath.contains("/")
+
         val parts = targetPath.split("/").dropLast(1)
 
-        val targetPathBase = parts.joinToString("/", prefix = "/")
+        val targetPathBase = parts.joinToString("/")
 
         val children = if (targetPathBase == "/") root.children() else root.findInode(targetPathBase)?.children()
 
         children?.forEach {
             val currentNodePath = it.path()
             if (currentNodePath.startsWith(targetPath)) {
-                if (isAbsolute) {
-                    add(currentNodePath)
+                val suggestion = if (isAbsolute) {
+                    currentNodePath
+                } else if (isSubPath) {
+                  currentNodePath.removePrefix("$pwd/")
                 } else {
-                    add(it.name)
+                    it.name
                 }
+
+                add("$suggestion/")
             }
         }
     }
+
 }
