@@ -127,6 +127,10 @@ You should see something like:
 
 Since data pipelines are unbound, the command will run indefinitely (or until you stop it with `Ctrl+C`).
 
+Here's a recorded example of what we've just done:
+
+![grep](../../assets/vhs/grep.gif)
+
 ## What did we learn?
 
 These two short examples tell us a lot about `TypeStream`:
