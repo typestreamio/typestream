@@ -2,13 +2,12 @@ name: server check
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -16,8 +15,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'corretto'
+          java-version: "17"
+          distribution: "corretto"
       - name: Check
         uses: gradle/gradle-build-action@v2
         with:
