@@ -12,6 +12,10 @@ cat /dev/kafka/local/topics/books | grep "Station"
 {"id":"9923d491-d421-4c84-9a97-7d1f7bc613a4","title":"Station Eleven","word_count":300,"author_id":"011bb70f-9dd3-4a1e-894c-bf6bb19879f8"}
 ```
 
+Here's this example in action:
+
+![grep](../../../assets/vhs/grep.gif)
+
 ## Filtering by field
 
 You can also filter by field using the `grep` operator with a field name parameter:
