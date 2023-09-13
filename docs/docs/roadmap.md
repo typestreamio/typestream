@@ -2,22 +2,26 @@
 
 A loose outlook of where `TypeStream` is headed.
 
-## Alpha
+## Short term
 
+- Extensible scheduler interface: we want to allow users to choose where to run long running jobs.
 - Language
   - introduce functions and expression statements like:
     - `answers=$(cat questions | grep answers); grep $answers 42 > result_42; grep $answers 24 > result_24`
 - Commands (these imply supporting more types)
   - find
   - tr
+- Serialization
+  - support for `protobuf`
+  - Add JSON schema encoding support
+  - write back to the schema registry
 
-## Beta
+## Medium term
 
 - Introduce new sources:
   - pulsar
   - postgresql
 - Introduce naming strategies for: graph nodes, `TypeStream` apps.
-- Add JSON schema encoding support
 
 ## Long term
 
