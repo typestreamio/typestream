@@ -88,7 +88,7 @@ func Run() {
 
 		runProgramResponse, err := s.client.RunProgram(ctx, &program_service.RunProgramRequest{Source: input})
 		if err != nil {
-			println("💥 failed to run program: %v", err)
+			fmt.Printf("💥 failed to run program: %v\n", err)
 			continue
 		}
 
@@ -102,15 +102,25 @@ func Run() {
 		p.setEnv("PWD", runProgramResponse.Env["PWD"])
 
 		if runProgramResponse.HasMoreOutput {
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(ctx)
 			go func() {
 				<-c
 				cancel()
+
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
+				source := fmt.Sprintf("kill %s", runProgramResponse.Id)
+				_, err := s.client.RunProgram(ctx, &program_service.RunProgramRequest{Source: source})
+				if err != nil {
+					fmt.Printf("💥 failed to kill program: %v\n", err)
+				}
 			}()
 
 			runProgramResponse, err := s.client.GetProgramOutput(ctx, &program_service.GetProgramOutputRequest{Id: runProgramResponse.Id})
 			if err != nil {
-				log.Fatalf("failed to get program output: %v", err)
+				fmt.Printf("💥 failed to get program output: %v\n", err)
+				break
 			}
 
 			for {
