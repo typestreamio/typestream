@@ -10,4 +10,15 @@ sealed interface Job {
     fun startBackground()
     fun startForeground(): Flow<String>
     fun stop()
+    fun state(): State
+    fun displayName() = "${program.id}\t${state()}"
+
+    enum class State {
+        STARTING,
+        RUNNING,
+        STOPPING,
+        STOPPED,
+        FAILED,
+        UNKNOWN,
+    }
 }

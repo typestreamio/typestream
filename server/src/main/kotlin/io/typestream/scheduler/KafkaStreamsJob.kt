@@ -109,7 +109,7 @@ class KafkaStreamsJob(override val program: Program, private val kafkaConfig: Ka
     }
 
     override fun stop() {
-        logger.info { "stopping $program.id" }
+        logger.info { "stopping ${program.id}" }
         running = false
         kafkaStreams?.close()
     }
@@ -122,8 +122,15 @@ class KafkaStreamsJob(override val program: Program, private val kafkaConfig: Ka
     private fun isRunning() = running && ((kafkaStreams?.state()?.hasNotStarted()
         ?: false) || (kafkaStreams?.state()?.isRunningOrRebalancing ?: false))
 
-    override fun toString() = buildString {
-        append(program.id)
-        append(" state: ${kafkaStreams?.state()}")
+    override fun state(): Job.State = when (kafkaStreams?.state()) {
+        KafkaStreams.State.CREATED -> Job.State.STARTING
+        //TODO not quite good enough but does the job (no pun intended) for now
+        KafkaStreams.State.REBALANCING -> Job.State.UNKNOWN
+        KafkaStreams.State.RUNNING -> Job.State.RUNNING
+        KafkaStreams.State.PENDING_SHUTDOWN -> Job.State.STOPPING
+        KafkaStreams.State.NOT_RUNNING -> Job.State.STOPPED
+        KafkaStreams.State.PENDING_ERROR -> Job.State.FAILED
+        KafkaStreams.State.ERROR -> Job.State.FAILED
+        null -> Job.State.UNKNOWN
     }
 }

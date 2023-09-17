@@ -16,7 +16,6 @@ private val commands: Map<String, (environment: Environment, args: List<String>)
     "file" to ::file,
     "http" to ::http,
     "kill" to ::kill,
-    "kill-fg" to ::killFg,
     "ls" to ::ls,
     "openai-complete" to ::openaiComplete,
     "ps" to ::ps,
@@ -69,15 +68,6 @@ private fun kill(environment: Environment, args: List<String>): ShellCommandOutp
     environment.scheduler.kill(args.first())
 
     return ShellCommandOutput.withError("kill: ${args.joinToString(" ")}")
-}
-
-private fun killFg(
-    environment: Environment,
-    @Suppress("UNUSED_PARAMETER") args: List<String>,
-): ShellCommandOutput {
-    environment.scheduler.killFg()
-
-    return ShellCommandOutput.empty
 }
 
 private fun http(
@@ -148,6 +138,5 @@ private fun stat(environment: Environment, args: List<String>) = if (args.size !
 private fun ps(environment: Environment, args: List<String>) = if (args.isNotEmpty()) {
     ShellCommandOutput.withError("Usage: ps")
 } else {
-    ShellCommandOutput.withOutput(environment.scheduler.ps().map { it.toString() }
-        .map { DataStream("/bin/ps", Schema.String(it)) })
+    ShellCommandOutput.withOutput(environment.scheduler.ps().map { DataStream("/bin/ps", Schema.String(it)) })
 }

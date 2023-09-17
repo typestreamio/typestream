@@ -46,15 +46,7 @@ class Scheduler(
         runningJobs.remove(job)
     }
 
-    fun killFg() {
-        val job = runningJobs.find { it.program.hasMoreOutput() } ?: error("no foreground job running")
-        job.stop()
-        job.remove()
-        jobsStdout.remove(job)
-        runningJobs.remove(job)
-    }
-
-    fun ps() = runningJobs.toList()
+    fun ps() = runningJobs.map(Job::displayName).toList()
 
     override fun close() {
         runningJobs.forEach(Job::stop)

@@ -20,7 +20,7 @@ func NewClient() *Client {
 
 	conn, err := grpc.Dial("127.0.0.1:4242", opts...)
 	if err != nil {
-		log.Fatalf("💥 cannot connect to TypeStream server %v", err)
+		log.Fatalf("💥 cannot connect to TypeStream server %v\n", err)
 	}
 	return &Client{
 		conn: conn,
