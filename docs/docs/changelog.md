@@ -21,4 +21,3 @@
 ### Features
 
 - [chore: it's open source now :tada:](https://github.com/typestreamio/typestream/commit/571f702)
-

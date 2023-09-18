@@ -21,12 +21,13 @@ type release struct {
 	version       string
 	dockerVersion string
 	dryRun        bool
+	branchName    string
 }
 
-type changelogEntryType int
+type changelogEntryKind int
 
 const (
-	feat changelogEntryType = iota
+	feat changelogEntryKind = iota
 	fix
 	docs
 	build
@@ -37,13 +38,18 @@ const (
 type changelogEntry struct {
 	Hash    string
 	Message string
-	Kind    changelogEntryType
+	Kind    changelogEntryKind
 	Tag     string
 }
 
 type tag struct {
 	name string
 	hash string
+}
+
+type changelog struct {
+	Entries map[string]map[changelogEntryKind][]changelogEntry
+	Tags    []string
 }
 
 func (r *release) run(name string, args ...string) error {
@@ -58,7 +64,7 @@ func (r *release) run(name string, args ...string) error {
 	return cmd.Run()
 }
 
-func newRelease(dryRun bool) *release {
+func newRelease(dryRun bool, action string) *release {
 	currentDate := time.Now().Format("2006.01.02")
 
 	cmd := exec.Command("git", "tag", "--list", currentDate+"*")
@@ -89,7 +95,9 @@ func newRelease(dryRun bool) *release {
 	if highestMicro == -1 {
 		highestMicro = 0
 	} else {
-		highestMicro++
+		if action == "start" {
+			highestMicro++
+		}
 	}
 
 	version := fmt.Sprintf("%s+%d", currentDate, highestMicro)
@@ -97,10 +105,12 @@ func newRelease(dryRun bool) *release {
 	return &release{
 		version:       version,
 		dockerVersion: strings.Replace(version, "+", ".", -1),
-		dryRun:        dryRun}
+		dryRun:        dryRun,
+		branchName:    fmt.Sprintf("release/%s", version),
+	}
 }
 
-func parseKind(kind string) changelogEntryType {
+func parseKind(kind string) changelogEntryKind {
 	switch kind {
 	case "feat":
 		return feat
@@ -117,8 +127,25 @@ func parseKind(kind string) changelogEntryType {
 	}
 }
 
-func formatKind(kind changelogEntryType) string {
-	switch kind {
+func (k changelogEntryKind) toEmoji() string {
+	switch k {
+	case feat:
+		return ":rocket:"
+	case fix:
+		return ":bug:"
+	case docs:
+		return ":books:"
+	case build:
+		return ":hammer:"
+	case chore:
+		return ":toolbox:"
+	default:
+		return ":shrug:"
+	}
+}
+
+func (k changelogEntryKind) toTitle() string {
+	switch k {
 	case feat:
 		return "Features"
 	case fix:
@@ -134,9 +161,80 @@ func formatKind(kind changelogEntryType) string {
 	}
 }
 
-var tagReg = regexp.MustCompile(`^tag: (\d{4}.\d{2}.\d{2}\+\d+)$`)
+func formatKind(rich bool) func(k changelogEntryKind) string {
+	if rich {
+		return func(k changelogEntryKind) string {
+			return fmt.Sprintf("%s %s", k.toEmoji(), k.toTitle())
+		}
+	} else {
+		return func(k changelogEntryKind) string {
+			return k.toTitle()
+		}
+	}
+}
 
-func updateChangelog(r *release) error {
+var tagReg = regexp.MustCompile(`tag: (\d{4}.\d{2}.\d{2}\+\d+)`)
+
+func writeChangelog(r *release, ch changelog, fileName string, richFormat bool) {
+	funcMap := template.FuncMap{
+		"tocLink":    strings.NewReplacer(".", "", "+", "").Replace,
+		"formatKind": formatKind(richFormat),
+	}
+
+	file, err := os.CreateTemp(os.TempDir(), "changelog")
+	if err != nil {
+		fmt.Printf("error creating temp file: %v\n", err)
+		os.Exit(1)
+	}
+	defer os.Remove(file.Name())
+
+	tmpl, err := template.New("changelog").Funcs(funcMap).Parse(changelogTmpl)
+	if err != nil {
+		fmt.Printf("error parsing template: %v\n", err)
+		os.Exit(1)
+	}
+	err = tmpl.Execute(file, ch)
+	if err != nil {
+		fmt.Printf("error executing template: %v\n", err)
+		os.Exit(1)
+	}
+
+	if r.dryRun {
+		file.Seek(0, 0)
+		buf := make([]byte, 1024)
+		for {
+			n, err := file.Read(buf)
+			if err != nil {
+				break
+			}
+			fmt.Print(string(buf[:n]))
+		}
+	}
+
+	err = file.Close()
+	if err != nil {
+		fmt.Printf("error closing file: %v\n", err)
+		os.Exit(1)
+	}
+
+	if r.dryRun {
+		fmt.Printf("os.Rename(%s, %s)\n", file.Name(), fileName)
+	} else {
+		err = os.Rename(file.Name(), fileName)
+		if err != nil {
+			fmt.Printf("error renaming file: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	err = r.run("git", "add", fileName)
+	if err != nil {
+		fmt.Printf("error adding changelog: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func parseHistory(r *release) changelog {
 	cmd := exec.Command("git", "log", "--pretty=format:\"%h,%s,%D\"")
 	output, err := cmd.Output()
 	if err != nil {
@@ -185,78 +283,48 @@ func updateChangelog(r *release) error {
 		entries = append(entries, entry)
 	}
 
-	indexedEntries := make(map[string]map[changelogEntryType]changelogEntry)
+	indexedEntries := make(map[string]map[changelogEntryKind][]changelogEntry)
 	for _, entry := range entries {
 		if _, ok := indexedEntries[entry.Tag]; !ok {
-			indexedEntries[entry.Tag] = make(map[changelogEntryType]changelogEntry)
+			indexedEntries[entry.Tag] = make(map[changelogEntryKind][]changelogEntry)
+
 		}
-
-		indexedEntries[entry.Tag][entry.Kind] = entry
+		indexedEntries[entry.Tag][entry.Kind] = append(indexedEntries[entry.Tag][entry.Kind], entry)
 	}
 
-	funcMap := template.FuncMap{
-		"tocLink":    strings.NewReplacer(".", "", "+", "").Replace,
-		"formatKind": formatKind,
+	return changelog{
+		Entries: indexedEntries,
+		Tags:    allTags,
 	}
+}
 
-	file, err := os.CreateTemp(os.TempDir(), "changelog")
-	if err != nil {
-		fmt.Printf("error creating temp file: %v\n", err)
-		os.Exit(1)
-	}
-	defer os.Remove(file.Name())
+func updateChangelog(r *release) error {
+	ch := parseHistory(r)
 
-	tmpl, err := template.New("changelog").Funcs(funcMap).Parse(changelogTmpl)
-	if err != nil {
-		fmt.Printf("error parsing template: %v\n", err)
-		os.Exit(1)
-	}
-	err = tmpl.Execute(file, struct {
-		Tags    []string
-		Entries map[string]map[changelogEntryType]changelogEntry
-	}{Tags: allTags, Entries: indexedEntries})
-	if err != nil {
-		fmt.Printf("error executing template: %v\n", err)
-		os.Exit(1)
-	}
+	writeChangelog(r, ch, "CHANGELOG.md", false)
+	writeChangelog(r, ch, "docs/docs/changelog.md", true)
 
-	if r.dryRun {
-		file.Seek(0, 0)
-		buf := make([]byte, 1024)
-		for {
-			n, err := file.Read(buf)
-			if err != nil {
-				break
-			}
-			fmt.Print(string(buf[:n]))
-		}
+	return r.run("git", "commit", "-m", fmt.Sprint("chore: release ", r.version))
+}
 
-		return nil
-	}
+func gitCheckoutReleaseBranch(r *release) error {
+	return r.run("git", "checkout", "-b", r.branchName)
+}
 
-	err = file.Close()
-	if err != nil {
-		fmt.Printf("error closing file: %v\n", err)
-		os.Exit(1)
-	}
+func gitPushReleaseBranch(r *release) error {
+	return r.run("git", "push", "--set-upstream", "origin", r.branchName)
+}
 
-	err = os.Rename(file.Name(), "CHANGELOG.md")
-	if err != nil {
-		fmt.Printf("error renaming file: %v\n", err)
-		os.Exit(1)
-	}
-
-	err = r.run("git", "add", "CHANGELOG.md")
-	if err != nil {
-		fmt.Printf("error adding changelog: %v\n", err)
-		os.Exit(1)
-	}
-
-	return r.run("git", "commit", "-m", "chore: update changelog")
+func gitPushTag(r *release) error {
+	return r.run("git", "push", "origin", r.version)
 }
 
 func gitTag(r *release) error {
 	return r.run("git", "tag", r.version)
+}
+
+func createReleasePR(r *release) error {
+	return r.run("gh", "pr", "create", "--title", fmt.Sprintf("chore: release %s", r.version), "--body", "See changelog", "--base", "main", "--head", r.branchName)
 }
 
 func buildImages(r *release) error {
@@ -287,12 +355,76 @@ func releaseClient(r *release) error {
 	return cmd.Run()
 }
 
-func generateGitHubRelease(release *release) error {
+func generateGitHubRelease(r *release) error {
+	return r.run("gh", "release", "create", r.version, "--title", r.version, "-F", "docs/docs/changelog.md")
+}
+
+func announceOnDiscord(r *release) error {
 	return nil
 }
 
-func announceOnDiscord(release *release) error {
-	return nil
+func start(r *release) {
+	err := gitCheckoutReleaseBranch(r)
+	if err != nil {
+		fmt.Println("Error creating branch:", err)
+		os.Exit(1)
+	}
+
+	err = updateChangelog(r)
+	if err != nil {
+		fmt.Println("Error updating changelog:", err)
+		os.Exit(1)
+	}
+
+	err = gitPushReleaseBranch(r)
+	if err != nil {
+		fmt.Println("Error pushing branch:", err)
+		os.Exit(1)
+	}
+
+	err = createReleasePR(r)
+	if err != nil {
+		fmt.Println("Error creating PR:", err)
+		os.Exit(1)
+	}
+}
+
+func publish(r *release) {
+	err := gitTag(r)
+	if err != nil {
+		fmt.Println("Error tagging:", err)
+		os.Exit(1)
+	}
+
+	err = gitPushTag(r)
+	if err != nil {
+		fmt.Println("Error pushing tag:", err)
+		os.Exit(1)
+	}
+
+	err = buildImages(r)
+	if err != nil {
+		fmt.Println("Error building images:", err)
+		os.Exit(1)
+	}
+
+	err = releaseClient(r)
+	if err != nil {
+		fmt.Println("Error releasing client:", err)
+		os.Exit(1)
+	}
+
+	err = generateGitHubRelease(r)
+	if err != nil {
+		fmt.Println("Error generating GitHub release:", err)
+		os.Exit(1)
+	}
+
+	err = announceOnDiscord(r)
+	if err != nil {
+		fmt.Println("Error announcing on Discord:", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -301,46 +433,23 @@ func main() {
 	flag.BoolVar(&dry, "dry", false, "Dry run")
 	flag.Parse()
 
+	if flag.NArg() != 1 {
+		fmt.Println("Usage: release [-dry] <start|publish>")
+		os.Exit(1)
+	}
+
 	if dry {
 		fmt.Println("dry run, not doing anything")
 	}
 
-	release := newRelease(dry)
-	fmt.Printf("New version: %s\n", release.version)
-
-	err := updateChangelog(release)
-	if err != nil {
-		fmt.Println("Error updating changelog:", err)
-		os.Exit(1)
-	}
-
-	err = gitTag(release)
-	if err != nil {
-		fmt.Println("Error tagging:", err)
-		os.Exit(1)
-	}
-
-	err = buildImages(release)
-	if err != nil {
-		fmt.Println("Error building images:", err)
-		os.Exit(1)
-	}
-
-	err = releaseClient(release)
-	if err != nil {
-		fmt.Println("Error releasing client:", err)
-		os.Exit(1)
-	}
-
-	err = generateGitHubRelease(release)
-	if err != nil {
-		fmt.Println("Error generating GitHub release:", err)
-		os.Exit(1)
-	}
-
-	err = announceOnDiscord(release)
-	if err != nil {
-		fmt.Println("Error announcing on Discord:", err)
+	action := flag.Arg(0)
+	switch action {
+	case "start":
+		start(newRelease(dry, action))
+	case "publish":
+		publish(newRelease(dry, action))
+	default:
+		fmt.Println("Usage: release [-dry] <start|publish>")
 		os.Exit(1)
 	}
 }
