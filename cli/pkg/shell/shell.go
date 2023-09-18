@@ -14,6 +14,7 @@ import (
 	"github.com/reeflective/readline"
 	"github.com/typestreamio/typestream/cli/pkg/grpc"
 	"github.com/typestreamio/typestream/cli/pkg/program_service"
+	"google.golang.org/grpc/status"
 )
 
 type shell struct {
@@ -88,7 +89,11 @@ func Run() {
 
 		runProgramResponse, err := s.client.RunProgram(ctx, &program_service.RunProgramRequest{Source: input})
 		if err != nil {
-			fmt.Printf("💥 failed to run program: %v\n", err)
+			if s, ok := status.FromError(err); ok {
+				fmt.Println(s.Message())
+			} else {
+				fmt.Printf("💥 failed to run program: %v\n", err)
+			}
 			continue
 		}
 
