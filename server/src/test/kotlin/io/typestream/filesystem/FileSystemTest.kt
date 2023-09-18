@@ -45,12 +45,13 @@ internal class FileSystemTest {
     @Test
     fun `expands paths correctly`() {
         fileSystem.use {
-            assertThat(fileSystem.expandPath("dev", "/")).isEqualTo("/dev");
-            assertThat(fileSystem.expandPath("dev/", "/")).isEqualTo("/dev");
-            assertThat(fileSystem.expandPath("kafka", "/dev")).isEqualTo("/dev/kafka");
-            assertThat(fileSystem.expandPath("", "/")).isEqualTo("/");
-            assertThat(fileSystem.expandPath("..", "/dev")).isEqualTo("/");
-            assertNull(fileSystem.expandPath("dev/whatever", "/"));
+            assertThat(fileSystem.expandPath("dev", "/")).isEqualTo("/dev")
+            assertThat(fileSystem.expandPath("dev/", "/")).isEqualTo("/dev")
+            assertThat(fileSystem.expandPath("kafka", "/dev")).isEqualTo("/dev/kafka")
+            assertThat(fileSystem.expandPath("/dev/kafka", "/")).isEqualTo("/dev/kafka")
+            assertThat(fileSystem.expandPath("", "/")).isEqualTo("/")
+            assertThat(fileSystem.expandPath("..", "/dev")).isEqualTo("/")
+            assertNull(fileSystem.expandPath("dev/whatever", "/"))
         }
     }
 
