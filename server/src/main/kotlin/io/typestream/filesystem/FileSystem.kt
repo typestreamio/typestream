@@ -56,8 +56,8 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
         jobs.add(launch(dispatcher) { catalog.watch() })
     }
 
-    fun expandPath(name: String, pwd: String): String? {
-        return when (name) {
+    fun expandPath(path: String, pwd: String): String? {
+        return when (path) {
             ".." -> {
                 val paths = pwd.split("/")
                 paths.subList(0, paths.lastIndex - 1).joinToString("/", prefix = "/")
@@ -66,7 +66,11 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
             "." -> pwd
             "", "/" -> "/"
             else -> {
-                val targetPath = if (pwd == "/") "/$name" else "$pwd/$name"
+                val targetPath = if (pwd == "/") {
+                    if (path.startsWith("/")) path else "/$path"
+                } else {
+                    "$pwd/$path"
+                }
                 if (root.findInode(targetPath) !== null) {
                     targetPath.removeSuffix("/")
                 } else {
