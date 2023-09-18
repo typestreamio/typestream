@@ -102,6 +102,7 @@ internal class FileSystemTest {
             Arguments.of("/d", "/", listOf("/dev/")),
             Arguments.of("ka", "/dev", listOf("kafka/")),
             Arguments.of("kafka/lo", "/dev", listOf("kafka/local/")),
+            Arguments.of("dev/kafka/lo", "/", listOf("dev/kafka/local/")),
             Arguments.of(
                 "/dev/kafka/local/", "/", listOf(
                     "/dev/kafka/local/brokers/",
@@ -121,4 +122,23 @@ internal class FileSystemTest {
                 assertThat(fileSystem.completePath(incompletePath, pwd)).contains(*suggestions.toTypedArray())
             }
         }
+
+    @Test
+    fun `only completes directories with trailing slash`() = runTest(testDispatcher) {
+        fileSystem.use {
+            testKafka.produceRecords("authors", buildAuthor("Chimamanda Ngozi Adichie"))
+
+            launch {
+                fileSystem.watch()
+            }
+
+
+            assertThat(
+                fileSystem.completePath(
+                    "dev/kafka/local/topics/a",
+                    "/"
+                )
+            ).contains("dev/kafka/local/topics/authors")
+        }
+    }
 }

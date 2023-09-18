@@ -161,18 +161,24 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
 
         val children = if (targetPathBase == "/") root.children() else root.findInode(targetPathBase)?.children()
 
+        val pwdPrefix = if (pwd == "/") "/" else "$pwd/"
+
         children?.forEach {
             val currentNodePath = it.path()
             if (currentNodePath.startsWith(targetPath)) {
-                val suggestion = if (isAbsolute) {
+                var suggestion = if (isAbsolute) {
                     currentNodePath
                 } else if (isSubPath) {
-                  currentNodePath.removePrefix("$pwd/")
+                    currentNodePath.removePrefix(pwdPrefix)
                 } else {
                     it.name
                 }
 
-                add("$suggestion/")
+                if (it is Directory) {
+                    suggestion += "/"
+                }
+
+                add(suggestion)
             }
         }
     }
