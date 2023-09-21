@@ -16,6 +16,6 @@ registry_port=$(docker port "$(docker ps --filter name=rp-node-0 --format '{{.ID
   echo "sources.kafka.local.bootstrapServers=localhost:$kafka_port"
   echo "sources.kafka.local.schemaRegistryUrl=http://localhost:$registry_port"
   echo "sources.kafka.local.fsRefreshRate=10"
-} > "$script_dir"/server.dev.properties
+} > "$script_dir"/server.properties
 
 echo "export BOOTSTRAP_SERVER=localhost:$kafka_port"
