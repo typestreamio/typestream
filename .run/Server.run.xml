@@ -4,7 +4,7 @@
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="io.typestream.App" />
     <module name="typestream.server.main" />
-    <option name="PROGRAM_PARAMETERS" value="$ProjectFileDir$/scripts/dev/server.dev.properties" />
+    <option name="PROGRAM_PARAMETERS" value="$ProjectFileDir$/scripts/dev/server.properties" />
     <shortenClasspath name="NONE" />
     <method v="2">
       <option name="Make" enabled="true" />
