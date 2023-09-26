@@ -1,0 +1,81 @@
+# Installation
+
+The purpose of this guide is to help you install `TypeStream` locally so you can
+start writing your own data pipelines. If you're looking to run `TypeStream` in
+production, refer to the [deployment](/docs/tutorial/deployment.md) guide.
+
+`TypeStream` can run in two different modes:
+
+- [Local mode](#local-mode): This mode is intended for development purposes.
+  Every feature is available, but long running processes aren't persisted
+  anywhere. It's not recommended to use local mode in production.
+- [Kubernetes mode](#kubernetes-mode): This mode is intended for production
+  purposes. Every feature is available and long running processes are run as
+  Kubernetes jobs. It's the recommended way to run `TypeStream` in production.
+
+To help you install `TypeStream` locally, the official CLI has two groups of
+commands to help you with the process of installing `TypeStream` locally. So
+let's install the CLI first:
+
+<Tabs>
+  <TabItem value="brew" label="brew" default>
+    brew install typestreamio/tap/typestream
+  </TabItem>
+</Tabs>
+
+Then you can check if `TypeStream` is installed correctly:
+
+```bash
+typestream --version
+typestream version 2023.09.28.0
+```
+
+If you see something like that, you're all set 🎉
+
+## Local mode
+
+Pre-requisites:
+
+- [docker](https://docs.docker.com/get-docker/)
+- [docker-compose](https://docs.docker.com/compose/install/)
+
+import LocalStart from "./_local_start.mdx";
+
+<LocalStart />
+
+## Kubernetes mode
+
+Pre-requisites:
+
+- [minikube](https://minikube.sigs.k8s.io/docs/start/)
+
+The first thing we need to do know is to create a cluster minikube:
+
+```bash
+minikube start --cpus=4 --memory=8192 --addons=registry --profile=typestream --insecure-registry="10.0.0.0/24"
+```
+
+Then install `TypeStream`:
+
+```bash
+typestream k8s create --redpanda
+```
+
+This command will install `TypeStream` in the `typestream` namespace. You can check if everything is installed correctly by running:
+
+```bash
+kubectl get pods -n typestream
+```
+
+You should see something like this:
+
+```bash
+
+```
+
+You're all set now 🎉
+
+## Where to go from here
+
+If it's the first time you're around here, we recommend the [getting
+started](/docs/getting-started.mdx) guide.

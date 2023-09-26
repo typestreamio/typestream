@@ -6,6 +6,7 @@ import io.typestream.compiler.kafka.KafkaStreamSource
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
+import io.typestream.coroutine.retry
 import io.typestream.kafka.DataStreamSerde
 import io.typestream.kafka.StreamsBuilderWrapper
 import kotlinx.coroutines.flow.flow
@@ -19,7 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 
-class KafkaStreamsJob(override val program: Program, private val kafkaConfig: KafkaConfig) : Job {
+class KafkaStreamsJob(override val id: String, val program: Program, private val kafkaConfig: KafkaConfig) : Job {
     private var running: Boolean = false
     private val logger = KotlinLogging.logger {}
     private var kafkaStreams: KafkaStreams? = null
@@ -51,9 +52,11 @@ class KafkaStreamsJob(override val program: Program, private val kafkaConfig: Ka
         return streamsBuilder.build()
     }
 
-    override fun startForeground() = flow {
-        start()
-
+    override fun output() = flow {
+        // we retry here because we may be trying to get output before the job has started
+        retry {
+            require(isRunning()) { "cannot get output of a non-running job" }
+        }
         val consumer = KafkaConsumer<DataStream, DataStream>(consumerProps())
         consumer.subscribe(listOf("${program.id}-stdout"))
 
@@ -71,15 +74,12 @@ class KafkaStreamsJob(override val program: Program, private val kafkaConfig: Ka
         consumer.close()
     }
 
-    override fun startBackground() {
-        start()
-    }
-
-    private fun start() {
+    override fun start() {
         val topology = buildTopology()
         kafkaStreams = KafkaStreams(topology, StreamsConfig(config()))
         logger.debug { topology.describe().toString() }
 
+        logger.info { "starting ${program.id}" }
         kafkaStreams?.start()
         running = true
     }
@@ -116,6 +116,7 @@ class KafkaStreamsJob(override val program: Program, private val kafkaConfig: Ka
 
     override fun remove() {
         require(!running) { "cannot remove a running Kafka Streams app" }
+        logger.info { "removing ${program.id}"}
         kafkaStreams?.cleanUp()
     }
 

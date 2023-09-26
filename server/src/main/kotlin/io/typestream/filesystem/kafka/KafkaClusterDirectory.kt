@@ -7,8 +7,9 @@ import io.typestream.filesystem.Directory
 import io.typestream.kafka.KafkaAdminClient
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.supervisorScope
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -39,35 +40,42 @@ class KafkaClusterDirectory(
         appendLine("topics: ${topicsDir.children().size}")
     }
 
-    override suspend fun watch(): Unit = coroutineScope {
+    override suspend fun watch(): Unit = supervisorScope {
         val fsRefreshRate = kafkaConfig.fsRefreshRate.seconds
-        launch(dispatcher) {
-            tick(fsRefreshRate) {
-                logger.info { "$name consumer groups refresh" }
-                consumerGroupsDir.replaceAll(kafkaAdminClient.consumerGroupIds().map { ConsumerGroup(it) })
+        logger.info { "launching kafka watchers (rate: $fsRefreshRate seconds)" }
+
+        val handler = CoroutineExceptionHandler { _, exception ->
+            logger.error(exception) { "kafka cluster directory watcher failed" }
+        }
+
+        val networkExceptionHandler: (Throwable) -> Unit = { exception ->
+            when (exception) {
+                is java.net.ConnectException -> logger.warn(exception) { "kafka cluster directory watcher failed" }
+                else -> throw exception
             }
         }
 
-        launch(dispatcher) {
-            tick(fsRefreshRate) {
-                logger.info { "$name brokers refresh" }
-                brokersDir.replaceAll(kafkaAdminClient.brokerIds().map { Broker(it) })
-            }
+        val scope = CoroutineScope(dispatcher + handler)
+
+        scope.tick(fsRefreshRate, networkExceptionHandler) {
+            logger.info { "$name consumer groups refresh" }
+            consumerGroupsDir.replaceAll(kafkaAdminClient.consumerGroupIds().map { ConsumerGroup(it) })
         }
 
-        launch(dispatcher) {
-            tick(fsRefreshRate) {
-                logger.info { "$name topics refresh" }
-                topicsDir.replaceAll(kafkaAdminClient.topicNames().filterNot { it.startsWith("typestream-app-") }
-                    .map { t -> Topic(t, kafkaAdminClient) })
-            }
+        scope.tick(fsRefreshRate, networkExceptionHandler) {
+            logger.info { "$name brokers refresh" }
+            brokersDir.replaceAll(kafkaAdminClient.brokerIds().map { Broker(it) })
         }
 
-        launch(dispatcher) {
-            tick(fsRefreshRate) {
-                logger.info { "$name schema registry refresh" }
-                schemaRegistryDir.replaceAll(schemaRegistryClient.subjects().keys.map { t -> Directory(t) })
-            }
+        scope.tick(fsRefreshRate, networkExceptionHandler) {
+            logger.info { "$name topics refresh" }
+            topicsDir.replaceAll(kafkaAdminClient.topicNames().filterNot { it.startsWith("typestream-app-") }
+                .map { t -> Topic(t, kafkaAdminClient) })
+        }
+
+        scope.tick(fsRefreshRate, networkExceptionHandler) {
+            logger.info { "$name schema registry refresh" }
+            schemaRegistryDir.replaceAll(schemaRegistryClient.subjects().keys.map { t -> Directory(t) })
         }
     }
 }

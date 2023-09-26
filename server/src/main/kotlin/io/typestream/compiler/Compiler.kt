@@ -15,12 +15,12 @@ import io.typestream.compiler.shellcommand.names
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.vm.CompilerResult
-import io.typestream.compiler.vm.Environment
+import io.typestream.compiler.vm.Session
 import io.typestream.filesystem.FileSystem
 import io.typestream.graph.Graph
 import java.util.UUID
 
-class Compiler(private val environment: Environment) : Statement.Visitor<Unit> {
+class Compiler(private val session: Session) : Statement.Visitor<Unit> {
     private val root: Graph<Node> = Graph(Node.NoOp("root"))
     private var currentNode: Graph<Node> = root
     private val errors = mutableListOf<String>()
@@ -43,7 +43,7 @@ class Compiler(private val environment: Environment) : Statement.Visitor<Unit> {
             return CompilerResult(program, errors)
         }
 
-        val interpreter = Interpreter(environment)
+        val interpreter = Interpreter(session)
 
         statements.forEach { it.accept(interpreter) }
 
@@ -118,14 +118,14 @@ class Compiler(private val environment: Environment) : Statement.Visitor<Unit> {
                                     .forEach(::add)
                             } else {
                                 when (val lastExpr = lastCommand.expressions.lastOrNull()) {
-                                    is Expr.BareWord -> environment.fileSystem.completePath(
+                                    is Expr.BareWord -> session.fileSystem.completePath(
                                         lastExpr.value,
-                                        environment.session.pwd
+                                        session.env.pwd
                                     ).forEach(::add)
 
-                                    else -> environment.fileSystem.completePath(
+                                    else -> session.fileSystem.completePath(
                                         "/",
-                                        environment.session.pwd
+                                        session.env.pwd
                                     ).forEach(::add)
                                 }
                             }
@@ -136,9 +136,9 @@ class Compiler(private val environment: Environment) : Statement.Visitor<Unit> {
 
                         is DataCommand -> {
                             when (val lastExpr = lastCommand.expressions.last()) {
-                                is Expr.BareWord -> environment.fileSystem.completePath(
+                                is Expr.BareWord -> session.fileSystem.completePath(
                                     lastExpr.value,
-                                    environment.session.pwd
+                                    session.env.pwd
                                 ).forEach(::add)
 
                                 else -> {}

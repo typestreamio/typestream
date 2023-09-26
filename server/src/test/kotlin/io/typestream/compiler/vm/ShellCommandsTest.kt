@@ -29,7 +29,7 @@ internal class ShellCommandsTest {
     private val testKafka = RedpandaContainerWrapper()
 
     private lateinit var fileSystem: FileSystem
-    private lateinit var environment: Environment
+    private lateinit var session: Session
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -38,20 +38,20 @@ internal class ShellCommandsTest {
         val sourcesConfig = SourcesConfig(testKonfig(testKafka))
 
         fileSystem = FileSystem(sourcesConfig, testDispatcher)
-        environment = Environment(fileSystem, Scheduler(sourcesConfig, dispatcher = testDispatcher), Session())
+        session = Session(fileSystem, Scheduler(false, testDispatcher), Env())
     }
 
 
     @Test
-    fun `changes directory correctly`() = runTest(testDispatcher) {
+    fun `changes directory correctly`() = runTest {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Emily St. John Mandel"))
-            launch { fileSystem.watch() }
+            launch(testDispatcher) { fileSystem.watch() }
 
             val cd = ShellCommand.find("cd")
             requireNotNull(cd)
 
-            val shellCommandOutput = cd(environment, listOf("dev/kafka/local/topics"))
+            val shellCommandOutput = cd(session, listOf("dev/kafka/local/topics"))
 
             assertThat(shellCommandOutput)
                 .isEqualTo(
@@ -65,45 +65,45 @@ internal class ShellCommandsTest {
                     )
                 )
 
-            assertThat(environment.session.pwd).isEqualTo("/dev/kafka/local/topics")
+            assertThat(session.env.pwd).isEqualTo("/dev/kafka/local/topics")
         }
     }
 
     @Test
-    fun `cannot change directory to incorrect path`() = runTest(testDispatcher) {
+    fun `cannot change directory to incorrect path`() = runTest {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Octavia E. Butler"))
-            launch { fileSystem.watch() }
+            launch(testDispatcher) { fileSystem.watch() }
 
             val cd = ShellCommand.find("cd")
             requireNotNull(cd)
 
-            val programResult = cd(environment, listOf("dev/whatever"))
+            val programResult = cd(session, listOf("dev/whatever"))
 
             assertThat(programResult)
                 .isEqualTo(ShellCommandOutput.withError("cd: cannot cd into dev/whatever: no such file or directory"))
 
-            assertThat(environment.session.pwd).isEqualTo("/")
+            assertThat(session.env.pwd).isEqualTo("/")
         }
     }
 
 
     @Test
-    fun `changes directory only to dirs`() = runTest(testDispatcher) {
+    fun `changes directory only to dirs`() = runTest {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Ann Leckie"))
-            launch { fileSystem.watch() }
+            launch(testDispatcher) { fileSystem.watch() }
 
             val cd = ShellCommand.find("cd")
             requireNotNull(cd)
 
-            val programResult = cd(environment, listOf("dev/kafka/local/topics/authors"))
+            val programResult = cd(session, listOf("dev/kafka/local/topics/authors"))
 
             assertThat(programResult).isEqualTo(
                 ShellCommandOutput.withError("cd: cannot cd into dev/kafka/local/topics/authors: not a directory")
             )
 
-            assertThat(environment.session.pwd).isEqualTo("/")
+            assertThat(session.env.pwd).isEqualTo("/")
         }
     }
 }

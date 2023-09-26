@@ -2,7 +2,7 @@ package io.typestream.kafka
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.config.KafkaConfig
-import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.KafkaAdminClient
 import java.util.Properties
@@ -10,13 +10,13 @@ import java.util.Properties
 
 class KafkaAdminClient(kafkaConfig: KafkaConfig) {
     private val logger = KotlinLogging.logger { }
-    private val kafkaAdminClient: AdminClient
+    private val kafkaAdminClient: Admin
 
     init {
         val props = Properties()
         props[AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaConfig.bootstrapServers
 
-        this.kafkaAdminClient = KafkaAdminClient.create(props) // TODO ping kafka and fail to start if it's not up
+        this.kafkaAdminClient = KafkaAdminClient.create(props)
         logger.info { "kafka admin created" }
     }
 

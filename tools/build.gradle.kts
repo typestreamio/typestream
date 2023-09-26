@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":libs:testing"))
     implementation(project(":libs:konfig"))
     implementation(project(":libs:version-info"))
+    implementation("io.fabric8:kubernetes-client:6.8.1")
 
     implementation(libs.bundles.sf4j)
     implementation(libs.bundles.kafka)

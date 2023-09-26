@@ -1,15 +1,23 @@
 package io.typestream.grpc
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.testing.GrpcCleanupRule
-import io.typestream.App
-import io.typestream.grpc.ProgramServiceGrpc.ProgramServiceBlockingStub
+import io.typestream.Server
+import io.typestream.compiler.Program
+import io.typestream.grpc.interactive_session_service.InteractiveSession.GetProgramOutputRequest
+import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProgramRequest
+import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProgramResponse
+import io.typestream.grpc.interactive_session_service.InteractiveSession.StartSessionRequest
+import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc
+import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc.InteractiveSessionServiceBlockingStub
 import io.typestream.testing.RedpandaContainerWrapper
 import io.typestream.testing.avro.buildBook
 import io.typestream.testing.avro.buildUser
 import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.until
+import io.typestream.version_info.VersionInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -24,10 +32,11 @@ import kotlin.test.assertTrue
 
 
 @Testcontainers
-internal class ProgramServiceTest {
+internal class InteractiveSessionServiceTest {
+    private val logger = KotlinLogging.logger {}
     private val dispatcher = Dispatchers.IO
 
-    private lateinit var app: App
+    private lateinit var app: Server
 
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
@@ -37,7 +46,7 @@ internal class ProgramServiceTest {
 
     @BeforeEach
     fun beforeEach() {
-        app = App(testKonfig(testKafka), dispatcher)
+        app = Server(testKonfig(testKafka), VersionInfo("beta", "n/a"), dispatcher)
     }
 
     @Test
@@ -45,19 +54,50 @@ internal class ProgramServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
 
             grpcCleanupRule.register(app.server!!)
 
-            val stub = ProgramServiceGrpc.newBlockingStub(
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            assertThat(stub.runProgram("ls")).extracting("stdOut", "stdErr", "hasMoreOutput")
+            val sessionId =
+                stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
+            assertThat(stub.runProgram(sessionId, "ls")).extracting("stdOut", "stdErr", "hasMoreOutput")
                 .containsExactly("dev", "", false)
+        }
+    }
+
+    @Test
+    fun `runs sessions correctly`(): Unit = runBlocking {
+        app.use {
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server!!)
+
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+            val sessionId =
+                stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
+            assertThat(stub.runProgram(sessionId, "let localKafkaDir = \'/dev/kafka/local\'"))
+                .extracting("stdOut", "stdErr", "hasMoreOutput")
+                .containsExactly("", "", false)
+
+            assertThat(stub.runProgram(sessionId,"ls \$localKafkaDir"))
+                .extracting("stdOut", "stdErr", "hasMoreOutput")
+                .containsExactly("brokers\nconsumer-groups\nschemas\ntopics", "", false)
         }
     }
 
@@ -66,18 +106,21 @@ internal class ProgramServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
 
             grpcCleanupRule.register(app.server!!)
 
-            val stub = ProgramServiceGrpc.newBlockingStub(
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            assertThat(stub.runProgram("whatever")).extracting("stdOut", "stdErr", "hasMoreOutput")
+            val sessionId =
+                stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
+            assertThat(stub.runProgram(sessionId, "whatever")).extracting("stdOut", "stdErr", "hasMoreOutput")
                 .containsExactly("", "typestream: whatever not found", false)
         }
     }
@@ -89,24 +132,27 @@ internal class ProgramServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
 
             grpcCleanupRule.register(app.server!!)
 
-            val stub = ProgramServiceGrpc.newBlockingStub(
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val cat = stub.runProgram("cat /dev/kafka/local/topics/users")
+            val sessionId =
+                stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
+            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/users")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
             val responseStream =
                 stub.getProgramOutput(
-                    Program.GetProgramOutputRequest.newBuilder().setId(cat.id).build()
+                    GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(cat.id).build()
                 )
 
             assertTrue(responseStream.hasNext())
@@ -127,24 +173,26 @@ internal class ProgramServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
 
             grpcCleanupRule.register(app.server!!)
 
-            val stub = ProgramServiceGrpc.newBlockingStub(
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val cat = stub.runProgram("cat /dev/kafka/local/topics/users | grep \"Margaret\"")
+            val sessionId = stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
+            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/users | grep \"Margaret\"")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
             val responseStream =
                 stub.getProgramOutput(
-                    Program.GetProgramOutputRequest.newBuilder().setId(cat.id).build()
+                    GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(cat.id).build()
                 )
 
             assertTrue(responseStream.hasNext())
@@ -167,29 +215,30 @@ internal class ProgramServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
 
             grpcCleanupRule.register(app.server!!)
 
-            val stub = ProgramServiceGrpc.newBlockingStub(
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val cat = stub.runProgram("cat /dev/kafka/local/topics/books | cut title")
+            val sessionId = stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
+            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/books | cut title")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
-            val responseStream =
-                stub.getProgramOutput(
-                    Program.GetProgramOutputRequest.newBuilder().setId(cat.id).build()
-                )
+            val responseStream = stub.getProgramOutput(
+                GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(cat.id).build()
+            )
             val output = buildList {
-                assertTrue(responseStream.hasNext())
+                assertTrue(responseStream.hasNext(), "expected more output")
                 add(responseStream.next().stdOut)
-                assertTrue(responseStream.hasNext())
+                assertTrue(responseStream.hasNext(), "expected more output")
                 add(responseStream.next().stdOut)
             }
 
@@ -208,35 +257,37 @@ internal class ProgramServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
 
             grpcCleanupRule.register(app.server!!)
 
-            val stub = ProgramServiceGrpc.newBlockingStub(
+            val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
+            val sessionId = stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
+
             val cat = stub.runProgram(
+                sessionId,
                 "cat /dev/kafka/local/topics/users | grep 'Margaret' > /dev/kafka/local/topics/user_names"
             )
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", false)
 
-            until("file") { stub.runProgram("file /dev/kafka/local/topics/user_names") }
+            until("file") { stub.runProgram(sessionId, "file /dev/kafka/local/topics/user_names") }
 
-            val catNames = stub.runProgram("cat /dev/kafka/local/topics/user_names")
+            val catNames = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/user_names")
 
-            until("ps") { assertThat(stub.runProgram("ps").stdOut).contains(catNames.id) }
+            until("ps") { assertThat(stub.runProgram(sessionId, "ps").stdOut).contains(catNames.id) }
 
             assertThat(catNames).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
-            val responseStream =
-                stub.getProgramOutput(
-                    Program.GetProgramOutputRequest.newBuilder().setId(catNames.id).build()
-                )
+            val responseStream = stub.getProgramOutput(
+                GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(catNames.id).build()
+            )
 
             assertTrue(responseStream.hasNext())
             val line = responseStream.next()
@@ -251,5 +302,5 @@ internal class ProgramServiceTest {
 
 }
 
-fun ProgramServiceBlockingStub.runProgram(source: String): Program.RunProgramResponse =
-    runProgram(Program.RunProgramRequest.newBuilder().setSource(source).build())
+fun InteractiveSessionServiceBlockingStub.runProgram(sessionId: String, source: String): RunProgramResponse =
+    runProgram(RunProgramRequest.newBuilder().setSessionId(sessionId).setSource(source).build())

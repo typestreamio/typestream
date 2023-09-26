@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package io.typestream.grpc;
+
+option java_package = "io.typestream.grpc.job_service";
+
+option go_package = "github.com/typestreamio/typestream/cli/pkg/job_service";
+
+service JobService {
+    rpc CreateJob(CreateJobRequest) returns (CreateJobResponse) {}
+}
+
+message CreateJobRequest {
+    string user_id = 1;
+    string source = 2;
+}
+
+message CreateJobResponse {
+    string job_id = 1;
+}
+

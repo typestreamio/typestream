@@ -1,26 +1,8 @@
 package io.typestream.compiler.vm
 
-import java.util.UUID
+import io.typestream.filesystem.FileSystem
+import io.typestream.scheduler.Scheduler
 
-class Session {
-    private val store = mutableMapOf<String, String>()
-    var pwd: String
-        get() = store["PWD"] ?: "/"
-        set(value) {
-            store["PWD"] = value
-        }
-    var id: String
-        get() = store["SESSION_ID"] ?: error("session id not set")
-        set(value) {
-            store["SESSION_ID"] = value
-        }
-
-    init {
-        id = UUID.randomUUID().toString()
-        pwd = "/"
-    }
-
-    override fun toString() = store.toString()
-
-    fun toList() = store.toList()
+data class Session(val fileSystem: FileSystem, val scheduler: Scheduler, val env: Env) : Cloneable {
+    public override fun clone() = Session(fileSystem, scheduler, env.clone())
 }

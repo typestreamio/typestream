@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/typestreamio/typestream/cli/cmd/k8s"
 	"github.com/typestreamio/typestream/cli/cmd/local"
 	"github.com/typestreamio/typestream/cli/pkg/shell"
 	"github.com/typestreamio/typestream/cli/pkg/version"
@@ -26,6 +27,7 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddCommand(k8s.NewCommand())
 	rootCmd.AddCommand(local.NewCommand())
 	rootCmd.Version = version.BuildVersion()
 }

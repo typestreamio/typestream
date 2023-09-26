@@ -1,7 +1,7 @@
 package io.typestream.compiler
 
 import io.typestream.compiler.lexer.CursorPosition
-import io.typestream.compiler.vm.Environment
+import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.config.SourcesConfig
 import io.typestream.filesystem.FileSystem
@@ -27,7 +27,7 @@ internal class CompilerTest {
 
     private lateinit var fileSystem: FileSystem
 
-    private lateinit var environment: Environment
+    private lateinit var session: Session
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -35,7 +35,7 @@ internal class CompilerTest {
     fun beforeEach() {
         val sourcesConfig = SourcesConfig(testKonfig(testKafka))
         fileSystem = FileSystem(sourcesConfig, testDispatcher)
-        environment = Environment(fileSystem, Scheduler(sourcesConfig, dispatcher = testDispatcher), Session())
+        session = Session(fileSystem, Scheduler(false, testDispatcher), Env())
     }
 
     @Nested
@@ -44,7 +44,7 @@ internal class CompilerTest {
         fun `completes simple program`() {
             val source = "c"
 
-            val compiler = Compiler(environment)
+            val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 1))
 
             assertThat(suggestions).containsExactly("cat", "cd", "cut")
@@ -54,7 +54,7 @@ internal class CompilerTest {
         fun `completes simple data program with path`() {
             val source = "cat /de"
 
-            val compiler = Compiler(environment)
+            val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 7))
 
             assertThat(suggestions).containsExactly("/dev/")
@@ -64,7 +64,7 @@ internal class CompilerTest {
         fun `completes empty expressions with paths`() {
             val source = "cd "
 
-            val compiler = Compiler(environment)
+            val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 3))
 
             assertThat(suggestions).containsExactly("/dev")
@@ -74,7 +74,7 @@ internal class CompilerTest {
         fun `completes simple shell program with path`() {
             val source = "cd /de"
 
-            val compiler = Compiler(environment)
+            val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 6))
 
             assertThat(suggestions).containsExactly("/dev/")
@@ -84,7 +84,7 @@ internal class CompilerTest {
         fun `completes simple program with pipe`() {
             val source = "cat /dev/kafka/local/topics/books | "
 
-            val compiler = Compiler(environment)
+            val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 31))
 
             assertThat(suggestions).containsExactly("cat", "cut", "echo", "enrich", "grep", "join", "let", "wc")

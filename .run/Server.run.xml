@@ -2,7 +2,7 @@
   <configuration default="false" name="Server" type="JetRunConfigurationType" singleton="true">
     <option name="ALTERNATIVE_JRE_PATH" value="azul-19" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="MAIN_CLASS_NAME" value="io.typestream.App" />
+    <option name="MAIN_CLASS_NAME" value="io.typestream.MainKt" />
     <module name="typestream.server.main" />
     <option name="PROGRAM_PARAMETERS" value="$ProjectFileDir$/scripts/dev/server.properties" />
     <shortenClasspath name="NONE" />

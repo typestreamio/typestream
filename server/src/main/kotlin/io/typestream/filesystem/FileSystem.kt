@@ -20,10 +20,11 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import java.io.Closeable
 
 
-class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: CoroutineDispatcher) : Closeable {
+class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: CoroutineDispatcher) : Closeable {
     private val logger = KotlinLogging.logger {}
 
     private val kafkaDir = Directory("kafka")
@@ -46,12 +47,20 @@ class FileSystem(sourcesConfig: SourcesConfig, private val dispatcher: Coroutine
         root.add(devDir)
     }
 
+    fun isReady(): Boolean {
+        val kafkaClustersReady = sourcesConfig.kafkaClustersConfig.clusters.keys.all {
+            root.findInode("$KAFKA_CLUSTERS_PREFIX/$it/topics/_schemas") !== null
+        }
+
+        return kafkaClustersReady && catalog.isReady()
+    }
+
     fun ls(path: String): List<String> {
         val children = if (path == "/") root.children() else (root.findInode(path)?.children() ?: setOf())
         return children.map { it.name }
     }
 
-    suspend fun watch() = coroutineScope {
+    suspend fun watch() = supervisorScope {
         jobs.add(launch(dispatcher) { root.watch() })
         jobs.add(launch(dispatcher) { catalog.watch() })
     }
