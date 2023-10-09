@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seeder
+  namespace: typestream
+spec:
+  template:
+    spec:
+      serviceAccountName: typestream-service-account
+      containers:
+        - image: {{.Image}}
+          imagePullPolicy: Always
+          name: seed
+          args: ["seed"]
+      restartPolicy: Never
+  backoffLimit: 4

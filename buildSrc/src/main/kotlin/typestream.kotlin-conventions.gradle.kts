@@ -12,13 +12,12 @@ group = "io.typestream"
 
 repositories {
     mavenCentral()
-    maven("https://packages.confluent.io/maven/")
+    maven("https://packages.confluent.io/maven/") //TODO this doesn't belong here
 }
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.10")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.10")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")

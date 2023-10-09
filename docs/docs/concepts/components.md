@@ -9,19 +9,18 @@ for you. In order to that, it needs a few components:
 
 - A [gRPC server](#grpc-server). It's how you compile and run programs with
   `TypeStream`.
-- A virtual filesystem. It's how `TypeStream` allows you to address data sources with
-  a familiar path-like syntax. The [FileSystem](filesystem.md) document explains
-  in more details how it works.
-- A data catalog that makes sense of the data schemas. It's how `TypeStream` type
-  checks your programs.
+- A `virtual filesystem`. It's how TypeStream allows you to address data sources
+  with a familiar path-like syntax. The [FileSystem](filesystem.md) document
+  explains in more details how it works.
+- A `data catalog` that makes sense of the data schemas. It's how `TypeStream`
+  type checks your programs.
 - A `compiler`. The server uses it to compile source code in a generic graph
   which is then resolved by the resolvers.
-- A `resolver` for each supported [source](/reference/glossary.md#source):
-  - A Kafka Streams application resolver which translates the generic graph into
-    a runnable kafka streams application.
-- A job scheduler.
+- A `scheduler`. Streaming data pipelines are mostly long running jobs so the
+  TypeStream scheduler makes sense of the data pipelines (via their assigned
+  runtime, e.g. kafka streams) and schedules them accordingly.
 - `shell` - The official shell like program. It's the only official gRPC client
-  at the moment. See the [getting started](/getting-started.md) guide for more
+  at the moment. See the [getting started](/getting-started.mdx) guide for more
   information.
 
 Since there's a lot of moving parts, it's useful to have a diagram that shows
@@ -29,16 +28,15 @@ they're connected:
 
 ```mermaid
 flowchart LR
-  subgraph resolvers
-    kafka
-  end
   subgraph Server
     direction LR
       grpc["gRPC server"] <--> Compiler
       grpc <--> Scheduler
       Compiler-->Scheduler
-      resolvers-->Scheduler
-      catalog["Data Catalog"] <--> Compiler
+      Compiler<-->catalog
+      subgraph FileSystem
+        catalog
+      end
   end
   Clients <--> grpc
   subgraph Clients
@@ -49,19 +47,20 @@ flowchart LR
 
 ## gRPC Server
 
-At its core, `TypeStream` is a remote compiler. Clients send code to a server which
-the server turns into data pipelines. At a very high-level, the client/server
-interaction works this way:
+At its core, `TypeStream` is a remote compiler. Clients send code to a server,
+the server turns the code into data pipelines and runs them via a scheduler. At
+a very high-level, the client/server interaction works this way:
 
 - Clients sends source code via gRPC calls to the server.
 - The server compiles the source code into a program and returns structured
-  information about the program back to the client.
+  information about the program back to the client. (e.g. the program id,
+  information about the output data streams, etc.)
 - The client reacts accordingly.
 
-A core principle behind the design of `TypeStream` is the idea clients should
-maintain minimal state. The process of compiling source code into runnable data
-pipelines has many moving parts so the clients are simple enough they're almost
-only "rendering" results.
+A core principle behind the design of `TypeStream` is the idea clients maintain
+minimal state. The process of compiling source code into runnable data pipelines
+has many moving parts so the clients are simple enough they're almost only
+"rendering" results and informing their users.
 
 Before we dive deeper into the details of how the compilation process works,
 it's useful to look at some examples of the various requests clients can issue
@@ -113,8 +112,8 @@ step-by-step overview of the compilation process:
 
 1. The scanner converts the source code into tokens.
 2. The parsers converts tokens into AST (abstract syntax tree).
-3. The semantic analyser type checks the data pipeline and in the process.
-   enriches the AST and with type information, producing an "enhanced AST".
+3. The semantic analyzer type checks the data pipeline and enriches the AST and
+   with type information, producing an "enhanced AST".
 4. The compiler packages the "enhanced AST" into a program (list of statements +
    graph data pipeline).
 
@@ -144,7 +143,7 @@ The semantic analyser primary job is to make sense of the data streams types
 involved in the data pipeline. There are two reasons why this is important:
 
 - To correctly infer the sink nodes types (the redirections).
-- To apply [encoding rules](#encoding-rules) for each sink node.
+- To apply [encoding rules](catalog.md#encoding-rules) for each sink node.
 
 Take the following statement from the previous example:
 
@@ -164,7 +163,7 @@ cat $books | cut $title > book_titles
 
 In this case, the semantic analyser assigns the type Struct[title: String] to
 the output topic with a JSON encoding (following the [encoding
-rules](#encoding-rules)).
+rules](catalog.md#encoding-rules)).
 
 There is one more detail to consider which concerns variables. Consider this
 statement one more time:
@@ -181,95 +180,35 @@ pipelines.
 With these details in mind, let's recap what the semantic analyser does:
 
 - It binds variables.
-- It infers the resulting type of the sink nodes (the redirections) from the pipeline.
-- It applies [encoding rules](#encoding-rules) to the sink nodes.
+- It infers the resulting type of the sink nodes (the redirections) from the
+  pipeline.
+- It applies [encoding rules](catalog.md#encoding-rules) to the sink nodes.
 
 ## Scheduler
 
-TODO: fix this is not accurately described.
-
-The job scheduler schedules the job and sends it to the kafka streams
-application resolver that creates and runs a Kafka streams application.
+The scheduler is responsible for running data pipelines. It decides how to run
+the pipelines based on the runtime assigned to the program and the "mode" the
+server is running in.
 
 ## Data Catalog
 
-The `TypeStream` data catalog is a key-value store where:
+The data catalog is strongly related to the FileSystem. Since in TypeStream we
+address data sources filesystem's like paths, it's only natural that the data
+catalog uses the same approach to storing metadata information about the data
+sources.
 
-- The key is a path to a data stream. Examples: `/dev/kafka/local/topics/users`,
-  `/dev/dataflow/cluster1/topics/clicks`.
-- The value is a [DataStream](reference/language/specs.md#data-stream).
-
-A DataStream holds:
-
-- Its reference path (which is used to derive identifiers)
-- Schema information. For example, `/dev/kafka/local/topics/users` may be a
-  `Struct[id: String, name: String, createdAt: Date]`
-
-The compiler uses the data catalog to "type check" source code.
-
-The data catalog is also used to determine the output type of streaming
-operations that involve more than one DataStream. See the [DataStream
-type](reference/language/specs.md#data-stream) documentation for more
-information.
-
-## Encoding rules
-
-`TypeStream` needs to distinguish between different data stream types and their
-encodings. The former is part of the typing system of the language, while the
-latter is relevant when reading data from sources and writing data back.
-
-Here are the rules that determine the output data stream encoding:
-
-- If the output data stream type is the same as the input data stream type, the
-  output data stream encoding is the same as the input data stream encoding.
-- If the output data stream type is different from the input data stream type,
-  then we default to JSON encoding.
-
-Consider the following data streams:
-
-```sh
-let authors = "/dev/kafka/local/topics/authors" # Struct[id: String, name: String] encoded as Avro
-let books = "/dev/kafka/local/topics/books" # Struct[id: String, title: String] encoded as Avro
-let ratings = "/dev/kafka/local/topics/ratings" # Struct[bookId: String, userId: String, rating: Int] encoded as JSON
-```
-
-The following pipeline:
-
-```sh
-cat books | grep "Station eleven" > station_books
-```
-
-will be encoded as Avro since:
-
-- The input data stream type is Avro encoded.
-- The output data stream type is the same as the input one.
-
-While the following pipeline:
-
-```sh
-cat books | cut title > book_titles
-```
-
-will be encoded as JSON since:
-
-- The input data stream type is Avro encoded.
-- The output data stream type is different from the input one.
-
-Also the following pipeline:
-
-```sh
-join books ratings > book_ratings
-```
-
-will be encoded as JSON since:
-
-- One input data stream type is Avro encoded.
-- One input data stream type is JSON encoded.
-- The output data stream type is different from the input one.
+For more information about the data catalog, see the [catalog](catalog.md)
 
 ## Filesystem
 
+The Filesystem component is responsible for managing the data catalog and for
+maintaining a structured view of the data sources where each data source is
+addressed with a filesystem like path. For more information about the
+filesystem, see the [filesystem](filesystem.md) document.
+
 ### Watchers
 
-Each top level directory has its own coroutine "watcher" that polls for updates
-and keeps the info fresh for the FileSystemService.
+In order to maintain a fresh view of the data sources, the Filesystem component
+starts a "watcher" coroutine for each source. Each top level directory has its
+own coroutine "watcher" that polls for updates and keeps the info fresh for the
+FileSystemService.

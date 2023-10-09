@@ -2,18 +2,33 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 	"github.com/typestreamio/typestream/cli/pkg/grpc"
-	"github.com/typestreamio/typestream/cli/pkg/program_service"
+	"github.com/typestreamio/typestream/cli/pkg/job_service"
 )
+
+func extractSource(arg string) string {
+	stat, err := os.Stat(arg)
+	if err == nil && !stat.IsDir() {
+		content, err := os.ReadFile(arg)
+		if err != nil {
+			fmt.Println("error reading file:", err)
+			os.Exit(1)
+		}
+		return string(content)
+	}
+
+	return arg
+}
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Runs a command on a TypeStream server and displays the output",
+	Short: "Runs a pipeline on a TypeStream server",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client := grpc.NewClient()
@@ -23,16 +38,15 @@ var runCmd = &cobra.Command{
 
 		defer client.Close()
 
-		if err := client.CheckConn(ctx); err != nil {
-			log.Fatalf("💥 cannot connect to TypeStream server %v", err)
-		}
+		source := extractSource(args[0])
 
-		runProgramResponse, err := client.RunProgram(ctx, &program_service.RunProgramRequest{Source: args[0]})
+		_, err := client.CreateJob(ctx, &job_service.CreateJobRequest{
+			UserId: "42", // TODO get from config
+			Source: source,
+		})
 		if err != nil {
-			log.Fatalf("💥 failed to run program: %v", err)
-		}
-		if runProgramResponse.StdOut != "" {
-			println(runProgramResponse.StdOut)
+			fmt.Printf("💥 failed to create job: %v\n", err)
+			os.Exit(1)
 		}
 	},
 }

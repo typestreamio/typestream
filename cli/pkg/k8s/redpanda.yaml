@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.typestream.k8s: redpanda
+  name: redpanda
+  namespace: typestream
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redpanda
+  namespace: typestream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.typestream.k8s: redpanda
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.typestream.k8s: redpanda
+    spec:
+      containers:
+        - args:
+            - redpanda start
+            - --smp 1
+            - --overprovisioned
+            - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+            - --advertise-kafka-addr internal://0.0.0.0:9092,external://redpanda.typestream:19092
+            - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+            - --advertise-pandaproxy-addr internal://0.0.0.0:8082,external://redpanda.typestream:18082
+            - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+          image: docker.redpanda.com/redpandadata/redpanda:v23.2.9
+          name: redpanda
+          ports:
+            - containerPort: 18081
+              hostPort: 18081
+              protocol: TCP
+            - containerPort: 18082
+              hostPort: 18082
+              protocol: TCP
+            - containerPort: 19092
+              hostPort: 19092
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/lib/redpanda/data
+              name: redpanda
+      restartPolicy: Always
+      volumes:
+        - name: redpanda
+          persistentVolumeClaim:
+            claimName: redpanda
+status: {}
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.typestream.k8s: redpanda
+  name: redpanda
+  namespace: typestream
+spec:
+  ports:
+    - name: "18081"
+      port: 18081
+      targetPort: 18081
+    - name: "18082"
+      port: 18082
+      targetPort: 18082
+    - name: "19092"
+      port: 19092
+      targetPort: 19092
+    - name: "19644"
+      port: 19644
+      targetPort: 9644
+  selector:
+    io.typestream.k8s: redpanda
+status:
+  loadBalancer: {}

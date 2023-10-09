@@ -10,25 +10,62 @@ import (
 	"os/signal"
 
 	"github.com/alecthomas/chroma/quick"
-	"github.com/charmbracelet/log"
 	"github.com/reeflective/readline"
 	"github.com/typestreamio/typestream/cli/pkg/grpc"
-	"github.com/typestreamio/typestream/cli/pkg/program_service"
+	"github.com/typestreamio/typestream/cli/pkg/interactive_session_service"
 	"google.golang.org/grpc/status"
 )
 
 type shell struct {
-	client *grpc.Client
+	client    *grpc.Client
+	sessionId string
 }
 
-func newShell() *shell {
+// TODO: get user id from config
+func newShell(ctx context.Context, userId string) (*shell, error) {
+	client := grpc.NewClient()
+	startSessionResponse, err := client.StartSession(ctx, &interactive_session_service.StartSessionRequest{UserId: userId})
+	if err != nil {
+		fmt.Printf("💥 failed to start session: %v\n", err)
+		return nil, err
+	}
+
 	return &shell{
-		client: grpc.NewClient(),
+		client:    client,
+		sessionId: startSessionResponse.SessionId,
+	}, nil
+}
+
+func (s *shell) runProgram(ctx context.Context, source string) (*interactive_session_service.RunProgramResponse, error) {
+	return s.client.RunProgram(ctx,
+		&interactive_session_service.RunProgramRequest{SessionId: s.sessionId, Source: source})
+}
+
+func (s *shell) completeProgram(ctx context.Context, source string) (*interactive_session_service.CompleteProgramResponse, error) {
+	return s.client.CompleteProgram(ctx, &interactive_session_service.CompleteProgramRequest{SessionId: s.sessionId, Source: source})
+}
+
+func (s *shell) getProgramOutput(ctx context.Context, id string) (interactive_session_service.InteractiveSessionService_GetProgramOutputClient, error) {
+	return s.client.GetProgramOutput(ctx, &interactive_session_service.GetProgramOutputRequest{Id: id, SessionId: s.sessionId})
+}
+
+func (s *shell) waitToKillProgram(c chan os.Signal, cancel context.CancelFunc, id string) {
+	<-c
+
+	cancel()
+
+	ctx, canc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer canc()
+
+	source := fmt.Sprintf("kill %s", id)
+	_, err := s.runProgram(ctx, source)
+	if err != nil {
+		fmt.Printf("💥 failed to kill program: %v\n", err)
 	}
 }
 
-func (s *shell) close() {
-	s.client.Close()
+func (s *shell) close() error {
+	return s.client.Close()
 }
 
 func (s *shell) highlighter(line []rune) string {
@@ -46,7 +83,7 @@ func (s *shell) completer(line []rune, cursor int) readline.Completions {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	completeProgramResponse, err := s.client.CompleteProgram(ctx, &program_service.CompleteProgramRequest{Source: string(line)})
+	completeProgramResponse, err := s.completeProgram(ctx, string(line))
 	if err != nil {
 		return readline.CompleteValues()
 	}
@@ -57,16 +94,15 @@ func Run() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	s := newShell()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	defer s.close()
-
-	if err := s.client.CheckConn(ctx); err != nil {
-		log.Fatalf("💥 cannot connect to TypeStream server %v", err)
+	s, err := newShell(ctx, "42")
+	if err != nil {
+		return
 	}
+
+	defer s.close()
 
 	p := NewPrompt()
 
@@ -87,7 +123,7 @@ func Run() {
 			continue
 		}
 
-		runProgramResponse, err := s.client.RunProgram(ctx, &program_service.RunProgramRequest{Source: input})
+		runProgramResponse, err := s.runProgram(ctx, input)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				fmt.Println(s.Message())
@@ -108,21 +144,9 @@ func Run() {
 
 		if runProgramResponse.HasMoreOutput {
 			ctx, cancel := context.WithCancel(ctx)
-			go func() {
-				<-c
-				cancel()
+			go s.waitToKillProgram(c, cancel, runProgramResponse.Id)
 
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancel()
-
-				source := fmt.Sprintf("kill %s", runProgramResponse.Id)
-				_, err := s.client.RunProgram(ctx, &program_service.RunProgramRequest{Source: source})
-				if err != nil {
-					fmt.Printf("💥 failed to kill program: %v\n", err)
-				}
-			}()
-
-			runProgramResponse, err := s.client.GetProgramOutput(ctx, &program_service.GetProgramOutputRequest{Id: runProgramResponse.Id})
+			runProgramResponse, err := s.getProgramOutput(ctx, runProgramResponse.Id)
 			if err != nil {
 				fmt.Printf("💥 failed to get program output: %v\n", err)
 				break
@@ -141,4 +165,59 @@ func Run() {
 		}
 	}
 	fmt.Println("👋 Bye!")
+}
+
+func Exec(source string) error {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	s, err := newShell(ctx, "42")
+	if err != nil {
+		return err
+	}
+
+	defer s.close()
+
+	runProgramResponse, err := s.runProgram(ctx, source)
+	if err != nil {
+		if s, ok := status.FromError(err); ok {
+			fmt.Println(s.Message())
+		} else {
+			fmt.Printf("💥 failed to run program: %v\n", err)
+		}
+		return err
+	}
+
+	if runProgramResponse.StdOut != "" {
+		println(runProgramResponse.StdOut)
+	}
+	if runProgramResponse.StdErr != "" {
+		println(runProgramResponse.StdErr)
+	}
+
+	if runProgramResponse.HasMoreOutput {
+		ctx, cancel := context.WithCancel(ctx)
+		go s.waitToKillProgram(c, cancel, runProgramResponse.Id)
+
+		runProgramResponse, err := s.getProgramOutput(ctx, runProgramResponse.Id)
+		if err != nil {
+			fmt.Printf("💥 failed to get program output: %v\n", err)
+			return err
+		}
+
+		for {
+			line, err := runProgramResponse.Recv()
+			if err != nil {
+				if ctx.Err() != context.Canceled {
+					fmt.Println("Error: ", err)
+				}
+				break
+			}
+			fmt.Println(line.StdOut)
+		}
+	}
+	return nil
 }

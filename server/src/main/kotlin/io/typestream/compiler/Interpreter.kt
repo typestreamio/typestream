@@ -18,10 +18,10 @@ import io.typestream.compiler.types.inferType
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.types.schema.empty
 import io.typestream.compiler.types.value.fromBinary
-import io.typestream.compiler.vm.Environment
+import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
 
-class Interpreter(private val environment: Environment) : Statement.Visitor<Unit>, Expr.Visitor<Value> {
+class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.Visitor<Value> {
     val errors = mutableListOf<String>()
 
     override fun visitShellCommand(shellCommand: ShellCommand) {
@@ -40,7 +40,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
             }
         }
 
-        val programResult = command(environment, shellCommand.boundArgs)
+        val programResult = command(session, shellCommand.boundArgs)
         shellCommand.dataStreams.addAll(programResult.output)
         errors.addAll(programResult.errors)
     }
@@ -50,7 +50,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
             when (val arg = evaluate(expr)) {
                 is DataStream -> {
                     dataCommand.dataStreams.add(arg)
-                    dataCommand.encoding = environment.fileSystem.inferEncoding(dataCommand)
+                    dataCommand.encoding = session.fileSystem.inferEncoding(dataCommand)
                 }
 
                 is Value.List -> TODO("cannot evaluate lists yet")
@@ -64,7 +64,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
                     when (val expandedValue = expandString(arg.value)) {
                         is DataStream -> {
                             dataCommand.dataStreams.add(expandedValue)
-                            dataCommand.encoding = environment.fileSystem.inferEncoding(dataCommand)
+                            dataCommand.encoding = session.fileSystem.inferEncoding(dataCommand)
                         }
 
                         is Value.String -> dataCommand.boundArgs.add(expandedValue.value)
@@ -84,7 +84,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
     override fun visitPipeline(pipeline: Pipeline) {
         pipeline.commands.forEach { it.accept(this) }
 
-        pipeline.encoding = environment.fileSystem.inferEncoding(pipeline)
+        pipeline.encoding = session.fileSystem.inferEncoding(pipeline)
 
         adjustEncoding(pipeline)
 
@@ -117,7 +117,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
                 is Value.String -> {
                     val targetPath = getTargetPath(value.value)
 
-                    require(environment.fileSystem.findDataStream(targetPath) == null) {
+                    require(session.fileSystem.findDataStream(targetPath) == null) {
                         "cannot redirect to existing data stream"
                     }
 
@@ -175,13 +175,13 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
     }
 
     override fun visitVarDeclaration(varDeclaration: VarDeclaration) {
-        environment.defineVariable(varDeclaration.token.lexeme, evaluate(varDeclaration.expr))
+        session.env.defineVariable(varDeclaration.token.lexeme, evaluate(varDeclaration.expr))
     }
 
     override fun visitAssign(assign: Expr.Assign): Value {
         val value = evaluate(assign.value)
 
-        environment.defineVariable(assign.name.lexeme, value)
+        session.env.defineVariable(assign.name.lexeme, value)
 
         return value
     }
@@ -204,16 +204,16 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
         //TODO this is horrible. I don't want to compile the block at runtime but honestly
         //don't know how to produce a graph without compiling it.
         return Value.Block { dataStream ->
-            val localEnv = environment.clone()
-            localEnv.defineVariable(block.argument.lexeme, dataStream)
-            val compiler = Compiler(localEnv)
+            val localSession = session.clone()
+            localSession.env.defineVariable(block.argument.lexeme, dataStream)
+            val compiler = Compiler(localSession)
             val compilerResult = compiler.compile(listOf(block.pipeline.clone()))
 
             if (compilerResult.errors.isNotEmpty()) {
                 compilerResult.errors.forEach { errors.add(it) }
             }
 
-            val vm = Vm(localEnv.fileSystem, localEnv.scheduler)
+            val vm = Vm(localSession.fileSystem, localSession.scheduler)
             val result =
                 vm.eval(compilerResult.program.graph).firstOrNull() ?: DataStream("empty", Schema.Struct.empty())
 
@@ -229,13 +229,13 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
         val key = parts.first()
 
         if (parts.size > 1) {
-            val dataStream = environment.getVariable(key)
+            val dataStream = session.env.getVariable(key)
             require(dataStream is DataStream) { "cannot access field '$key' of non data stream" }
 
             return Value.String(dataStream.schema.selectOne(parts.drop(1).joinToString(".")).toString())
         }
 
-        return environment.getVariable(key)
+        return session.env.getVariable(key)
     }
 
     private fun evaluate(expr: Expr) = expr.accept(this)
@@ -243,7 +243,7 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
     private fun getTargetPath(value: String) = if (value.startsWith("/")) {
         value
     } else {
-        environment.fileSystem.expandPath(value, environment.session.pwd) ?: value
+        session.fileSystem.expandPath(value, session.env.pwd) ?: value
     }
 
     //TODO the message has the incorrect path (as it's the resulting type)
@@ -260,6 +260,6 @@ class Interpreter(private val environment: Environment) : Statement.Visitor<Unit
     private fun expandString(value: String): Value {
         val targetPath = getTargetPath(value)
 
-        return environment.fileSystem.findDataStream(targetPath) ?: Value.String(value)
+        return session.fileSystem.findDataStream(targetPath) ?: Value.String(value)
     }
 }

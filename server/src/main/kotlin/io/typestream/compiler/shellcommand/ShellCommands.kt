@@ -4,13 +4,13 @@ import io.typestream.compiler.ast.ShellCommand
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.types.schema.fromJSON
-import io.typestream.compiler.vm.Environment
+import io.typestream.compiler.vm.Session
 import io.typestream.http.HttpClient
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 
-private val commands: Map<String, (environment: Environment, args: List<String>) -> ShellCommandOutput> = mapOf(
+private val commands: Map<String, (session: Session, args: List<String>) -> ShellCommandOutput> = mapOf(
     "cd" to ::cd,
     "env" to ::env,
     "file" to ::file,
@@ -26,52 +26,52 @@ fun ShellCommand.Companion.find(command: String) = commands[command]
 
 fun ShellCommand.Companion.names() = commands.keys
 
-private fun cd(environment: Environment, args: List<String>): ShellCommandOutput {
+private fun cd(session: Session, args: List<String>): ShellCommandOutput {
     val dir = args.firstOrNull()
     if (dir == null) {
-        environment.session.pwd = "/"
+        session.env.pwd = "/"
         return ShellCommandOutput.empty
     }
 
-    val newPath = environment.fileSystem.expandPath(dir, environment.session.pwd)
+    val newPath = session.fileSystem.expandPath(dir, session.env.pwd)
         ?: return ShellCommandOutput.withError("cd: cannot cd into $dir: no such file or directory")
 
-    return if (environment.fileSystem.isDirectory(newPath)) {
-        environment.session.pwd = newPath
+    return if (session.fileSystem.isDirectory(newPath)) {
+        session.env.pwd = newPath
         ShellCommandOutput.withOutput(DataStream("/bin/cd", Schema.String(newPath)))
     } else {
         ShellCommandOutput.withError("cd: cannot cd into $dir: not a directory")
     }
 }
 
-private fun env(environment: Environment, args: List<String>) = if (args.isNotEmpty()) {
+private fun env(session: Session, args: List<String>) = if (args.isNotEmpty()) {
     ShellCommandOutput.withError("Usage: env")
 } else {
-    ShellCommandOutput.withOutput((environment.session.toList() + environment.toList()).sortedBy { it.first }.map {
+    ShellCommandOutput.withOutput((session.env.toList() + session.env.toList()).sortedBy { it.first }.map {
         DataStream("/bin/env", Schema.String("${it.first}=${it.second}"))
     })
 }
 
-private fun file(environment: Environment, args: List<String>) = if (args.size != 1) {
+private fun file(session: Session, args: List<String>) = if (args.size != 1) {
     ShellCommandOutput.withError("Usage: file <path>")
 } else {
     ShellCommandOutput.withOutput(
-        DataStream("/bin/file", Schema.String(environment.fileSystem.file(args[0], environment.session.pwd)))
+        DataStream("/bin/file", Schema.String(session.fileSystem.file(args[0], session.env.pwd)))
     )
 }
 
-private fun kill(environment: Environment, args: List<String>): ShellCommandOutput {
+private fun kill(session: Session, args: List<String>): ShellCommandOutput {
     if (args.size != 1) {
         return ShellCommandOutput.withError("Usage: kill <program id>")
     }
 
-    environment.scheduler.kill(args.first())
+    session.scheduler.kill(args.first())
 
     return ShellCommandOutput.withError("kill: ${args.joinToString(" ")}")
 }
 
 private fun http(
-    @Suppress("UNUSED_PARAMETER") environment: Environment,
+    @Suppress("UNUSED_PARAMETER") session: Session,
     args: List<String>,
 ): ShellCommandOutput {
     if (args.isEmpty()) {
@@ -85,7 +85,7 @@ private fun http(
 }
 
 private fun openaiComplete(
-    @Suppress("UNUSED_PARAMETER") environment: Environment,
+    @Suppress("UNUSED_PARAMETER") session: Session,
     args: List<String>,
 ): ShellCommandOutput {
     if (args.isEmpty()) {
@@ -112,31 +112,31 @@ private fun openaiComplete(
     return ShellCommandOutput.withOutput(DataStream("/bin/openai-complete", Schema.Struct.fromJSON(json)))
 }
 
-private fun ls(environment: Environment, args: List<String>): ShellCommandOutput {
+private fun ls(session: Session, args: List<String>): ShellCommandOutput {
     val files = if (args.size < 2) {
-        fileNames(environment, args.getOrNull(0))
+        fileNames(session, args.getOrNull(0))
     } else {
-        args.flatMap { fileNames(environment, it) }
+        args.flatMap { fileNames(session, it) }
     }
 
     return ShellCommandOutput.withOutput(files.map { DataStream("/bin/ls", Schema.String(it)) })
 }
 
-private fun fileNames(environment: Environment, path: String?) =
-    environment.fileSystem.ls("${environment.session.pwd}${if (path == null) "" else "/$path"}").sorted()
+private fun fileNames(session: Session, path: String?) =
+    session.fileSystem.ls("${session.env.pwd}${if (path == null) "" else "/$path"}").sorted()
 
-private fun stat(environment: Environment, args: List<String>) = if (args.size != 1) {
+private fun stat(session: Session, args: List<String>) = if (args.size != 1) {
     ShellCommandOutput.withError("Usage: stat <path>")
 } else {
     ShellCommandOutput.withOutput(
         DataStream(
-            "/bin/stat", Schema.String(environment.fileSystem.stat(args[0], environment.session.pwd))
+            "/bin/stat", Schema.String(session.fileSystem.stat(args[0], session.env.pwd))
         )
     )
 }
 
-private fun ps(environment: Environment, args: List<String>) = if (args.isNotEmpty()) {
+private fun ps(session: Session, args: List<String>) = if (args.isNotEmpty()) {
     ShellCommandOutput.withError("Usage: ps")
 } else {
-    ShellCommandOutput.withOutput(environment.scheduler.ps().map { DataStream("/bin/ps", Schema.String(it)) })
+    ShellCommandOutput.withOutput(session.scheduler.ps().map { DataStream("/bin/ps", Schema.String(it)) })
 }

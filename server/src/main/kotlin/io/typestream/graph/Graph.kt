@@ -1,14 +1,14 @@
 package io.typestream.graph
 
+import kotlinx.serialization.Serializable
 import java.util.function.Predicate
 
-class Graph<K>(val ref: K) {
+@Serializable
+data class Graph<K>(val ref: K) {
     val children = mutableSetOf<Graph<K>>()
-    private val parents = mutableSetOf<Graph<K>>()
 
     fun addChild(child: Graph<K>) {
         children.add(child)
-        child.parents.add(this)
     }
 
     private fun print(node: Graph<K> = this, indent: Int = 1): String = buildString {
@@ -36,8 +36,6 @@ class Graph<K>(val ref: K) {
     }
 
     fun findLeaves() = findChildren { it.children.isEmpty() }
-
-    override fun toString(): String = ref.toString()
 
     internal class DepthFirstVisitor<K>(private val root: Graph<K>) {
         private val stack = ArrayDeque(listOf(root))

@@ -6,7 +6,8 @@ to abide to the `TypeStream` [code of conduct](/CODE_OF_CONDUCT.md).
 ## Prerequisites
 
 - [Gradle](https://gradle.org/)
-- [Docker](https://www.docker.com/)
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
 - [Go](https://go.dev)
 - [Protobuf](https://protobuf.dev/)
 - [Make](https://www.gnu.org/software/make/)
@@ -51,7 +52,7 @@ into any problem.
 
 ## Building and running TypeStream
 
-You can build the `TypeStream` by running :
+You can build the `TypeStream` by running:
 
 ```sh
 ./gradlew build
@@ -71,6 +72,41 @@ and then, from another window terminal, the CLI with:
 
 ```sh
 ./scripts/dev/shell.sh
+```
+
+While this is sufficient to run the server and play around with the CLI
+features, it doesn't allow you to work with `TypeStream` "cloud native" features
+(such as the long running jobs scheduler).
+
+To do so, you need to run `TypeStream` in "k8s mode". The first thing to do is
+to push the beta images to a local docker registry. In one terminal, run:
+
+```sh
+docker run --rm -it --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube -p typestream ip):5000"
+```
+
+so that the docker registry is available at `localhost:5000`. Then, in another terminal, run:
+
+```sh
+./scripts/dev/push-images.sh
+```
+
+to push the beta images to the local registry. Finally, run:
+
+```sh
+cd cli
+make
+./typestream k8s create
+```
+
+to create a local k8s cluster with
+[Minikube](https://minikube.sigs.k8s.io/docs/start/) using the `beta` images.
+
+Once you have an healthy minikube cluster, you can connect to the `TypeStream`
+server with the CLI as long as you're running this command in the background:
+
+```sh
+kubectl port-forward -n typestream svc/server 4242:4242
 ```
 
 ## Testing

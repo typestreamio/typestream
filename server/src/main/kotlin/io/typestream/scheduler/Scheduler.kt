@@ -1,31 +1,33 @@
 package io.typestream.scheduler
 
-import io.typestream.config.SourcesConfig
+import io.typestream.k8s.K8sClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.Closeable
+import java.util.Collections
 
-class Scheduler(
-    val sourcesConfig: SourcesConfig,
-    private val jobs: Channel<Job> = Channel(),
-    private val dispatcher: CoroutineDispatcher,
-) : Closeable {
-    private val runningJobs = mutableSetOf<Job>()
-    private val jobsStdout = mutableMapOf<Job, Flow<String>>()
+class Scheduler(private val k8sMode: Boolean, private val dispatcher: CoroutineDispatcher) : Closeable {
+    private val jobs: Channel<Job> = Channel()
+    private val runningJobs = Collections.synchronizedCollection(mutableSetOf<Job>())
 
     suspend fun start() = coroutineScope {
+        if (k8sMode) {
+            launch {
+                K8sClient().use {
+                    it.getJobs().forEach { job ->
+                        runningJobs.add(K8sJob(job.id))
+                    }
+                }
+            }
+            //TODO launch coroutine to watch for new jobs
+        }
         for (job in jobs) {
             runningJobs.add(job)
 
-            if (job.program.hasMoreOutput()) {
-                jobsStdout[job] = job.startForeground()
-            } else {
-                launch(dispatcher) {
-                    job.startBackground()
-                }
+            launch(dispatcher) {
+                job.start()
             }
         }
     }
@@ -34,23 +36,25 @@ class Scheduler(
         jobs.send(job)
     }
 
-    fun jobOutput(id: String) = jobsStdout[findJob(id)] ?: error("job $id does not have output")
+    fun jobOutput(id: String) = findJob(id).output()
 
-    private fun findJob(id: String) = runningJobs.find { it.program.id == id } ?: error("job $id is not running")
+    private fun findJob(id: String) = runningJobs.find { it.id == id } ?: error("job $id is not running")
 
     fun kill(id: String) {
         val job = findJob(id)
         job.stop()
         job.remove()
-        jobsStdout.remove(job)
         runningJobs.remove(job)
     }
 
     fun ps() = runningJobs.map(Job::displayName).toList()
 
     override fun close() {
-        runningJobs.forEach(Job::stop)
-        runningJobs.forEach(Job::remove)
+        runningJobs.filterNot { it is K8sJob }.forEach { job ->
+            job.stop()
+            job.remove()
+        }
+
         jobs.close()
     }
 }

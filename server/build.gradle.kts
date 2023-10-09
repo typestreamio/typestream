@@ -1,15 +1,16 @@
 plugins {
     id("typestream.kotlin-conventions")
     id("typestream.version-info")
-    id("com.google.cloud.tools.jib") version "3.3.2"
+    id("com.google.cloud.tools.jib") version "3.4.0"
     application
 }
 
 application {
-    mainClass.set("io.typestream.App")
+    mainClass.set("io.typestream.Main")
 }
 
 dependencies {
+    implementation(project(":libs:k8s-client"))
     implementation(project(":libs:konfig"))
     implementation(project(":libs:option"))
     implementation(project(":libs:version-info"))

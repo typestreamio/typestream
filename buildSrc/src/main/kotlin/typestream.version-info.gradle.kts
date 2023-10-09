@@ -1,6 +1,7 @@
 import java.io.ByteArrayOutputStream
 import java.util.Properties
 
+//TODO It would be nice to package the task and the code it depends on in the same place. (e.g. the libs/version-info project)
 tasks.register("createProperties") {
     dependsOn("processResources")
 

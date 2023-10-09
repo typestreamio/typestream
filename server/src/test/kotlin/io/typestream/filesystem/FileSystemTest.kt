@@ -58,11 +58,11 @@ internal class FileSystemTest {
     @Nested
     inner class EncodingRules {
         @Test
-        fun `infers simple encoding`() = runTest(testDispatcher) {
+        fun `infers simple encoding`() = runTest {
             fileSystem.use {
                 testKafka.produceRecords("authors", buildAuthor("Octavia E. Butler"))
 
-                launch {
+                launch(testDispatcher) {
                     fileSystem.watch()
                 }
 
@@ -75,11 +75,11 @@ internal class FileSystemTest {
         }
 
         @Test
-        fun `infers pipeline encoding`() = runTest(testDispatcher) {
+        fun `infers pipeline encoding`() = runTest {
             fileSystem.use {
                 testKafka.produceRecords("authors", buildAuthor("Emily St. John Mandel"))
 
-                launch {
+                launch(testDispatcher) {
                     fileSystem.watch()
                 }
 
@@ -118,18 +118,18 @@ internal class FileSystemTest {
     @ParameterizedTest
     @MethodSource("incompletePaths")
     fun `completes correctly`(incompletePath: String, pwd: String, suggestions: List<String>) =
-        runTest(testDispatcher) {
+        runTest {
             fileSystem.use {
                 assertThat(fileSystem.completePath(incompletePath, pwd)).contains(*suggestions.toTypedArray())
             }
         }
 
     @Test
-    fun `only completes directories with trailing slash`() = runTest(testDispatcher) {
+    fun `only completes directories with trailing slash`() = runTest {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Chimamanda Ngozi Adichie"))
 
-            launch {
+            launch(testDispatcher) {
                 fileSystem.watch()
             }
 

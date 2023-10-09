@@ -1,5 +1,5 @@
 rootProject.name = "typestream"
-include("libs:testing", "libs:konfig", "libs:option", "libs:version-info", "protos", "stub", "server", "tools")
+include("libs:testing", "libs:k8s-client", "libs:konfig", "libs:option", "libs:version-info", "protos", "stub", "server", "tools")
 
 dependencyResolutionManagement {
     versionCatalogs {

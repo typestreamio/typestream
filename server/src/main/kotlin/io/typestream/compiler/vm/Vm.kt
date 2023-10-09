@@ -1,6 +1,7 @@
 package io.typestream.compiler.vm
 
-import io.typestream.compiler.Program
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.typestream.compiler.Compiler
 import io.typestream.compiler.RuntimeType.KAFKA
 import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.KeyValue
@@ -12,20 +13,53 @@ import io.typestream.scheduler.KafkaStreamsJob
 import io.typestream.scheduler.Scheduler
 
 class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
-    suspend fun run(program: Program): ProgramOutput {
+    private val logger = KotlinLogging.logger {}
+
+    fun exec(source: String, env: Env) {
+        val (program, errors) = Compiler(Session(fileSystem, scheduler, env)).compile(source)
+        require(errors.isEmpty()) { errors.joinToString("\n") }
+
         val runtime = program.runtime()
-        return when (runtime.type) {
+        when (runtime.type) {
             KAFKA -> {
-                val kafkaConfig = scheduler.sourcesConfig.kafkaClustersConfig.clusters[runtime.name]
+                val kafkaConfig = fileSystem.sourcesConfig.kafkaClustersConfig.clusters[runtime.name]
                     ?: error("cluster ${runtime.name} not found")
 
-                scheduler.schedule(KafkaStreamsJob(program, kafkaConfig))
-                ProgramOutput("", "")
+                logger.info { "starting kafka streams job for ${program.id}" }
+
+                KafkaStreamsJob(program.id, program, kafkaConfig).start()
             }
 
             SHELL -> {
                 val dataStreams = eval(program.graph)
-                ProgramOutput(dataStreams.joinToString("\n") { it.prettyPrint() }, "")
+                logger.info { dataStreams.joinToString("\n") { it.prettyPrint() } }
+            }
+        }
+    }
+
+    suspend fun run(source: String, session: Session): VmResult {
+        val (program, errors) = Compiler(session).compile(source)
+        if (errors.isNotEmpty()) {
+            return VmResult(program, ProgramOutput("", errors.joinToString("\n")))
+        }
+
+        val runtime = program.runtime()
+        return when (runtime.type) {
+            KAFKA -> {
+                val kafkaConfig = fileSystem.sourcesConfig.kafkaClustersConfig.clusters[runtime.name]
+                    ?: error("cluster ${runtime.name} not found")
+
+                scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig))
+                VmResult(program, ProgramOutput("", ""))
+            }
+
+            SHELL -> {
+                val dataStreams = eval(program.graph)
+                VmResult(
+                    program, ProgramOutput(
+                        dataStreams.joinToString("\n") { it.prettyPrint() }, ""
+                    )
+                )
             }
         }
     }

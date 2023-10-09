@@ -23,7 +23,15 @@ internal class ProgramTest {
 
         @Test
         fun `raises when detection is not possible`() {
-            val program = buildProgram()
+            val program = buildProgram(
+                Graph(
+                    Node.StreamSource(
+                        "cat",
+                        DataStream.fromString("/dev/pulsar/local/topics/books", ""),
+                        Encoding.AVRO
+                    )
+                )
+            )
 
             assertThatThrownBy { program.runtime() }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -91,23 +99,23 @@ internal class ProgramTest {
 
             val program = buildProgram(cat)
 
-            assertThat(program.runtime()).extracting("name", "type")
-                .containsExactly("local", KAFKA)
+            assertThat(program.runtime()).extracting("name", "type").containsExactly("local", KAFKA)
         }
 
         @Test
         fun `detects shell runtime`() {
             val program = buildProgram(
-                Graph(
-                    Node.ShellSource(
-                        "ls",
-                        listOf(DataStream.fromString("/dev/ls", "dev"))
-                    )
-                )
+                Graph(Node.ShellSource("ls", listOf(DataStream.fromString("/dev/ls", "dev"))))
             )
 
-            assertThat(program.runtime()).extracting("name", "type")
-                .containsExactly("shell", RuntimeType.SHELL)
+            assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", RuntimeType.SHELL)
+        }
+
+        @Test
+        fun `detects shell runtime for empty graphs`() {
+            val program = buildProgram(Graph(Node.NoOp("no-op")))
+
+            assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", RuntimeType.SHELL)
         }
     }
 }
