@@ -4,13 +4,17 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder
 import io.fabric8.kubernetes.client.ConfigBuilder
 import io.fabric8.kubernetes.client.KubernetesClientBuilder
+import io.fabric8.kubernetes.client.Watcher
+import io.fabric8.kubernetes.client.WatcherException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.io.BufferedReader
 import java.io.Closeable
 import java.io.InputStream
 import java.io.InputStreamReader
+import io.fabric8.kubernetes.api.model.batch.v1.Job as BatchV1Job
 
 class K8sClient : Closeable {
     private val kubernetesClient = KubernetesClientBuilder()
@@ -30,19 +34,19 @@ class K8sClient : Closeable {
         kubernetesClient.close()
     }
 
-    fun getJobs(): List<Job> {
-        val jobList = kubernetesClient.batch().v1().jobs().inNamespace("typestream").list()
+    private fun jobQuery() = kubernetesClient.batch().v1().jobs()
+        .inNamespace("typestream")
+        .withLabel("app.kubernetes.io/name", "worker")
 
-        return jobList.items.map { job ->
-            Job(
-                job.metadata.name,
-                when (job.status.active) {
-                    1 -> Job.State.RUNNING
-                    0 -> Job.State.STOPPED
-                    else -> Job.State.UNKNOWN
-                }
-            )
-        }
+    fun getJobs() = jobQuery().list().items.map { job ->
+        Job(
+            job.metadata.name,
+            when (job.status.active) {
+                1 -> Job.State.RUNNING
+                0 -> Job.State.STOPPED
+                else -> Job.State.UNKNOWN
+            }
+        )
     }
 
     fun createWorkerJob(typestreamVersion: String, workerId: String, payload: String): Job {
@@ -56,6 +60,16 @@ class K8sClient : Closeable {
             JobBuilder()
                 .withNewMetadata()
                 .withName("worker-$workerId")
+                .withLabels<String, String>(
+                    mapOf(
+                        "app.kubernetes.io/name" to "worker",
+                        "app.kubernetes.io/instance" to "worker-$workerId",
+                        "app.kubernetes.io/version" to typestreamVersion,
+                        "app.kubernetes.io/component" to "worker",
+                        "app.kubernetes.io/part-of" to "typestream",
+                        "app.kubernetes.io/managed-by" to "typestream-server",
+                    ),
+                )
                 .endMetadata()
                 .withNewSpec()
                 .withNewTemplate()
@@ -98,5 +112,18 @@ class K8sClient : Closeable {
             val line = reader.readLine() ?: break
             emit(line)
         }
+    }.flowOn(Dispatchers.IO)
+
+    fun watchJobs() = callbackFlow {
+        jobQuery().watch(
+            object : Watcher<BatchV1Job> {
+                override fun eventReceived(action: Watcher.Action?, resource: BatchV1Job?) {
+                    if (resource != null && action == Watcher.Action.ADDED) {
+                        trySend(Job(resource.metadata.name, Job.State.RUNNING))
+                    }
+                }
+
+                override fun onClose(cause: WatcherException?) {}
+            })
     }.flowOn(Dispatchers.IO)
 }
