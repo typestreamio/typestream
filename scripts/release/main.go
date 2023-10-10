@@ -17,12 +17,8 @@ import (
 //go:embed changelog.tmpl
 var changelogTmpl string
 
-type release struct {
-	version       string
-	dockerVersion string
-	dryRun        bool
-	branchName    string
-}
+//go:embed release.tmpl
+var releaseTmpl string
 
 type changelogEntryKind int
 
@@ -34,98 +30,6 @@ const (
 	chore
 	other
 )
-
-type changelogEntry struct {
-	Hash    string
-	Message string
-	Kind    changelogEntryKind
-	Tag     string
-}
-
-type tag struct {
-	name string
-	hash string
-}
-
-type changelog struct {
-	Entries map[string]map[changelogEntryKind][]changelogEntry
-	Tags    []string
-}
-
-func (r *release) run(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	if r.dryRun {
-		fmt.Println(cmd.Args)
-		return nil
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func newRelease(dryRun bool, action string) *release {
-	currentDate := time.Now().Format("2006.01.02")
-
-	cmd := exec.Command("git", "tag", "--list", currentDate+"*")
-	output, err := cmd.Output()
-	if err != nil {
-		fmt.Println("Error checking existing tags:", err)
-		os.Exit(1)
-	}
-
-	existingTags := strings.Split(strings.TrimSuffix(string(output), "\n"), "\n")
-
-	highestMicro := -1
-	if len(existingTags) > 0 {
-		sort.Slice(existingTags, func(i int, j int) bool { return existingTags[i] < existingTags[j] })
-
-		lastTag := existingTags[len(existingTags)-1]
-		parts := strings.Split(lastTag, "+")
-		if len(parts) == 2 {
-			micro := parts[1]
-			microInt := 0
-			_, err := fmt.Sscanf(micro, "%d", &microInt)
-			if err == nil && microInt > highestMicro {
-				highestMicro = microInt
-			}
-		}
-	}
-
-	if highestMicro == -1 {
-		highestMicro = 0
-	} else {
-		if action == "start" {
-			highestMicro++
-		}
-	}
-
-	version := fmt.Sprintf("%s+%d", currentDate, highestMicro)
-
-	return &release{
-		version:       version,
-		dockerVersion: strings.Replace(version, "+", ".", -1),
-		dryRun:        dryRun,
-		branchName:    fmt.Sprintf("release/%s", version),
-	}
-}
-
-func parseKind(kind string) changelogEntryKind {
-	switch kind {
-	case "feat":
-		return feat
-	case "fix":
-		return fix
-	case "docs":
-		return docs
-	case "build":
-		return build
-	case "chore":
-		return chore
-	default:
-		return other
-	}
-}
 
 func (k changelogEntryKind) toEmoji() string {
 	switch k {
@@ -161,80 +65,32 @@ func (k changelogEntryKind) toTitle() string {
 	}
 }
 
-func formatKind(rich bool) func(k changelogEntryKind) string {
-	if rich {
-		return func(k changelogEntryKind) string {
-			return fmt.Sprintf("%s %s", k.toEmoji(), k.toTitle())
-		}
-	} else {
-		return func(k changelogEntryKind) string {
-			return k.toTitle()
-		}
-	}
+type changelogEntry struct {
+	Hash    string
+	Message string
+	Kind    changelogEntryKind
+	Tag     string
 }
 
-var tagReg = regexp.MustCompile(`tag: (\d{4}.\d{2}.\d{2}\+\d+)`)
-
-func writeChangelog(r *release, ch changelog, fileName string, richFormat bool) {
-	funcMap := template.FuncMap{
-		"tocLink":    strings.NewReplacer(".", "", "+", "").Replace,
-		"formatKind": formatKind(richFormat),
-	}
-
-	file, err := os.CreateTemp(os.TempDir(), "changelog")
-	if err != nil {
-		fmt.Printf("error creating temp file: %v\n", err)
-		os.Exit(1)
-	}
-	defer os.Remove(file.Name())
-
-	tmpl, err := template.New("changelog").Funcs(funcMap).Parse(changelogTmpl)
-	if err != nil {
-		fmt.Printf("error parsing template: %v\n", err)
-		os.Exit(1)
-	}
-	err = tmpl.Execute(file, ch)
-	if err != nil {
-		fmt.Printf("error executing template: %v\n", err)
-		os.Exit(1)
-	}
-
-	if r.dryRun {
-		file.Seek(0, 0)
-		buf := make([]byte, 1024)
-		for {
-			n, err := file.Read(buf)
-			if err != nil {
-				break
-			}
-			fmt.Print(string(buf[:n]))
-		}
-	}
-
-	err = file.Close()
-	if err != nil {
-		fmt.Printf("error closing file: %v\n", err)
-		os.Exit(1)
-	}
-
-	if r.dryRun {
-		fmt.Printf("os.Rename(%s, %s)\n", file.Name(), fileName)
-	} else {
-		err = os.Rename(file.Name(), fileName)
-		if err != nil {
-			fmt.Printf("error renaming file: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	err = r.run("git", "add", fileName)
-	if err != nil {
-		fmt.Printf("error adding changelog: %v\n", err)
-		os.Exit(1)
-	}
+type tag struct {
+	name string
+	hash string
 }
 
-func parseHistory(r *release) changelog {
+type changelog struct {
+	Entries map[string]map[changelogEntryKind][]changelogEntry
+	Tags    []string
+}
+
+type release struct {
+	changelog     changelog
+	version       string
+	dockerVersion string
+	dryRun        bool
+	branchName    string
+}
+
+func parseHistory(version string) changelog {
 	cmd := exec.Command("git", "log", "--pretty=format:\"%h,%s,%D\"")
 	output, err := cmd.Output()
 	if err != nil {
@@ -245,7 +101,7 @@ func parseHistory(r *release) changelog {
 	commits := strings.Split(strings.TrimSuffix(string(output), "\n"), "\n")
 
 	entries := make([]changelogEntry, 0, len(commits))
-	currentTag := r.version
+	currentTag := version
 
 	allTags := make([]string, 0)
 	allTags = append(allTags, currentTag)
@@ -298,36 +154,167 @@ func parseHistory(r *release) changelog {
 	}
 }
 
-func updateChangelog(r *release) error {
-	ch := parseHistory(r)
+func newRelease(dryRun bool, action string) *release {
+	currentDate := time.Now().Format("2006.01.02")
 
-	writeChangelog(r, ch, "CHANGELOG.md", false)
-	writeChangelog(r, ch, "docs/docs/changelog.md", true)
+	cmd := exec.Command("git", "tag", "--list", currentDate+"*")
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println("Error checking existing tags:", err)
+		os.Exit(1)
+	}
+
+	existingTags := strings.Split(strings.TrimSuffix(string(output), "\n"), "\n")
+
+	highestMicro := -1
+	if len(existingTags) > 0 {
+		sort.Slice(existingTags, func(i int, j int) bool { return existingTags[i] < existingTags[j] })
+
+		lastTag := existingTags[len(existingTags)-1]
+		parts := strings.Split(lastTag, "+")
+		if len(parts) == 2 {
+			micro := parts[1]
+			microInt := 0
+			_, err := fmt.Sscanf(micro, "%d", &microInt)
+			if err == nil && microInt > highestMicro {
+				highestMicro = microInt
+			}
+		}
+	}
+
+	if highestMicro == -1 {
+		highestMicro = 0
+	} else {
+		if action == "start" {
+			highestMicro++
+		}
+	}
+
+	version := fmt.Sprintf("%s+%d", currentDate, highestMicro)
+
+	return &release{
+		changelog:     parseHistory(version),
+		version:       version,
+		dockerVersion: strings.Replace(version, "+", ".", -1),
+		dryRun:        dryRun,
+		branchName:    fmt.Sprintf("release/%s", version),
+	}
+}
+
+func (r *release) run(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	if r.dryRun {
+		fmt.Println(cmd.Args)
+		return nil
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func parseKind(kind string) changelogEntryKind {
+	switch kind {
+	case "feat":
+		return feat
+	case "fix":
+		return fix
+	case "docs":
+		return docs
+	case "build":
+		return build
+	case "chore":
+		return chore
+	default:
+		return other
+	}
+}
+
+func formatKind(rich bool) func(k changelogEntryKind) string {
+	if rich {
+		return func(k changelogEntryKind) string {
+			return fmt.Sprintf("%s %s", k.toEmoji(), k.toTitle())
+		}
+	} else {
+		return func(k changelogEntryKind) string {
+			return k.toTitle()
+		}
+	}
+}
+
+var tagReg = regexp.MustCompile(`tag: (\d{4}.\d{2}.\d{2}\+\d+)`)
+
+func (r *release) writeChangelog(fileName string, richFormat bool) {
+	funcMap := template.FuncMap{
+		"tocLink":    strings.NewReplacer(".", "", "+", "").Replace,
+		"formatKind": formatKind(richFormat),
+	}
+
+	file, err := os.CreateTemp(os.TempDir(), "changelog")
+	if err != nil {
+		fmt.Printf("error creating temp file: %v\n", err)
+		os.Exit(1)
+	}
+	defer os.Remove(file.Name())
+
+	t, err := template.New("changelog").Funcs(funcMap).Parse(changelogTmpl)
+	if err != nil {
+		fmt.Printf("error parsing template: %v\n", err)
+		os.Exit(1)
+	}
+	err = t.Execute(file, r.changelog)
+	if err != nil {
+		fmt.Printf("error executing template: %v\n", err)
+		os.Exit(1)
+	}
+
+	if r.dryRun {
+		file.Seek(0, 0)
+		buf := make([]byte, 1024)
+		for {
+			n, err := file.Read(buf)
+			if err != nil {
+				break
+			}
+			fmt.Print(string(buf[:n]))
+		}
+	}
+
+	err = file.Close()
+	if err != nil {
+		fmt.Printf("error closing file: %v\n", err)
+		os.Exit(1)
+	}
+
+	if r.dryRun {
+		fmt.Printf("os.Rename(%s, %s)\n", file.Name(), fileName)
+	} else {
+		err = os.Rename(file.Name(), fileName)
+		if err != nil {
+			fmt.Printf("error renaming file: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	err = r.run("git", "add", fileName)
+	if err != nil {
+		fmt.Printf("error adding changelog: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func (r *release) updateChangelog() error {
+	r.writeChangelog("CHANGELOG.md", false)
+	r.writeChangelog("docs/docs/changelog.md", true)
 
 	return r.run("git", "commit", "-m", fmt.Sprint("chore: release ", r.version))
 }
 
-func gitCheckoutReleaseBranch(r *release) error {
-	return r.run("git", "checkout", "-b", r.branchName)
-}
-
-func gitPushReleaseBranch(r *release) error {
-	return r.run("git", "push", "--set-upstream", "origin", r.branchName)
-}
-
-func gitPushTag(r *release) error {
-	return r.run("git", "push", "origin", r.version)
-}
-
-func gitTag(r *release) error {
-	return r.run("git", "tag", r.version)
-}
-
-func createReleasePR(r *release) error {
+func (r *release) createReleasePR() error {
 	return r.run("gh", "pr", "create", "--title", fmt.Sprintf("chore: release %s", r.version), "--body", "See changelog", "--base", "main", "--head", r.branchName)
 }
 
-func buildImages(r *release) error {
+func (r *release) buildImages() error {
 	if err := r.run("./gradlew", "--parallel", "-Pversion="+r.dockerVersion, ":tools:jibDockerBuild", ":server:jibDockerBuild"); err != nil {
 		return err
 	}
@@ -339,7 +326,7 @@ func buildImages(r *release) error {
 	return r.run("docker", "push", "typestream/server:"+r.dockerVersion)
 }
 
-func releaseClient(r *release) error {
+func (r *release) releaseClient() error {
 	cliPath := "./cli"
 
 	cmd := exec.Command("goreleaser", "--clean")
@@ -355,72 +342,110 @@ func releaseClient(r *release) error {
 	return cmd.Run()
 }
 
-func generateGitHubRelease(r *release) error {
-	return r.run("gh", "release", "create", r.version, "--title", r.version, "-F", "docs/docs/changelog.md")
+func (r *release) generateGitHubRelease() error {
+	funcMap := template.FuncMap{"formatKind": formatKind(true)}
+
+	file, err := os.CreateTemp(os.TempDir(), "release")
+	if err != nil {
+		fmt.Printf("error creating temp file: %v\n", err)
+		os.Exit(1)
+	}
+	defer os.Remove(file.Name())
+
+	t, err := template.New("release").Funcs(funcMap).Parse(releaseTmpl)
+	if err != nil {
+		fmt.Printf("error parsing template: %v\n", err)
+		os.Exit(1)
+	}
+	err = t.Execute(file, r.changelog.Entries[r.version])
+	if err != nil {
+		fmt.Printf("error executing template: %v\n", err)
+		os.Exit(1)
+	}
+
+	if r.dryRun {
+		file.Seek(0, 0)
+		buf := make([]byte, 1024)
+		for {
+			n, err := file.Read(buf)
+			if err != nil {
+				break
+			}
+			fmt.Print(string(buf[:n]))
+		}
+	}
+
+	err = file.Close()
+	if err != nil {
+		fmt.Printf("error closing file: %v\n", err)
+		os.Exit(1)
+	}
+
+	return r.run("gh", "release", "create", r.version, "--title", r.version, "-F", file.Name())
 }
 
-func announceOnDiscord(r *release) error {
+func (r *release) announceOnDiscord() error {
 	return nil
 }
 
-func start(r *release) {
-	err := gitCheckoutReleaseBranch(r)
+func (r *release) start() {
+	err := r.run("git", "checkout", "-b", r.branchName)
 	if err != nil {
 		fmt.Println("Error creating branch:", err)
 		os.Exit(1)
 	}
 
-	err = updateChangelog(r)
+	err = r.updateChangelog()
 	if err != nil {
 		fmt.Println("Error updating changelog:", err)
 		os.Exit(1)
 	}
 
-	err = gitPushReleaseBranch(r)
+	err = r.run("git", "push", "--set-upstream", "origin", r.branchName)
 	if err != nil {
 		fmt.Println("Error pushing branch:", err)
 		os.Exit(1)
 	}
 
-	err = createReleasePR(r)
+	err = r.createReleasePR()
 	if err != nil {
 		fmt.Println("Error creating PR:", err)
 		os.Exit(1)
 	}
 }
 
-func publish(r *release) {
-	err := gitTag(r)
+func (r *release) publish() {
+	err := r.run("git", "tag", r.version)
 	if err != nil {
 		fmt.Println("Error tagging:", err)
 		os.Exit(1)
 	}
 
-	err = gitPushTag(r)
+	err = r.run("git", "push", "origin", r.version)
 	if err != nil {
 		fmt.Println("Error pushing tag:", err)
 		os.Exit(1)
 	}
 
-	err = buildImages(r)
+	err = r.buildImages()
 	if err != nil {
 		fmt.Println("Error building images:", err)
 		os.Exit(1)
 	}
 
-	err = releaseClient(r)
+	err = r.releaseClient()
 	if err != nil {
 		fmt.Println("Error releasing client:", err)
 		os.Exit(1)
 	}
 
-	err = generateGitHubRelease(r)
+	err = r.generateGitHubRelease()
 	if err != nil {
 		fmt.Println("Error generating GitHub release:", err)
 		os.Exit(1)
 	}
 
-	err = announceOnDiscord(r)
+	err = r.announceOnDiscord()
 	if err != nil {
 		fmt.Println("Error announcing on Discord:", err)
 		os.Exit(1)
@@ -443,11 +468,13 @@ func main() {
 	}
 
 	action := flag.Arg(0)
+
+	r := newRelease(dry, action)
 	switch action {
 	case "start":
-		start(newRelease(dry, action))
+		r.start()
 	case "publish":
-		publish(newRelease(dry, action))
+		r.publish()
 	default:
 		fmt.Println("Usage: release [-dry] <start|publish>")
 		os.Exit(1)
