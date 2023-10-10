@@ -21,7 +21,13 @@ class Scheduler(private val k8sMode: Boolean, private val dispatcher: CoroutineD
                     }
                 }
             }
-            //TODO launch coroutine to watch for new jobs
+            launch {
+                val k8sClient = K8sClient()
+                k8sClient.watchJobs().collect { job ->
+                    runningJobs.add(K8sJob(job.id))
+                }
+                k8sClient.close()
+            }
         }
         for (job in jobs) {
             runningJobs.add(job)

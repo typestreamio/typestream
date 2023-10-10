@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation("io.fabric8:kubernetes-client:6.8.1")
+    implementation("io.fabric8:kubernetes-client:6.9.0")
 }
