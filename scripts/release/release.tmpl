@@ -1,0 +1,6 @@
+{{ range $kind, $entries := . }}
+### {{formatKind $kind}}
+{{ range $entry := $entries }}
+- [{{$entry.Message}}](https://github.com/typestreamio/typestream/commit/{{$entry.Hash}})
+{{- end}}
+{{end}}
