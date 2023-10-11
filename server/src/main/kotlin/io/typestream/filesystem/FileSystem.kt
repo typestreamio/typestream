@@ -18,7 +18,6 @@ import io.typestream.filesystem.kafka.KafkaClusterDirectory
 import io.typestream.filesystem.kafka.Topic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import java.io.Closeable
@@ -69,13 +68,14 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
         return when (path) {
             ".." -> {
                 val paths = pwd.split("/")
-                paths.subList(0, paths.lastIndex - 1).joinToString("/", prefix = "/")
+                paths.subList(0, paths.lastIndex).joinToString("/").ifEmpty { "/" }
             }
 
             "." -> pwd
             "", "/" -> "/"
             else -> {
-                val targetPath = if (pwd == "/") {
+                val targetPath = if (path.startsWith("/")) path
+                else if (pwd == "/") {
                     if (path.startsWith("/")) path else "/$path"
                 } else {
                     "$pwd/$path"

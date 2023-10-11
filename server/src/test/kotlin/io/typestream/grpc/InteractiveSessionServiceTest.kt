@@ -5,7 +5,6 @@ import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.testing.GrpcCleanupRule
 import io.typestream.Server
-import io.typestream.compiler.Program
 import io.typestream.grpc.interactive_session_service.InteractiveSession.GetProgramOutputRequest
 import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProgramRequest
 import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProgramResponse
@@ -95,7 +94,7 @@ internal class InteractiveSessionServiceTest {
                 .extracting("stdOut", "stdErr", "hasMoreOutput")
                 .containsExactly("", "", false)
 
-            assertThat(stub.runProgram(sessionId,"ls \$localKafkaDir"))
+            assertThat(stub.runProgram(sessionId, "ls \$localKafkaDir"))
                 .extracting("stdOut", "stdErr", "hasMoreOutput")
                 .containsExactly("brokers\nconsumer-groups\nschemas\ntopics", "", false)
         }
@@ -275,7 +274,8 @@ internal class InteractiveSessionServiceTest {
                 "cat /dev/kafka/local/topics/users | grep 'Margaret' > /dev/kafka/local/topics/user_names"
             )
 
-            assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", false)
+            assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput")
+                .containsExactly("running ${cat.id} in the background", "", false)
 
             until("file") { stub.runProgram(sessionId, "file /dev/kafka/local/topics/user_names") }
 

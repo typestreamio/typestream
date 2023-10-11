@@ -164,6 +164,22 @@ func Run() {
 			}
 		}
 	}
+
+	//TODO this can be improved. It may take a while to stop the session so we should stream the output
+	//to give the user feedback on the process (right now it's a blocking process)
+	stopSessionResponse, err := s.client.StopSession(ctx, &interactive_session_service.StopSessionRequest{SessionId: s.sessionId})
+	if err != nil {
+		fmt.Printf("💥 failed to stop session: %v\n", err)
+		os.Exit(1)
+	}
+
+	if stopSessionResponse.StdOut != "" {
+		println(stopSessionResponse.StdOut)
+	}
+	if stopSessionResponse.StdErr != "" {
+		println(stopSessionResponse.StdErr)
+	}
+
 	fmt.Println("👋 Bye!")
 }
 
