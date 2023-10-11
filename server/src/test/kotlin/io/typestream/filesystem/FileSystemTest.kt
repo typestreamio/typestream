@@ -49,8 +49,10 @@ internal class FileSystemTest {
             assertThat(fileSystem.expandPath("dev/", "/")).isEqualTo("/dev")
             assertThat(fileSystem.expandPath("kafka", "/dev")).isEqualTo("/dev/kafka")
             assertThat(fileSystem.expandPath("/dev/kafka", "/")).isEqualTo("/dev/kafka")
+            assertThat(fileSystem.expandPath("/dev/kafka", "/dev")).isEqualTo("/dev/kafka")
             assertThat(fileSystem.expandPath("", "/")).isEqualTo("/")
             assertThat(fileSystem.expandPath("..", "/dev")).isEqualTo("/")
+            assertThat(fileSystem.expandPath("..", "/dev/kafka")).isEqualTo("/dev")
             assertNull(fileSystem.expandPath("dev/whatever", "/"))
         }
     }

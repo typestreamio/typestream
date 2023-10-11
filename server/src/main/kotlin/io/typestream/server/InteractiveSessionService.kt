@@ -18,6 +18,7 @@ import io.typestream.grpc.interactive_session_service.runProgramResponse
 import io.typestream.grpc.interactive_session_service.startSessionResponse
 import io.typestream.grpc.interactive_session_service.stopSessionResponse
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.util.Collections
 import java.util.UUID
@@ -38,6 +39,9 @@ class InteractiveSessionService(private val vm: Vm) :
         requireNotNull(session) { "session ${request.sessionId} not found" }
 
         val vmResult = vm.run(request.source, session)
+        if (vmResult.programOutput.stdErr.isBlank()) {
+            session.env.addHistoryEntry(request.source)
+        }
 
         id = vmResult.program.id
         hasMoreOutput = vmResult.program.hasMoreOutput()
@@ -51,13 +55,8 @@ class InteractiveSessionService(private val vm: Vm) :
         val session = this@InteractiveSessionService.sessions[request.sessionId]
         requireNotNull(session) { "session ${request.sessionId} not found" }
 
-        Compiler(session).complete(
-            request.source,
-            CursorPosition(
-                0,
-                request.cursor
-            ) //right now we only support one line programs completion from the shell client
-        ).forEach {
+        //right now we only support one line programs completion from the shell client
+        Compiler(session).complete(request.source, CursorPosition(0, request.cursor)).forEach {
             this.value += it
         }
     }
@@ -70,8 +69,14 @@ class InteractiveSessionService(private val vm: Vm) :
     }
 
     override suspend fun stopSession(request: StopSessionRequest) = stopSessionResponse {
+        val output = StringBuilder()
+        this@InteractiveSessionService.sessions[request.sessionId]?.runningPrograms?.forEach { program ->
+            vm.scheduler.kill(program.id)
+            output.appendLine("killed ${program.id}")
+        }
         this@InteractiveSessionService.sessions.remove(request.sessionId)
-        this.success = true
+        this.stdOut = output.toString()
+        this.stdErr = ""
     }
 
 }

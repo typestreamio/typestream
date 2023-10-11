@@ -58,6 +58,12 @@ func (c *Client) CreateJob(ctx context.Context, req *job_service.CreateJobReques
 	return client.CreateJob(ctx, req)
 }
 
+func (c *Client) StopSession(ctx context.Context, req *interactive_session_service.StopSessionRequest) (*interactive_session_service.StopSessionResponse, error) {
+	client := interactive_session_service.NewInteractiveSessionServiceClient(c.conn)
+
+	return client.StopSession(ctx, req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

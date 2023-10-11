@@ -116,7 +116,7 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
 
     override fun remove() {
         require(!running) { "cannot remove a running Kafka Streams app" }
-        logger.info { "removing ${program.id}"}
+        logger.info { "removing ${program.id}" }
         kafkaStreams?.cleanUp()
     }
 

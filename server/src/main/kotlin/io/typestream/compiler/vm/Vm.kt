@@ -44,13 +44,17 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
         }
 
         val runtime = program.runtime()
+        if (runtime.type != SHELL && !program.hasMoreOutput()) {
+            session.runningPrograms.add(program)
+        }
         return when (runtime.type) {
             KAFKA -> {
                 val kafkaConfig = fileSystem.sourcesConfig.kafkaClustersConfig.clusters[runtime.name]
                     ?: error("cluster ${runtime.name} not found")
 
                 scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig))
-                VmResult(program, ProgramOutput("", ""))
+                val stdOut = if (!program.hasMoreOutput()) "running ${program.id} in the background" else ""
+                VmResult(program, ProgramOutput(stdOut, ""))
             }
 
             SHELL -> {

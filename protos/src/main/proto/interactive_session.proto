@@ -61,5 +61,6 @@ message StopSessionRequest {
 }
 
 message StopSessionResponse {
-  bool success = 1;
+  string stdOut = 1;
+  string stdErr = 2;
 }

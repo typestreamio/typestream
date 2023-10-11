@@ -8,6 +8,7 @@ import java.util.UUID
 class Env : Cloneable {
     private val store = mutableMapOf<String, String>()
     private val variables = mutableMapOf<String, Value>()
+    private val history = mutableListOf<String>()
 
     var pwd: String
         get() = store["PWD"] ?: "/"
@@ -39,4 +40,13 @@ class Env : Cloneable {
         it.store.putAll(store)
         it.variables.putAll(variables)
     }
+
+    fun addHistoryEntry(entry: String) {
+        if (entry.startsWith("history")) {
+            return
+        }
+        history.add(entry)
+    }
+
+    fun history() = history.toList()
 }
