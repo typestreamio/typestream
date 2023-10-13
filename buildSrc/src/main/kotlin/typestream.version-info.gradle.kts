@@ -6,7 +6,7 @@ tasks.register("createProperties") {
     dependsOn("processResources")
 
     doLast {
-        val propertiesFile = File("${buildDir}/resources/main/version-info.properties")
+        val propertiesFile = File("${layout.buildDirectory.get()}/resources/main/version-info.properties")
         val stdout = ByteArrayOutputStream()
         rootProject.exec {
             commandLine("git", "rev-parse", "--verify", "--short", "HEAD")

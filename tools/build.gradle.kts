@@ -1,7 +1,7 @@
 plugins {
     id("typestream.kotlin-conventions")
     id("typestream.version-info")
-    id("com.google.cloud.tools.jib") version "3.3.2"
+    id("com.google.cloud.tools.jib") version "3.4.0"
     application
 }
 
