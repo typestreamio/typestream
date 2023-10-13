@@ -5,23 +5,28 @@ plugins {
     application
 }
 
+repositories {
+    mavenCentral()
+    maven("https://packages.confluent.io/maven/")
+}
+
 application {
     mainClass.set("io.typestream.tools.Main")
 }
 
 dependencies {
-    implementation(project(":libs:testing"))
     implementation(project(":libs:konfig"))
+    implementation(project(":libs:k8s-client"))
+    implementation(project(":libs:testing"))
     implementation(project(":libs:version-info"))
-    implementation("io.fabric8:kubernetes-client:6.8.1")
 
-    implementation(libs.bundles.sf4j)
-    implementation(libs.bundles.kafka)
     implementation(libs.avro)
-    implementation("io.confluent:kafka-avro-serializer:7.3.0")
+    implementation(libs.bundles.kafka)
+    implementation(libs.bundles.sf4j)
+    implementation(libs.kafka.avro.serializer)
 
     testImplementation(libs.bundles.testcontainers)
-    testImplementation("org.testcontainers:redpanda:${libs.versions.testcontainers.get()}")
+    testImplementation(libs.test.containers.redpanda)
 }
 
 jib {

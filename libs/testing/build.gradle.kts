@@ -12,7 +12,6 @@ dependencies {
     implementation(project(":libs:konfig"))
     implementation(libs.avro)
     implementation(libs.bundles.kafka)
-    implementation("org.testcontainers:redpanda:${libs.versions.testcontainers.get()}")
-
-    implementation("io.confluent:kafka-avro-serializer:7.1.0")
+    implementation(libs.test.containers.redpanda)
+    implementation(libs.kafka.avro.serializer)
 }

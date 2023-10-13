@@ -1,8 +1,7 @@
 package io.typestream.tools
 
-import io.fabric8.kubernetes.client.ConfigBuilder
-import io.fabric8.kubernetes.client.KubernetesClientBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.typestream.k8s.K8sClient
 import io.typestream.tools.command.seed
 import io.typestream.tools.command.streamPageViews
 import java.io.FileInputStream
@@ -51,26 +50,12 @@ class Main(konfig: io.typestream.konfig.Konfig) {
             val serverConfig: InputStream? = if (kubernetesMode) {
                 logger.info { "running in kubernetes mode" }
 
-                val kubeConfig = ConfigBuilder()
-                    .withConnectionTimeout(100)
-                    .withRequestTimeout(100)
-                    .build()
-                val client = KubernetesClientBuilder().withConfig(kubeConfig).build()
+                val k8sClient = K8sClient()
 
                 logger.info { "fetching config" }
 
-                client.use {
-                    val configMap = client.configMaps()
-                        .inNamespace("typestream")
-                        .withName("server-config")
-                        .get()
-                    logger.info { "config: ${configMap.data["server.properties"]}" }
-
-                    if (configMap != null) {
-                        configMap.data["server.properties"]?.byteInputStream()
-                    } else {
-                        null
-                    }
+                k8sClient.use {
+                    it.getServerProperties()
                 }
             } else {
                 logger.info { "running in local mode" }
