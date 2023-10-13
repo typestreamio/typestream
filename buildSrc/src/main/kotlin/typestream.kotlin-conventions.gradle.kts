@@ -25,14 +25,16 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
 
     testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testImplementation("nz.lae.stacksrc:stacksrc-junit5:0.6.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.7.3")
 }
 
 tasks.test {
     useJUnitPlatform()
+    systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
 }
 
 tasks.withType<KotlinCompile> {
