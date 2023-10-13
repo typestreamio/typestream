@@ -5,6 +5,11 @@ plugins {
     application
 }
 
+repositories {
+    mavenCentral()
+    maven("https://packages.confluent.io/maven/")
+}
+
 application {
     mainClass.set("io.typestream.Main")
 }
@@ -16,19 +21,17 @@ dependencies {
     implementation(project(":libs:version-info"))
     implementation(project(":stub"))
 
+    implementation(libs.avro)
     implementation(libs.bundles.kafka)
     implementation(libs.bundles.sf4j)
-    implementation(libs.avro)
-
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
-
     runtimeOnly(libs.grpc.netty)
-    implementation("io.grpc:grpc-services:${libs.versions.grpc.get()}")
+    implementation(libs.grpc.services)
+    implementation(libs.okhttp)
 
     testImplementation(project(":libs:testing"))
     testImplementation(libs.bundles.testcontainers)
-    testImplementation("org.testcontainers:redpanda:${libs.versions.testcontainers.get()}")
-    testImplementation("io.grpc:grpc-testing:${libs.versions.grpc.get()}")
+    testImplementation(libs.test.containers.redpanda)
+    testImplementation(libs.grpc.testing)
 }
 
 jib {

@@ -12,7 +12,6 @@ group = "io.typestream"
 
 repositories {
     mavenCentral()
-    maven("https://packages.confluent.io/maven/") //TODO this doesn't belong here
 }
 
 dependencies {
