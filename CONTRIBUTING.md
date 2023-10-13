@@ -136,4 +136,6 @@ go:
 ## Submit a pull request
 
 Push your branch to your `TypeStream` fork and open a pull request against the
-main branch.
+main branch. We use [conventional commits](https://www.conventionalcommits.org/)
+for our commit messages so follow the convention in the title of your PR
+(otherwise, the build will fail).
