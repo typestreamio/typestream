@@ -10,10 +10,7 @@ import io.typestream.helpers.author
 import io.typestream.testing.RedpandaContainerWrapper
 import io.typestream.testing.avro.buildAuthor
 import io.typestream.testing.konfig.testKonfig
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -26,7 +23,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.stream.Stream
 import kotlin.test.assertNull
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Testcontainers
 internal class FileSystemTest {
 
@@ -35,11 +31,9 @@ internal class FileSystemTest {
 
     private lateinit var fileSystem: FileSystem
 
-    private val testDispatcher = UnconfinedTestDispatcher()
-
     @BeforeEach
     fun beforeEach() {
-        fileSystem = FileSystem(SourcesConfig(testKonfig(testKafka)), testDispatcher)
+        fileSystem = FileSystem(SourcesConfig(testKonfig(testKafka)), Dispatchers.IO)
     }
 
     @Test
@@ -60,13 +54,11 @@ internal class FileSystemTest {
     @Nested
     inner class EncodingRules {
         @Test
-        fun `infers simple encoding`() = runTest {
+        fun `infers simple encoding`() {
             fileSystem.use {
                 testKafka.produceRecords("authors", buildAuthor("Octavia E. Butler"))
 
-                launch(testDispatcher) {
-                    fileSystem.watch()
-                }
+                fileSystem.refresh()
 
                 val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
 
@@ -77,13 +69,11 @@ internal class FileSystemTest {
         }
 
         @Test
-        fun `infers pipeline encoding`() = runTest {
+        fun `infers pipeline encoding`() {
             fileSystem.use {
                 testKafka.produceRecords("authors", buildAuthor("Emily St. John Mandel"))
 
-                launch(testDispatcher) {
-                    fileSystem.watch()
-                }
+                fileSystem.refresh()
 
                 val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
 
@@ -119,28 +109,21 @@ internal class FileSystemTest {
 
     @ParameterizedTest
     @MethodSource("incompletePaths")
-    fun `completes correctly`(incompletePath: String, pwd: String, suggestions: List<String>) =
-        runTest {
-            fileSystem.use {
-                assertThat(fileSystem.completePath(incompletePath, pwd)).contains(*suggestions.toTypedArray())
-            }
+    fun `completes correctly`(incompletePath: String, pwd: String, suggestions: List<String>) {
+        fileSystem.use {
+            assertThat(fileSystem.completePath(incompletePath, pwd)).contains(*suggestions.toTypedArray())
         }
+    }
 
     @Test
-    fun `only completes directories with trailing slash`() = runTest {
+    fun `only completes directories with trailing slash`() {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Chimamanda Ngozi Adichie"))
 
-            launch(testDispatcher) {
-                fileSystem.watch()
-            }
-
+            fileSystem.refresh()
 
             assertThat(
-                fileSystem.completePath(
-                    "dev/kafka/local/topics/a",
-                    "/"
-                )
+                fileSystem.completePath("dev/kafka/local/topics/a", "/")
             ).contains("dev/kafka/local/topics/authors")
         }
     }

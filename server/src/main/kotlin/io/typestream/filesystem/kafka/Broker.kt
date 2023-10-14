@@ -7,4 +7,6 @@ class Broker(name: String) : Inode(name) {
     override fun stat() = TODO("broker stat")
 
     override suspend fun watch() {}
+
+    override fun refresh() {}
 }

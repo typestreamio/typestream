@@ -8,4 +8,6 @@ class Topic(name: String, private val kafkaAdminClient: KafkaAdminClient) : Inod
     override fun stat() = kafkaAdminClient.topicInfo(name)
 
     override suspend fun watch() {}
+
+    override fun refresh() {}
 }

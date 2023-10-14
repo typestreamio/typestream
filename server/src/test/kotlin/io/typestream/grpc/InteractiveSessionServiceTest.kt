@@ -32,7 +32,6 @@ import kotlin.test.assertTrue
 
 @Testcontainers
 internal class InteractiveSessionServiceTest {
-    private val logger = KotlinLogging.logger {}
     private val dispatcher = Dispatchers.IO
 
     private lateinit var app: Server

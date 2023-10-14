@@ -41,7 +41,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
 
         val networkExceptionHandler: (Throwable) -> Unit = { exception ->
             when (exception) {
-                is java.net.SocketException -> logger.warn(exception) { "catalog network failed" }
+                is java.net.SocketException -> logger.debug(exception) { "catalog network failed" }
                 else -> throw exception
             }
         }
@@ -50,34 +50,33 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
         // loop on subjects and default to string on fetching from the catalog is a better strategy
         sourcesConfig.kafkaClustersConfig.clusters.forEach { (name, config) ->
             scope.tick(config.fsRefreshRate.seconds, networkExceptionHandler) {
-                val path = FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + name
-                logger.info { "fetching schemas for $path" }
-                val schemaRegistryClient = schemaRegistries[path]
-
-                requireNotNull(schemaRegistryClient) { "schema registry client not found for $name" }
-
-                schemaRegistryClient.subjects().forEach { (subjectName, subject) ->
-                    val topicPath = "$path/topics/${subjectName.replace("-value", "")}"
-
-                    store[topicPath] =
-                        Metadata(
-                            DataStream.fromAvroSchema(topicPath, Parser().parse(subject.schema)),
-                            Encoding.AVRO
-                        )
-                }
+                refreshRegistry(name)
             }
         }
     }
 
-    //In our definition of ready, we assume each cluster has got at least one path (e.g. one kafka topic)
-    //so the catalog is ready when we have at least one path for each cluster
-    fun isReady(): Boolean {
-        val rootPaths = sourcesConfig.kafkaClustersConfig.clusters.keys.map { clusterName ->
-            FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + clusterName
-        }
+    private fun refreshRegistry(name: String) {
+        val path = FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + name
+        logger.info { "fetching schemas for $path" }
+        val schemaRegistryClient = schemaRegistries[path]
 
-        return rootPaths.all { rootPath ->
-            store.keys.any { it.startsWith(rootPath) }
+        requireNotNull(schemaRegistryClient) { "schema registry client not found for $path" }
+
+        schemaRegistryClient.subjects().forEach { (subjectName, subject) ->
+            val topicPath = "$path/topics/${subjectName.replace("-value", "")}"
+
+            store[topicPath] =
+                Metadata(
+                    DataStream.fromAvroSchema(topicPath, Parser().parse(subject.schema)),
+                    Encoding.AVRO
+                )
         }
     }
+
+    fun refresh() {
+        sourcesConfig.kafkaClustersConfig.clusters.keys.forEach { name ->
+            refreshRegistry(name)
+        }
+    }
+
 }

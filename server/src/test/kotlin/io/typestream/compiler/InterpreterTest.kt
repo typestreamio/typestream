@@ -1,19 +1,15 @@
 package io.typestream.compiler
 
 import io.typestream.compiler.parser.Parser
-import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Env
+import io.typestream.compiler.vm.Session
 import io.typestream.config.SourcesConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.RedpandaContainerWrapper
 import io.typestream.testing.avro.buildBook
 import io.typestream.testing.konfig.testKonfig
-import io.typestream.testing.until
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +18,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Testcontainers
 internal class InterpreterTest {
 
@@ -33,25 +28,19 @@ internal class InterpreterTest {
 
     private lateinit var session: Session
 
-    private val testDispatcher = UnconfinedTestDispatcher()
-
     @BeforeEach
     fun beforeEach() {
         val sourcesConfig = SourcesConfig(testKonfig(testKafka))
-        fileSystem = FileSystem(sourcesConfig, testDispatcher)
-        session = Session(fileSystem, Scheduler(false, testDispatcher), Env())
+        fileSystem = FileSystem(sourcesConfig, Dispatchers.IO)
+        session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
     }
 
     @Test
-    fun `handles non-existing fields on conditions`() = runTest {
+    fun `handles non-existing fields on conditions`() {
         fileSystem.use {
             testKafka.produceRecords("books", buildBook("Station Eleven", 300, UUID.randomUUID()))
 
-            launch(testDispatcher) {
-                fileSystem.watch()
-            }
-
-            until { fileSystem.isReady() }
+            fileSystem.refresh()
 
             val statements =
                 Parser("cat /dev/kafka/local/topics/books | grep [ .notTheTitle == 'Station Eleven' ]").parse()
@@ -71,13 +60,11 @@ internal class InterpreterTest {
     }
 
     @Test
-    fun `handles non-existing fields on projections`() = runTest {
+    fun `handles non-existing fields on projections`() {
         fileSystem.use {
             testKafka.produceRecords("books", buildBook("Station Eleven", 300, UUID.randomUUID()))
 
-            launch(testDispatcher) {
-                fileSystem.watch()
-            }
+            fileSystem.refresh()
 
             val statements = Parser("cat /dev/kafka/local/topics/books | cut .notTheTitle").parse()
 

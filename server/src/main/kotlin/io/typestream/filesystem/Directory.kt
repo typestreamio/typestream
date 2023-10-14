@@ -10,4 +10,8 @@ open class Directory(name: String) : Inode(name) {
     override suspend fun watch() {
         children.forEach { it.watch() }
     }
+
+    override fun refresh() {
+        children.forEach { it.refresh() }
+    }
 }

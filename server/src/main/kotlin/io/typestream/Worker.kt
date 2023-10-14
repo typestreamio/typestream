@@ -23,12 +23,9 @@ class Worker(konfig: Konfig) {
 
         logger.info { "starting filesystem" }
         val fileSystem = FileSystem(sourcesConfig, dispatcher)
-        launch { fileSystem.watch() }
 
-        // we wait so that types information is available when we compile the program
-        // this solution is suboptimal, because we don't need to watch the filesystem.
-        // We need something like filesystem.fetch() to fetch all relevant types synchronously once
-        until { fileSystem.isReady() }
+        fileSystem.refresh()
+
         logger.info { "file system is ready" }
 
         val vm = Vm(fileSystem, Scheduler(true, dispatcher))

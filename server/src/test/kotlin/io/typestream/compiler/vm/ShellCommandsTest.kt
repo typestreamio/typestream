@@ -11,10 +11,7 @@ import io.typestream.scheduler.Scheduler
 import io.typestream.testing.RedpandaContainerWrapper
 import io.typestream.testing.avro.buildAuthor
 import io.typestream.testing.konfig.testKonfig
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +19,6 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Testcontainers
 internal class ShellCommandsTest {
     @Container
@@ -31,22 +27,20 @@ internal class ShellCommandsTest {
     private lateinit var fileSystem: FileSystem
     private lateinit var session: Session
 
-    private val testDispatcher = UnconfinedTestDispatcher()
-
     @BeforeEach
     fun beforeEach() {
         val sourcesConfig = SourcesConfig(testKonfig(testKafka))
 
-        fileSystem = FileSystem(sourcesConfig, testDispatcher)
-        session = Session(fileSystem, Scheduler(false, testDispatcher), Env())
+        fileSystem = FileSystem(sourcesConfig, Dispatchers.IO)
+        session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
     }
 
 
     @Test
-    fun `changes directory correctly`() = runTest {
+    fun `changes directory correctly`() {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Emily St. John Mandel"))
-            launch(testDispatcher) { fileSystem.watch() }
+            fileSystem.refresh()
 
             val cd = ShellCommand.find("cd")
             requireNotNull(cd)
@@ -70,10 +64,10 @@ internal class ShellCommandsTest {
     }
 
     @Test
-    fun `cannot change directory to incorrect path`() = runTest {
+    fun `cannot change directory to incorrect path`() {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Octavia E. Butler"))
-            launch(testDispatcher) { fileSystem.watch() }
+            fileSystem.refresh()
 
             val cd = ShellCommand.find("cd")
             requireNotNull(cd)
@@ -89,10 +83,10 @@ internal class ShellCommandsTest {
 
 
     @Test
-    fun `changes directory only to dirs`() = runTest {
+    fun `changes directory only to dirs`() {
         fileSystem.use {
             testKafka.produceRecords("authors", buildAuthor("Ann Leckie"))
-            launch(testDispatcher) { fileSystem.watch() }
+            fileSystem.refresh()
 
             val cd = ShellCommand.find("cd")
             requireNotNull(cd)

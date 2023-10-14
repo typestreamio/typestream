@@ -7,4 +7,6 @@ class ConsumerGroup(name: String) : Inode(name) {
     override fun stat() = TODO("consumer group stat")
 
     override suspend fun watch() {}
+
+    override fun refresh() {}
 }
