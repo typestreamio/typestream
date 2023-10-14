@@ -6,6 +6,7 @@ abstract class Inode(val name: String) {
 
     abstract fun stat(): String
     abstract suspend fun watch()
+    abstract fun refresh()
 
     fun findInode(path: String): Inode? {
         var current = this

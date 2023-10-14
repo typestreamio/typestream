@@ -46,14 +46,6 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
         root.add(devDir)
     }
 
-    fun isReady(): Boolean {
-        val kafkaClustersReady = sourcesConfig.kafkaClustersConfig.clusters.keys.all {
-            root.findInode("$KAFKA_CLUSTERS_PREFIX/$it/topics/_schemas") !== null
-        }
-
-        return kafkaClustersReady && catalog.isReady()
-    }
-
     fun ls(path: String): List<String> {
         val children = if (path == "/") root.children() else (root.findInode(path)?.children() ?: setOf())
         return children.map { it.name }
@@ -62,6 +54,11 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
     suspend fun watch() = supervisorScope {
         jobs.add(launch(dispatcher) { root.watch() })
         jobs.add(launch(dispatcher) { catalog.watch() })
+    }
+
+    fun refresh() {
+        root.refresh()
+        catalog.refresh()
     }
 
     fun expandPath(path: String, pwd: String): String? {

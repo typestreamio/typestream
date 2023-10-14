@@ -37,6 +37,7 @@ class KafkaClusterDirectory(
 
         appendLine("brokers: ${brokersDir.children().size}")
         appendLine("consumerGroups: ${consumerGroupsDir.children().size}")
+        appendLine("schemaRegistry: ${schemaRegistryDir.children().size}")
         appendLine("topics: ${topicsDir.children().size}")
     }
 
@@ -50,7 +51,7 @@ class KafkaClusterDirectory(
 
         val networkExceptionHandler: (Throwable) -> Unit = { exception ->
             when (exception) {
-                is java.net.ConnectException -> logger.warn(exception) { "kafka cluster directory watcher failed" }
+                is java.net.ConnectException -> logger.debug(exception) { "kafka cluster directory watcher failed" }
                 else -> throw exception
             }
         }
@@ -58,24 +59,48 @@ class KafkaClusterDirectory(
         val scope = CoroutineScope(dispatcher + handler)
 
         scope.tick(fsRefreshRate, networkExceptionHandler) {
-            logger.info { "$name consumer groups refresh" }
-            consumerGroupsDir.replaceAll(kafkaAdminClient.consumerGroupIds().map { ConsumerGroup(it) })
+            refreshConsumerGroupsDir()
         }
 
         scope.tick(fsRefreshRate, networkExceptionHandler) {
-            logger.info { "$name brokers refresh" }
-            brokersDir.replaceAll(kafkaAdminClient.brokerIds().map { Broker(it) })
+            refreshBrokersDir()
         }
 
         scope.tick(fsRefreshRate, networkExceptionHandler) {
-            logger.info { "$name topics refresh" }
-            topicsDir.replaceAll(kafkaAdminClient.topicNames().filterNot { it.startsWith("typestream-app-") }
-                .map { t -> Topic(t, kafkaAdminClient) })
+            refreshTopicsDir()
         }
 
         scope.tick(fsRefreshRate, networkExceptionHandler) {
-            logger.info { "$name schema registry refresh" }
-            schemaRegistryDir.replaceAll(schemaRegistryClient.subjects().keys.map { t -> Directory(t) })
+            refreshSchemaRegistryDir()
         }
+    }
+
+    override fun refresh() {
+        refreshBrokersDir()
+        refreshConsumerGroupsDir()
+        refreshSchemaRegistryDir()
+        refreshTopicsDir()
+    }
+
+    private fun refreshBrokersDir() {
+        logger.info { "$name brokers refresh" }
+        brokersDir.replaceAll(kafkaAdminClient.brokerIds().map { Broker(it) })
+    }
+
+    private fun refreshConsumerGroupsDir() {
+        logger.info { "$name consumer groups refresh" }
+        consumerGroupsDir.replaceAll(kafkaAdminClient.consumerGroupIds().map { ConsumerGroup(it) })
+    }
+
+    private fun refreshTopicsDir() {
+        logger.info { "$name topics refresh" }
+        topicsDir.replaceAll(kafkaAdminClient.topicNames().filterNot { it.startsWith("typestream-app-") }
+            .map { t -> Topic(t, kafkaAdminClient) })
+    }
+
+
+    private fun refreshSchemaRegistryDir() {
+        logger.info { "$name schema registry refresh" }
+        schemaRegistryDir.replaceAll(schemaRegistryClient.subjects().keys.map { t -> Directory(t) })
     }
 }
