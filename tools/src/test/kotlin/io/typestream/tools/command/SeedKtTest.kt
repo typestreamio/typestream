@@ -1,8 +1,14 @@
 package io.typestream.tools.command
 
 import io.typestream.testing.RedpandaContainerWrapper
+import io.typestream.testing.avro.Author
+import io.typestream.testing.avro.Book
+import io.typestream.testing.avro.PageView
+import io.typestream.testing.avro.Rating
+import io.typestream.testing.avro.User
 import io.typestream.testing.kafka.AdminClientWrapper
 import io.typestream.testing.kafka.KafkaConsumerWrapper
+import io.typestream.testing.kafka.RecordsExpected
 import io.typestream.testing.konfig.testKonfig
 import io.typestream.tools.Config
 import org.assertj.core.api.Assertions.assertThat
@@ -30,11 +36,17 @@ internal class SeedKtTest {
     fun `seeds correctly`() {
         seed(Config(testKonfig(testKafka)).kafkaClustersConfig)
 
-        assertThat(adminClientWrapper.listTopics()).contains(
-            "authors", "books", "users", "ratings", "page_views"
-        )
+        assertThat(adminClientWrapper.listTopics()).contains("authors", "books", "users", "ratings", "page_views")
 
-        val authors = kafkaConsumerWrapper.consume<io.typestream.testing.avro.Author>("authors", 3)
+        val allRecords = kafkaConsumerWrapper.consume(listOf(
+            "authors" to 3,
+            "books" to 10,
+            "users" to 2,
+            "ratings" to 6,
+            "page_views" to 1,
+        ).map { (topic, expected) -> RecordsExpected(topic, expected) })
+
+        val authors = allRecords.filter { it.topic() == "authors" }.map { it.value() as Author }
 
         assertThat(authors).extracting("name").containsExactlyInAnyOrder(
             "Emily St. John Mandel",
@@ -42,11 +54,11 @@ internal class SeedKtTest {
             "Chimamanda Ngozi Adichie"
         )
 
-        val users = kafkaConsumerWrapper.consume<io.typestream.testing.avro.User>("users", 2)
+        val users = allRecords.filter { it.topic() == "users" }.map { it.value() as User }
 
         assertThat(users).extracting("name").containsExactlyInAnyOrder("Grace Hopper", "Margaret Hamilton")
 
-        val books = kafkaConsumerWrapper.consume<io.typestream.testing.avro.Book>("books", 10)
+        val books = allRecords.filter { it.topic() == "books" }.map { it.value() as Book }
 
         assertThat(books).extracting("title").containsExactlyInAnyOrder(
             "Station Eleven",
@@ -61,12 +73,12 @@ internal class SeedKtTest {
             "Purple Hibiscus",
         )
 
-        val ratings = kafkaConsumerWrapper.consume<io.typestream.testing.avro.Rating>("ratings", 6)
+        val ratings = allRecords.count { it.topic() == "ratings" }
 
-        assertThat(ratings).hasSize(6)
+        assertThat(ratings).isEqualTo(6)
 
-        val pageViews = kafkaConsumerWrapper.consume<io.typestream.testing.avro.PageView>("page_views", 1)
+        val pageViews = allRecords.count { it.topic() == "page_views" }
 
-        assertThat(pageViews).hasSize(1)
+        assertThat(pageViews).isEqualTo(1)
     }
 }

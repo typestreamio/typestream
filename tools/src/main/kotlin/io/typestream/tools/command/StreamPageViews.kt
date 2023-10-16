@@ -1,9 +1,11 @@
 package io.typestream.tools.command
 
+import io.typestream.testing.avro.Author
 import io.typestream.testing.avro.buildBook
 import io.typestream.testing.avro.toProducerRecords
 import io.typestream.testing.kafka.KafkaConsumerWrapper
 import io.typestream.testing.kafka.KafkaProducerWrapper
+import io.typestream.testing.kafka.RecordsExpected
 import io.typestream.tools.KafkaClustersConfig
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -26,7 +28,12 @@ fun streamPageViews(kafkaClustersConfig: KafkaClustersConfig) = runBlocking {
 
     val kafkaConsumerWrapper = KafkaConsumerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
 
-    val authors = kafkaConsumerWrapper.consume<io.typestream.testing.avro.Author>("authors", 3)
+    val authors = kafkaConsumerWrapper.consume(listOf(("authors" to 3)).map { (topic, expected) ->
+        RecordsExpected(
+            topic,
+            expected
+        )
+    }).filter { it.topic() == "authors" }.map { it.value() as Author }
 
     val emily = authors.find { it.name == "Emily St. John Mandel" } ?: error("Emily not found")
     val olivia = authors.find { it.name == "Octavia E. Butler" } ?: error("Octavia not found")
