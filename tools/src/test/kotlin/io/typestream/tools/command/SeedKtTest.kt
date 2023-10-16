@@ -3,8 +3,6 @@ package io.typestream.tools.command
 import io.typestream.testing.RedpandaContainerWrapper
 import io.typestream.testing.avro.Author
 import io.typestream.testing.avro.Book
-import io.typestream.testing.avro.PageView
-import io.typestream.testing.avro.Rating
 import io.typestream.testing.avro.User
 import io.typestream.testing.kafka.AdminClientWrapper
 import io.typestream.testing.kafka.KafkaConsumerWrapper

@@ -1,6 +1,5 @@
 package io.typestream.grpc
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.testing.GrpcCleanupRule
