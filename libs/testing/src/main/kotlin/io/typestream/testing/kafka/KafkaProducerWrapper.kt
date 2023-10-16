@@ -10,10 +10,10 @@ import java.util.Properties
 
 class KafkaProducerWrapper(private val bootstrapServers: String, private val schemaRegistryUrl: String) {
     fun <K, V> produce(records: List<ProducerRecord<K, V>>) {
-        val producer = KafkaProducer<K, V>(producerConfig())
-
-        for (e in records) {
-            producer.send(e).get()
+        KafkaProducer<K, V>(producerConfig()).use {
+            for (e in records) {
+                it.send(e).get()
+            }
         }
     }
 
