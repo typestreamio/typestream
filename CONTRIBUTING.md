@@ -96,7 +96,7 @@ to push the beta images to the local registry. Finally, run:
 ```sh
 cd cli
 make
-./typestream k8s create
+./typestream k8s create # add --redpanda to also start a Redpanda cluster inside k8s
 ```
 
 to create a local k8s cluster with
