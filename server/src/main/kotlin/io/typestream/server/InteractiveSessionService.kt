@@ -18,7 +18,6 @@ import io.typestream.grpc.interactive_session_service.runProgramResponse
 import io.typestream.grpc.interactive_session_service.startSessionResponse
 import io.typestream.grpc.interactive_session_service.stopSessionResponse
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.util.Collections
 import java.util.UUID

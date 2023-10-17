@@ -1,27 +1,35 @@
 package io.typestream.scheduler
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.k8s.K8sClient
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import java.io.Closeable
 import java.util.Collections
 
 class Scheduler(private val k8sMode: Boolean, private val dispatcher: CoroutineDispatcher) : Closeable {
     private val jobs: Channel<Job> = Channel()
     private val runningJobs = Collections.synchronizedCollection(mutableSetOf<Job>())
+    private val logger = KotlinLogging.logger {}
 
-    suspend fun start() = coroutineScope {
+    suspend fun start() = supervisorScope {
+        val handler = CoroutineExceptionHandler { _, exception ->
+            logger.error(exception) { "scheduler failed" }
+        }
+        val scope = CoroutineScope(dispatcher + handler)
         if (k8sMode) {
-            launch {
+            scope.launch {
                 K8sClient().use {
                     it.getJobs().forEach { job ->
                         runningJobs.add(K8sJob(job.id))
                     }
                 }
             }
-            launch {
+            scope.launch {
                 val k8sClient = K8sClient()
                 k8sClient.watchJobs().collect { job ->
                     runningJobs.add(K8sJob(job.id))
