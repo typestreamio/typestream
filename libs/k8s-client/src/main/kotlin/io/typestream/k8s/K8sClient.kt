@@ -7,6 +7,7 @@ import io.fabric8.kubernetes.client.KubernetesClientBuilder
 import io.fabric8.kubernetes.client.Watcher
 import io.fabric8.kubernetes.client.WatcherException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -125,5 +126,9 @@ class K8sClient : Closeable {
 
                 override fun onClose(cause: WatcherException?) {}
             })
+
+        awaitClose {
+            channel.close()
+        }
     }.flowOn(Dispatchers.IO)
 }
