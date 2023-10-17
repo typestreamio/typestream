@@ -28,14 +28,7 @@ func parseTemplate(text string, imgName string) string {
 		log.Fatal("💥 failed to parse typestream resources template: ", err)
 	}
 
-	image := fmt.Sprintf("%s:%s", imgName, version.DockerVersion())
-
-	version := version.Version
-	if version == "beta" {
-		image = fmt.Sprintf("localhost:5000/%s", image)
-	}
-
-	err = tmpl.Execute(&buf, struct{ Image string }{Image: image})
+	err = tmpl.Execute(&buf, struct{ Image string }{Image: version.DockerImage(imgName)})
 	if err != nil {
 		log.Fatal("💥 failed to execute typestream resources template: ", err)
 	}

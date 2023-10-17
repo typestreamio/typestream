@@ -74,6 +74,8 @@ and then, from another window terminal, the CLI with:
 ./scripts/dev/shell.sh
 ```
 
+### K8s mode
+
 While this is sufficient to run the server and play around with the CLI
 features, it doesn't allow you to work with `TypeStream` "cloud native" features
 (such as the long running jobs scheduler).
@@ -109,6 +111,31 @@ server with the CLI as long as you're running this command in the background:
 kubectl port-forward -n typestream svc/server 4242:4242
 ```
 
+### Local mode
+
+To help people [getting started](https://docs.typestream.io), we provide a few
+`local` commands. If you're to test TypeStream in this context, you need a local
+docker registry:
+
+```sh
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+```
+
+and then you can run:
+
+```sh
+./scripts/dev/push-images.sh
+```
+
+You're now ready to run the server in local mode:
+
+```sh
+cd cli
+make
+./typestream local start
+./typestream local seed
+```
+
 ## Testing
 
 We try to cover as much as we can with testing. The goal is having each single
@@ -130,7 +157,7 @@ You can create a branch for your changes and try to build from the source as you
 go:
 
 ```sh
-./gradlew build
+./gradlew check
 ```
 
 ## Submit a pull request

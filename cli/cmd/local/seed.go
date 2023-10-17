@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/charmbracelet/log"
@@ -13,7 +12,7 @@ import (
 	"github.com/typestreamio/typestream/cli/pkg/version"
 )
 
-const imageName = "typestream/tools-seeder"
+const imgName = "typestream/tools-seeder"
 
 // seedCmd represents the seed command
 var seedCmd = &cobra.Command{
@@ -30,8 +29,8 @@ var seedCmd = &cobra.Command{
 		ctx := context.Background()
 
 		cli.NegotiateAPIVersion(ctx)
-
-		out, err := cli.ImagePull(ctx, fmt.Sprintf("%s:%s", imageName, version.DockerVersion()), types.ImagePullOptions{})
+		image := version.DockerImage(imgName)
+		out, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
 		if err != nil {
 			log.Fatalf("💥 image pull failed: %v", err)
 		}
@@ -44,11 +43,12 @@ var seedCmd = &cobra.Command{
 		log.Info("⛽ starting seeding process")
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image: imageName,
+			Image: image,
 		}, &container.HostConfig{NetworkMode: container.NetworkMode("host")}, nil, nil, "ts-seed-container")
 		if err != nil {
 			log.Fatalf("💥 failed to create container: %v", err)
 		}
+
 		id := resp.ID
 		if err := cli.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
 			log.Fatalf("💥 failed to start container: %v", err)
