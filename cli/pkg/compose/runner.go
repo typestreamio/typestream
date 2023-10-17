@@ -3,7 +3,6 @@ package compose
 import (
 	"bufio"
 	_ "embed"
-	"fmt"
 	"html/template"
 	"os"
 	"os/exec"
@@ -38,14 +37,7 @@ func (runner *Runner) RunCommand(arg ...string) error {
 		log.Fatal("💥 failed to parse compose template: %v", err)
 	}
 
-	image := fmt.Sprintf("typestream/server:%s", version.DockerVersion())
-
-	version := version.Version
-	if version == "beta" {
-		image = fmt.Sprintf("localhost:5000/%s", image)
-	}
-
-	err = tmpl.Execute(tmpFile, struct{ Image string }{Image: image})
+	err = tmpl.Execute(tmpFile, struct{ Image string }{Image: version.DockerImage("typestream/server")})
 	if err != nil {
 		log.Fatal("💥 failed to execute compose template: %v", err)
 	}

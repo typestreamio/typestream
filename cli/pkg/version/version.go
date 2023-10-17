@@ -18,3 +18,13 @@ func BuildVersion() string {
 func DockerVersion() string {
 	return strings.Replace(Version, "+", ".", 1)
 }
+
+func DockerImage(imgName string) string {
+	image := fmt.Sprintf("%s:%s", imgName, DockerVersion())
+
+	if Version == "beta" {
+		image = fmt.Sprintf("localhost:5000/%s", image)
+	}
+
+	return image
+}
