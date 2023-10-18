@@ -185,9 +185,7 @@ func newRelease(dryRun bool, action string) *release {
 	if highestMicro == -1 {
 		highestMicro = 0
 	} else {
-		if action == "start" {
-			highestMicro++
-		}
+		highestMicro++
 	}
 
 	version := fmt.Sprintf("%s+%d", currentDate, highestMicro)
