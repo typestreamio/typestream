@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const (
+var (
 	Version = "beta"
 
 	CommitHash = "n/a"
