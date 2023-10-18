@@ -37,12 +37,12 @@ and run <i>typed</i> data pipelines with a minimal, familiar syntax.
 ## Why TypeStream?
 
 Building streaming data pipelines on top of Kafka comes with some fixed costs.
-You have to write the app, test it, then deploy and manage it in production.
-Even for the simplest pipelines, this can be a lot of work.
+You have to write an app, test it, then deploy and manage it in production. Even
+for the simplest pipelines, this can be a lot of work.
 
-With TypeStream you can write powerful, typed Kafka pipelines like you would
-write a simple UNIX pipeline in your terminal. For example, imagine you'd like
-to filter a "books" topic. With TypeStream, it's a one liner:
+With TypeStream you can write powerful, typed data pipelines the way you'd write
+a simple UNIX pipeline in your terminal. For example, imagine you'd like to
+filter a "books" topic. With TypeStream, it's a one liner:
 
 ```sh
 $ typestream
@@ -69,8 +69,8 @@ Here's how enriching looks like in action:
 ![enriching with TypeStream](/assets/vhs/enrich.gif?raw=true)
 
 As you can see from the previous command, in the spirit of UNIX, we used cut to
-extract the country field from the response. Here's the kick with TypeStream,
-you can use `cut` (and many other Unix commands) on streams as well:
+extract the country field from the response. Here's the kick, you can use `cut`
+(and many other Unix commands) on streams as well:
 
 ```sh
 $ typestream
@@ -81,12 +81,14 @@ Here's how cutting looks like in action:
 
 ![cutting with TypeStream](/assets/vhs/cut.gif?raw=true)
 
-Another problem that TypeStream solves is preventing you from writing faulty pipelines by type-checking them before executing them. Here's type checking in action:
+Another problem that TypeStream solves is preventing you from writing faulty
+pipelines by type-checking them before executing them. Here's type checking in
+action:
 
 ![type checking with TypeStream](/assets/vhs/type-checking.gif?raw=true)
 
-If you'd like to learn more about TypeStream, check out our
-[documentation](https://docs.typestream.io/).
+If you'd like to learn more about TypeStream, check out [the official
+documentation](https://docs.typestream.io/).
 
 ## Getting started
 
