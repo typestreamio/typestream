@@ -28,7 +28,7 @@ const sidebars = {
         slug: "/how-to",
         keywords: ["how to"],
       },
-      items: ["how-to/filtering", "how-to/enriching"],
+      items: ["how-to/filtering", "how-to/enriching", "how-to/run"],
     },
     {
       type: "category",
@@ -41,9 +41,9 @@ const sidebars = {
         keywords: ["reference"],
       },
       items: [
-        "reference/grpc",
         "reference/glossary",
         "reference/language/specs",
+        "reference/language/shell",
         "reference/language/experiments",
       ],
     },
