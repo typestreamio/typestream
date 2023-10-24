@@ -1,3 +1,7 @@
+---
+description: Learn how to filter streams using the enrich operator.
+---
+
 # Enriching streams
 
 ## Enrich a stream via HTTP requests

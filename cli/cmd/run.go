@@ -40,7 +40,7 @@ var runCmd = &cobra.Command{
 
 		source := extractSource(args[0])
 
-		_, err := client.CreateJob(ctx, &job_service.CreateJobRequest{
+		createJobResponse, err := client.CreateJob(ctx, &job_service.CreateJobRequest{
 			UserId: "42", // TODO get from config
 			Source: source,
 		})
@@ -48,6 +48,13 @@ var runCmd = &cobra.Command{
 			fmt.Printf("💥 failed to create job: %v\n", err)
 			os.Exit(1)
 		}
+
+		if !createJobResponse.Success {
+			fmt.Printf("💥 failed to create job: %s\n", createJobResponse.Error)
+			os.Exit(1)
+		}
+
+		fmt.Printf("🚀 job created: %s\n", createJobResponse.JobId)
 	},
 }
 

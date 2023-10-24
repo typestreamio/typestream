@@ -16,6 +16,8 @@ message CreateJobRequest {
 }
 
 message CreateJobResponse {
-    string job_id = 1;
+    bool success = 1;
+    string job_id = 2;
+    string error = 3;
 }
 

@@ -1,3 +1,7 @@
+---
+description: Learn how to filter streams using the grep operator.
+---
+
 # Filtering streams
 
 In the true spirit of Unix, `TypeStream` allows you to filter streams using the
