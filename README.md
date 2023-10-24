@@ -50,7 +50,7 @@ $ typestream
 ```
 
 TypeStream will take care of type-checking your pipeline and then run it for
-you. Here's how grepping looks like in action:
+you. Here's how it looks like in action:
 
 ![grepping with TypeStream](/assets/vhs/grep.gif?raw=true)
 
@@ -86,6 +86,16 @@ pipelines by type-checking them before executing them. Here's type checking in
 action:
 
 ![type checking with TypeStream](/assets/vhs/type-checking.gif?raw=true)
+
+Deploying a pipeline to production is as simple as running:
+
+```sh
+typestream run 'cat /dev/kafka/local/topics/books | cut .title > /dev/kafka/local/topics/book_titles'
+```
+
+See it in action here:
+
+![running a pipeline with TypeStream](/assets/vhs/run.gif?raw=true)
 
 If you'd like to learn more about TypeStream, check out [the official
 documentation](https://docs.typestream.io/).
