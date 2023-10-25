@@ -269,6 +269,7 @@ class Parser(source: String, cursor: CursorPosition? = null) {
 
             else -> {
                 error("expected data operator after pipe", peek())
+                synchronize()
                 Incomplete(peek())
             }
         }

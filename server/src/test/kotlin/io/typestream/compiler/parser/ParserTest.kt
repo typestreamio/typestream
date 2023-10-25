@@ -69,6 +69,16 @@ internal class ParserTest {
         assertThat(command.expressions).isEqualTo(listOf(Expr.BareWord("topic")))
     }
 
+
+    // "Sentinel" test to make sure we synchronize correctly inside quotes
+    @Test
+    fun `parses a quote`() {
+        val parser = Parser("\"hello\"")
+
+        parser.parse()
+        assertThat(parser.errors).hasSize(1)
+    }
+
     @Test
     fun `parses a shell command`() {
         val parser = Parser("cd dev/kafka")
