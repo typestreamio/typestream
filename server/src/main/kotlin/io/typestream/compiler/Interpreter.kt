@@ -201,11 +201,24 @@ class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.
     override fun visitGrouping(grouping: Expr.Grouping) = evaluate(grouping.expr)
 
     override fun visitBlock(block: Expr.Block): Value {
-        //TODO this is horrible. I don't want to compile the block at runtime but honestly
-        //don't know how to produce a graph without compiling it.
+        // We want to bound args for the block to the block itself
+        // but also don't want to execute any shell command
+
+        session.env.defineVariable(block.argument.lexeme, DataStream("block", Schema.Struct.empty()))
+        block.pipeline.commands.forEach {
+            when (it) {
+                is ShellCommand -> {}
+                // TODO also avoid binding vars?
+                // Probably a sign that we should have a better way to handle blocks
+                // as we're also compiling them at runtime which seems pretty horrible
+                else -> it.accept(this)
+            }
+        }
+
         return Value.Block { dataStream ->
             val localSession = session.clone()
             localSession.env.defineVariable(block.argument.lexeme, dataStream)
+
             val compiler = Compiler(localSession)
             val compilerResult = compiler.compile(listOf(block.pipeline.clone()))
 
@@ -215,7 +228,7 @@ class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.
 
             val vm = Vm(localSession.fileSystem, localSession.scheduler)
             val result =
-                vm.eval(compilerResult.program.graph).firstOrNull() ?: DataStream("empty", Schema.Struct.empty())
+                vm.eval(compilerResult.program.graph).firstOrNull() ?: DataStream("block", Schema.Struct.empty())
 
             dataStream.merge(result)
         }

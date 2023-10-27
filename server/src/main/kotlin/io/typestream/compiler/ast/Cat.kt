@@ -17,6 +17,4 @@ data class Cat(override val expressions: List<Expr>) : DataCommand() {
             )
         )
     }
-
-    override fun inferType() = dataStreams.firstOrNull()
 }

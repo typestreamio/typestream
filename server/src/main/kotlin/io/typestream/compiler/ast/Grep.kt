@@ -35,6 +35,4 @@ data class Grep(override val expressions: List<Expr>) : DataCommand() {
             else -> throw IllegalArgumentException("invalid number of arguments")
         }
     }
-
-    override fun inferType() = dataStreams.firstOrNull()
 }

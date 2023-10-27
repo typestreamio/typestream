@@ -7,7 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 
-class JoinExtTest {
+internal class JoinExtTest {
 
     @Test
     fun `joins two data streams`() {

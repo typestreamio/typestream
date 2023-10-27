@@ -18,6 +18,4 @@ data class Echo(override val expressions: List<Expr>) : DataCommand() {
 
         return Graph(Node.ShellSource(toString(), outputStreams))
     }
-
-    override fun inferType() = DataStream("/bin/echo", Schema.Struct.empty())
 }

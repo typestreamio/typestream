@@ -11,8 +11,6 @@ data class Enrich(override val expressions: List<Expr>) : DataCommand() {
     var block: Value.Block? = null
     val expressionBlock = expressions.first() as Expr.Block
 
-    override fun inferType() = io.typestream.compiler.types.inferType(expressionBlock.pipeline.commands)
-
     override fun resolve(): Graph<Node> {
         val boundBlock = block
         requireNotNull(boundBlock) { "cannot resolve enrich node: unbound block" }

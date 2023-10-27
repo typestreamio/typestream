@@ -1,7 +1,7 @@
 package io.typestream.compiler.types.schema
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -76,8 +76,9 @@ internal class SchemaStructTest {
             assertThat(selection.value)
                 .hasSize(1)
                 .extracting("name", "value")
-                .containsExactly(Assertions.tuple("id", Schema.String("42")))
+                .containsExactly(tuple("id", Schema.String("42")))
         }
+
 
         @Test
         fun `selects nested fields`() {
@@ -118,9 +119,9 @@ internal class SchemaStructTest {
                 .hasSize(3)
                 .extracting("name", "value")
                 .containsExactly(
-                    Assertions.tuple("id", Schema.String("42")),
-                    Assertions.tuple("name", Schema.String("Emily St John Mandel")),
-                    Assertions.tuple(
+                    tuple("id", Schema.String("42")),
+                    tuple("name", Schema.String("Emily St John Mandel")),
+                    tuple(
                         "book", Schema.Struct(
                             listOf(
                                 Schema.Named("title", Schema.String("Station Eleven")),

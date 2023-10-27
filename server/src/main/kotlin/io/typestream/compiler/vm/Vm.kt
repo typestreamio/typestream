@@ -68,26 +68,21 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
         }
     }
 
-    fun eval(graph: Graph<Node>): List<DataStream> {
-        val outputStreams = mutableListOf<DataStream>()
-        graph.children.forEach { shellNode ->
-            require(shellNode.ref is Node.ShellSource) { "expected shell node" }
+    fun eval(graph: Graph<Node>): List<DataStream> = graph.children.flatMap { shellNode ->
+        require(shellNode.ref is Node.ShellSource) { "expected shell node" }
 
-            var dataStreams = shellNode.ref.data
-            shellNode.walk { node ->
-                dataStreams = when (node.ref) {
-                    is Node.Count -> TODO("count node not implemented")
-                    is Node.Group -> TODO("group node not implemented")
-                    is Node.Filter -> dataStreams.filter { node.ref.predicate.matches(it) }
-                    is Node.Map -> dataStreams.map { node.ref.mapper(KeyValue(it, it)).value }
-                    is Node.ShellSource -> dataStreams
-                    else -> error("unexpected node type: ${node.ref}")
-                }
+        var dataStreams = shellNode.ref.data
+        shellNode.walk { node ->
+            dataStreams = when (node.ref) {
+                is Node.Count -> TODO("count node not implemented")
+                is Node.Group -> TODO("group node not implemented")
+                is Node.Filter -> dataStreams.filter { node.ref.predicate.matches(it) }
+                is Node.Map -> dataStreams.map { node.ref.mapper(KeyValue(it, it)).value }
+                is Node.ShellSource -> dataStreams
+                else -> error("unexpected node type: ${node.ref}")
             }
-
-            outputStreams.addAll(dataStreams)
         }
 
-        return outputStreams
+        dataStreams
     }
 }

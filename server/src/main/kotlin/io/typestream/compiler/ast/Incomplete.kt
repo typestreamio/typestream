@@ -10,8 +10,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Incomplete(val token: Token, override val expressions: List<Expr> = listOf()) : DataCommand() {
-    override fun inferType() = DataStream("/bin/noop", Schema.Struct.empty())
-
     override fun resolve(): Graph<Node> = Graph(Node.NoOp(toString()))
 }
 
