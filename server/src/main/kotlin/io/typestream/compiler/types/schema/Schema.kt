@@ -128,7 +128,13 @@ sealed interface Schema {
 
                 val values = flatten().value + schema.flatten().value
 
-                Struct(values).nest()
+                val newSchema = Struct(values)
+
+                if (values.size > 1) {
+                    newSchema.nest()
+                } else {
+                    newSchema
+                }
             }
 
             else -> error("cannot merge $this")

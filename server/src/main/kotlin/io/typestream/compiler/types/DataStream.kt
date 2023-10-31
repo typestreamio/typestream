@@ -1,6 +1,7 @@
 package io.typestream.compiler.types
 
 import io.typestream.compiler.types.schema.Schema
+import io.typestream.compiler.types.schema.empty
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,15 +15,12 @@ data class DataStream(val path: String, val schema: Schema) : Value {
         fun fromLong(path: String, value: Long) = DataStream(path, Schema.Long(value))
     }
 
-    fun merge(right: DataStream) = copy(schema = schema.merge(right.schema))
+    fun merge(right: DataStream) = copy(
+        path = if (path == right.path) path else "${path}_${right.path.substringAfterLast("/")}",
+        schema = schema.merge(right.schema)
+    )
 
-    operator fun get(key: String): Schema {
-        val schema = schema.selectOne(key)
-
-        checkNotNull(schema) { "does not contain key '$key'" }
-
-        return schema
-    }
+    operator fun get(key: String) = schema.selectOne(key) ?: Schema.Struct.empty()
 
     fun hasKey(key: String): Boolean {
         require(schema is Schema.Struct) { "schema is not a struct" }

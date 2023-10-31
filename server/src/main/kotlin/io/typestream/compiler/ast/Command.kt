@@ -1,6 +1,5 @@
 package io.typestream.compiler.ast
 
-import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import kotlinx.serialization.Serializable
 
@@ -8,6 +7,4 @@ import kotlinx.serialization.Serializable
 sealed class Command : Statement {
     val boundArgs = mutableListOf<String>()
     var encoding: Encoding? = null
-
-    abstract fun inferType(): DataStream?
 }

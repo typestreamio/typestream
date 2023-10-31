@@ -2,8 +2,6 @@ package io.typestream.compiler.ast
 
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
-import io.typestream.compiler.types.DataStream
-import io.typestream.compiler.types.schema.Schema
 import io.typestream.graph.Graph
 import io.typestream.option.Option
 import io.typestream.option.parseOptions
@@ -30,8 +28,6 @@ data class Wc(override val expressions: List<Expr>) : DataCommand() {
 
         return groupNode
     }
-
-    override fun inferType() = DataStream("wc", Schema.Long(0))
 
     fun parseOptions() = parseOptions<Options>(boundArgs)
 }
