@@ -28,7 +28,12 @@ const sidebars = {
         slug: "/how-to",
         keywords: ["how to"],
       },
-      items: ["how-to/filtering", "how-to/enriching", "how-to/run"],
+      items: [
+        "how-to/filtering",
+        "how-to/enriching",
+        "how-to/export",
+        "how-to/run",
+      ],
     },
     {
       type: "category",
