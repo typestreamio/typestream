@@ -86,7 +86,7 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
         }
     }
 
-    fun stat(path: String, pwd: String) = mustFind(path, pwd).stat()
+    fun stat(path: String) = root.findInode(path)?.stat() ?: error("cannot find $path")
 
     fun file(path: String, pwd: String): String {
         val targetPath = if (path.startsWith("/")) path else "$pwd/$path"
@@ -107,12 +107,6 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
         val targetNode = root.findInode(path) ?: error("cannot find $path")
 
         return targetNode is Directory
-    }
-
-    private fun mustFind(path: String, pwd: String): Inode {
-        val targetPath = if (pwd == "/") "/$path" else "$pwd/$path"
-
-        return root.findInode(targetPath) ?: error("cannot find $targetPath")
     }
 
     fun findDataStream(path: String) = catalog[path]?.dataStream
