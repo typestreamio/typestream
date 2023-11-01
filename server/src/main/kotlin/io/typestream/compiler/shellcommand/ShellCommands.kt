@@ -20,6 +20,7 @@ private val commands: Map<String, (session: Session, args: List<String>) -> Shel
     "ls" to ::ls,
     "openai-complete" to ::openaiComplete,
     "ps" to ::ps,
+    "pwd" to ::pwd,
     "stat" to ::stat,
 )
 
@@ -136,9 +137,15 @@ private fun stat(session: Session, args: List<String>) = if (args.size != 1) {
 } else {
     ShellCommandOutput.withOutput(
         DataStream(
-            "/bin/stat", Schema.String(session.fileSystem.stat(args[0], session.env.pwd))
+            "/bin/stat", Schema.String(session.fileSystem.stat(args[0]))
         )
     )
+}
+
+private fun pwd(session: Session, args: List<String>) = if (args.isNotEmpty()) {
+    ShellCommandOutput.withError("Usage: pwd")
+} else {
+    ShellCommandOutput.withOutput(DataStream("/bin/pwd", Schema.String(session.env.pwd)))
 }
 
 private fun ps(session: Session, args: List<String>) = if (args.isNotEmpty()) {

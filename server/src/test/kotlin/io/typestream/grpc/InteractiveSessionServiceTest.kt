@@ -65,8 +65,17 @@ internal class InteractiveSessionServiceTest {
             val sessionId =
                 stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
 
-            assertThat(stub.runProgram(sessionId, "ls")).extracting("stdOut", "stdErr", "hasMoreOutput")
+            assertThat(stub.runProgram(sessionId, "ls"))
+                .extracting("stdOut", "stdErr", "hasMoreOutput")
                 .containsExactly("dev", "", false)
+
+            assertThat(stub.runProgram(sessionId, "stat dev"))
+                .extracting("stdOut", "stdErr", "hasMoreOutput")
+                .containsExactly("File: dev\nchildren: 1\n", "", false)
+
+            assertThat(stub.runProgram(sessionId, "file dev"))
+                .extracting("stdOut", "stdErr", "hasMoreOutput")
+                .containsExactly("directory", "", false)
         }
     }
 
