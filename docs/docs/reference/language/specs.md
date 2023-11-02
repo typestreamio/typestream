@@ -6,18 +6,24 @@ While `TypeStream` syntax is inspired by
 [bash](https://tiswww.case.edu/php/chet/bash/bashtop.html), feature parity is a
 _non_ goal of the project.
 
-By default, `TypeStream` doesn't need a syntax to specify types. It can infer types
-from context.
+## Keywords
+
+TODO
+
+## Types
+
+By default, `TypeStream` doesn't need a syntax to specify types. It can infer
+types from context.
 
 - String
 - Number
 - List
 - DataStream
 
-## DataStream
+### DataStream
 
-In `TypeStream`, a DataStream is a typed source of data. `TypeStream` always outputs
-structured data (defaulting to encoding data in JSON).
+In `TypeStream`, a DataStream is a typed source of data. `TypeStream` always
+outputs structured data (defaulting to encoding data in JSON).
 
 Let's start from some examples:
 
@@ -37,29 +43,3 @@ $ join users words
 # 1, [users: {name: Foo, age: 42}, words: "first word"]
 # 2, [users: {name: Foo, age: 42}, words: "second word"]
 ```
-
-## Data Operators
-
-### Cat
-
-### Cut
-
-### Grep
-
-Grep commands accepts conditions like:
-
-```sh
-cat /dev/kafka/local/topics/books | grep [ .title == 'Station Eleven' ]
-```
-
-Here's a list of supporter operators:
-
-- `==`
-- `!=`
-- `>`, `>=`
-- `<`, `<=`
-- `in`
-
-### Join
-
-### Wc

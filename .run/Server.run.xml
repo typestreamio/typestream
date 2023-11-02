@@ -6,6 +6,7 @@
     <module name="typestream.server.main" />
     <option name="PROGRAM_PARAMETERS" value="$ProjectFileDir$/scripts/dev/server.properties" />
     <shortenClasspath name="NONE" />
+    <option name="VM_PARAMETERS" value="-Dorg.slf4j.simpleLogger.log.io.typestream.server.LoggerInterceptor=DEBUG" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

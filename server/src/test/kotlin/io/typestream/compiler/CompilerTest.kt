@@ -1,15 +1,21 @@
 package io.typestream.compiler
 
+import io.typestream.compiler.ast.Predicate
 import io.typestream.compiler.lexer.CursorPosition
+import io.typestream.compiler.node.Node
+import io.typestream.compiler.types.DataStream
+import io.typestream.compiler.types.datastream.fromAvroSchema
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.config.SourcesConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.RedpandaContainerWrapper
+import io.typestream.testing.avro.Book
+import io.typestream.testing.avro.buildBook
 import io.typestream.testing.konfig.testKonfig
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -17,11 +23,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.util.UUID
 
 @Testcontainers
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class CompilerTest {
-
     @Container
     private val testKafka = RedpandaContainerWrapper()
 
@@ -29,7 +34,7 @@ internal class CompilerTest {
 
     private lateinit var session: Session
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val testDispatcher = Dispatchers.IO
 
     @BeforeEach
     fun beforeEach() {
@@ -88,6 +93,121 @@ internal class CompilerTest {
             val suggestions = compiler.complete(source, CursorPosition(0, 31))
 
             assertThat(suggestions).containsExactly("cat", "cut", "echo", "enrich", "grep", "join", "let", "wc")
+        }
+    }
+
+    @Nested
+    inner class Grep {
+        @BeforeEach
+        fun beforeEach() {
+            testKafka.produceRecords("books", buildBook("Station Eleven", 300, UUID.randomUUID()))
+
+            fileSystem.refresh()
+        }
+
+        @Test
+        fun `compiles simple grep correctly`() {
+            val source = "grep 'Station Eleven' /dev/kafka/local/topics/books"
+
+            val compiler = Compiler(session)
+            val compilerResult = compiler.compile(source)
+
+            assertThat(compilerResult.errors).isEmpty()
+
+            val program = compilerResult.program
+
+            assertThat(program.graph.children).hasSize(1)
+            val streamSourceNode = program.graph.children.first().ref
+            require(streamSourceNode is Node.StreamSource)
+
+            assertThat(streamSourceNode.dataStream).isEqualTo(
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+            )
+
+            assertThat(program.graph.children.first().children).hasSize(1)
+            val grepNode = program.graph.children.first().children.first().ref
+            require(grepNode is Node.Filter)
+
+            assertThat(grepNode.predicate).isEqualTo(Predicate.matches("Station Eleven"))
+        }
+
+        @Test
+        fun `compiles inverted grep correctly`() {
+            val source = "grep -v 'Station Eleven' /dev/kafka/local/topics/books"
+
+            val compiler = Compiler(session)
+            val compilerResult = compiler.compile(source)
+
+            assertThat(compilerResult.errors).isEmpty()
+
+            val program = compilerResult.program
+
+            assertThat(program.graph.children).hasSize(1)
+            val streamSourceNode = program.graph.children.first().ref
+            require(streamSourceNode is Node.StreamSource)
+
+            assertThat(streamSourceNode.dataStream).isEqualTo(
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+            )
+
+            assertThat(program.graph.children.first().children).hasSize(1)
+            val grepNode = program.graph.children.first().children.first().ref
+            require(grepNode is Node.Filter)
+
+            assertThat(grepNode.predicate).isEqualTo(Predicate.matches("Station Eleven").not())
+        }
+
+        @Test
+        fun `compiles grep by key correctly`() {
+            val source = "grep -k 'Station Eleven' /dev/kafka/local/topics/books"
+
+            val compiler = Compiler(session)
+            val compilerResult = compiler.compile(source)
+
+            assertThat(compilerResult.errors).isEmpty()
+
+            val program = compilerResult.program
+
+            assertThat(program.graph.children).hasSize(1)
+            val streamSourceNode = program.graph.children.first().ref
+            require(streamSourceNode is Node.StreamSource)
+
+            assertThat(streamSourceNode.dataStream).isEqualTo(
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+            )
+
+            assertThat(program.graph.children.first().children).hasSize(1)
+            val grepNode = program.graph.children.first().children.first().ref
+            require(grepNode is Node.Filter)
+
+            assertThat(grepNode.predicate).isEqualTo(Predicate.matches("Station Eleven"))
+            assertThat(grepNode.byKey).isTrue
+        }
+
+        @Test
+        fun `compiles grep with predicate correctly`() {
+            val source = "grep [.title ~= 'the'] /dev/kafka/local/topics/books"
+
+            val compiler = Compiler(session)
+            val compilerResult = compiler.compile(source)
+
+            assertThat(compilerResult.errors).isEmpty()
+
+            val program = compilerResult.program
+
+            assertThat(program.graph.children).hasSize(1)
+            val streamSourceNode = program.graph.children.first().ref
+            require(streamSourceNode is Node.StreamSource)
+
+            assertThat(streamSourceNode.dataStream).isEqualTo(
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+            )
+
+            assertThat(program.graph.children.first().children).hasSize(1)
+            val grepNode = program.graph.children.first().children.first().ref
+            require(grepNode is Node.Filter)
+
+            assertThat(grepNode.predicate).isEqualTo(Predicate.almostEquals("title", Schema.String("the")))
         }
     }
 }

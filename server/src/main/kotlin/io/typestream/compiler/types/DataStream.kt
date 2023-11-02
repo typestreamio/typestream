@@ -22,7 +22,7 @@ data class DataStream(val path: String, val schema: Schema) : Value {
 
     operator fun get(key: String) = schema.selectOne(key) ?: Schema.Struct.empty()
 
-    fun hasKey(key: String): Boolean {
+    fun hasField(key: String): Boolean {
         require(schema is Schema.Struct) { "schema is not a struct" }
 
         return schema.selectOne(key) != null

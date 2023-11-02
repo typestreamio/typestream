@@ -155,13 +155,13 @@ class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.
 
                     when (command) {
                         is Grep -> errors.addAll(command.predicates.flatMap { it.typeCheck(typeStream) })
-                        is Cut -> command.boundArgs.forEach { key -> checkKey(typeStream, key) }
+                        is Cut -> command.boundArgs.forEach { key -> checkField(typeStream, key) }
                         is Wc -> {
                             // TODO we're parsing options twice.
                             //  To do it once, we need to do it at the end of visitDataCommand
                             val (options, _) = command.parseOptions()
                             if (options.by.isNotBlank()) {
-                                checkKey(typeStream, options.by)
+                                checkField(typeStream, options.by)
                             }
                         }
 
@@ -260,8 +260,8 @@ class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.
     }
 
     //TODO the message has the incorrect path (as it's the resulting type)
-    private fun checkKey(typeStream: DataStream, key: String) {
-        if (!typeStream.hasKey(key)) {
+    private fun checkField(typeStream: DataStream, key: String) {
+        if (!typeStream.hasField(key)) {
             errors.add(
                 """
                     cannot find field '$key' in ${typeStream.path}.

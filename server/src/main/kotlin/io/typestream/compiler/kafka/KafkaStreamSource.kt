@@ -76,7 +76,11 @@ data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBui
     }
 
     fun filter(filter: Node.Filter) {
-        stream = stream.filter { _, v -> filter.predicate.matches(v) }
+        stream = if (filter.byKey) {
+            stream.filter { k, _ -> filter.predicate.matches(k) }
+        } else {
+            stream.filter { _, v -> filter.predicate.matches(v) }
+        }
     }
 
     fun group(group: Node.Group) {

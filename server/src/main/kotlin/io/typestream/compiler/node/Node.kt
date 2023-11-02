@@ -13,7 +13,7 @@ sealed interface Node {
     data class Count(override val id: String) : Node
 
     @Serializable
-    data class Filter(override val id: String, val predicate: Predicate) : Node
+    data class Filter(override val id: String, val byKey: Boolean, val predicate: Predicate) : Node
 
     @Serializable
     data class Group(override val id: String, val keyMapper: (KeyValue) -> DataStream) : Node

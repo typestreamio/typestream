@@ -23,35 +23,40 @@ fun Value.Companion.fromBinary(left: Value, operator: TokenType, right: Value): 
     }
 
     if (left is Value.FieldAccess && right is Value.String) {
-        return when (operator) {
-            EQUAL_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.String(right.value)))
-            BANG_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.String(right.value)).not())
-            ALMOST_EQUAL -> Value.Predicate(Predicate.almostEquals(left.value, Schema.String(right.value)))
+        return fieldAccessAndString(left, operator, right)
+    }
 
-            else -> error("$operator not supported")
-        }
+    if (left is Value.String && right is Value.FieldAccess) {
+        return fieldAccessAndString(right, operator, left)
     }
 
     if (left is Value.FieldAccess && right is Value.Number) {
-        return when (operator) {
-            EQUAL_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.Long(right.value.toLong())))
-            BANG_EQUAL -> Value.Predicate(
-                Predicate.equals(left.value, Schema.Long(right.value.toLong())).not()
-            )
+        return fieldAccessAndNumber(left, operator, right)
+    }
 
-            GREATER -> Value.Predicate(Predicate.greaterThan(left.value, Schema.Long(right.value.toLong())))
-            GREATER_EQUAL -> Value.Predicate(
-                Predicate.greaterOrEqualThan(left.value, Schema.Long(right.value.toLong()))
-            )
-
-            LESS -> Value.Predicate(Predicate.lessThan(left.value, Schema.Long(right.value.toLong())))
-            LESS_EQUAL -> Value.Predicate(
-                Predicate.lessOrEqualThan(left.value, Schema.Long(right.value.toLong()))
-            )
-
-            else -> error("$operator not supported")
-        }
+    if (left is Value.Number && right is Value.FieldAccess) {
+        return fieldAccessAndNumber(right, operator, left)
     }
 
     error("cannot apply $operator to $left and $right")
 }
+
+private fun fieldAccessAndString(left: Value.FieldAccess, operator: TokenType, right: Value.String) = when (operator) {
+    EQUAL_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.String(right.value)))
+    BANG_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.String(right.value)).not())
+    ALMOST_EQUAL -> Value.Predicate(Predicate.almostEquals(left.value, Schema.String(right.value)))
+
+    else -> error("$operator not supported")
+}
+
+private fun fieldAccessAndNumber(left: Value.FieldAccess, operator: TokenType, right: Value.Number) = when (operator) {
+    BANG_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.Long(right.value.toLong())).not())
+    EQUAL_EQUAL -> Value.Predicate(Predicate.equals(left.value, Schema.Long(right.value.toLong())))
+    GREATER -> Value.Predicate(Predicate.greaterThan(left.value, Schema.Long(right.value.toLong())))
+    GREATER_EQUAL -> Value.Predicate(Predicate.greaterOrEqualThan(left.value, Schema.Long(right.value.toLong())))
+    LESS -> Value.Predicate(Predicate.lessThan(left.value, Schema.Long(right.value.toLong())))
+    LESS_EQUAL -> Value.Predicate(Predicate.lessOrEqualThan(left.value, Schema.Long(right.value.toLong())))
+
+    else -> error("$operator not supported")
+}
+

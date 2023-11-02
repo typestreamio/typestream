@@ -37,7 +37,7 @@ sealed interface Predicate {
     }
 
     private data class Equals(val key: String, val value: Schema) : Predicate {
-        override fun matches(dataStream: DataStream) = dataStream[key] == value
+        override fun matches(dataStream: DataStream) = dataStream[key].compareTo(value) == 0
     }
 
     private data class Matches(val pattern: String) : Predicate {
@@ -68,7 +68,7 @@ sealed interface Predicate {
     }
 
     private fun opTypeCheck(dataStream: DataStream, key: String, value: Schema) = buildList {
-        if (!dataStream.hasKey(key)) {
+        if (!dataStream.hasField(key)) {
             add("cannot find field '$key' in ${dataStream.path}.\nYou can use 'file ${dataStream.path}' to check available fields")
         } else {
             val schema = dataStream[key]
