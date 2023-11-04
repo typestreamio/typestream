@@ -108,6 +108,14 @@ func Run() {
 
 	rl := readline.NewShell()
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Printf("💥 failed to get user home dir: %v\n", err)
+		os.Exit(1)
+	}
+
+	rl.History.AddFromFile("home_history", fmt.Sprintf("%s/.typestream_history", homeDir))
+
 	rl.SyntaxHighlighter = s.highlighter
 
 	rl.Completer = s.completer
