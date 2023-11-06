@@ -101,7 +101,7 @@ sealed interface Schema {
             is List -> value.any { it.matches(pattern) }
             is Long -> value.toString().contains(pattern)
             is Named -> value.matches(pattern)
-            is String -> value.contains(pattern)
+            is String -> value.contains(pattern, true)
             is Struct -> value.any { it.matches(pattern) }
             is UUID -> value.toString().contains(pattern)
         }

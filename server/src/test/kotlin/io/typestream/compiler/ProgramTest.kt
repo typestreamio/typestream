@@ -50,8 +50,7 @@ internal class ProgramTest {
                 )
             )
 
-            assertThat(program.runtime()).extracting("name", "type")
-                .containsExactly("local", KAFKA)
+            assertThat(program.runtime()).extracting("name", "type").containsExactly("local", KAFKA)
         }
 
         @Test

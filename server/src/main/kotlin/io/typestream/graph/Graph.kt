@@ -4,20 +4,9 @@ import kotlinx.serialization.Serializable
 import java.util.function.Predicate
 
 @Serializable
-data class Graph<K>(val ref: K) {
-    val children = mutableSetOf<Graph<K>>()
-
+data class Graph<K>(val ref: K, val children: MutableSet<Graph<K>> = mutableSetOf()) {
     fun addChild(child: Graph<K>) {
         children.add(child)
-    }
-
-    private fun print(node: Graph<K> = this, indent: Int = 1): String = buildString {
-        append(node)
-        append("\n")
-        for (child in node.children) {
-            append("\t".repeat(indent))
-            append(print(child, indent + 1))
-        }
     }
 
     fun walk(visitor: (Graph<K>) -> Unit) {

@@ -15,7 +15,14 @@ fun author(
 fun book(
     id: Schema.UUID = Schema.UUID(UUID.randomUUID()),
     title: String,
+    wordCount: Int = 42,
 ) = DataStream(
     "/dev/kafka/local/topics/books",
-    Schema.Struct(listOf(Schema.Named("id", id), Schema.Named("title", Schema.String(title))))
+    Schema.Struct(
+        listOf(
+            Schema.Named("id", id),
+            Schema.Named("title", Schema.String(title)),
+            Schema.Named("word_count", Schema.Int(wordCount))
+        )
+    )
 )

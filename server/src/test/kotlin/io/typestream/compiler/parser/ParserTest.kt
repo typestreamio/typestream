@@ -69,7 +69,6 @@ internal class ParserTest {
         assertThat(command.expressions).isEqualTo(listOf(Expr.BareWord("topic")))
     }
 
-
     // "Sentinel" test to make sure we synchronize correctly inside quotes
     @Test
     fun `parses a quote`() {
@@ -340,8 +339,7 @@ internal class ParserTest {
             val parser = Parser("cat \"books_#{\$foo}\"")
 
             val statements = parser.parse()
-            assertThat(parser.errors)
-                .hasSize(0)
+            assertThat(parser.errors).hasSize(0)
             assertThat(statements).hasSize(1)
 
             assertThat(statements[0]).isInstanceOf(Pipeline::class.java)
