@@ -46,7 +46,7 @@ filter a "books" topic. With TypeStream, it's a one liner:
 
 ```sh
 $ typestream
-> cat /dev/kafka/local/topics/books | grep "station" > /dev/kafka/local/topics/stations
+> grep /dev/kafka/local/topics/books the > /dev/kafka/local/topics/books_with_the
 ```
 
 TypeStream will take care of type-checking your pipeline and then run it for
