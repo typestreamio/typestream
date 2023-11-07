@@ -101,7 +101,7 @@ Paste the following one liner to check if the book "Station eleven" is in the
 books topic:
 
 ```sh
-cat /dev/kafka/local/topics/books | grep "Station eleven"
+grep /dev/kafka/local/topics/books "Station eleven"
 ```
 
 You should see something like:
@@ -120,10 +120,11 @@ Here's a recorded example of what we've just done:
 
 These two short examples tell us a lot about `TypeStream`:
 
-- The syntax is familiar to UNIX users. At first sight, it looks a bit like bash.
-- `TypeStream` data pipelines are _typed_. In the second example, you can see that the
-  output is a structured JSON object derived from the original Avro encoded
-  "books" topic.
+- The syntax is familiar to UNIX users. At first sight, it looks a bit like
+  bash.
+- `TypeStream` data pipelines are _typed_. In the second example, you can see
+  that the output is a structured JSON object derived from the original Avro
+  encoded "books" topic.
 - You build data pipelines by chaining commands with pipes.
 
 In the examples we've seen so far, `TypeStream` outputted the data to the
@@ -132,13 +133,13 @@ scenarios. However, in most cases, you will want to output the results of your
 data pipelines to a new topic. The syntax is as familiar as it can get:
 
 ```sh
-cat /dev/kafka/local/topics/ratings | grep "386428f9-8ad2-4011-8199-b2674d671f87"  > /dev/kafka/local/topics/mandel_ratings
+grep /dev/kafka/local/topics/ratings "386428f9-8ad2-4011-8199-b2674d671f87"  > /dev/kafka/local/topics/mandel_ratings
 ```
 
 ## Where to go from here?
 
-We will be adding more tutorials in the near future but in the meantime, reach
-out to us with any questions you may have. We'd love to hear from you!
-
-If you're curious about the internals of `TypeStream`, check out the
-[components](concepts/components.md) page.
+- Check out our [guides](how-to) to learn how to accomplish common tasks.
+- If you wish to install `TypeStream`, check out the
+  [installation](tutorial/installation.mdx) page.
+- If you're curious about the internals of `TypeStream`, check out the
+  [components](concepts/components.md) page.

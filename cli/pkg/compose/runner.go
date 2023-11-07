@@ -2,6 +2,7 @@ package compose
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
 	"html/template"
 	"os"
@@ -23,6 +24,20 @@ func NewRunner() *Runner {
 	return &Runner{
 		StdOut: make(chan string),
 	}
+}
+
+func (runner *Runner) Show() string {
+	buf := bytes.Buffer{}
+	tmpl, err := template.New("compose-template").Parse(composeFile)
+	if err != nil {
+		log.Fatal("💥 failed to parse compose template: %v", err)
+	}
+
+	err = tmpl.Execute(&buf, struct{ Image string }{Image: version.DockerImage("typestream/server")})
+	if err != nil {
+		log.Fatal("💥 failed to execute compose template: %v", err)
+	}
+	return buf.String()
 }
 
 func (runner *Runner) RunCommand(arg ...string) error {
