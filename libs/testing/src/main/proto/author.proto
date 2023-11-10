@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package io.typestream.testing.proto;
+
+option java_package = "io.typestream.testing.proto";
+option java_multiple_files = true;
+
+message Author {
+  string id = 1;
+  string name = 2;
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package io.typestream.testing.proto;
+
+option java_package = "io.typestream.testing.proto";
+
+option java_multiple_files = true;
+
+message Book {
+  string id = 1;
+  string title = 2;
+  int32 word_count = 3;
+  string author_id = 4;
+}

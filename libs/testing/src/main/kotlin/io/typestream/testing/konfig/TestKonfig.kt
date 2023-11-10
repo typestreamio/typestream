@@ -1,6 +1,6 @@
 package io.typestream.testing.konfig
 
-import io.typestream.testing.RedpandaContainerWrapper
+import io.typestream.testing.TestKafka
 import org.testcontainers.redpanda.RedpandaContainer
 import java.io.ByteArrayInputStream
 
@@ -12,5 +12,5 @@ sources.kafka.local.schemaRegistryUrl=${testKafka.schemaRegistryAddress}
 sources.kafka.local.fsRefreshRate=1
         """.trimIndent()
 
-fun testKonfig(testKafka: RedpandaContainerWrapper) =
+fun testKonfig(testKafka: TestKafka) =
     io.typestream.konfig.Konfig(ByteArrayInputStream(kafkaProperties(testKafka).toByteArray()))

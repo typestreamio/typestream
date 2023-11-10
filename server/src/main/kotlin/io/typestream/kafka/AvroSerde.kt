@@ -1,6 +1,7 @@
 package io.typestream.kafka
 
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
+import io.typestream.kafka.schemaregistry.SchemaType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.generic.GenericDatumWriter
@@ -13,7 +14,7 @@ import org.apache.kafka.common.serialization.Serializer
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
-class AvroSchemaSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer<GenericRecord>,
+class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer<GenericRecord>,
     Serializer<GenericRecord> {
 
     private var decoderFactory = DecoderFactory.get()
@@ -30,7 +31,7 @@ class AvroSchemaSerde(private val schema: Schema) : Serde<GenericRecord>, Deseri
         val out = ByteArrayOutputStream()
 
         out.write(0) // magic byte
-        val id = schemaRegistryClient.register(topic, schema)
+        val id = schemaRegistryClient.register(topic, SchemaType.AVRO, schema.toString())
         out.write(ByteBuffer.allocate(4).putInt(id).array())
 
         val encoder = encoderFactory.binaryEncoder(out, null)

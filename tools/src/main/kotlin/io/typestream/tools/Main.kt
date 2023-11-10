@@ -2,6 +2,7 @@ package io.typestream.tools
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.k8s.K8sClient
+import io.typestream.konfig.Konfig
 import io.typestream.tools.command.seed
 import io.typestream.tools.command.streamPageViews
 import java.io.FileInputStream
@@ -11,21 +12,13 @@ import java.net.InetAddress
 import kotlin.system.exitProcess
 
 
-class Main(konfig: io.typestream.konfig.Konfig) {
+class Main(konfig: Konfig) {
     private val config: Config = Config(konfig)
-    private val logger = KotlinLogging.logger {}
 
-    fun run(command: String) {
-
+    fun run(command: String, args: List<String>) {
         when (command) {
-            "seed" -> {
-                seed(config.kafkaClustersConfig)
-            }
-
-            "stream-page-views" -> {
-                streamPageViews(config.kafkaClustersConfig)
-            }
-
+            "seed" -> seed(config.kafkaClustersConfig, args)
+            "stream-page-views" -> streamPageViews(config.kafkaClustersConfig, args)
             else -> error("cannot run $command")
         }
     }
@@ -77,11 +70,11 @@ class Main(konfig: io.typestream.konfig.Konfig) {
 
             val versionInfo = io.typestream.version_info.VersionInfo.get()
             logger.info { "\uD83D\uDE80 starting tools $versionInfo" }
-            logger.info { "\uD83C\uDFC3\u200D♂\uFE0F running $command" }
+            logger.info { "\uD83C\uDFC3\u200D♂\uFE0F running $command with ${args.toList()}" }
 
-            val app = Main(io.typestream.konfig.Konfig(serverConfig))
+            val app = Main(Konfig(serverConfig))
 
-            app.run(command)
+            app.run(command, args.drop(2))
         }
     }
 }

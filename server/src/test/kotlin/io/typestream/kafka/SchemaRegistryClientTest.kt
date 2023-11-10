@@ -1,9 +1,9 @@
 package io.typestream.kafka
 
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
-import io.typestream.testing.RedpandaContainerWrapper
-import io.typestream.testing.avro.buildUser
 import io.typestream.kafka.schemaregistry.SchemaType.AVRO
+import io.typestream.testing.TestKafka
+import io.typestream.testing.model.User
 import org.apache.avro.Schema.Parser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -14,11 +14,11 @@ import org.testcontainers.junit.jupiter.Testcontainers
 internal class SchemaRegistryClientTest {
 
     @Container
-    private val testKafka = RedpandaContainerWrapper()
+    private val testKafka = TestKafka()
 
     @Test
     fun `fetches schemas`() {
-        testKafka.produceRecords("users", buildUser("Margaret Hamilton"))
+        testKafka.produceRecords("users", "avro", User(name = "Margaret Hamilton"))
 
         val schemaRegistryClient = SchemaRegistryClient(testKafka.schemaRegistryAddress)
 

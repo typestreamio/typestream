@@ -5,14 +5,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
-
 private val logger = KotlinLogging.logger {}
 
-suspend fun until(
-    message: String = "condition",
-    times: Int = 10,
-    block: suspend () -> Unit,
-) {
+suspend fun until(message: String = "condition", times: Int = 10, block: suspend () -> Unit) {
     repeat(times) {
         try {
             block()

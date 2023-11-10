@@ -4,10 +4,13 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.datastream.fromAvroSchema
+import io.typestream.compiler.types.datastream.fromProtoSchema
 import io.typestream.config.SourcesConfig
 import io.typestream.coroutine.tick
 import io.typestream.filesystem.FileSystem
+import io.typestream.kafka.protobuf.ProtoParser
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
+import io.typestream.kafka.schemaregistry.SchemaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -65,11 +68,20 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
         schemaRegistryClient.subjects().forEach { (subjectName, subject) ->
             val topicPath = "$path/topics/${subjectName.replace("-value", "")}"
 
-            store[topicPath] =
-                Metadata(
+            store[topicPath] = when (subject.schemaType) {
+                SchemaType.AVRO -> Metadata(
                     DataStream.fromAvroSchema(topicPath, Parser().parse(subject.schema)),
                     Encoding.AVRO
                 )
+
+                SchemaType.PROTOBUF -> Metadata(
+                    DataStream.fromProtoSchema(topicPath, ProtoParser.parse(subject.schema)),
+                    Encoding.PROTOBUF
+                )
+
+                else -> error("unsupported schema type ${subject.schemaType}")
+            }
+
         }
     }
 

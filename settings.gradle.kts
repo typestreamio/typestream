@@ -34,6 +34,7 @@ dependencyResolutionManagement {
             library("kafka-clients", "org.apache.kafka", "kafka-clients").versionRef("kafka")
             library("kafka-streams", "org.apache.kafka", "kafka-streams").versionRef("kafka")
             library("kafka-avro-serializer", "io.confluent", "kafka-avro-serializer").versionRef("confluent")
+            library("kafka-protobuf-serializer", "io.confluent", "kafka-protobuf-serializer").versionRef("confluent")
             library("kubernetes-client", "io.fabric8", "kubernetes-client").versionRef("kubernetes-client")
             library("okhttp", "com.squareup.okhttp3", "okhttp").versionRef("okhttp")
             library("rocksdbjni", "org.rocksdb", "rocksdbjni").versionRef("rocksdbjni")

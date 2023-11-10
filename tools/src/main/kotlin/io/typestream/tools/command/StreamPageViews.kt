@@ -1,56 +1,44 @@
 package io.typestream.tools.command
 
-import io.typestream.testing.avro.Author
-import io.typestream.testing.avro.buildBook
-import io.typestream.testing.avro.toProducerRecords
 import io.typestream.testing.kafka.KafkaConsumerWrapper
 import io.typestream.testing.kafka.KafkaProducerWrapper
 import io.typestream.testing.kafka.RecordsExpected
+import io.typestream.testing.model.Author
+import io.typestream.testing.model.Book
+import io.typestream.testing.model.PageView
 import io.typestream.tools.KafkaClustersConfig
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import java.time.Instant
-import java.util.UUID
 
-fun randomIpv4() = (0..3).map { (0..255).random() }.joinToString(".")
-
-fun buildPageView(bookId: UUID): io.typestream.testing.avro.PageView =
-    io.typestream.testing.avro.PageView.newBuilder().setViewedAt(Instant.now()).setIpAddress(randomIpv4())
-        .setBookId(bookId).build()
-
-fun streamPageViews(kafkaClustersConfig: KafkaClustersConfig) = runBlocking {
+fun streamPageViews(kafkaClustersConfig: KafkaClustersConfig, args: List<String>) = runBlocking {
+    val encoding = args.firstOrNull() ?: "avro"
     val kafkaConfig = kafkaClustersConfig.clusters["local"]
-    requireNotNull(kafkaConfig) {
-        "local kafka cluster not found"
-    }
+    requireNotNull(kafkaConfig) { "local kafka cluster not found" }
 
     val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
 
     val kafkaConsumerWrapper = KafkaConsumerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
 
-    val authors = kafkaConsumerWrapper.consume(listOf(("authors" to 3)).map { (topic, expected) ->
-        RecordsExpected(
-            topic,
-            expected
-        )
-    }).filter { it.topic() == "authors" }.map { it.value() as Author }
+    val authors = kafkaConsumerWrapper.consume(encoding, listOf(("authors" to 3)).map { (topic, expected) ->
+        RecordsExpected(topic, expected)
+    }).filterIsInstance<Author>()
 
     val emily = authors.find { it.name == "Emily St. John Mandel" } ?: error("Emily not found")
-    val olivia = authors.find { it.name == "Octavia E. Butler" } ?: error("Octavia not found")
+    val octavia = authors.find { it.name == "Octavia E. Butler" } ?: error("Octavia not found")
 
     val books = listOf(
-        buildBook("Station Eleven", 300, emily.id),
-        buildBook("The Sea of Tranquility", 400, emily.id),
-        buildBook("The Glass Hotel", 500, emily.id),
-        buildBook("Kindred", 200, olivia.id),
-        buildBook("Bloodchild", 100, olivia.id)
+        Book(title = "Station Eleven", wordCount = 300, authorId = emily.id),
+        Book(title = "The Sea of Tranquility", wordCount = 400, authorId = emily.id),
+        Book(title = "The Glass Hotel", wordCount = 500, authorId = emily.id),
+        Book(title = "Kindred", wordCount = 200, authorId = octavia.id),
+        Book(title = "Bloodchild", wordCount = 100, authorId = octavia.id)
     )
 
     while (true) {
         val book = books.random()
-        val view = buildPageView(book.id)
+        val view = PageView(book.id, book.id)
         println("$view")
-        kafkaProducer.produce(toProducerRecords("page_views", view) { v -> v.get("book_id").toString() })
+        kafkaProducer.produce("page_views", encoding, listOf(view))
         delay(System.getenv("STREAM_PAGE_VIEWS_DELAY_MS")?.toLong() ?: 500)
     }
 }

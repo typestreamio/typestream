@@ -10,10 +10,10 @@ import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProg
 import io.typestream.grpc.interactive_session_service.InteractiveSession.StartSessionRequest
 import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc
 import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc.InteractiveSessionServiceBlockingStub
-import io.typestream.testing.RedpandaContainerWrapper
-import io.typestream.testing.avro.buildBook
-import io.typestream.testing.avro.buildUser
+import io.typestream.testing.TestKafka
 import io.typestream.testing.konfig.testKonfig
+import io.typestream.testing.model.Book
+import io.typestream.testing.model.User
 import io.typestream.testing.until
 import io.typestream.version_info.VersionInfo
 import kotlinx.coroutines.Dispatchers
@@ -23,11 +23,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 import kotlin.test.assertTrue
-
 
 @Testcontainers
 internal class InteractiveSessionServiceTest {
@@ -39,7 +40,7 @@ internal class InteractiveSessionServiceTest {
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
     @Container
-    private val testKafka = RedpandaContainerWrapper()
+    private val testKafka = TestKafka()
 
     @BeforeEach
     fun beforeEach() {
@@ -131,9 +132,10 @@ internal class InteractiveSessionServiceTest {
         }
     }
 
-    @Test
-    fun `runs a one command pipeline`(): Unit = runBlocking {
-        val users = testKafka.produceRecords("users", buildUser("Grace Hopper"))
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `runs a one command pipeline`(encoding: String): Unit = runBlocking {
+        val users = testKafka.produceRecords("users", encoding, User(name = "Grace Hopper"))
 
         app.use {
             val serverName = InProcessServerBuilder.generateName()
@@ -166,14 +168,15 @@ internal class InteractiveSessionServiceTest {
 
             val user = users.first()
 
-            assertThat(line).extracting("stdOut").isEqualTo("{\"id\":\"${user.value().id}\",\"name\":\"Grace Hopper\"}")
+            assertThat(line).extracting("stdOut").isEqualTo("{\"id\":\"${user.id}\",\"name\":\"Grace Hopper\"}")
         }
     }
 
-    @Test
-    fun `runs a filter pipeline`(): Unit = runBlocking {
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `runs a filter pipeline`(encoding: String): Unit = runBlocking {
         val users = testKafka.produceRecords(
-            "users", buildUser("Grace Hopper"), buildUser("Margaret Hamilton")
+            "users", encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
         )
 
         app.use {
@@ -201,22 +204,22 @@ internal class InteractiveSessionServiceTest {
                     GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(cat.id).build()
                 )
 
-            assertTrue(responseStream.hasNext())
+            assertThat(responseStream.hasNext()).isTrue
             val line = responseStream.next()
 
-            val user = users.find { it.value().name == "Margaret Hamilton" }
+            val user = users.find { require(it is User); it.name == "Margaret Hamilton" }
             requireNotNull(user)
 
-            assertThat(line).extracting("stdOut")
-                .isEqualTo("{\"id\":\"${user.value().id}\",\"name\":\"Margaret Hamilton\"}")
+            assertThat(line).extracting("stdOut").isEqualTo("{\"id\":\"${user.id}\",\"name\":\"Margaret Hamilton\"}")
         }
     }
 
-    @Test
-    fun `runs a projection`(): Unit = runBlocking {
-        val stationEleven = buildBook("Station Eleven", 42, UUID.randomUUID())
-        val kindred = buildBook("Kindred", 42, UUID.randomUUID())
-        testKafka.produceRecords("books", stationEleven, kindred)
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `runs a projection`(encoding: String): Unit = runBlocking {
+        val stationEleven = Book(title = "Station Eleven", wordCount = 42, authorId = UUID.randomUUID().toString())
+        val kindred = Book(title = "Kindred", wordCount = 42, authorId = UUID.randomUUID().toString())
+        testKafka.produceRecords("books", encoding, stationEleven, kindred)
 
         app.use {
             val serverName = InProcessServerBuilder.generateName()
@@ -254,10 +257,11 @@ internal class InteractiveSessionServiceTest {
         }
     }
 
-    @Test
-    fun `runs a redirection`(): Unit = runBlocking {
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `runs a redirection`(encoding: String): Unit = runBlocking {
         val users = testKafka.produceRecords(
-            "users", buildUser("Grace Hopper"), buildUser("Margaret Hamilton")
+            "users", encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
         )
 
         app.use {
@@ -299,11 +303,11 @@ internal class InteractiveSessionServiceTest {
             assertTrue(responseStream.hasNext())
             val line = responseStream.next()
 
-            val user = users.find { it.value().name == "Margaret Hamilton" }
+            val user = users.find { require(it is User); it.name == "Margaret Hamilton" }
             requireNotNull(user)
+            require(user is User)
 
-            assertThat(line).extracting("stdOut")
-                .isEqualTo("{\"id\":\"${user.value().id}\",\"name\":\"${user.value().name}\"}")
+            assertThat(line).extracting("stdOut").isEqualTo("{\"id\":\"${user.id}\",\"name\":\"${user.name}\"}")
         }
     }
 

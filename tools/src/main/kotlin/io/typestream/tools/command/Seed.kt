@@ -1,19 +1,19 @@
 package io.typestream.tools.command
 
-import io.typestream.testing.avro.buildAuthor
-import io.typestream.testing.avro.buildBook
-import io.typestream.testing.avro.buildRating
-import io.typestream.testing.avro.buildUser
-import io.typestream.testing.avro.toProducerRecords
 import io.typestream.testing.kafka.AdminClientWrapper
 import io.typestream.testing.kafka.KafkaProducerWrapper
+import io.typestream.testing.model.Author
+import io.typestream.testing.model.Book
+import io.typestream.testing.model.PageView
+import io.typestream.testing.model.Rating
+import io.typestream.testing.model.User
 import io.typestream.tools.KafkaClustersConfig
 
-fun seed(kafkaClustersConfig: KafkaClustersConfig) {
+fun seed(kafkaClustersConfig: KafkaClustersConfig, args: List<String>) {
+    val encoding = args.firstOrNull() ?: "avro"
+
     val kafkaConfig = kafkaClustersConfig.clusters["local"]
-    requireNotNull(kafkaConfig) {
-        "local kafka cluster not found"
-    }
+    requireNotNull(kafkaConfig) { "local kafka cluster not found" }
 
     val adminClientWrapper = AdminClientWrapper(kafkaConfig.bootstrapServers)
 
@@ -21,28 +21,28 @@ fun seed(kafkaClustersConfig: KafkaClustersConfig) {
 
     val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
 
-    val emily = buildAuthor("Emily St. John Mandel")
-    val stationEleven = buildBook("Station Eleven", 300, emily.id)
-    val seaOfTranquility = buildBook("Sea of Tranquility", 400, emily.id)
-    val theGlassHotel = buildBook("The Glass Hotel", 500, emily.id)
+    val emily = Author(name = "Emily St. John Mandel")
+    val stationEleven = Book(title = "Station Eleven", wordCount = 300, authorId = emily.id)
+    val seaOfTranquility = Book(title = "Sea of Tranquility", wordCount = 400, authorId = emily.id)
+    val theGlassHotel = Book(title = "The Glass Hotel", wordCount = 500, authorId = emily.id)
 
-    val olivia = buildAuthor("Octavia E. Butler")
-    val kindred = buildBook("Kindred", 200, olivia.id)
-    val bloodChild = buildBook("Bloodchild", 100, olivia.id)
-    val parableOfTheSower = buildBook("Parable of the Sower", 200, olivia.id)
-    val parableOfTheTalents = buildBook("Parable of the Talents", 200, olivia.id)
+    val octavia = Author(name = "Octavia E. Butler")
+    val kindred = Book(title = "Kindred", wordCount = 100, authorId = octavia.id)
+    val bloodChild = Book(title = "Bloodchild", wordCount = 100, authorId = octavia.id)
+    val parableOfTheSower = Book(title = "Parable of the Sower", wordCount = 200, authorId = octavia.id)
+    val parableOfTheTalents = Book(title = "Parable of the Talents", wordCount = 300, authorId = octavia.id)
 
-    val chimamanda = buildAuthor("Chimamanda Ngozi Adichie")
-    val americanah = buildBook("Americanah", 200, chimamanda.id)
-    val halfOfAYellowSun = buildBook("Half of a Yellow Sun", 250, chimamanda.id)
-    val purpleHibiscus = buildBook("Purple Hibiscus", 300, chimamanda.id)
+    val chimamanda = Author(name = "Chimamanda Ngozi Adichie")
+    val americanah = Book(title = "Americanah", wordCount = 200, authorId = chimamanda.id)
+    val halfOfAYellowSun = Book(title = "Half of a Yellow Sun", wordCount = 250, authorId = chimamanda.id)
+    val purpleHibiscus = Book(title = "Purple Hibiscus", wordCount = 300, authorId = chimamanda.id)
 
-    val grace = buildUser("Grace Hopper")
-    val margaret = buildUser("Margaret Hamilton")
+    val grace = User(name = "Grace Hopper")
+    val margaret = User(name = "Margaret Hamilton")
 
-    val authors = toProducerRecords("authors", emily, olivia, chimamanda)
-    val books = toProducerRecords(
-        "books",
+    val authors = listOf(emily, octavia, chimamanda)
+
+    val books = listOf(
         stationEleven,
         seaOfTranquility,
         theGlassHotel,
@@ -54,31 +54,30 @@ fun seed(kafkaClustersConfig: KafkaClustersConfig) {
         halfOfAYellowSun,
         purpleHibiscus,
     )
-    val users = toProducerRecords("users", grace, margaret)
 
-    val pageViews =
-        toProducerRecords("page_views", buildPageView(stationEleven.id)) { v -> v.get("book_id").toString() }
+    val users = listOf(grace, margaret)
 
-    val ratings = toProducerRecords(
-        "ratings",
-        buildRating(grace.id, stationEleven.id, 5),
-        buildRating(grace.id, seaOfTranquility.id, 5),
-        buildRating(grace.id, theGlassHotel.id, 5),
-        buildRating(grace.id, kindred.id, 5),
-        buildRating(grace.id, americanah.id, 5),
-        buildRating(grace.id, halfOfAYellowSun.id, 5),
-        buildRating(grace.id, purpleHibiscus.id, 5),
-        buildRating(margaret.id, kindred.id, 5),
-        buildRating(margaret.id, americanah.id, 5),
-        buildRating(margaret.id, bloodChild.id, 5),
-        buildRating(margaret.id, stationEleven.id, 5),
-        buildRating(margaret.id, parableOfTheSower.id, 5),
-        buildRating(margaret.id, parableOfTheTalents.id, 5),
-    ) { r -> r.get("user_id").toString() + r.get("book_id").toString() }
+    val pageViews = listOf(PageView(stationEleven.id, stationEleven.id))
 
-    kafkaProducer.produce(authors)
-    kafkaProducer.produce(books)
-    kafkaProducer.produce(users)
-    kafkaProducer.produce(ratings)
-    kafkaProducer.produce(pageViews)
+    val ratings = listOf(
+        Rating(grace.id + stationEleven.id, grace.id, stationEleven.id, 5),
+        Rating(grace.id + seaOfTranquility.id, grace.id, seaOfTranquility.id, 5),
+        Rating(grace.id + theGlassHotel.id, grace.id, theGlassHotel.id, 5),
+        Rating(grace.id + kindred.id, grace.id, kindred.id, 5),
+        Rating(grace.id + kindred.id, grace.id, americanah.id, 5),
+        Rating(grace.id + halfOfAYellowSun.id, grace.id, halfOfAYellowSun.id, 5),
+        Rating(grace.id + purpleHibiscus.id, grace.id, purpleHibiscus.id, 5),
+        Rating(margaret.id + kindred.id, margaret.id, kindred.id, 5),
+        Rating(margaret.id + americanah.id, margaret.id, americanah.id, 5),
+        Rating(margaret.id + bloodChild.id, margaret.id, bloodChild.id, 5),
+        Rating(margaret.id + stationEleven.id, margaret.id, stationEleven.id, 5),
+        Rating(margaret.id + parableOfTheSower.id, margaret.id, parableOfTheSower.id, 5),
+        Rating(margaret.id + parableOfTheTalents.id, margaret.id, parableOfTheTalents.id, 5),
+    )
+
+    kafkaProducer.produce("authors", encoding, authors)
+    kafkaProducer.produce("books", encoding, books)
+    kafkaProducer.produce("users", encoding, users)
+    kafkaProducer.produce("page_views", encoding, pageViews)
+    kafkaProducer.produce("ratings", encoding, ratings)
 }
