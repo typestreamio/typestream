@@ -1,15 +1,18 @@
 Output grep.gif
 
-Set Theme "Monokai Pro"
-Set FontSize 22
-Set Width 1300
-Set Height 650
+Source ./config.tape
 
 Type typestream
 
 Enter
 
+Sleep 400ms
+
 Type "# Let's start with a simple example"
+
+Enter
+
+Type "# By default, grep matches the pattern against the whole 'content' of the record"
 
 Enter
 
@@ -21,11 +24,7 @@ Sleep 3s
 
 Ctrl+C
 
-Type "# By default, grep matches the pattern against the whole 'content' of the record"
-
-Enter
-
-Type "# Sometimes, we want to match against a specific field"
+Type "# grep can also match against a specific field"
 
 Enter
 
@@ -39,6 +38,7 @@ Enter
 
 Sleep 3s
 
+Ctrl+C
 Ctrl+C
 
 Type "# It's that easy 🎉"
