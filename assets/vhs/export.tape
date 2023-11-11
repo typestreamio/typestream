@@ -1,9 +1,6 @@
 Output export.gif
 
-Set Theme "Monokai Pro"
-Set FontSize 22
-Set Width 1300
-Set Height 650
+Source ./config.tape
 
 Type "# Let's say you are debugging a problem with analytics"
 

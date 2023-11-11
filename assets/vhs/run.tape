@@ -1,9 +1,6 @@
 Output run.gif
 
-Set Theme "Monokai Pro"
-Set FontSize 22
-Set Width 1300
-Set Height 650
+Source ./config.tape
 
 Type "# Let's say you need to run a job that extracts the titles of books from a Kafka topic"
 

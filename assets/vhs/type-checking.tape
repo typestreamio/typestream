@@ -1,11 +1,8 @@
 Output type-checking.gif
 
-Set Theme "Monokai Pro"
-Set FontSize 22
-Set Width 1300
-Set Height 650
+Source ./config.tape
 
-Type typestream
+Type "typestream"
 
 Enter
 
@@ -29,9 +26,7 @@ Sleep 2s
 
 Ctrl+C
 
-Type exit
-
-Enter
+Ctrl+C
 
 Type "# Safer pipelines with TypeStream 🎉"
 

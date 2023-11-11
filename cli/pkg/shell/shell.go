@@ -71,7 +71,7 @@ func (s *shell) close() error {
 func (s *shell) highlighter(line []rune) string {
 	var highlighted strings.Builder
 
-	err := quick.Highlight(&highlighted, string(line), "bash", "terminal16m", "xcode")
+	err := quick.Highlight(&highlighted, string(line), "bash", "terminal16m", "onedark")
 	if err != nil {
 		return string(line)
 	}

@@ -1,15 +1,12 @@
 Output enrich.gif
 
-Set Theme "Monokai Pro"
-Set FontSize 22
-Set Width 1300
-Set Height 650
+Source ./config.tape
 
-Type typestream
+Type "typestream"
 
 Enter
 
-Type ' cat /dev/kafka/local/topics/page_views | enrich { view -> http "https://api.country.is/#{$view.ip_address}" | cut .country }'
+Type 'cat /dev/kafka/local/topics/page_views | enrich { v -> http "https://api.country.is/#{$v.ip_address}" | cut .country }'
 
 Enter
 
