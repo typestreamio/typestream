@@ -43,3 +43,24 @@ $ join users words
 # 1, [users: {name: Foo, age: 42}, words: "first word"]
 # 2, [users: {name: Foo, age: 42}, words: "second word"]
 ```
+
+#### Merging data streams
+
+## Block expression
+
+Block expressions define anonymous functions that take one parameter. They're
+used by `TypeStream` data operators like `each` and `enrich`.
+
+Here's their syntax:
+
+```js
+{ <var> -> <pipeline> }
+```
+
+and an example using the `each` operator:
+
+```sh
+cat users | each { user -> echo $user }
+```
+
+In the example above, the `user` variable is bound to each record in the `users` data stream.

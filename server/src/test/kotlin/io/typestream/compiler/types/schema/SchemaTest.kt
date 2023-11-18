@@ -91,4 +91,36 @@ internal class SchemaTest {
             assertThat(value.prettyPrint()).isEqualTo("{id: \"\", answer: \"42\"}")
         }
     }
+
+    @Nested
+    inner class MergeTest {
+        @Test
+        fun `merges structs`() {
+            val book = Schema.Struct(
+                listOf(
+                    Schema.Named("title", Schema.String("Station Eleven")),
+                    Schema.Named("word_count", Schema.Int(42)),
+                ),
+            )
+
+            val author = Schema.Struct(
+                listOf(
+                    Schema.Named("name", Schema.String("Emily St John Mandel")),
+                )
+            )
+
+            val merged = book.merge(author)
+
+            assertThat(merged).isEqualTo(
+                Schema.Struct(
+                    listOf(
+                        Schema.Named("title", Schema.String("Station Eleven")),
+                        Schema.Named("word_count", Schema.Int(42)),
+                        Schema.Named("name", Schema.String("Emily St John Mandel")),
+                    )
+                )
+            )
+        }
+    }
+
 }

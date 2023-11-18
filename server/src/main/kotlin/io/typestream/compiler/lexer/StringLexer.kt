@@ -20,6 +20,13 @@ class StringLexer(sourceScanner: SourceScanner) : Tokenizer(sourceScanner) {
             emit(STRING_INTER_START)
         }
 
+        '\\' -> if (!sourceScanner.match('"')) {
+            sourceScanner.emitError()
+        } else {
+            sourceScanner.next()
+            stringLiteralPart()
+        }
+
         '"' -> {
             stack.removeLast()
             emit(STRING_END)
@@ -32,6 +39,10 @@ class StringLexer(sourceScanner: SourceScanner) : Tokenizer(sourceScanner) {
         while (sourceScanner.peek() != '"' && !sourceScanner.isAtEnd()) {
             when (sourceScanner.peek()) {
                 '\n' -> sourceScanner.advanceLine()
+                '\\' -> if (sourceScanner.peekNext() == '"') {
+                    sourceScanner.next()
+                }
+
                 '#' -> if (sourceScanner.peekNext() == '{') {
                     return emit(STRING_LIT_PART)
                 }

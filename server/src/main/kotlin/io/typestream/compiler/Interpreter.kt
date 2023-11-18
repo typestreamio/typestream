@@ -2,6 +2,7 @@ package io.typestream.compiler
 
 import io.typestream.compiler.ast.Cut
 import io.typestream.compiler.ast.DataCommand
+import io.typestream.compiler.ast.Each
 import io.typestream.compiler.ast.Enrich
 import io.typestream.compiler.ast.Expr
 import io.typestream.compiler.ast.Grep
@@ -74,8 +75,11 @@ class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.
 
                 is Value.FieldAccess -> dataCommand.boundArgs.add(arg.value)
                 is Value.Block -> {
-                    require(dataCommand is Enrich) { "typestream: $dataCommand does not support blocks" }
-                    dataCommand.block = arg
+                    when (dataCommand) {
+                        is Enrich -> dataCommand.block = arg
+                        is Each -> dataCommand.block = arg
+                        else -> error("typestream: $dataCommand does not support blocks")
+                    }
                 }
             }
         }

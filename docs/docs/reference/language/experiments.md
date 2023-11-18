@@ -3,7 +3,7 @@
 This document is where we sketch language ideas. They may never see the light of
 day.
 
-Refer to the official language [specs](specs.md) if you're looking for a formal
+Refer to the official language [specification](spec.md) if you're looking for a formal
 description of `TypeStream` syntax.
 
 ## Join operations
@@ -108,12 +108,4 @@ cat /dev/kafka/local/topics/impressions | grep [.timestamp > $yesterday]  | wc -
 
 ## alternative syntax with aliases
 select /dev/kafka/local/topics/impressions | where [.timestamp > $yesterday] | by .page_id | top 5
-```
-
-## Enrich records
-
-```js
-cat /dev/kafka/local/topics/views | enrich { view ->
-    http get "http://example.com/#{$view.ip}" | cut .country_code
-} > /dev/kafka/local/topics/enriched_views
 ```

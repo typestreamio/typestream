@@ -4,7 +4,7 @@ The `TypeStream` data catalog is a key-value store where:
 
 - The key is a path to a data stream. Examples: `/dev/kafka/local/topics/users`,
   `/dev/dataflow/cluster1/topics/clicks`.
-- The value is a [DataStream](reference/language/specs.md#data-stream).
+- The value is a [DataStream](reference/language/spec.md#data-stream).
 
 A DataStream holds:
 
@@ -16,7 +16,7 @@ The compiler uses the data catalog to "type check" source code.
 
 The data catalog is also used to determine the output type of streaming
 operations that involve more than one DataStream. See the [DataStream
-type](reference/language/specs.md#data-stream) documentation for more
+type](reference/language/spec.md#data-stream) documentation for more
 information.
 
 ## Encoding rules

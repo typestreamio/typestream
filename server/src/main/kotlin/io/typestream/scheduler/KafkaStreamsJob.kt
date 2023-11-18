@@ -41,6 +41,7 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
                     is Node.Group -> kafkaStreamSource.group(currentNode.ref)
                     is Node.Join -> kafkaStreamSource.join(currentNode.ref)
                     is Node.Map -> kafkaStreamSource.map(currentNode.ref)
+                    is Node.Each -> kafkaStreamSource.each(currentNode.ref)
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)

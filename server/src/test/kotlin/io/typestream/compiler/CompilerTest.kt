@@ -92,7 +92,7 @@ internal class CompilerTest {
             val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 31))
 
-            assertThat(suggestions).containsExactly("cat", "cut", "echo", "enrich", "grep", "join", "let", "wc")
+            assertThat(suggestions).containsExactly("cat", "cut",  "each", "echo", "enrich", "grep", "join", "let", "wc")
         }
     }
 

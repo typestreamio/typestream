@@ -78,6 +78,10 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                 is Node.Group -> TODO("group node not implemented")
                 is Node.Filter -> dataStreams.filter { node.ref.predicate.matches(it) }
                 is Node.Map -> dataStreams.map { node.ref.mapper(KeyValue(it, it)).value }
+                is Node.Each -> {
+                    dataStreams.forEach { node.ref.fn(KeyValue(it, it)) }
+                    dataStreams
+                }
                 is Node.ShellSource -> dataStreams
                 else -> error("unexpected node type: ${node.ref}")
             }

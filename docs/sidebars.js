@@ -47,7 +47,7 @@ const sidebars = {
       },
       items: [
         "reference/glossary",
-        "reference/language/specs",
+        "reference/language/spec",
         "reference/language/operators",
         "reference/language/shell",
         "reference/language/experiments",
