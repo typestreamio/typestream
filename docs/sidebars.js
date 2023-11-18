@@ -15,7 +15,11 @@ const sidebars = {
         slug: "/tutorial",
         keywords: ["tutorials"],
       },
-      items: ["tutorial/installation", "tutorial/configuration"],
+      items: [
+        "tutorial/installation",
+        "tutorial/configuration",
+        "tutorial/deployment",
+      ],
     },
     {
       type: "category",

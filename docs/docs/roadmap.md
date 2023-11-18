@@ -4,7 +4,6 @@ A loose outlook of where `TypeStream` is headed.
 
 ## Short term
 
-- Extensible scheduler interface: we want to allow users to choose where to run long running jobs.
 - Language
   - introduce functions and expression statements like:
     - `answers=$(cat questions | grep answers); grep $answers 42 > result_42; grep $answers 24 > result_24`
@@ -12,9 +11,8 @@ A loose outlook of where `TypeStream` is headed.
   - find
   - tr
 - Serialization
-  - support for `protobuf`
+  - extend support for `protobuf`
   - Add JSON schema encoding support
-  - write back to the schema registry
 
 ## Medium term
 

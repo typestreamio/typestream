@@ -162,8 +162,7 @@ cat $books | cut $title > book_titles
 ```
 
 In this case, the semantic analyser assigns the type Struct[title: String] to
-the output topic with a JSON encoding (following the [encoding
-rules](catalog.md#encoding-rules)).
+the output topic with a JSON encoding (following the [encoding rules](catalog.md#encoding-rules)).
 
 There is one more detail to consider which concerns variables. Consider this
 statement one more time:
@@ -182,7 +181,7 @@ With these details in mind, let's recap what the semantic analyser does:
 - It binds variables.
 - It infers the resulting type of the sink nodes (the redirections) from the
   pipeline.
-- It applies [encoding rules](catalog.md#encoding-rules) to the sink nodes.
+- It applies [encoding rules](./catalog.md#encoding-rules) to the sink nodes.
 
 ## Scheduler
 
