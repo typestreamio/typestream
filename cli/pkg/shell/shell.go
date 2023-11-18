@@ -3,14 +3,12 @@ package shell
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"os"
 	"os/signal"
 
-	"github.com/alecthomas/chroma/quick"
-	"github.com/reeflective/readline"
+	"github.com/chzyer/readline"
 	"github.com/typestreamio/typestream/cli/pkg/grpc"
 	"github.com/typestreamio/typestream/cli/pkg/interactive_session_service"
 	"google.golang.org/grpc/status"
@@ -41,10 +39,6 @@ func (s *shell) runProgram(ctx context.Context, source string) (*interactive_ses
 		&interactive_session_service.RunProgramRequest{SessionId: s.sessionId, Source: source})
 }
 
-func (s *shell) completeProgram(ctx context.Context, source string) (*interactive_session_service.CompleteProgramResponse, error) {
-	return s.client.CompleteProgram(ctx, &interactive_session_service.CompleteProgramRequest{SessionId: s.sessionId, Source: source})
-}
-
 func (s *shell) getProgramOutput(ctx context.Context, id string) (interactive_session_service.InteractiveSessionService_GetProgramOutputClient, error) {
 	return s.client.GetProgramOutput(ctx, &interactive_session_service.GetProgramOutputRequest{Id: id, SessionId: s.sessionId})
 }
@@ -68,28 +62,6 @@ func (s *shell) close() error {
 	return s.client.Close()
 }
 
-func (s *shell) highlighter(line []rune) string {
-	var highlighted strings.Builder
-
-	err := quick.Highlight(&highlighted, string(line), "bash", "terminal16m", "onedark")
-	if err != nil {
-		return string(line)
-	}
-
-	return highlighted.String()
-}
-
-func (s *shell) completer(line []rune, cursor int) readline.Completions {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	completeProgramResponse, err := s.completeProgram(ctx, string(line))
-	if err != nil {
-		return readline.CompleteValues()
-	}
-	return readline.CompleteValues(completeProgramResponse.Value...)
-}
-
 func Run() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -106,23 +78,27 @@ func Run() {
 
 	p := NewPrompt()
 
-	rl := readline.NewShell()
-
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("💥 failed to get user home dir: %v\n", err)
 		os.Exit(1)
 	}
 
-	rl.History.AddFromFile("home_history", fmt.Sprintf("%s/.typestream_history", homeDir))
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:            "> ",
+		HistoryFile:       fmt.Sprintf("%s/.typestream_history", homeDir),
+		HistorySearchFold: true,
+		InterruptPrompt:   "^C",
+		EOFPrompt:         "exit",
+	})
 
-	rl.SyntaxHighlighter = s.highlighter
-
-	rl.Completer = s.completer
-
-	rl.Prompt.Primary(p.Primary)
+	if err != nil {
+		fmt.Printf("💥 failed to create readline: %v\n", err)
+		os.Exit(1)
+	}
 
 	for {
+		rl.SetPrompt(p.Primary())
 		input, err := rl.Readline()
 		if err != nil || input == "exit" {
 			break

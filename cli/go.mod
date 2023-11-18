@@ -4,8 +4,8 @@ go 1.21
 
 require (
 	github.com/charmbracelet/log v0.2.5
+	github.com/chzyer/readline v1.5.1
 	github.com/docker/docker v24.0.6+incompatible
-	github.com/reeflective/readline v1.0.10
 	github.com/spf13/cobra v1.7.0
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
@@ -14,7 +14,6 @@ require (
 require (
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 )
 
 require (
@@ -44,7 +43,6 @@ require (
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.16.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
