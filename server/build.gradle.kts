@@ -27,6 +27,8 @@ dependencies {
     runtimeOnly(libs.grpc.netty)
     implementation(libs.grpc.services)
     implementation(libs.okhttp)
+    implementation("com.squareup.wire:wire-schema:4.0.0")
+    implementation("com.github.os72:protobuf-dynamic:1.0.1")
 
     testImplementation(project(":libs:testing"))
     testImplementation(libs.bundles.testcontainers)

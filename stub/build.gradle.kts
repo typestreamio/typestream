@@ -2,7 +2,7 @@ import com.google.protobuf.gradle.id
 
 plugins {
     id("typestream.kotlin-conventions")
-    id("com.google.protobuf") version "0.9.2"
+    id("com.google.protobuf") version "0.9.4"
 }
 
 repositories {

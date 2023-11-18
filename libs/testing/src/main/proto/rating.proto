@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package io.typestream.testing.proto;
+
+option java_package = "io.typestream.testing.proto";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+
+message Rating {
+  string user_id = 1;
+  string book_id = 2;
+  int32 rating = 3;
+  google.protobuf.Timestamp rated_at = 4;
+}

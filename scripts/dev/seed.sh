@@ -5,4 +5,4 @@ IFS=$'\n\t'
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-./gradlew tools:run --args="$script_dir/server.properties seed" -q --console=plain
+./gradlew tools:run --args="$script_dir/server.properties seed $@" -q --console=plain

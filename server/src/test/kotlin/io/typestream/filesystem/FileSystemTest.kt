@@ -3,13 +3,16 @@ package io.typestream.filesystem
 import io.typestream.compiler.ast.Cat
 import io.typestream.compiler.ast.Expr
 import io.typestream.compiler.ast.Grep
+import io.typestream.compiler.ast.Join
 import io.typestream.compiler.ast.Pipeline
 import io.typestream.compiler.types.Encoding
 import io.typestream.config.SourcesConfig
 import io.typestream.helpers.author
-import io.typestream.testing.RedpandaContainerWrapper
-import io.typestream.testing.avro.buildAuthor
+import io.typestream.helpers.book
+import io.typestream.testing.TestKafka
 import io.typestream.testing.konfig.testKonfig
+import io.typestream.testing.model.Author
+import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -28,14 +31,20 @@ internal class FileSystemTest {
         private lateinit var fileSystem: FileSystem
 
         @Container
-        private val testKafka = RedpandaContainerWrapper()
+        private val testKafka = TestKafka()
 
         @JvmStatic
         @BeforeAll
         fun beforeAll() {
             fileSystem = FileSystem(SourcesConfig(testKonfig(testKafka)), Dispatchers.IO)
 
-            testKafka.produceRecords("authors", buildAuthor("Octavia E. Butler"))
+            val author = Author(name = "Octavia E. Butler")
+            testKafka.produceRecords("authors", "avro", author)
+            testKafka.produceRecords(
+                "books",
+                "proto",
+                Book(title = "Parable of the Sower", authorId = author.id, wordCount = 100)
+            )
 
             fileSystem.refresh()
         }
@@ -86,12 +95,21 @@ internal class FileSystemTest {
     @Nested
     inner class EncodingRules {
         @Test
-        fun `infers simple encoding`() {
+        fun `infers avro encoding`() {
             val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
 
             dataCommand.dataStreams.add(author())
 
             assertThat(fileSystem.inferEncoding(dataCommand)).isEqualTo(Encoding.AVRO)
+        }
+
+        @Test
+        fun `infers proto encoding`() {
+            val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/books")))
+
+            dataCommand.dataStreams.add(book(title = "Parable of the Sower"))
+
+            assertThat(fileSystem.inferEncoding(dataCommand)).isEqualTo(Encoding.PROTOBUF)
         }
 
         @Test
@@ -105,6 +123,22 @@ internal class FileSystemTest {
             val pipeline = Pipeline(listOf(cat, grep))
 
             assertThat(fileSystem.inferEncoding(pipeline)).isEqualTo(Encoding.AVRO)
+        }
+
+
+        @Test
+        fun `infers mixed pipeline encoding`() {
+            val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+
+            cat.dataStreams.add(author())
+
+            val join = Join(listOf(Expr.BareWord("/dev/kafka/local/topics/books")))
+
+            join.dataStreams.add(book(title = "Parable of the Sower"))
+
+            val pipeline = Pipeline(listOf(cat, join))
+
+            assertThat(fileSystem.inferEncoding(pipeline)).isEqualTo(Encoding.JSON)
         }
     }
 }

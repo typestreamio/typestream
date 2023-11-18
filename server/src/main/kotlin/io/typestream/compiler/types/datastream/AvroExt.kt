@@ -53,7 +53,7 @@ private fun toAvroType(schema: Schema): String {
         is Schema.String -> "{\"type\":\"string\",\"avro.java.string\":\"String\"}"
         is Schema.Long -> "{\"type\":\"long\"}"
         is Schema.Int -> "{\"type\":\"int\"}"
-        else -> throw IllegalArgumentException("Unsupported type: ${schema::class.simpleName}")
+        else -> error("Unsupported type: ${schema::class.simpleName}")
     }
 }
 
@@ -62,7 +62,7 @@ private fun AvroSchema.Field.toNamedValue(): Schema.Named {
         AvroSchema.Type.STRING -> Schema.Named(name(), Schema.String.empty)
         AvroSchema.Type.INT -> Schema.Named(name(), Schema.Int(0))
         AvroSchema.Type.LONG -> Schema.Named(name(), Schema.Long(0L))
-        else -> throw IllegalArgumentException("Unsupported type: ${schema().type}")
+        else -> error("Unsupported type: ${schema().type}")
     }
 }
 
@@ -71,7 +71,7 @@ private fun AvroSchema.Field.toNamedValue(genericRecord: GenericRecord): Schema.
         AvroSchema.Type.STRING -> Schema.Named(name(), Schema.String(genericRecord[name()].toString()))
         AvroSchema.Type.INT -> Schema.Named(name(), Schema.Int(genericRecord[name()] as Int))
         AvroSchema.Type.LONG -> Schema.Named(name(), Schema.Long(genericRecord[name()] as Long))
-        else -> throw IllegalArgumentException("Unsupported type: ${schema().type}")
+        else -> error("Unsupported type: ${schema().type}")
     }
 }
 

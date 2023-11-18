@@ -11,10 +11,9 @@ import io.typestream.compiler.vm.Session
 import io.typestream.config.SourcesConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
-import io.typestream.testing.RedpandaContainerWrapper
-import io.typestream.testing.avro.Book
-import io.typestream.testing.avro.buildBook
+import io.typestream.testing.TestKafka
 import io.typestream.testing.konfig.testKonfig
+import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -24,11 +23,12 @@ import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
+import io.typestream.testing.avro.Book as AvroBook
 
 @Testcontainers
 internal class CompilerTest {
     @Container
-    private val testKafka = RedpandaContainerWrapper()
+    private val testKafka = TestKafka()
 
     private lateinit var fileSystem: FileSystem
 
@@ -100,7 +100,11 @@ internal class CompilerTest {
     inner class Grep {
         @BeforeEach
         fun beforeEach() {
-            testKafka.produceRecords("books", buildBook("Station Eleven", 300, UUID.randomUUID()))
+            testKafka.produceRecords(
+                "books",
+                "avro",
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
 
             fileSystem.refresh()
         }
@@ -121,7 +125,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -147,7 +151,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -173,7 +177,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -200,7 +204,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)

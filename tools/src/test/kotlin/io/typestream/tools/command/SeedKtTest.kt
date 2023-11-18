@@ -1,17 +1,20 @@
 package io.typestream.tools.command
 
-import io.typestream.testing.RedpandaContainerWrapper
-import io.typestream.testing.avro.Author
-import io.typestream.testing.avro.Book
-import io.typestream.testing.avro.User
+import io.typestream.testing.TestKafka
 import io.typestream.testing.kafka.AdminClientWrapper
 import io.typestream.testing.kafka.KafkaConsumerWrapper
 import io.typestream.testing.kafka.RecordsExpected
 import io.typestream.testing.konfig.testKonfig
+import io.typestream.testing.model.Author
+import io.typestream.testing.model.Book
+import io.typestream.testing.model.PageView
+import io.typestream.testing.model.Rating
+import io.typestream.testing.model.User
 import io.typestream.tools.Config
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
@@ -19,7 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 internal class SeedKtTest {
 
     @Container
-    private val testKafka = RedpandaContainerWrapper()
+    private val testKafka = TestKafka()
 
     private lateinit var adminClientWrapper: AdminClientWrapper
     private lateinit var kafkaConsumerWrapper: KafkaConsumerWrapper
@@ -30,13 +33,14 @@ internal class SeedKtTest {
         kafkaConsumerWrapper = KafkaConsumerWrapper(testKafka.bootstrapServers, testKafka.schemaRegistryAddress)
     }
 
-    @Test
-    fun `seeds correctly`() {
-        seed(Config(testKonfig(testKafka)).kafkaClustersConfig)
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `seeds correctly`(encoding: String) {
+        seed(Config(testKonfig(testKafka)).kafkaClustersConfig, listOf(encoding))
 
         assertThat(adminClientWrapper.listTopics()).contains("authors", "books", "users", "ratings", "page_views")
 
-        val allRecords = kafkaConsumerWrapper.consume(listOf(
+        val allRecords = kafkaConsumerWrapper.consume(encoding, listOf(
             "authors" to 3,
             "books" to 10,
             "users" to 2,
@@ -44,7 +48,7 @@ internal class SeedKtTest {
             "page_views" to 1,
         ).map { (topic, expected) -> RecordsExpected(topic, expected) })
 
-        val authors = allRecords.filter { it.topic() == "authors" }.map { it.value() as Author }
+        val authors = allRecords.filterIsInstance<Author>()
 
         assertThat(authors).extracting("name").containsExactlyInAnyOrder(
             "Emily St. John Mandel",
@@ -52,11 +56,11 @@ internal class SeedKtTest {
             "Chimamanda Ngozi Adichie"
         )
 
-        val users = allRecords.filter { it.topic() == "users" }.map { it.value() as User }
+        val users = allRecords.filterIsInstance<User>()
 
         assertThat(users).extracting("name").containsExactlyInAnyOrder("Grace Hopper", "Margaret Hamilton")
 
-        val books = allRecords.filter { it.topic() == "books" }.map { it.value() as Book }
+        val books = allRecords.filterIsInstance<Book>()
 
         assertThat(books).extracting("title").containsExactlyInAnyOrder(
             "Station Eleven",
@@ -71,11 +75,11 @@ internal class SeedKtTest {
             "Purple Hibiscus",
         )
 
-        val ratings = allRecords.count { it.topic() == "ratings" }
+        val ratings = allRecords.count { it is Rating }
 
         assertThat(ratings).isEqualTo(6)
 
-        val pageViews = allRecords.count { it.topic() == "page_views" }
+        val pageViews = allRecords.count { it is PageView }
 
         assertThat(pageViews).isEqualTo(1)
     }

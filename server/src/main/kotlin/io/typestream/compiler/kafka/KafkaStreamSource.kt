@@ -6,11 +6,15 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.datastream.fromAvroGenericRecord
 import io.typestream.compiler.types.datastream.fromBytes
+import io.typestream.compiler.types.datastream.fromProtoMessage
 import io.typestream.compiler.types.datastream.join
 import io.typestream.compiler.types.datastream.toAvroGenericRecord
 import io.typestream.compiler.types.datastream.toAvroSchema
 import io.typestream.compiler.types.datastream.toBytes
-import io.typestream.kafka.AvroSchemaSerde
+import io.typestream.compiler.types.datastream.toProtoMessage
+import io.typestream.compiler.types.datastream.toProtoSchema
+import io.typestream.kafka.AvroSerde
+import io.typestream.kafka.ProtoSerde
 import io.typestream.kafka.StreamsBuilderWrapper
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KeyValue.pair
@@ -21,37 +25,69 @@ import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.Produced
 import java.time.Duration
 
+// TODO we need to support schemas for keys
 data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBuilder: StreamsBuilderWrapper) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
 
-    // TODO we need a BytesOrAvroSerde for keys
     private fun stream(dataStream: DataStream): KStream<DataStream, DataStream> {
+        val config = streamsBuilder.config.toMutableMap()
         return when (node.encoding) {
-            Encoding.AVRO -> streamsBuilder.stream(
-                dataStream.name, Consumed.with(Serdes.Bytes(), AvroSchemaSerde(dataStream.toAvroSchema()))
-            ).map { k, v ->
-                pair(
-                    DataStream.fromBytes(dataStream.path, k), DataStream.fromAvroGenericRecord(dataStream.path, v)
-                )
+
+            Encoding.AVRO -> {
+                val valueSerde = AvroSerde(dataStream.toAvroSchema())
+                valueSerde.configure(config, false)
+
+                streamsBuilder.stream(
+                    dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
+                ).map { k, v ->
+                    pair(
+                        DataStream.fromBytes(dataStream.path, k), DataStream.fromAvroGenericRecord(dataStream.path, v)
+                    )
+                }
+            }
+
+            Encoding.PROTOBUF -> {
+                val valueSerde = ProtoSerde(dataStream.toProtoSchema())
+                valueSerde.configure(config, false)
+                streamsBuilder.stream(
+                    dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
+                ).map { k, v ->
+                    pair(
+                        DataStream.fromBytes(dataStream.path, k), DataStream.fromProtoMessage(dataStream.path, v)
+                    )
+                }
             }
 
             else -> streamsBuilder.stream(dataStream.name)
         }
     }
 
-    // TODO we need a BytesOrAvroSerde for keys
     fun to(node: Node.Sink) {
+        val config = streamsBuilder.config.toMutableMap()
+
         when (node.encoding) {
             Encoding.AVRO -> {
                 val keySerde = Serdes.Bytes()
-                keySerde.configure(streamsBuilder.config.toMutableMap(), true)
+                keySerde.configure(config, true)
 
-                val valueSerde = AvroSchemaSerde(node.output.toAvroSchema())
-                valueSerde.configure(streamsBuilder.config.toMutableMap(), false)
+                val valueSerde = AvroSerde(node.output.toAvroSchema())
+                valueSerde.configure(config, false)
 
                 stream.map { k, v ->
                     pair(k.toBytes(), v.toAvroGenericRecord())
+                }.to(node.output.name, Produced.with(keySerde, valueSerde))
+            }
+
+            Encoding.PROTOBUF -> {
+                val keySerde = Serdes.Bytes()
+                keySerde.configure(config, true)
+
+                val valueSerde = ProtoSerde(node.output.toProtoSchema())
+                valueSerde.configure(config, false)
+
+                stream.map { k, v ->
+                    pair(k.toBytes(), v.toProtoMessage())
                 }.to(node.output.name, Produced.with(keySerde, valueSerde))
             }
 

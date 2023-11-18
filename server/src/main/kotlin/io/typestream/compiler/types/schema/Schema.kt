@@ -33,7 +33,11 @@ sealed interface Schema {
     }
 
     @Serializable
-    data class Struct(override val value: kotlin.collections.List<Named>) : Schema
+    data class Struct(override val value: kotlin.collections.List<Named>) : Schema {
+        private val indexedValue = value.associate { namedValue -> namedValue.name to namedValue.value }
+
+        operator fun get(key: kotlin.String): Schema = indexedValue[key] ?: error("no such field: $key")
+    }
 
     @Serializable
     data class UUID(@Serializable(with = UUIDSerializer::class) override val value: java.util.UUID) : Schema

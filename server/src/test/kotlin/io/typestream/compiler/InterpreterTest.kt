@@ -6,13 +6,14 @@ import io.typestream.compiler.vm.Session
 import io.typestream.config.SourcesConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
-import io.typestream.testing.RedpandaContainerWrapper
-import io.typestream.testing.avro.buildBook
+import io.typestream.testing.TestKafka
 import io.typestream.testing.konfig.testKonfig
+import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
@@ -22,7 +23,7 @@ import java.util.UUID
 internal class InterpreterTest {
 
     @Container
-    private val testKafka = RedpandaContainerWrapper()
+    private val testKafka = TestKafka()
 
     private lateinit var fileSystem: FileSystem
 
@@ -35,10 +36,15 @@ internal class InterpreterTest {
         session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
     }
 
-    @Test
-    fun `handles non-existing fields on conditions`() {
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `handles non-existing fields on conditions`(encoding: String) {
         fileSystem.use {
-            testKafka.produceRecords("books", buildBook("Station Eleven", 300, UUID.randomUUID()))
+            testKafka.produceRecords(
+                "books",
+                encoding,
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
 
             fileSystem.refresh()
 
@@ -59,10 +65,15 @@ internal class InterpreterTest {
         }
     }
 
-    @Test
-    fun `handles non-existing fields on projections`() {
+    @ParameterizedTest
+    @ValueSource(strings = ["avro", "proto"])
+    fun `handles non-existing fields on projections`(encoding: String) {
         fileSystem.use {
-            testKafka.produceRecords("books", buildBook("Station Eleven", 300, UUID.randomUUID()))
+            testKafka.produceRecords(
+                "books",
+                encoding,
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
 
             fileSystem.refresh()
 
