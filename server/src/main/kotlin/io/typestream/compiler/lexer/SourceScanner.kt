@@ -41,7 +41,7 @@ class SourceScanner(private val source: String, val cursor: CursorPosition? = nu
     fun emitError() = emitToken(ERROR)
 
     fun emitToken(type: TokenType): Token {
-        val lexeme = source.substring(start, current)
+        val lexeme = source.substring(start, current).replace("\\\"", "\"")
         val token = when (type) {
             EOF -> Token(type, "", line, column)
             STRING -> Token(type, lexeme.substring(1, lexeme.length - 1), line, column)

@@ -184,6 +184,18 @@ internal class ModalLexerTest {
         }
 
         @Test
+        fun `scans quoted strings with escaped quotes`() {
+            val lexer = ModalLexer(SourceScanner("echo \"\\\"hello\\\"\""))
+
+            assertThat(lexer.tokens()).extracting("type", "lexeme").containsExactly(
+                tuple(ECHO, "echo"),
+                tuple(STRING_START, "\""),
+                tuple(STRING_LIT_PART, "\"hello\""),
+                tuple(STRING_END, "\"")
+            )
+        }
+
+        @Test
         fun `scans single quoted strings`() {
             val lexer = ModalLexer(SourceScanner("cat 'topic'"))
 

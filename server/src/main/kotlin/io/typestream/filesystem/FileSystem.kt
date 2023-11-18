@@ -5,6 +5,7 @@ import io.typestream.compiler.ast.Cat
 import io.typestream.compiler.ast.Command
 import io.typestream.compiler.ast.Cut
 import io.typestream.compiler.ast.DataCommand
+import io.typestream.compiler.ast.Each
 import io.typestream.compiler.ast.Echo
 import io.typestream.compiler.ast.Enrich
 import io.typestream.compiler.ast.Grep
@@ -136,7 +137,7 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
 
         for (i in 1 until pipeline.commands.size) {
             when (pipeline.commands[i]) {
-                is Grep, is Enrich -> {}
+                is Grep, is Enrich, is Each -> {}
                 is Cut, is Join, is Wc -> encoding += Encoding.JSON
                 else -> error("cannot infer encoding for $pipeline: ${pipeline.commands[i]} not supported")
             }

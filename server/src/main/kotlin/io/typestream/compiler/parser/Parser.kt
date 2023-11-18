@@ -4,6 +4,7 @@ import io.typestream.compiler.ast.Cat
 import io.typestream.compiler.ast.Command
 import io.typestream.compiler.ast.Cut
 import io.typestream.compiler.ast.DataCommand
+import io.typestream.compiler.ast.Each
 import io.typestream.compiler.ast.Echo
 import io.typestream.compiler.ast.Enrich
 import io.typestream.compiler.ast.Expr
@@ -247,6 +248,11 @@ class Parser(source: String, cursor: CursorPosition? = null) {
                 Echo(expressionList())
             }
 
+            EACH -> {
+                consume(EACH, "each expected")
+                Each(listOf(block()))
+            }
+
             ENRICH -> {
                 consume(ENRICH, "enrich expected")
                 Enrich(listOf(block()))
@@ -322,7 +328,8 @@ class Parser(source: String, cursor: CursorPosition? = null) {
         while (!isAtEnd()) {
             if (previousToken.type == SEMICOLON) return
             when (peek().type) {
-                CAT, CUT, ECHO, ENRICH, GREP, JOIN, LET, WC -> return
+                //TODO use keywords from TokenType?
+                CAT, CUT, ECHO, EACH, ENRICH, GREP, JOIN, LET, WC -> return
                 else -> {}
             }
             advance()

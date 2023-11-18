@@ -3,8 +3,9 @@ package io.typestream.compiler.types
 import io.typestream.compiler.ast.Command
 import io.typestream.compiler.ast.Cut
 import io.typestream.compiler.ast.DataCommand
+import io.typestream.compiler.ast.Each
+import io.typestream.compiler.ast.Echo
 import io.typestream.compiler.ast.Enrich
-import io.typestream.compiler.ast.Join
 import io.typestream.compiler.ast.ShellCommand
 import io.typestream.compiler.types.datastream.join
 import io.typestream.compiler.types.schema.Schema
@@ -13,6 +14,7 @@ import io.typestream.compiler.types.schema.empty
 fun inferType(commands: List<Command>): DataStream {
     var resultingType: DataStream = when (val command = commands.firstOrNull()) {
         is ShellCommand -> DataStream("/bin/${command.token.lexeme}", Schema.Struct.empty())
+        is Echo -> DataStream("/bin/echo", Schema.Struct.empty())
         is DataCommand -> command.dataStreams.reduce(DataStream::join)
         else -> error("cannot infer type: $commands not supported")
     }

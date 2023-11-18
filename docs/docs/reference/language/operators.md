@@ -6,6 +6,43 @@ The purpose of this document is to spec `TypeStream` data operators.
 
 ## Cut
 
+## Each
+
+### Synopsis
+
+`each <block expression>`
+
+### Description
+
+The `each` data operator is used to execute a [block
+expression](spec.md#block-expression) for each record in a data stream. The
+block expression is required.
+
+`each` **must** be the last operator in a pipeline.
+
+Here's an example of using `each` to make a HTTP request for each record in a data stream:
+
+```sh
+cat /dev/kafka/local/books | each { book -> http post https://example.com/new_books "{\"book_id\": #{$book.id}}" }
+```
+
+## Enrich
+
+### Synopsis
+
+`enrich <block expression>`
+
+### Description
+
+The `enrich` data operator is used to enrich data streams. The block expression
+is required. `enrich` **cannot** be the first operator in a pipeline.
+
+`enrich` evaluates the block expression for each record in the data stream and
+will [merge](spec.md#merging-data-streams) the result with the original record
+therefore enriching it.
+
+See [enriching](how-to/enriching.md) for more examples.
+
 ## Grep
 
 ### Synopsis
@@ -52,8 +89,6 @@ Here's the list of supported operators:
   "Contains" operator. It matches if the field contains the value. Ignores case.
 
 See the [filtering streams](how-to/filtering.md) how-to document for examples.
-
-## Enrich
 
 ## Join
 

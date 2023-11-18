@@ -34,5 +34,8 @@ sealed interface Node {
     data class StreamSource(override val id: String, val dataStream: DataStream, val encoding: Encoding) : Node
 
     @Serializable
+    data class Each(override val id: String, val fn: (KeyValue) -> Unit) : Node
+
+    @Serializable
     data class Sink(override val id: String, val output: DataStream, val encoding: Encoding) : Node
 }

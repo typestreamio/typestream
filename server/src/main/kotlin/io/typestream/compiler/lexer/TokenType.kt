@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class TokenType {
     //keywords
-    CAT, CUT, ECHO, ENRICH, GREP, JOIN, LET, WC,
+    CAT, CUT, ECHO, EACH, ENRICH, GREP, JOIN, LET, WC,
 
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
@@ -37,6 +37,7 @@ enum class TokenType {
             "cat" to CAT,
             "cut" to CUT,
             "echo" to ECHO,
+            "each" to EACH,
             "enrich" to ENRICH,
             "grep" to GREP,
             "join" to JOIN,

@@ -102,6 +102,10 @@ data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBui
         }
     }
 
+    fun each(each: Node.Each) {
+        stream.foreach { k, v -> each.fn(KeyValue(k, v)) }
+    }
+
     fun join(join: Node.Join) {
         val windowSize = Duration.ofMinutes(5)
         val advance = Duration.ofMinutes(1)
