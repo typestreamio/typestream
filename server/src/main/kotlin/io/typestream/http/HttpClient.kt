@@ -9,20 +9,18 @@ private val okHttpClient = OkHttpClient()
 
 object HttpClient {
     fun get(url: String): String {
-        val request = Request.Builder()
-            .url(url)
-            .build()
-
+        val request = Request.Builder().url(url).build()
         val response = okHttpClient.newCall(request).execute()
         return response.body?.string() ?: "{}"
     }
 
     // post with body
     fun post(url: String, body: String, headers: Map<String, String> = emptyMap()): String {
+        val contentType = "application/json"
         val request = Request.Builder()
             .url(url)
-            .post(body.toRequestBody("application/json".toMediaTypeOrNull()))
-            .addHeader("Content-Type", "application/json")
+            .post(body.toRequestBody(contentType.toMediaTypeOrNull()))
+            .addHeader("Content-Type", contentType)
 
         headers.forEach(request::addHeader)
 

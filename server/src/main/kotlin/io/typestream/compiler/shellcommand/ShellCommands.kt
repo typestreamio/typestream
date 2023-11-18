@@ -25,6 +25,7 @@ private val commands: Map<String, (session: Session, args: List<String>) -> Shel
 )
 
 fun ShellCommand.Companion.find(command: String) = commands[command]
+fun ShellCommand.Companion.mustFind(command: String) = commands[command] ?: error("unknown command: $command")
 
 fun ShellCommand.Companion.names() = commands.keys
 
@@ -76,20 +77,6 @@ private fun history(session: Session, @Suppress("UNUSED_PARAMETER") args: List<S
     ShellCommandOutput.withOutput(session.env.history().mapIndexed { index, command ->
         DataStream("/bin/history", Schema.String("${index + 1} $command"))
     })
-
-private fun http(
-    @Suppress("UNUSED_PARAMETER") session: Session,
-    args: List<String>,
-): ShellCommandOutput {
-    if (args.isEmpty()) {
-        return ShellCommandOutput.withError("Usage: http <url>")
-    }
-
-    val url = args.first()
-    val output = HttpClient.get(url)
-
-    return ShellCommandOutput.withOutput(DataStream("/bin/http", Schema.Struct.fromJSON(output)))
-}
 
 private fun openaiComplete(
     @Suppress("UNUSED_PARAMETER") session: Session,

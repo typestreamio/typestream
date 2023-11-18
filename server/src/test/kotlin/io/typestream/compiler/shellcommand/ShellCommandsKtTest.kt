@@ -1,10 +1,10 @@
-package io.typestream.compiler.vm
+package io.typestream.compiler.shellcommand
 
 import io.typestream.compiler.ast.ShellCommand
-import io.typestream.compiler.shellcommand.ShellCommandOutput
-import io.typestream.compiler.shellcommand.find
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
+import io.typestream.compiler.vm.Env
+import io.typestream.compiler.vm.Session
 import io.typestream.config.SourcesConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
@@ -22,7 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 
 @Testcontainers
-internal class ShellCommandsTest {
+internal class ShellCommandsKtTest {
     @Container
     private val testKafka = TestKafka()
 
@@ -37,16 +37,10 @@ internal class ShellCommandsTest {
         session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
     }
 
-
-    @ParameterizedTest
-    @ValueSource(strings = ["avro", "proto"])
-    fun `changes directory correctly`(encoding: String) {
+    @Test
+    fun `changes directory correctly`() {
         fileSystem.use {
-            testKafka.produceRecords("authors", encoding, Author(name = "Emily St. John Mandel"))
-            fileSystem.refresh()
-
-            val cd = ShellCommand.find("cd")
-            requireNotNull(cd)
+            val cd = ShellCommand.mustFind("cd")
 
             val shellCommandOutput = cd(session, listOf("dev/kafka/local/topics"))
 
@@ -66,20 +60,16 @@ internal class ShellCommandsTest {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["avro", "proto"])
-    fun `cannot change directory to incorrect path`(encoding: String) {
+    @Test
+    fun `cannot change directory to incorrect path`() {
         fileSystem.use {
-            testKafka.produceRecords("authors", encoding, Author(name = "Octavia E. Butler"))
-            fileSystem.refresh()
-
-            val cd = ShellCommand.find("cd")
-            requireNotNull(cd)
+            val cd = ShellCommand.mustFind("cd")
 
             val programResult = cd(session, listOf("dev/whatever"))
 
-            assertThat(programResult)
-                .isEqualTo(ShellCommandOutput.withError("cd: cannot cd into dev/whatever: no such file or directory"))
+            assertThat(programResult).isEqualTo(
+                ShellCommandOutput.withError("cd: cannot cd into dev/whatever: no such file or directory")
+            )
 
             assertThat(session.env.pwd).isEqualTo("/")
         }
@@ -93,8 +83,7 @@ internal class ShellCommandsTest {
             testKafka.produceRecords("authors", encoding, Author(name = "Ann Leckie"))
             fileSystem.refresh()
 
-            val cd = ShellCommand.find("cd")
-            requireNotNull(cd)
+            val cd = ShellCommand.mustFind("cd")
 
             val programResult = cd(session, listOf("dev/kafka/local/topics/authors"))
 

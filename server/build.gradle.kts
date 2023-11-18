@@ -34,6 +34,7 @@ dependencies {
     testImplementation(libs.bundles.testcontainers)
     testImplementation(libs.test.containers.redpanda)
     testImplementation(libs.grpc.testing)
+    testImplementation(libs.okhttp.mockwebserver)
 }
 
 jib {
