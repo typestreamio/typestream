@@ -14,8 +14,7 @@ The purpose of this document is to spec `TypeStream` data operators.
 
 ### Description
 
-The `each` data operator is used to execute a [block
-expression](spec.md#block-expression) for each record in a data stream. The
+The `each` data operator is used to execute a [block expression](spec.md#block-expression) for each record in a data stream. The
 block expression is required.
 
 `each` **must** be the last operator in a pipeline.

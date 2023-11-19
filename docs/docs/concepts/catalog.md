@@ -15,9 +15,8 @@ A DataStream holds:
 The compiler uses the data catalog to "type check" source code.
 
 The data catalog is also used to determine the output type of streaming
-operations that involve more than one DataStream. See the [DataStream
-type](reference/language/spec.md#data-stream) documentation for more
-information.
+operations that involve more than one DataStream. See the [DataStream type](/reference/language/spec.md#data-stream)
+documentation for more information.
 
 ## Encoding rules
 
