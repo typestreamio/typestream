@@ -9,26 +9,32 @@ import (
 	"os/exec"
 
 	"github.com/charmbracelet/log"
-	"github.com/typestreamio/typestream/cli/pkg/version"
 )
 
-//go:embed typestream.yaml
+//go:embed typestream.yaml.tmpl
 var typestreamTmpl string
 
 //go:embed redpanda.yaml
 var redpandaTmpl string
 
-//go:embed seeder.yaml
+//go:embed seeder.yaml.tmpl
 var seederTmpl string
 
-func parseTemplate(text string, imgName string) string {
+type templateData struct {
+	Image     string
+	Namespace string
+}
+
+func parseTemplate(text string, data templateData) string {
 	buf := bytes.Buffer{}
-	tmpl, err := template.New(fmt.Sprintf("%s-template", imgName)).Parse(text)
+	tmpl, err := template.New(fmt.Sprintf("%s-template", data.Image)).Parse(text)
 	if err != nil {
 		log.Fatal("💥 failed to parse typestream resources template: ", err)
 	}
 
-	err = tmpl.Execute(&buf, struct{ Image string }{Image: version.DockerImage(imgName)})
+	log.Printf("📝 data: %+v", data)
+
+	err = tmpl.Execute(&buf, data)
 	if err != nil {
 		log.Fatal("💥 failed to execute typestream resources template: ", err)
 	}
@@ -38,10 +44,11 @@ func parseTemplate(text string, imgName string) string {
 }
 
 type Runner struct {
+	namespace string
 }
 
-func NewRunner() *Runner {
-	return &Runner{}
+func NewRunner(namespace string) *Runner {
+	return &Runner{namespace: namespace}
 }
 
 func (r *Runner) apply(tmpl string) error {
@@ -53,13 +60,26 @@ func (r *Runner) apply(tmpl string) error {
 }
 
 func (r *Runner) Apply(redpanda bool) error {
+	serverTmpl := r.Show()
+
 	if redpanda {
-		return r.apply(parseTemplate(typestreamTmpl, "typestream/server") + "\n\n---\n\n" + redpandaTmpl)
+		return r.apply(serverTmpl + "\n\n---\n\n" + redpandaTmpl)
 	}
 
-	return r.apply(parseTemplate(typestreamTmpl, "typestream/server"))
+	return r.apply(serverTmpl)
 }
 
 func (r *Runner) ApplySeeder() error {
-	return r.apply(parseTemplate(seederTmpl, "typestream/tools-seeder"))
+	seederTmpl := parseTemplate(seederTmpl, templateData{
+		Image:     "typestream/tools-seeder",
+		Namespace: r.namespace,
+	})
+	return r.apply(seederTmpl)
+}
+
+func (r *Runner) Show() string {
+	return parseTemplate(typestreamTmpl, templateData{
+		Image:     "typestream/server",
+		Namespace: r.namespace,
+	})
 }

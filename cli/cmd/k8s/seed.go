@@ -12,7 +12,7 @@ var seedCmd = &cobra.Command{
 	Short: "Seeds the local TypeStream server with some data",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("🚀 starting seeding process")
-		runner := k8s.NewRunner()
+		runner := k8s.NewRunner(Namespace)
 
 		err := runner.ApplySeeder()
 		if err != nil {

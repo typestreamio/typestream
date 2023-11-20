@@ -11,7 +11,9 @@ class Konfig(source: InputStream) {
     private val onCamelCase = "(?<=[a-z])(?=[A-Z])".toRegex()
 
     init {
-        props.load(source)
+        val lines = source.bufferedReader().readLines().filter { !it.startsWith("#") }
+
+        props.load(lines.joinToString("\n").byteInputStream())
     }
 
     fun get(prefix: String, key: String): String? {
@@ -30,7 +32,7 @@ class Konfig(source: InputStream) {
     }
 
     fun <T : Any> decodeKlass(klass: KClass<T>): T {
-        val klassConfig = klass.java.getAnnotation(io.typestream.konfig.KonfigSource::class.java)
+        val klassConfig = klass.java.getAnnotation(KonfigSource::class.java)
         requireNotNull(klassConfig) { "${klass.java.name} is not annotated with @KonfigSource" }
         val prefix = klassConfig.prefix
         require(klass.isData) { "${klass.java.name} is not a data class" }
@@ -47,9 +49,13 @@ class Konfig(source: InputStream) {
                 Int::class -> args[index] = get(prefix, "${param.name}")?.toInt()
                 Map::class -> {
                     val map = HashMap<String, Any>()
-                    val keys = (props[prefix] as String).split(",").map { it.trim() }
-                    keys.forEach { key ->
-                        map[key] = decodeParams(param.type.arguments[1].type!!.classifier as KClass<*>, "$prefix.$key")
+                    val mapKey = props[prefix]
+                    if (mapKey is String) {
+                        val keys = mapKey.split(",").map { it.trim() }
+                        keys.forEach { key ->
+                            map[key] =
+                                decodeParams(param.type.arguments[1].type!!.classifier as KClass<*>, "$prefix.$key")
+                        }
                     }
 
                     args[index] = map
