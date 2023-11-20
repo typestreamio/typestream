@@ -13,15 +13,27 @@ internal class KonfigSourceMapTest {
     data class ServersConfig(val servers: Map<String, ServerConfig>)
 
     @Test
-    fun `can load a simple config`() {
-        class App(konfig: io.typestream.konfig.Konfig) {
+    fun `loads a simple map config`() {
+        class App(konfig: Konfig) {
             val serversConfig by konfig.inject<ServersConfig>()
         }
 
-        val konfig = io.typestream.konfig.Konfig(FileInputStream("src/test/resources/map.properties"))
+        val konfig = Konfig(FileInputStream("src/test/resources/map.properties"))
         val app = App(konfig)
 
         assertThat(app.serversConfig.servers["local"]).extracting("host", "port").containsExactly("localhost", 4242)
         assertThat(app.serversConfig.servers["remote"]).extracting("host", "port").containsExactly("example.com", 2424)
+    }
+
+    @Test
+    fun `loads empty map config`() {
+        class App(konfig: Konfig) {
+            val serversConfig by konfig.inject<ServersConfig>()
+        }
+
+        val konfig = Konfig("".byteInputStream())
+        val app = App(konfig)
+
+        assertThat(app.serversConfig.servers).isEmpty()
     }
 }

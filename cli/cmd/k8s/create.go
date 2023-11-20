@@ -15,7 +15,7 @@ var createCmd = &cobra.Command{
 	Short: "Creates a k8s TypeStream server",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("🚀 creating TypeStream server")
-		runner := k8s.NewRunner()
+		runner := k8s.NewRunner(Namespace)
 
 		err := runner.Apply(redpanda)
 		if err != nil {

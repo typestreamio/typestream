@@ -19,40 +19,53 @@ internal class KonfigSourceTest {
     data class NestedConfig(val db: DbConfig, val server: ServerConfig)
 
     @Test
-    fun `can load a simple config`() {
-        class App(konfig: io.typestream.konfig.Konfig) {
+    fun `loads a simple config`() {
+        class App(konfig: Konfig) {
             val serverConfig by konfig.inject<ServerConfig>()
         }
 
-        val konfig = io.typestream.konfig.Konfig(FileInputStream("src/test/resources/application.properties"))
+        val konfig = Konfig(FileInputStream("src/test/resources/application.properties"))
         val app = App(konfig)
 
         assertThat(app.serverConfig).extracting("host", "port").containsExactly("localhost", 4242)
     }
 
     @Test
-    fun `can load a simple config without prefix`() {
-        class App(konfig: io.typestream.konfig.Konfig) {
+    fun `loads a simple config without prefix`() {
+        class App(konfig: Konfig) {
             val config by konfig.inject<Config>()
         }
 
-        val konfig = io.typestream.konfig.Konfig(FileInputStream("src/test/resources/application.properties"))
+        val konfig = Konfig(FileInputStream("src/test/resources/application.properties"))
         val app = App(konfig)
 
         assertThat(app.config).extracting("serverHost", "serverPort").containsExactly("localhost", 4242)
     }
 
     @Test
-    fun `can load a nested config`() {
-        class App(konfig: io.typestream.konfig.Konfig) {
+    fun `loads a nested config`() {
+        class App(konfig: Konfig) {
             val config by konfig.inject<NestedConfig>()
         }
 
-        val konfig = io.typestream.konfig.Konfig(FileInputStream("src/test/resources/application.properties"))
+        val konfig = Konfig(FileInputStream("src/test/resources/application.properties"))
         val app = App(konfig)
 
-        assertThat(app.config).extracting("db.endpoint", "server.host", "server.port")
+        assertThat(app.config)
+            .extracting("db.endpoint", "server.host", "server.port")
             .containsExactly("http://db.local:5432", "localhost", 4242)
+    }
+
+    @Test
+    fun `ignores comments`() {
+        class App(konfig: Konfig) {
+            val config by konfig.inject<ServerConfig>()
+        }
+
+        val konfig = Konfig(FileInputStream("src/test/resources/comments.properties"))
+        val app = App(konfig)
+
+        assertThat(app.config).extracting("host", "port").containsExactly("localhost", 4242)
     }
 
 }
