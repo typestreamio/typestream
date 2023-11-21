@@ -9,6 +9,7 @@ import (
 	"os/exec"
 
 	"github.com/charmbracelet/log"
+	"github.com/typestreamio/typestream/cli/pkg/version"
 )
 
 //go:embed typestream.yaml.tmpl
@@ -31,8 +32,6 @@ func parseTemplate(text string, data templateData) string {
 	if err != nil {
 		log.Fatal("💥 failed to parse typestream resources template: ", err)
 	}
-
-	log.Printf("📝 data: %+v", data)
 
 	err = tmpl.Execute(&buf, data)
 	if err != nil {
@@ -71,7 +70,7 @@ func (r *Runner) Apply(redpanda bool) error {
 
 func (r *Runner) ApplySeeder() error {
 	seederTmpl := parseTemplate(seederTmpl, templateData{
-		Image:     "typestream/tools-seeder",
+		Image:     version.DockerImage("typestream/tools-seeder"),
 		Namespace: r.namespace,
 	})
 	return r.apply(seederTmpl)
@@ -79,7 +78,7 @@ func (r *Runner) ApplySeeder() error {
 
 func (r *Runner) Show() string {
 	return parseTemplate(typestreamTmpl, templateData{
-		Image:     "typestream/server",
+		Image:     version.DockerImage("typestream/server"),
 		Namespace: r.namespace,
 	})
 }
