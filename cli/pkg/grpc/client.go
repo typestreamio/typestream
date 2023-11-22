@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"os"
 
 	"github.com/charmbracelet/log"
 	"github.com/typestreamio/typestream/cli/pkg/interactive_session_service"
@@ -20,7 +21,16 @@ func NewClient() *Client {
 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	conn, err := grpc.Dial("127.0.0.1:4242", opts...)
+	host := os.Getenv("TYPESTREAM_HOST")
+	port := os.Getenv("TYPESTREAM_PORT")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	if port == "" {
+		port = "4242"
+	}
+
+	conn, err := grpc.Dial(host+":"+port, opts...)
 	if err != nil {
 		log.Fatalf("💥 cannot connect to TypeStream server %v\n", err)
 	}
