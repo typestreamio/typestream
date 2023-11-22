@@ -68,27 +68,29 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
         schemaRegistryClient.subjects().forEach { (subjectName, subject) ->
             val topicPath = "$path/topics/${subjectName.replace("-value", "")}"
 
-            store[topicPath] = when (subject.schemaType) {
-                SchemaType.AVRO -> Metadata(
-                    DataStream.fromAvroSchema(topicPath, Parser().parse(subject.schema)),
-                    Encoding.AVRO
-                )
+            try {
+                store[topicPath] = when (subject.schemaType) {
+                    SchemaType.AVRO -> Metadata(
+                        DataStream.fromAvroSchema(topicPath, Parser().parse(subject.schema)),
+                        Encoding.AVRO
+                    )
 
-                SchemaType.PROTOBUF -> Metadata(
-                    DataStream.fromProtoSchema(topicPath, ProtoParser.parse(subject.schema)),
-                    Encoding.PROTOBUF
-                )
+                    SchemaType.PROTOBUF -> Metadata(
+                        DataStream.fromProtoSchema(topicPath, ProtoParser.parse(subject.schema)),
+                        Encoding.PROTOBUF
+                    )
 
-                else -> error("unsupported schema type ${subject.schemaType}")
+                    else -> error("unsupported schema type ${subject.schemaType} for $topicPath")
+                }
+            } catch (e: Exception) {
+                logger.error(e) { "failed to fetch schema for $topicPath" }
             }
 
         }
     }
 
     fun refresh() {
-        sourcesConfig.kafkaClustersConfig.clusters.keys.forEach { name ->
-            refreshRegistry(name)
-        }
+        sourcesConfig.kafkaClustersConfig.clusters.keys.forEach { name -> refreshRegistry(name) }
     }
 
 }
