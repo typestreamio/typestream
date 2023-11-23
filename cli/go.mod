@@ -13,13 +13,11 @@ require (
 
 require (
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/dlclark/regexp2 v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/alecthomas/chroma v0.10.0
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.9.1 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
