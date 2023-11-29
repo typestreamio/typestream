@@ -1,5 +1,6 @@
 package io.typestream.kafka
 
+import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.schemaregistry.SchemaType
 import org.apache.avro.Schema
@@ -67,8 +68,6 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
 
     override fun close() {}
     override fun configure(configs: MutableMap<String, *>, isKey: Boolean) {
-        configs["schema.registry.url"]?.let {
-            schemaRegistryClient = SchemaRegistryClient(it.toString())
-        }
+            schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig.fromMap(configs))
     }
 }

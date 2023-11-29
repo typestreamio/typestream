@@ -31,11 +31,12 @@ class Konfig(source: InputStream) {
         return ReadOnlyProperty { _, _ -> decodeKlass(T::class) }
     }
 
-    fun <T : Any> decodeKlass(klass: KClass<T>): T {
+    fun <T : Any> decodeKlass(klass: KClass<T>, parentPrefix: String? = null): T {
         val klassConfig = klass.java.getAnnotation(KonfigSource::class.java)
         requireNotNull(klassConfig) { "${klass.java.name} is not annotated with @KonfigSource" }
-        val prefix = klassConfig.prefix
         require(klass.isData) { "${klass.java.name} is not a data class" }
+
+        val prefix = if (parentPrefix.isNullOrBlank()) klassConfig.prefix else "$parentPrefix.${klassConfig.prefix}"
 
         return decodeParams(klass, prefix)
     }
@@ -61,7 +62,7 @@ class Konfig(source: InputStream) {
                     args[index] = map
                 }
 
-                is KClass<*> -> args[index] = decodeKlass(param.type.classifier as KClass<*>)
+                is KClass<*> -> args[index] = decodeKlass(param.type.classifier as KClass<*>, prefix)
                 else -> error("${param.type.classifier} is not supported")
             }
         }

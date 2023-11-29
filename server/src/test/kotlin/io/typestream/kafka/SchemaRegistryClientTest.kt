@@ -1,5 +1,6 @@
 package io.typestream.kafka
 
+import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.schemaregistry.SchemaType.AVRO
 import io.typestream.testing.TestKafka
@@ -20,7 +21,7 @@ internal class SchemaRegistryClientTest {
     fun `fetches schemas`() {
         testKafka.produceRecords("users", "avro", User(name = "Margaret Hamilton"))
 
-        val schemaRegistryClient = SchemaRegistryClient(testKafka.schemaRegistryAddress)
+        val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
         val subjects = schemaRegistryClient.subjects()
         assertThat(subjects).hasSize(1).containsKey("users-value")

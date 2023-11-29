@@ -26,7 +26,7 @@ class KafkaClusterDirectory(
 
     private val kafkaAdminClient = KafkaAdminClient(kafkaConfig)
 
-    private val schemaRegistryClient = SchemaRegistryClient(kafkaConfig.schemaRegistryUrl)
+    private val schemaRegistryClient = SchemaRegistryClient(kafkaConfig.schemaRegistry)
 
     init {
         setOf(brokersDir, consumerGroupsDir, topicsDir, schemaRegistryDir).forEach(::add)
