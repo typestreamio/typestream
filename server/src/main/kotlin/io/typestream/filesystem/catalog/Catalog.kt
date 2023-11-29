@@ -28,7 +28,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
     init {
         sourcesConfig.kafkaClustersConfig.clusters.forEach { (name, config) ->
             schemaRegistries[FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + name] =
-                SchemaRegistryClient(config.schemaRegistryUrl)
+                SchemaRegistryClient(config.schemaRegistry)
         }
     }
 

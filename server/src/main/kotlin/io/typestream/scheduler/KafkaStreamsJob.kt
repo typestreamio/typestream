@@ -94,7 +94,10 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
 
         //TODO make this a config
         props[StreamsConfig.COMMIT_INTERVAL_MS_CONFIG] = 100
-        props["schema.registry.url"] = kafkaConfig.schemaRegistryUrl
+        props["schema.registry.url"] = kafkaConfig.schemaRegistry.url
+        if (kafkaConfig.schemaRegistry.userInfo != null) {
+            props["schema.registry.userInfo"] = kafkaConfig.schemaRegistry.userInfo
+        }
 
         return props
     }

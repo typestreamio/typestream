@@ -1,6 +1,7 @@
 package io.typestream.kafka
 
 import com.google.protobuf.Message
+import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.protobuf.ProtoParser
 import io.typestream.kafka.protobuf.ProtoSchema
 import io.typestream.kafka.protobuf.toMessage
@@ -82,8 +83,6 @@ class ProtoSerde(private val schema: ProtoSchema) : Serde<Message>, Deserializer
     override fun close() {}
 
     override fun configure(configs: MutableMap<String, *>, isKey: Boolean) {
-        configs["schema.registry.url"]?.let {
-            schemaRegistryClient = SchemaRegistryClient(it.toString())
-        }
+        schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig.fromMap(configs))
     }
 }

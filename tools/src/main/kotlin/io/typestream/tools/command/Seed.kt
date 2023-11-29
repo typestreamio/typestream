@@ -19,7 +19,7 @@ fun seed(kafkaClustersConfig: KafkaClustersConfig, args: List<String>) {
 
     adminClientWrapper.createTopics("authors", "books", "users", "page_views", "ratings")
 
-    val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
+    val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistry.url)
 
     val emily = Author(name = "Emily St. John Mandel")
     val stationEleven = Book(title = "Station Eleven", wordCount = 300, authorId = emily.id)

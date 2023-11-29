@@ -1,6 +1,7 @@
 package io.typestream.konfig
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.io.FileInputStream
 
@@ -17,6 +18,9 @@ internal class KonfigSourceTest {
 
     @KonfigSource
     data class NestedConfig(val db: DbConfig, val server: ServerConfig)
+
+    @KonfigSource(prefix = "nested")
+    data class NestedWithPrefix(val db: DbConfig, val server: ServerConfig)
 
     @Test
     fun `loads a simple config`() {
@@ -42,18 +46,35 @@ internal class KonfigSourceTest {
         assertThat(app.config).extracting("serverHost", "serverPort").containsExactly("localhost", 4242)
     }
 
-    @Test
-    fun `loads a nested config`() {
-        class App(konfig: Konfig) {
-            val config by konfig.inject<NestedConfig>()
+    @Nested
+    inner class NestedTest {
+        @Test
+        fun `loads a nested config`() {
+            class App(konfig: Konfig) {
+                val config by konfig.inject<NestedConfig>()
+            }
+
+            val konfig = Konfig(FileInputStream("src/test/resources/application.properties"))
+            val app = App(konfig)
+
+            assertThat(app.config)
+                .extracting("db.endpoint", "server.host", "server.port")
+                .containsExactly("http://db.local:5432", "localhost", 4242)
         }
 
-        val konfig = Konfig(FileInputStream("src/test/resources/application.properties"))
-        val app = App(konfig)
+        @Test
+        fun `loads a nested config with prefix`() {
+            class App(konfig: Konfig) {
+                val config by konfig.inject<NestedWithPrefix>()
+            }
 
-        assertThat(app.config)
-            .extracting("db.endpoint", "server.host", "server.port")
-            .containsExactly("http://db.local:5432", "localhost", 4242)
+            val konfig = Konfig(FileInputStream("src/test/resources/nested-prefix.properties"))
+            val app = App(konfig)
+
+            assertThat(app.config)
+                .extracting("db.endpoint", "server.host", "server.port")
+                .containsExactly("http://db.local:5432", "localhost", 4242)
+        }
     }
 
     @Test

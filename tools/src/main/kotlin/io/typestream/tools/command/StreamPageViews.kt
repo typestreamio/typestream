@@ -15,9 +15,9 @@ fun streamPageViews(kafkaClustersConfig: KafkaClustersConfig, args: List<String>
     val kafkaConfig = kafkaClustersConfig.clusters["local"]
     requireNotNull(kafkaConfig) { "local kafka cluster not found" }
 
-    val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
+    val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistry.url)
 
-    val kafkaConsumerWrapper = KafkaConsumerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistryUrl)
+    val kafkaConsumerWrapper = KafkaConsumerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistry.url)
 
     val authors = kafkaConsumerWrapper.consume(encoding, listOf(("authors" to 3)).map { (topic, expected) ->
         RecordsExpected(topic, expected)
