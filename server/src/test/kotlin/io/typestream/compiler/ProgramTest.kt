@@ -20,7 +20,6 @@ internal class ProgramTest {
 
     @Nested
     inner class RuntimeDetection {
-
         @Test
         fun `raises when detection is not possible`() {
             val program = buildProgram(

@@ -1,0 +1,37 @@
+{
+  "namespace": "io.typestream.testing.avro",
+  "type": "record",
+  "name": "SmokeType",
+  "fields": [
+    {"name": "booleanField", "type": "boolean"},
+    {"name": "doubleField", "type": "double"},
+    {"name": "floatField", "type": "float"},
+    {"name": "intField", "type": "int"},
+    {"name": "longField", "type": "long"},
+    {"name": "stringField", "type": "string"},
+
+    {"name": "arrayField", "type": {"type": "array", "items": "string"}},
+    {"name": "enumField", "type": {"type": "enum", "name": "Color", "symbols": ["RED", "GREEN", "BLUE"]}},
+    {"name": "mapField", "type": {"type": "map", "values": "string"}},
+    {"name": "recordField", "type": {
+      "type": "record",
+      "name": "NestedRecord",
+      "fields": [
+        {"name": "nestedInt", "type": "int"},
+        {"name": "nestedString", "type": "string"}
+      ]
+    }},
+
+    {"name": "dateField", "type": {"type": "int", "logicalType": "date"}},
+    {"name": "decimalField", "type": {"type": "bytes", "logicalType": "decimal", "precision": 9, "scale": 2}},
+    {"name": "localTimestampMicrosField", "type": {"type": "long", "logicalType": "local-timestamp-micros"}},
+    {"name": "localTimestampMillisField", "type": {"type": "long", "logicalType": "local-timestamp-millis"}},
+    {"name": "timeMicrosField", "type": {"type": "long", "logicalType": "time-micros"}},
+    {"name": "timeMillisField", "type": {"type": "int", "logicalType": "time-millis"}},
+    {"name": "timestampMicrosField", "type": {"type": "long", "logicalType": "timestamp-micros"}},
+    {"name": "timestampMillisField", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "uuidField", "type": {"type": "string", "logicalType": "uuid"}},
+
+    {"name": "optionalField", "type": ["null", "string"], "default": null}
+  ]
+}

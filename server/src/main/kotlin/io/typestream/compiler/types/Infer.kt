@@ -3,7 +3,6 @@ package io.typestream.compiler.types
 import io.typestream.compiler.ast.Command
 import io.typestream.compiler.ast.Cut
 import io.typestream.compiler.ast.DataCommand
-import io.typestream.compiler.ast.Each
 import io.typestream.compiler.ast.Echo
 import io.typestream.compiler.ast.Enrich
 import io.typestream.compiler.ast.ShellCommand
@@ -26,7 +25,7 @@ fun inferType(commands: List<Command>): DataStream {
                 resultingType.merge(
                     DataStream(
                         "/bin/cut",
-                        Schema.Struct(command.boundArgs.map { Schema.Named(it, Schema.String.empty) })
+                        Schema.Struct(command.boundArgs.map { Schema.Field(it, Schema.String.zeroValue) })
                     )
                 )
             } else {

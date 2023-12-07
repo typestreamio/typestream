@@ -15,7 +15,7 @@ include(
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
-            version("avro", "1.11.2")
+            version("avro", "1.11.3")
             version("confluent", "7.1.0")
             version("grpc", "1.57.2")
             version("grpcKotlin", "1.3.1")

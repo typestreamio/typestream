@@ -5,26 +5,24 @@ import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-
 internal class SchemaStructTest {
-
     private val author = Schema.Struct(
         listOf(
-            Schema.Named("id", Schema.String("42")),
-            Schema.Named("name", Schema.String("Emily St John Mandel")),
-            Schema.Named(
+            Schema.Field("id", Schema.String("42")),
+            Schema.Field("name", Schema.String("Emily St John Mandel")),
+            Schema.Field(
                 "book", Schema.Struct(
                     listOf(
-                        Schema.Named("title", Schema.String("Station Eleven")),
-                        Schema.Named("wordCount", Schema.Int(42)),
-                        Schema.Named(
+                        Schema.Field("title", Schema.String("Station Eleven")),
+                        Schema.Field("wordCount", Schema.Int(42)),
+                        Schema.Field(
                             "publisher", Schema.Struct(
                                 listOf(
-                                    Schema.Named("name", Schema.String("Knopf")),
-                                    Schema.Named(
+                                    Schema.Field("name", Schema.String("Knopf")),
+                                    Schema.Field(
                                         "address", Schema.Struct(
                                             listOf(
-                                                Schema.Named("city", Schema.String("New York City")),
+                                                Schema.Field("city", Schema.String("New York City")),
                                             )
                                         )
                                     ),
@@ -39,12 +37,12 @@ internal class SchemaStructTest {
 
     private val flattenedAuthor = Schema.Struct(
         listOf(
-            Schema.Named("id", Schema.String("42")),
-            Schema.Named("name", Schema.String("Emily St John Mandel")),
-            Schema.Named("book.title", Schema.String("Station Eleven")),
-            Schema.Named("book.wordCount", Schema.Int(42)),
-            Schema.Named("book.publisher.name", Schema.String("Knopf")),
-            Schema.Named("book.publisher.address.city", Schema.String("New York City")),
+            Schema.Field("id", Schema.String("42")),
+            Schema.Field("name", Schema.String("Emily St John Mandel")),
+            Schema.Field("book.title", Schema.String("Station Eleven")),
+            Schema.Field("book.wordCount", Schema.Int(42)),
+            Schema.Field("book.publisher.name", Schema.String("Knopf")),
+            Schema.Field("book.publisher.address.city", Schema.String("New York City")),
         )
     )
 
@@ -65,8 +63,8 @@ internal class SchemaStructTest {
         fun `selects top-level fields`() {
             val struct = Schema.Struct(
                 listOf(
-                    Schema.Named("id", Schema.String("42")),
-                    Schema.Named("name", Schema.String("Grace Hopper")),
+                    Schema.Field("id", Schema.String("42")),
+                    Schema.Field("name", Schema.String("Grace Hopper")),
                 )
             )
 
@@ -84,21 +82,21 @@ internal class SchemaStructTest {
         fun `selects nested fields`() {
             val struct = Schema.Struct(
                 listOf(
-                    Schema.Named("id", Schema.String("42")),
-                    Schema.Named("name", Schema.String("Emily St John Mandel")),
-                    Schema.Named(
+                    Schema.Field("id", Schema.String("42")),
+                    Schema.Field("name", Schema.String("Emily St John Mandel")),
+                    Schema.Field(
                         "book", Schema.Struct(
                             listOf(
-                                Schema.Named("title", Schema.String("Station Eleven")),
-                                Schema.Named("wordCount", Schema.Int(42)),
-                                Schema.Named(
+                                Schema.Field("title", Schema.String("Station Eleven")),
+                                Schema.Field("wordCount", Schema.Int(42)),
+                                Schema.Field(
                                     "publisher", Schema.Struct(
                                         listOf(
-                                            Schema.Named("name", Schema.String("Knopf")),
-                                            Schema.Named(
+                                            Schema.Field("name", Schema.String("Knopf")),
+                                            Schema.Field(
                                                 "address", Schema.Struct(
                                                     listOf(
-                                                        Schema.Named("city", Schema.String("New York City")),
+                                                        Schema.Field("city", Schema.String("New York City")),
                                                     )
                                                 )
                                             ),
@@ -124,15 +122,15 @@ internal class SchemaStructTest {
                     tuple(
                         "book", Schema.Struct(
                             listOf(
-                                Schema.Named("title", Schema.String("Station Eleven")),
-                                Schema.Named(
+                                Schema.Field("title", Schema.String("Station Eleven")),
+                                Schema.Field(
                                     "publisher", Schema.Struct(
                                         listOf(
-                                            Schema.Named("name", Schema.String("Knopf")),
-                                            Schema.Named(
+                                            Schema.Field("name", Schema.String("Knopf")),
+                                            Schema.Field(
                                                 "address", Schema.Struct(
                                                     listOf(
-                                                        Schema.Named("city", Schema.String("New York City")),
+                                                        Schema.Field("city", Schema.String("New York City")),
                                                     )
                                                 )
                                             )
