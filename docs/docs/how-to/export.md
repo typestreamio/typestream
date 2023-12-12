@@ -4,7 +4,9 @@ description: Lear how to export data with the official CLI
 
 # Export data
 
-If you pipe commands into the official CLI, TypeStream will run it for you and print its output to standard output. For example, if you want to quickly check the topic names in your local Kafka cluster you can run the following command:
+If you pipe commands into the official CLI, TypeStream will run it for you and
+print its output to standard output. For example, if you want to quickly check
+the topic names in your local Kafka cluster you can run the following command:
 
 ```sh
 $ echo 'ls /dev/kafka/local/topics' | typestream
