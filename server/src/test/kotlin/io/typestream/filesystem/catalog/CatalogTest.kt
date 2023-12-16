@@ -51,10 +51,10 @@ internal class CatalogTest {
             .hasSize(4)
             .extracting("name", "value")
             .contains(
-                tuple("user_id", Schema.String.empty),
-                tuple("book_id", Schema.String.empty),
+                tuple("user_id", Schema.UUID.zeroValue),
+                tuple("book_id", Schema.UUID.zeroValue),
                 tuple("rating", Schema.Int(0)),
-                tuple("rated_at", Schema.Long(0))
+                tuple("rated_at", Schema.Instant.zeroValue(Schema.Instant.Precision.MILLIS))
             )
     }
 }

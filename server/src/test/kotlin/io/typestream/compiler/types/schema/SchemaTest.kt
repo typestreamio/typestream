@@ -37,21 +37,13 @@ internal class SchemaTest {
         fun `matches a struct`() {
             val value = Schema.Struct(
                 listOf(
-                    Schema.Named("id", Schema.String("42")),
-                    Schema.Named("name", Schema.String("Grace Hopper")),
+                    Schema.Field("id", Schema.String("42")),
+                    Schema.Field("name", Schema.String("Grace Hopper")),
                 )
             )
 
             assertThat(value.matches("42")).isTrue
             assertThat(value.matches("Grace")).isTrue
-            assertThat(value.matches("24")).isFalse
-        }
-
-        @Test
-        fun `matches a named value`() {
-            val value = Schema.Named("id", Schema.String("42"))
-
-            assertThat(value.matches("42")).isTrue
             assertThat(value.matches("24")).isFalse
         }
     }
@@ -74,7 +66,7 @@ internal class SchemaTest {
 
         @Test
         fun `pretty prints structs`() {
-            val value = Schema.Struct(listOf(Schema.Named("id", Schema.String("42"))))
+            val value = Schema.Struct(listOf(Schema.Field("id", Schema.String("42"))))
 
             assertThat(value.prettyPrint()).isEqualTo("{id: \"42\"}")
         }
@@ -83,8 +75,8 @@ internal class SchemaTest {
         fun `pretty prints empty values for structs`() {
             val value = Schema.Struct(
                 listOf(
-                    Schema.Named("id", Schema.String("")),
-                    Schema.Named("answer", Schema.Long(42L))
+                    Schema.Field("id", Schema.String("")),
+                    Schema.Field("answer", Schema.Long(42L))
                 )
             )
 
@@ -98,25 +90,21 @@ internal class SchemaTest {
         fun `merges structs`() {
             val book = Schema.Struct(
                 listOf(
-                    Schema.Named("title", Schema.String("Station Eleven")),
-                    Schema.Named("word_count", Schema.Int(42)),
+                    Schema.Field("title", Schema.String("Station Eleven")),
+                    Schema.Field("word_count", Schema.Int(42)),
                 ),
             )
 
-            val author = Schema.Struct(
-                listOf(
-                    Schema.Named("name", Schema.String("Emily St John Mandel")),
-                )
-            )
+            val author = Schema.Struct(listOf(Schema.Field("name", Schema.String("Emily St John Mandel"))))
 
             val merged = book.merge(author)
 
             assertThat(merged).isEqualTo(
                 Schema.Struct(
                     listOf(
-                        Schema.Named("title", Schema.String("Station Eleven")),
-                        Schema.Named("word_count", Schema.Int(42)),
-                        Schema.Named("name", Schema.String("Emily St John Mandel")),
+                        Schema.Field("title", Schema.String("Station Eleven")),
+                        Schema.Field("word_count", Schema.Int(42)),
+                        Schema.Field("name", Schema.String("Emily St John Mandel")),
                     )
                 )
             )

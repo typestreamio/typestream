@@ -4,6 +4,7 @@ import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.schemaregistry.SchemaType.AVRO
 import io.typestream.testing.TestKafka
+import io.typestream.testing.avro.User.getClassSchema
 import io.typestream.testing.model.User
 import org.apache.avro.Schema.Parser
 import org.assertj.core.api.Assertions.assertThat
@@ -32,7 +33,6 @@ internal class SchemaRegistryClientTest {
 
         val avroSchema = Parser().parse(schema?.schema)
 
-        assertThat(avroSchema).isEqualTo(io.typestream.testing.avro.User.`SCHEMA$`)
+        assertThat(avroSchema).isEqualTo(getClassSchema())
     }
-
 }

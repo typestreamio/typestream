@@ -13,7 +13,7 @@ import io.typestream.compiler.types.datastream.toAvroSchema
 import io.typestream.compiler.types.datastream.toBytes
 import io.typestream.compiler.types.datastream.toProtoMessage
 import io.typestream.compiler.types.datastream.toProtoSchema
-import io.typestream.kafka.AvroSerde
+import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.ProtoSerde
 import io.typestream.kafka.StreamsBuilderWrapper
 import org.apache.kafka.common.serialization.Serdes

@@ -6,10 +6,10 @@ import java.util.UUID
 
 fun author(
     id: Schema.UUID = Schema.UUID(UUID.randomUUID()),
-    name: Schema.String = Schema.String.empty,
+    name: Schema.String = Schema.String.zeroValue,
 ) = DataStream(
     "/dev/kafka/local/topics/authors",
-    Schema.Struct(listOf(Schema.Named("id", id), Schema.Named("name", name)))
+    Schema.Struct(listOf(Schema.Field("id", id), Schema.Field("name", name)))
 )
 
 fun book(
@@ -20,9 +20,9 @@ fun book(
     "/dev/kafka/local/topics/books",
     Schema.Struct(
         listOf(
-            Schema.Named("id", id),
-            Schema.Named("title", Schema.String(title)),
-            Schema.Named("word_count", Schema.Int(wordCount))
+            Schema.Field("id", id),
+            Schema.Field("title", Schema.String(title)),
+            Schema.Field("word_count", Schema.Int(wordCount))
         )
     )
 )

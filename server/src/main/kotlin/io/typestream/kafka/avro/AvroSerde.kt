@@ -1,4 +1,4 @@
-package io.typestream.kafka
+package io.typestream.kafka.avro
 
 import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
@@ -18,6 +18,8 @@ import java.nio.ByteBuffer
 class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer<GenericRecord>,
     Serializer<GenericRecord> {
 
+    private val schemaString = schema.toString()
+
     private var decoderFactory = DecoderFactory.get()
     private var encoderFactory = EncoderFactory.get()
 
@@ -28,11 +30,11 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
             return null
         }
 
-        val writer = GenericDatumWriter<GenericRecord>(schema)
+        val writer = GenericDatumWriter<GenericRecord>(schema, GenericDataWithLogicalTypes.get())
         val out = ByteArrayOutputStream()
 
         out.write(0) // magic byte
-        val id = schemaRegistryClient.register(topic, SchemaType.AVRO, schema.toString())
+        val id = schemaRegistryClient.register(topic, SchemaType.AVRO, schemaString)
         out.write(ByteBuffer.allocate(4).putInt(id).array())
 
         val encoder = encoderFactory.binaryEncoder(out, null)
@@ -55,12 +57,14 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
         buffer.get() // skip magic byte
         buffer.int // skip schema id
 
-        val reader = GenericDatumReader<GenericRecord>(schema)
+        val reader = GenericDatumReader<GenericRecord>(schema, schema, GenericDataWithLogicalTypes.get())
 
         val length = (buffer.limit() - 1) - 4 // take magic byte into account
         val start = buffer.position() + buffer.arrayOffset()
 
-        return reader.read(null, decoderFactory.binaryDecoder(buffer.array(), start, length, null))
+        val out = reader.read(null, decoderFactory.binaryDecoder(buffer.array(), start, length, null))
+
+        return out
     }
 
     override fun serializer(): Serializer<GenericRecord> = this
@@ -68,6 +72,6 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
 
     override fun close() {}
     override fun configure(configs: MutableMap<String, *>, isKey: Boolean) {
-            schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig.fromMap(configs))
+        schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig.fromMap(configs))
     }
 }

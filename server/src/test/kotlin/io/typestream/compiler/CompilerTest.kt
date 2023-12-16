@@ -92,7 +92,7 @@ internal class CompilerTest {
             val compiler = Compiler(session)
             val suggestions = compiler.complete(source, CursorPosition(0, 31))
 
-            assertThat(suggestions).containsExactly("cat", "cut",  "each", "echo", "enrich", "grep", "join", "let", "wc")
+            assertThat(suggestions).containsExactly("cat", "cut", "each", "echo", "enrich", "grep", "join", "let", "wc")
         }
     }
 
@@ -125,7 +125,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -151,7 +151,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -177,7 +177,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -204,7 +204,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)

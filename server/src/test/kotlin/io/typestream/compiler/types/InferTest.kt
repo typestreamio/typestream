@@ -22,18 +22,17 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 internal class InferTest {
-
     @Nested
     inner class InferDataStream {
         @Test
         fun `infers type correctly`() {
             val grep = Grep(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
             grep.dataStreams.add(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema())
             )
 
             assertThat(inferType(listOf(grep))).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema())
             )
         }
 
@@ -46,8 +45,8 @@ internal class InferTest {
                 )
             )
 
-            val books = DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.`SCHEMA$`)
-            val ratings = DataStream.fromAvroSchema("/dev/kafka/local/topics/ratings", Rating.`SCHEMA$`)
+            val books = DataStream.fromAvroSchema("/dev/kafka/local/topics/books", Book.getClassSchema())
+            val ratings = DataStream.fromAvroSchema("/dev/kafka/local/topics/ratings", Rating.getClassSchema())
 
             join.dataStreams.add(books)
             join.dataStreams.add(ratings)
@@ -61,13 +60,13 @@ internal class InferTest {
         @Test
         fun `infers type correctly`() {
             val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
-            cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.`SCHEMA$`))
+            cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema()))
             val grep = Grep(listOf(Expr.BareWord("Mandel")))
 
             val typeStream = inferType(listOf(cat, grep))
 
             assertThat(typeStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.`SCHEMA$`)
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema())
             )
         }
 
@@ -75,14 +74,14 @@ internal class InferTest {
         fun `infers cut type correctly`() {
             val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
 
-            cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.`SCHEMA$`))
+            cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema()))
 
             val cut = Cut(listOf(Expr.BareWord("name")))
             cut.boundArgs.add("name")
 
             val typeStream = inferType(listOf(cat, cut))
 
-            val schema = Schema.Struct(listOf(Schema.Named("name", Schema.String.empty)))
+            val schema = Schema.Struct(listOf(Schema.Field("name", Schema.String.zeroValue)))
 
             assertThat(typeStream).isEqualTo(DataStream("/dev/kafka/local/topics/authors", schema))
         }
@@ -93,7 +92,7 @@ internal class InferTest {
         @Test
         fun `infers enrich type correctly`() {
             val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/page_views")))
-            cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/page_views", PageView.`SCHEMA$`))
+            cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/page_views", PageView.getClassSchema()))
 
             val cut = Cut(listOf(Expr.BareWord(".country")))
             cut.boundArgs.add("country")
@@ -120,10 +119,10 @@ internal class InferTest {
                 DataStream(
                     "/dev/kafka/local/topics/page_views_http_cut", Schema.Struct(
                         listOf(
-                            Schema.Named("book_id", Schema.String.empty),
-                            Schema.Named("ip_address", Schema.String.empty),
-                            Schema.Named("viewed_at", Schema.Long(0)),
-                            Schema.Named("country", Schema.String.empty)
+                            Schema.Field("book_id", Schema.UUID.zeroValue),
+                            Schema.Field("ip_address", Schema.String.zeroValue),
+                            Schema.Field("viewed_at", Schema.Instant.zeroValue(Schema.Instant.Precision.MILLIS)),
+                            Schema.Field("country", Schema.String.zeroValue)
                         )
                     )
                 )

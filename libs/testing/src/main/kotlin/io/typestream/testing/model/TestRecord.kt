@@ -45,6 +45,11 @@ interface TestRecord {
                     Rating(key, value.bookId.toString(), value.userId.toString(), value.rating)
                 }
 
+                "smoke-type" -> {
+                    require(value is io.typestream.testing.avro.SmokeType)
+                    SmokeType()
+                }
+
                 "users" -> {
                     require(value is io.typestream.testing.avro.User)
                     User(value.id.toString(), value.name.toString())
