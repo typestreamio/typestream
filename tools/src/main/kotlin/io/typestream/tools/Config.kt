@@ -5,7 +5,7 @@ import io.typestream.konfig.KonfigSource
 
 
 @KonfigSource("schemaRegistry")
-data class SchemaRegistryConfig(val url: String, val userInfo: String?)
+data class SchemaRegistryConfig(val url: String, val userInfo: String? = null)
 
 data class KafkaConfig(val bootstrapServers: String, val schemaRegistry: SchemaRegistryConfig)
 

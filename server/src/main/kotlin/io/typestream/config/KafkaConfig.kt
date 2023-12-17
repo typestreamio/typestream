@@ -4,4 +4,5 @@ data class KafkaConfig(
     val bootstrapServers: String,
     val fsRefreshRate: Int = 60,
     val schemaRegistry: SchemaRegistryConfig,
+    val saslConfig: SaslConfig? = null,
 )
