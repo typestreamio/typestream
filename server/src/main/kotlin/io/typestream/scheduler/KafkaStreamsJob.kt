@@ -12,6 +12,7 @@ import io.typestream.kafka.StreamsBuilderWrapper
 import kotlinx.coroutines.flow.flow
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
@@ -97,6 +98,12 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
         props["schema.registry.url"] = kafkaConfig.schemaRegistry.url
         if (kafkaConfig.schemaRegistry.userInfo != null) {
             props["schema.registry.userInfo"] = kafkaConfig.schemaRegistry.userInfo
+        }
+
+        if (kafkaConfig.saslConfig != null) {
+            props[StreamsConfig.SECURITY_PROTOCOL_CONFIG] = "SASL_SSL"
+            props[SaslConfigs.SASL_MECHANISM] = kafkaConfig.saslConfig.mechanism
+            props[SaslConfigs.SASL_JAAS_CONFIG] = kafkaConfig.saslConfig.jaasConfig
         }
 
         return props

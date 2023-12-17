@@ -5,6 +5,7 @@ import io.typestream.config.KafkaConfig
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.KafkaAdminClient
+import org.apache.kafka.common.config.SaslConfigs
 import java.util.Properties
 
 
@@ -15,6 +16,12 @@ class KafkaAdminClient(kafkaConfig: KafkaConfig) {
     init {
         val props = Properties()
         props[AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaConfig.bootstrapServers
+
+        if (kafkaConfig.saslConfig != null) {
+            props[AdminClientConfig.SECURITY_PROTOCOL_CONFIG] = "SASL_SSL"
+            props[SaslConfigs.SASL_MECHANISM] = kafkaConfig.saslConfig.mechanism
+            props[SaslConfigs.SASL_JAAS_CONFIG] = kafkaConfig.saslConfig.jaasConfig
+        }
 
         this.kafkaAdminClient = KafkaAdminClient.create(props)
         logger.info { "kafka admin created" }

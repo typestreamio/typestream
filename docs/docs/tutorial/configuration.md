@@ -39,3 +39,5 @@ The following configuration options are available for Kafka sources:
 | **`bootstrapServers`**    | A comma-separated list of host:port pairs to use for establishing the initial connection to the Kafka cluster. | `localhost:9092`        |
 | **`schemaRegistry.url`**  | The URL of the schema registry.                                                                                | `http://localhost:8081` |
 | `schemaRegistry.userInfo` | The user info to use for authenticating with the schema registry.                                              |                         |
+| `sasl.mechanism`          | The SASL mechanism to use for authenticating with the Kafka cluster.                                           | `PLAIN`                 |
+| `sasl.jaasConfig`         | The JAAS configuration to use for authenticating with the Kafka cluster.                                       |                         |

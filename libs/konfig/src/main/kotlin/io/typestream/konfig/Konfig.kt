@@ -4,6 +4,7 @@ import java.io.InputStream
 import java.util.Properties
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 
 class Konfig(source: InputStream) {
@@ -43,11 +44,11 @@ class Konfig(source: InputStream) {
 
     private fun <T : Any> decodeParams(klass: KClass<T>, prefix: String): T {
         val constructor = klass.primaryConstructor!!
-        val args = arrayOfNulls<Any>(constructor.parameters.size)
-        constructor.parameters.forEachIndexed { index, param ->
+        val args = mutableMapOf<KParameter, Any?>()
+        constructor.parameters.forEach { param ->
             when (param.type.classifier) {
-                String::class -> args[index] = get(prefix, "${param.name}")
-                Int::class -> args[index] = get(prefix, "${param.name}")?.toInt()
+                String::class -> args[param] = get(prefix, "${param.name}")
+                Int::class -> args[param] = get(prefix, "${param.name}")?.toInt()
                 Map::class -> {
                     val map = HashMap<String, Any>()
                     val mapKey = props[prefix]
@@ -59,14 +60,19 @@ class Konfig(source: InputStream) {
                         }
                     }
 
-                    args[index] = map
+                    args[param] = map
                 }
 
-                is KClass<*> -> args[index] = decodeKlass(param.type.classifier as KClass<*>, prefix)
+                is KClass<*> -> {
+                    val keyPrefix = "$prefix.${param.name}"
+                    if (!param.type.isMarkedNullable || props.keys.count { it.toString().startsWith(keyPrefix) } > 0) {
+                        args[param] = decodeKlass(param.type.classifier as KClass<*>, prefix)
+                    }
+                }
                 else -> error("${param.type.classifier} is not supported")
             }
         }
-        return constructor.call(*args)
+        return constructor.callBy(args.filter { it.value != null })
     }
 
 }
