@@ -1,28 +1,26 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: ""
 labels: bug
-assignees: ''
-
+assignees: ""
 ---
 
-**Describe the bug**
+## What's wrong?
 
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-
-Steps to reproduce the behavior:
-
-**Expected behavior**
+## Expected behavior
 
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
+## Steps to reproduce
 
-If applicable, add screenshots to help explain your problem.
+Steps to reproduce the behavior:
 
-**Additional context**
+- Go to '...'
+- Run '....'
+
+## Additional context
 
 Add any other context about the problem here.
