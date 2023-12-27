@@ -73,11 +73,6 @@ private fun kill(session: Session, args: List<String>): ShellCommandOutput {
     return ShellCommandOutput.withError("kill: ${args.joinToString(" ")}")
 }
 
-private fun history(session: Session, @Suppress("UNUSED_PARAMETER") args: List<String>) =
-    ShellCommandOutput.withOutput(session.env.history().mapIndexed { index, command ->
-        DataStream("/bin/history", Schema.String("${index + 1} $command"))
-    })
-
 private fun openaiComplete(
     @Suppress("UNUSED_PARAMETER") session: Session,
     args: List<String>,

@@ -22,7 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 
 @Testcontainers
-internal class ShellCommandsKtTest {
+internal class CdKtTest {
     @Container
     private val testKafka = TestKafka()
 
