@@ -25,7 +25,7 @@ fun http(
 
     val url = arguments.first()
 
-    val output = when(verb) {
+    val output = when (verb) {
         "get" -> HttpClient.get(url)
         "post" -> {
             if (arguments.size < 2) {
@@ -34,6 +34,7 @@ fun http(
             val body = arguments[1]
             HttpClient.post(url, body)
         }
+
         else -> return ShellCommandOutput.withError("$verb requests not supported")
     }
 

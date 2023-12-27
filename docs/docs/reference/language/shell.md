@@ -4,12 +4,29 @@ Since `TypeStream` is heavily inspired by the Unix philosophy, it's only natural
 that it supports many shell commands.
 
 :::note
-Note that feature parity with Unix shells is not a goal of `TypeStream` so do not expect commands to be exactly the same as their Unix counterparts.
 
-Furthermore, `TypeStream` supports a few commands that are not available in Unix shells.
+Feature parity with Unix shells is a non-goal of `TypeStream` so do not expect
+commands to be exactly the same as their Unix counterparts.
+
+`TypeStream` also supports a few commands that are not available in Unix shells.
+
 :::
 
 ## Cd
+
+## History
+
+### Synopsis
+
+`history [-p]`
+
+### Description
+
+The `history` command is used to display the history of commands executed in the current session.
+
+The following options are supported:
+
+- `-p` `--print-session` - prints the history in a copy-paste friendly format
 
 ## Http
 

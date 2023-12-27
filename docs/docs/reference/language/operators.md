@@ -19,7 +19,8 @@ block expression is required.
 
 `each` **must** be the last operator in a pipeline.
 
-Here's an example of using `each` to make a HTTP request for each record in a data stream:
+Here's an example of using `each` to make a HTTP request for each record in a
+data stream:
 
 ```sh
 cat /dev/kafka/local/books | each { book -> http post https://example.com/new_books "{\"book_id\": #{$book.id}}" }
