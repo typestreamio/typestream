@@ -1,5 +1,11 @@
 # Specification
 
+:::warning
+
+This document is a work in progress. It's not complete and it's not final.
+
+:::
+
 The purpose of this document is to spec `TypeStream` language features.
 
 While `TypeStream` syntax is inspired by
