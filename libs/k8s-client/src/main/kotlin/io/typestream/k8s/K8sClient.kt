@@ -26,10 +26,10 @@ class K8sClient : Closeable {
                 .build()
         ).build()
 
-    fun getServerProperties(): InputStream? = kubernetesClient.configMaps()
+    fun getServerConfig(): InputStream? = kubernetesClient.configMaps()
         .inNamespace("typestream")
         .withName("server-config")
-        .get().data["server.properties"]?.byteInputStream()
+        .get().data["typestream.toml"]?.byteInputStream()
 
     override fun close() {
         kubernetesClient.close()

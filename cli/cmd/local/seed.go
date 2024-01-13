@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/charmbracelet/log"
@@ -13,6 +14,15 @@ import (
 )
 
 const imgName = "typestream/tools-seeder"
+
+const config = `
+[grpc]
+port=4242
+[sources.kafka.local]
+bootstrapServers="localhost:19092"
+schemaRegistry.url="http://localhost:18081"
+fsRefreshRate=10
+`
 
 // seedCmd represents the seed command
 var seedCmd = &cobra.Command{
@@ -44,6 +54,9 @@ var seedCmd = &cobra.Command{
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: image,
+			Env: []string{
+				fmt.Sprintf("TYPESTREAM_CONFIG=%s", config),
+			},
 		}, &container.HostConfig{NetworkMode: container.NetworkMode("host")}, nil, nil, "ts-seed-container")
 		if err != nil {
 			log.Fatalf("💥 failed to create container: %v", err)

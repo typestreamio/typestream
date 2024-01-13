@@ -4,13 +4,14 @@ import io.typestream.compiler.Compiler
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
+import io.typestream.config.Config
 import io.typestream.grpc.job_service.Job.CreateJobRequest
 import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
 import io.typestream.k8s.K8sClient
 import java.util.UUID
 
-class JobService(private val systemVersion: String, private val k8sMode: Boolean, private val vm: Vm) :
+class JobService(private val config: Config, private val vm: Vm) :
     JobServiceGrpcKt.JobServiceCoroutineImplBase() {
 
     override suspend fun createJob(request: CreateJobRequest) = createJobResponse {
@@ -26,9 +27,9 @@ class JobService(private val systemVersion: String, private val k8sMode: Boolean
         this.error = compilerResult.errors.joinToString("\n")
 
         if (compilerResult.errors.isEmpty()) {
-            if (k8sMode) {
+            if (config.k8sMode) {
                 K8sClient().use {
-                    it.createWorkerJob(systemVersion, id, request.source)
+                    it.createWorkerJob(config.versionInfo.version, id, request.source)
                 }
             } else {
                 vm.run(request.source, Session(vm.fileSystem, vm.scheduler, Env()))

@@ -7,11 +7,10 @@ import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.types.schema.fromJSON
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
-import io.typestream.config.SourcesConfig
+import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
-import io.typestream.testing.konfig.testKonfig
 import kotlinx.coroutines.Dispatchers
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -35,9 +34,7 @@ internal class HttpKtTest {
 
     @BeforeEach
     fun beforeEach() {
-        val sourcesConfig = SourcesConfig(testKonfig(testKafka))
-
-        fileSystem = FileSystem(sourcesConfig, Dispatchers.IO)
+        fileSystem = FileSystem(testConfig(testKafka).sources, Dispatchers.IO)
         session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
         mockWebServer = MockWebServer()
         mockWebServer.start()

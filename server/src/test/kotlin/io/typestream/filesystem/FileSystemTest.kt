@@ -6,11 +6,10 @@ import io.typestream.compiler.ast.Grep
 import io.typestream.compiler.ast.Join
 import io.typestream.compiler.ast.Pipeline
 import io.typestream.compiler.types.Encoding
-import io.typestream.config.SourcesConfig
+import io.typestream.config.testing.testConfig
 import io.typestream.helpers.author
 import io.typestream.helpers.book
 import io.typestream.testing.TestKafka
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.Author
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +35,7 @@ internal class FileSystemTest {
         @JvmStatic
         @BeforeAll
         fun beforeAll() {
-            fileSystem = FileSystem(SourcesConfig(testKonfig(testKafka)), Dispatchers.IO)
+            fileSystem = FileSystem(testConfig(testKafka).sources, Dispatchers.IO)
 
             val author = Author(name = "Octavia E. Butler")
             testKafka.produceRecords("authors", "avro", author)

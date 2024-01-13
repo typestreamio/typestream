@@ -8,11 +8,10 @@ import io.typestream.compiler.types.datastream.fromAvroSchema
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
-import io.typestream.config.SourcesConfig
+import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -38,8 +37,7 @@ internal class CompilerTest {
 
     @BeforeEach
     fun beforeEach() {
-        val sourcesConfig = SourcesConfig(testKonfig(testKafka))
-        fileSystem = FileSystem(sourcesConfig, testDispatcher)
+        fileSystem = FileSystem(testConfig(testKafka).sources, testDispatcher)
         session = Session(fileSystem, Scheduler(false, testDispatcher), Env())
     }
 

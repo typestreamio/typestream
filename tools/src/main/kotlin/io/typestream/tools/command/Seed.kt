@@ -1,5 +1,6 @@
 package io.typestream.tools.command
 
+import io.typestream.config.Config
 import io.typestream.testing.kafka.AdminClientWrapper
 import io.typestream.testing.kafka.KafkaProducerWrapper
 import io.typestream.testing.model.Author
@@ -7,12 +8,11 @@ import io.typestream.testing.model.Book
 import io.typestream.testing.model.PageView
 import io.typestream.testing.model.Rating
 import io.typestream.testing.model.User
-import io.typestream.tools.KafkaClustersConfig
 
-fun seed(kafkaClustersConfig: KafkaClustersConfig, args: List<String>) {
+fun seed(config: Config, args: List<String>) {
     val encoding = args.firstOrNull() ?: "avro"
 
-    val kafkaConfig = kafkaClustersConfig.clusters["local"]
+    val kafkaConfig = config.sources.kafka["local"]
     requireNotNull(kafkaConfig) { "local kafka cluster not found" }
 
     val adminClientWrapper = AdminClientWrapper(kafkaConfig.bootstrapServers)

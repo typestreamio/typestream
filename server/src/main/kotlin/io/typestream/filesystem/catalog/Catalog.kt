@@ -26,7 +26,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
     private val schemaRegistries = mutableMapOf<String, SchemaRegistryClient>()
 
     init {
-        sourcesConfig.kafkaClustersConfig.clusters.forEach { (name, config) ->
+        sourcesConfig.kafka.forEach { (name, config) ->
             schemaRegistries[FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + name] =
                 SchemaRegistryClient(config.schemaRegistry)
         }
@@ -51,7 +51,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
 
         val scope = CoroutineScope(dispatcher + handler)
         // loop on subjects and default to string on fetching from the catalog is a better strategy
-        sourcesConfig.kafkaClustersConfig.clusters.forEach { (name, config) ->
+        sourcesConfig.kafka.forEach { (name, config) ->
             scope.tick(config.fsRefreshRate.seconds, networkExceptionHandler) {
                 refreshRegistry(name)
             }
@@ -90,7 +90,6 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
     }
 
     fun refresh() {
-        sourcesConfig.kafkaClustersConfig.clusters.keys.forEach { name -> refreshRegistry(name) }
+        sourcesConfig.kafka.keys.forEach(::refreshRegistry)
     }
-
 }

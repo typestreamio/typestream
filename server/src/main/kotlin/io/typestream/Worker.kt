@@ -3,17 +3,13 @@ package io.typestream
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Vm
-import io.typestream.config.SourcesConfig
-import io.typestream.coroutine.until
+import io.typestream.config.Config
 import io.typestream.filesystem.FileSystem
-import io.typestream.konfig.Konfig
 import io.typestream.scheduler.Scheduler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class Worker(konfig: Konfig) {
-    private val sourcesConfig = SourcesConfig(konfig)
+class Worker(val config: Config) {
     private val logger = KotlinLogging.logger {}
     fun run() = runBlocking {
         val id = System.getenv("WORKER_ID") ?: error("WORKER_ID env var is not set")
@@ -22,7 +18,7 @@ class Worker(konfig: Konfig) {
         val dispatcher = Dispatchers.IO
 
         logger.info { "starting filesystem" }
-        val fileSystem = FileSystem(sourcesConfig, dispatcher)
+        val fileSystem = FileSystem(config.sources, dispatcher)
 
         fileSystem.refresh()
 

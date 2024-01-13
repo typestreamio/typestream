@@ -1,12 +1,9 @@
 package io.typestream.compiler.vm
 
-import io.typestream.config.SourcesConfig
+import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
-import io.typestream.testing.kafka.KafkaConsumerWrapper
-import io.typestream.testing.kafka.RecordsExpected
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.SmokeType
 import io.typestream.testing.until
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +13,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.apache.avro.generic.GenericRecord
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -35,10 +31,8 @@ class VmTest {
 
     @BeforeEach
     fun beforeEach() {
-        val sourcesConfig = SourcesConfig(testKonfig(testKafka))
-
         scheduler = Scheduler(false, testDispatcher)
-        fileSystem = FileSystem(sourcesConfig, testDispatcher)
+        fileSystem = FileSystem(testConfig(testKafka).sources, testDispatcher)
         session = Session(fileSystem, scheduler, Env())
         vm = Vm(fileSystem, scheduler)
     }

@@ -36,6 +36,14 @@ services:
       start_period: 5s
   server:
     image: {{ .Image }}
+    environment:
+      TYPESTREAM_CONFIG: |-
+        [grpc]
+        port=4242
+        [sources.kafka.local]
+        bootstrapServers="redpanda:9092"
+        schemaRegistry.url="http://redpanda:8081"
+        fsRefreshRate=10
     networks:
       - typestream_network
     ports:

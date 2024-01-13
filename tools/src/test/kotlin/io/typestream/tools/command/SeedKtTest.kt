@@ -1,16 +1,15 @@
 package io.typestream.tools.command
 
+import io.typestream.config.testing.testConfig
 import io.typestream.testing.TestKafka
 import io.typestream.testing.kafka.AdminClientWrapper
 import io.typestream.testing.kafka.KafkaConsumerWrapper
 import io.typestream.testing.kafka.RecordsExpected
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.Author
 import io.typestream.testing.model.Book
 import io.typestream.testing.model.PageView
 import io.typestream.testing.model.Rating
 import io.typestream.testing.model.User
-import io.typestream.tools.Config
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
@@ -36,7 +35,7 @@ internal class SeedKtTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `seeds correctly`(encoding: String) {
-        seed(Config(testKonfig(testKafka)).kafkaClustersConfig, listOf(encoding))
+        seed(testConfig(testKafka), listOf(encoding))
 
         assertThat(adminClientWrapper.listTopics()).contains("authors", "books", "users", "ratings", "page_views")
 

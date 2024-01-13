@@ -1,6 +1,6 @@
 package io.typestream.config
 
-import io.typestream.konfig.KonfigSource
+import kotlinx.serialization.Serializable
 
-@KonfigSource("grpc")
+@Serializable
 data class GrpcConfig(val port: Int)

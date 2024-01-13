@@ -11,11 +11,12 @@ kafka_port=$(docker port "$(docker ps --filter name=rp-node-0 --format '{{.ID}}'
 registry_port=$(docker port "$(docker ps --filter name=rp-node-0 --format '{{.ID}}')" | grep 8081 | cut -d: -f2)
 
 {
-  echo "grpc.port=4242"
-  echo "sources.kafka=local"
-  echo "sources.kafka.local.bootstrapServers=localhost:$kafka_port"
-  echo "sources.kafka.local.schemaRegistry.url=http://localhost:$registry_port"
-  echo "sources.kafka.local.fsRefreshRate=10"
-} > "$script_dir"/server.properties
+  echo "[grpc]"
+  echo "port=4242"
+  echo "[sources.kafka.local]"
+  echo "bootstrapServers=\"localhost:$kafka_port\""
+  echo "schemaRegistry.url=\"http://localhost:$registry_port\""
+  echo "fsRefreshRate=10"
+} > "$script_dir"/typestream.toml
 
 echo "export BOOTSTRAP_SERVER=localhost:$kafka_port"

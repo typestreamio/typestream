@@ -1,5 +1,7 @@
 plugins {
     id("typestream.kotlin-conventions")
+
+    //TODO It would be nice to package the code here and the gradle task it depends on in the same place.
     id("typestream.version-info")
     id("com.google.cloud.tools.jib") version "3.4.0"
     application
@@ -11,14 +13,13 @@ repositories {
 }
 
 application {
-    mainClass.set("io.typestream.Main")
+    mainClass.set("io.typestream.MainKt")
 }
 
 dependencies {
+    implementation(project(":config"))
     implementation(project(":libs:k8s-client"))
-    implementation(project(":libs:konfig"))
     implementation(project(":libs:option"))
-    implementation(project(":libs:version-info"))
     implementation(project(":stub"))
 
     implementation(libs.avro)

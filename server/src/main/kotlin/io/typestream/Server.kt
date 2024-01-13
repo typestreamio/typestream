@@ -5,40 +5,28 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.protobuf.services.ProtoReflectionService
 import io.typestream.compiler.vm.Vm
-import io.typestream.config.GrpcConfig
-import io.typestream.config.SourcesConfig
+import io.typestream.config.Config
 import io.typestream.filesystem.FileSystem
-import io.typestream.konfig.Konfig
 import io.typestream.scheduler.Scheduler
 import io.typestream.server.ExceptionInterceptor
 import io.typestream.server.InteractiveSessionService
 import io.typestream.server.JobService
 import io.typestream.server.LoggerInterceptor
-import io.typestream.version_info.VersionInfo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 
-
-class Server(
-    konfig: Konfig,
-    private val versionInfo: VersionInfo,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-) :
-    Closeable {
+class Server(private val config: Config, private val dispatcher: CoroutineDispatcher = Dispatchers.IO) : Closeable {
     private val logger = KotlinLogging.logger {}
 
     var server: Server? = null
 
-    private val grpcConfig: GrpcConfig by konfig.inject()
-    private val sourcesConfig = SourcesConfig(konfig)
-
     private val subSystems = mutableListOf<Closeable>()
 
-    fun run(k8sMode: Boolean, serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(grpcConfig.port)) = runBlocking {
-        val fileSystem = FileSystem(sourcesConfig, dispatcher)
+    fun run(serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(config.grpc.port)) = runBlocking {
+        val fileSystem = FileSystem(config.sources, dispatcher)
 
         subSystems.add(fileSystem)
         launch(dispatcher) {
@@ -46,7 +34,7 @@ class Server(
         }
         logger.info { "file system watching for changes" }
 
-        val scheduler = Scheduler(k8sMode, dispatcher)
+        val scheduler = Scheduler(config.k8sMode, dispatcher)
 
         subSystems.add(scheduler)
         launch(dispatcher) {
@@ -58,7 +46,7 @@ class Server(
         serverBuilder.intercept(ExceptionInterceptor())
         serverBuilder.intercept(LoggerInterceptor())
         serverBuilder.addService(InteractiveSessionService(vm))
-        serverBuilder.addService(JobService(versionInfo.version, k8sMode, vm))
+        serverBuilder.addService(JobService(config, vm))
         serverBuilder.addService(ProtoReflectionService.newInstance())
         //TODO add health check. See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 
