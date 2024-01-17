@@ -22,7 +22,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
         val runtime = program.runtime()
         when (runtime.type) {
             KAFKA -> {
-                val kafkaConfig = fileSystem.sourcesConfig.kafkaClustersConfig.clusters[runtime.name]
+                val kafkaConfig = fileSystem.sourcesConfig.kafka[runtime.name]
                     ?: error("cluster ${runtime.name} not found")
 
                 logger.info { "starting kafka streams job for ${program.id}" }
@@ -49,7 +49,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
         }
         return when (runtime.type) {
             KAFKA -> {
-                val kafkaConfig = fileSystem.sourcesConfig.kafkaClustersConfig.clusters[runtime.name]
+                val kafkaConfig = fileSystem.sourcesConfig.kafka[runtime.name]
                     ?: error("cluster ${runtime.name} not found")
 
                 scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig))
@@ -82,6 +82,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                     dataStreams.forEach { node.ref.fn(KeyValue(it, it)) }
                     dataStreams
                 }
+
                 is Node.ShellSource -> dataStreams
                 else -> error("unexpected node type: ${node.ref}")
             }

@@ -96,14 +96,14 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
         //TODO make this a config
         props[StreamsConfig.COMMIT_INTERVAL_MS_CONFIG] = 100
         props["schema.registry.url"] = kafkaConfig.schemaRegistry.url
-        if (kafkaConfig.schemaRegistry.userInfo != null) {
-            props["schema.registry.userInfo"] = kafkaConfig.schemaRegistry.userInfo
+        kafkaConfig.schemaRegistry.userInfo?.let {
+            props["schema.registry.userInfo"] = it
         }
 
-        if (kafkaConfig.saslConfig != null) {
+        kafkaConfig.saslConfig?.let {
             props[StreamsConfig.SECURITY_PROTOCOL_CONFIG] = "SASL_SSL"
-            props[SaslConfigs.SASL_MECHANISM] = kafkaConfig.saslConfig.mechanism
-            props[SaslConfigs.SASL_JAAS_CONFIG] = kafkaConfig.saslConfig.jaasConfig
+            props[SaslConfigs.SASL_MECHANISM] = it.mechanism
+            props[SaslConfigs.SASL_JAAS_CONFIG] = it.jaasConfig
         }
 
         return props

@@ -5,11 +5,10 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
-import io.typestream.config.SourcesConfig
+import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.Author
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -31,9 +30,7 @@ internal class CdKtTest {
 
     @BeforeEach
     fun beforeEach() {
-        val sourcesConfig = SourcesConfig(testKonfig(testKafka))
-
-        fileSystem = FileSystem(sourcesConfig, Dispatchers.IO)
+        fileSystem = FileSystem(testConfig(testKafka).sources, Dispatchers.IO)
         session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
     }
 

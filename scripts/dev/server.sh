@@ -5,4 +5,4 @@ IFS=$'\n\t'
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-./gradlew server:run --args="$script_dir/server.properties" -q --console=plain
+TYPESTREAM_CONFIG_PATH=$script_dir ./gradlew server:run -q --console=plain

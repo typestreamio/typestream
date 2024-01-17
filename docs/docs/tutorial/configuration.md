@@ -1,34 +1,48 @@
 # Configuration
 
-`TypeStream` employs a configuration strategy we call _graceful configuration_.
+`TypeStream` is configured using a [TOML](https://toml.io/en/) file.
 
-The idea is that, by default, you do not need to configure anything: every
-feature has defaults.
+At startup, `TypeStream` searches for a `typestream.toml` file using the
+`TYPESTREAM_CONFIG_PATH` environment variable. If it finds one, it uses it to
+configure itself. If it does not find one, it uses the following defaults:
 
-`TypeStream` configuration is done via a `server.properties` file.
+```toml
+[grpc]
+port = 4242
+[sources.kafka.local]
+bootstrapServers = "localhost:9092"
+schemaRegistry.url = "http://localhost:8081"
+fsRefreshRate = 60
+```
+
+The `TYPESTREAM_CONFIG_PATH` environment variable is a colon-separated list of
+paths to search for a `typestream.toml` file. If the environment variable is not
+set, `TypeStream` searches for a `typestream.toml` file in the following
+locations:
+
+1. The current working directory.
+2. The user's home directory.
+3. The `/etc/typestream` directory.
+
+You can also specify a configuration via the environment variable
+`TYPESTREAM_CONFIG`.
 
 In the following sections, we describe the available configuration options.
 
-Required configuration are marked **bold**.
+Required configuration is marked **bold**.
+
+## Grpc
+
+The following configuration options are available for the gRPC server:
+
+| Name       | Description                                    | Default |
+| ---------- | ---------------------------------------------- | ------- |
+| **`port`** | The port on which to listen for gRPC requests. | `4242`  |
 
 ## Sources
 
 This section of the configuration file is used to configure
-[sources](reference/glossary.md#source). For each source type, you must provide
-a comma-separated list of source names. For example:
-
-```properties
-sources.kafka=source1,source2
-sources.http=source3
-```
-
-Then you can configure each source individually. For example:
-
-```properties
-sources.kafka.source1.bootstrapServers=localhost:9092
-sources.kafka.source2.bootstrapServers=localhost:9092
-sources.http.source3.port=8080
-```
+[sources](reference/glossary.md#source).
 
 ### Kafka
 

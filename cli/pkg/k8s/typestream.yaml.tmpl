@@ -54,12 +54,13 @@ metadata:
   name: server-config
   namespace: {{.Namespace}}
 data:
-  server.properties: |-
-    grpc.port=4242
-    sources.kafka=local
-    sources.kafka.local.bootstrapServers=redpanda.typestream:19092
-    sources.kafka.local.schemaRegistry.url=http://redpanda.typestream:18081
-    sources.kafka.local.fsRefreshRate=10
+  typestream.toml: |-
+    [grpc]
+    port=4242
+    [sources.kafka.local]
+    bootstrapServers="redpanda.typestream:19092"
+    schemaRegistry.url="http://redpanda.typestream:18081"
+    fsRefreshRate=10
 
 ---
 

@@ -1,6 +1,6 @@
 package io.typestream.config
 
-import io.typestream.konfig.KonfigSource
+import kotlinx.serialization.Serializable
 
-@KonfigSource("sasl")
+@Serializable
 data class SaslConfig(val mechanism: String = "PLAIN", val jaasConfig: String)

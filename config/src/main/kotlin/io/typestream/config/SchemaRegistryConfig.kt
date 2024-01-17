@@ -1,8 +1,8 @@
 package io.typestream.config
 
-import io.typestream.konfig.KonfigSource
+import kotlinx.serialization.Serializable
 
-@KonfigSource("schemaRegistry")
+@Serializable
 data class SchemaRegistryConfig(val url: String, val userInfo: String? = null) {
     companion object {
         fun fromMap(configs: Map<String, *>): SchemaRegistryConfig {

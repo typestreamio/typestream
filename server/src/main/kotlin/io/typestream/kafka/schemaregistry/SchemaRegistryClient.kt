@@ -49,8 +49,8 @@ class SchemaRegistryClient(private val config: SchemaRegistryConfig) {
             .header("Accept", CONTENT_TYPE)
             .url("${config.url}$path")
 
-        if (config.userInfo != null) {
-            val encodedUserInfo = config.userInfo.encode().base64()
+        config.userInfo?.let {
+            val encodedUserInfo = it.encode().base64()
             requestBuilder.header("Authorization", "Basic $encodedUserInfo")
         }
 

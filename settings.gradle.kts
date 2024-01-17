@@ -1,11 +1,10 @@
 rootProject.name = "typestream"
 
 include(
+    "config",
     "libs:testing",
     "libs:k8s-client",
-    "libs:konfig",
     "libs:option",
-    "libs:version-info",
     "protos",
     "stub",
     "server",

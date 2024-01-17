@@ -15,7 +15,6 @@ repositories {
 val protobufVersion: String = libs.versions.protobuf.get()
 
 dependencies {
-    implementation(project(":libs:konfig"))
     implementation(libs.avro)
     implementation(libs.bundles.kafka)
     implementation(libs.test.containers.redpanda)

@@ -39,7 +39,7 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
     }
 
     init {
-        sourcesConfig.kafkaClustersConfig.clusters.forEach { (name, config) ->
+        sourcesConfig.kafka.forEach { (name, config) ->
             logger.info { "starting filesystem for kafka cluster: $name" }
             kafkaDir.add(KafkaClusterDirectory(name, config, dispatcher))
         }

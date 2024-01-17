@@ -1,10 +1,9 @@
 package io.typestream.filesystem.catalog
 
 import io.typestream.compiler.types.schema.Schema
-import io.typestream.config.SourcesConfig
+import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.testing.TestKafka
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.Rating
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -34,7 +33,7 @@ internal class CatalogTest {
                 rating = 5
             )
         )
-        val catalog = Catalog(SourcesConfig(testKonfig(testKafka)), Dispatchers.IO)
+        val catalog = Catalog(testConfig(testKafka).sources, Dispatchers.IO)
 
         catalog.refresh()
 

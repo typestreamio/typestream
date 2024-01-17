@@ -4,6 +4,7 @@ import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.testing.GrpcCleanupRule
 import io.typestream.Server
+import io.typestream.config.testing.testConfig
 import io.typestream.grpc.interactive_session_service.InteractiveSession.GetProgramOutputRequest
 import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProgramRequest
 import io.typestream.grpc.interactive_session_service.InteractiveSession.RunProgramResponse
@@ -11,11 +12,9 @@ import io.typestream.grpc.interactive_session_service.InteractiveSession.StartSe
 import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc
 import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc.InteractiveSessionServiceBlockingStub
 import io.typestream.testing.TestKafka
-import io.typestream.testing.konfig.testKonfig
 import io.typestream.testing.model.Book
 import io.typestream.testing.model.User
 import io.typestream.testing.until
-import io.typestream.version_info.VersionInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -44,7 +43,7 @@ internal class InteractiveSessionServiceTest {
 
     @BeforeEach
     fun beforeEach() {
-        app = Server(testKonfig(testKafka), VersionInfo("beta", "n/a"), dispatcher)
+        app = Server(testConfig(testKafka), dispatcher)
     }
 
     @Test
@@ -52,7 +51,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
@@ -85,7 +84,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
@@ -113,7 +112,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
@@ -140,7 +139,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
@@ -182,7 +181,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
@@ -224,7 +223,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }
@@ -267,7 +266,7 @@ internal class InteractiveSessionServiceTest {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
-                app.run(false, InProcessServerBuilder.forName(serverName).directExecutor())
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
             }
 
             until { requireNotNull(app.server) }

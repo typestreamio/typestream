@@ -1,18 +1,18 @@
 package io.typestream.tools.command
 
+import io.typestream.config.Config
 import io.typestream.testing.kafka.KafkaConsumerWrapper
 import io.typestream.testing.kafka.KafkaProducerWrapper
 import io.typestream.testing.kafka.RecordsExpected
 import io.typestream.testing.model.Author
 import io.typestream.testing.model.Book
 import io.typestream.testing.model.PageView
-import io.typestream.tools.KafkaClustersConfig
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-fun streamPageViews(kafkaClustersConfig: KafkaClustersConfig, args: List<String>) = runBlocking {
+fun streamPageViews(config: Config, args: List<String>) = runBlocking {
     val encoding = args.firstOrNull() ?: "avro"
-    val kafkaConfig = kafkaClustersConfig.clusters["local"]
+    val kafkaConfig = config.sources.kafka["local"]
     requireNotNull(kafkaConfig) { "local kafka cluster not found" }
 
     val kafkaProducer = KafkaProducerWrapper(kafkaConfig.bootstrapServers, kafkaConfig.schemaRegistry.url)

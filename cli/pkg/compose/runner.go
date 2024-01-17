@@ -53,6 +53,7 @@ func (runner *Runner) RunCommand(arg ...string) error {
 	}
 
 	err = tmpl.Execute(tmpFile, struct{ Image string }{Image: version.DockerImage("typestream/server")})
+
 	if err != nil {
 		log.Fatal("💥 failed to execute compose template: %v", err)
 	}
