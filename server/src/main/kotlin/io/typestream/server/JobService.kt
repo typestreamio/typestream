@@ -20,7 +20,7 @@ class JobService(private val config: Config, private val vm: Vm) :
         // job id that we create here
         val id = "typestream-app-${UUID.randomUUID()}"
 
-        val compilerResult = Compiler(Session(vm.fileSystem, vm.scheduler, Env())).compile(request.source)
+        val compilerResult = Compiler(Session(vm.fileSystem, vm.scheduler, Env(config))).compile(request.source)
 
         this.success = compilerResult.errors.isEmpty()
 
@@ -32,7 +32,7 @@ class JobService(private val config: Config, private val vm: Vm) :
                     it.createWorkerJob(config.versionInfo.version, id, request.source)
                 }
             } else {
-                vm.run(request.source, Session(vm.fileSystem, vm.scheduler, Env()))
+                vm.run(request.source, Session(vm.fileSystem, vm.scheduler, Env(config)))
             }
         }
 

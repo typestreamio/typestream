@@ -67,7 +67,7 @@ internal class InteractiveSessionServiceTest {
 
             assertThat(stub.runProgram(sessionId, "ls"))
                 .extracting("stdOut", "stdErr", "hasMoreOutput")
-                .containsExactly("dev", "", false)
+                .containsExactly("dev\nmnt", "", false)
 
             assertThat(stub.runProgram(sessionId, "stat dev"))
                 .extracting("stdOut", "stdErr", "hasMoreOutput")

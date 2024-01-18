@@ -13,7 +13,8 @@ import io.typestream.compiler.ast.Join
 import io.typestream.compiler.ast.Pipeline
 import io.typestream.compiler.ast.Wc
 import io.typestream.compiler.types.Encoding
-import io.typestream.config.SourcesConfig
+import io.typestream.config.Config
+import io.typestream.config.MountsConfig
 import io.typestream.filesystem.catalog.Catalog
 import io.typestream.filesystem.kafka.KafkaClusterDirectory
 import io.typestream.filesystem.kafka.Topic
@@ -24,13 +25,15 @@ import kotlinx.coroutines.supervisorScope
 import java.io.Closeable
 
 
-class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: CoroutineDispatcher) : Closeable {
+class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher) : Closeable {
     private val logger = KotlinLogging.logger {}
 
     private val kafkaDir = Directory("kafka")
     private val devDir = Directory("dev")
     private val root = Directory("/")
-    private val catalog = Catalog(sourcesConfig, dispatcher)
+    private val mntDir = Directory("mnt")
+    private val randomDir = Directory("random")
+    private val catalog = Catalog(config.sources, dispatcher)
 
     private val jobs = mutableListOf<Job>()
 
@@ -39,17 +42,22 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
     }
 
     init {
-        sourcesConfig.kafka.forEach { (name, config) ->
+        config.sources.kafka.forEach { (name, config) ->
             logger.info { "starting filesystem for kafka cluster: $name" }
             kafkaDir.add(KafkaClusterDirectory(name, config, dispatcher))
         }
+        config.mounts.random.values.forEach { config ->
+            randomDir.add(Random(config.endpoint.substringAfterLast("/"), config.valueType))
+        }
         devDir.add(kafkaDir)
+        mntDir.add(randomDir)
         root.add(devDir)
+        root.add(mntDir)
     }
 
     fun ls(path: String): List<String> {
         val children = if (path == "/") root.children() else (root.findInode(path)?.children() ?: setOf())
-        return children.map { it.name }
+        return children.map { it.name }.sorted()
     }
 
     suspend fun watch() = supervisorScope {
@@ -188,4 +196,24 @@ class FileSystem(val sourcesConfig: SourcesConfig, private val dispatcher: Corou
         }
     }
 
+    fun mount(mountConfig: String) {
+        val mountsConfig = MountsConfig.from(mountConfig)
+
+        mountsConfig.random.values.forEach { config ->
+            val target = root.findInode(config.endpoint)
+            require(target == null) { "${config.endpoint} already exists" }
+            mntDir.add(Random(config.endpoint.substringAfterLast("/"), config.valueType))
+        }
+
+        config.mount(mountsConfig)
+    }
+
+    fun unmount(endpoint: String) {
+        val target = root.findInode(endpoint)
+        require(target != null) { "$endpoint does not exist" }
+        require(target is Random) { "$endpoint is not a random value" }
+        mntDir.remove(target)
+
+        config.unmount(endpoint)
+    }
 }

@@ -21,8 +21,7 @@ set, `TypeStream` searches for a `typestream.toml` file in the following
 locations:
 
 1. The current working directory.
-2. The user's home directory.
-3. The `/etc/typestream` directory.
+2. The `/etc/typestream` directory.
 
 You can also specify a configuration via the environment variable
 `TYPESTREAM_CONFIG`.

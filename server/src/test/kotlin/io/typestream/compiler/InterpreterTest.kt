@@ -30,8 +30,9 @@ internal class InterpreterTest {
 
     @BeforeEach
     fun beforeEach() {
-        fileSystem = FileSystem(testConfig(testKafka).sources, Dispatchers.IO)
-        session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env())
+        val testConfig = testConfig(testKafka)
+        fileSystem = FileSystem(testConfig, Dispatchers.IO)
+        session = Session(fileSystem, Scheduler(false, Dispatchers.IO), Env(testConfig))
     }
 
     @ParameterizedTest

@@ -11,7 +11,7 @@ import (
 	"github.com/typestreamio/typestream/cli/pkg/job_service"
 )
 
-func extractSource(arg string) string {
+func readFile(arg string) string {
 	stat, err := os.Stat(arg)
 	if err == nil && !stat.IsDir() {
 		content, err := os.ReadFile(arg)
@@ -38,7 +38,7 @@ var runCmd = &cobra.Command{
 
 		defer client.Close()
 
-		source := extractSource(args[0])
+		source := readFile(args[0])
 
 		createJobResponse, err := client.CreateJob(ctx, &job_service.CreateJobRequest{
 			UserId: "42", // TODO get from config

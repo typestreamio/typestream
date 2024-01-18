@@ -1,0 +1,6 @@
+[grpc]
+port=4242
+[sources.kafka.local]
+bootstrapServers="example.com:9092"
+schemaRegistry.url="https://example.com:8081"
+fsRefreshRate=42

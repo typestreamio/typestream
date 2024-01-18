@@ -9,6 +9,7 @@ import io.typestream.config.Config
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.server.ExceptionInterceptor
+import io.typestream.server.FileSystemService
 import io.typestream.server.InteractiveSessionService
 import io.typestream.server.JobService
 import io.typestream.server.LoggerInterceptor
@@ -26,7 +27,7 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
     private val subSystems = mutableListOf<Closeable>()
 
     fun run(serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(config.grpc.port)) = runBlocking {
-        val fileSystem = FileSystem(config.sources, dispatcher)
+        val fileSystem = FileSystem(config, dispatcher)
 
         subSystems.add(fileSystem)
         launch(dispatcher) {
@@ -45,8 +46,11 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
 
         serverBuilder.intercept(ExceptionInterceptor())
         serverBuilder.intercept(LoggerInterceptor())
-        serverBuilder.addService(InteractiveSessionService(vm))
+
+        serverBuilder.addService(FileSystemService(vm))
+        serverBuilder.addService(InteractiveSessionService(config, vm))
         serverBuilder.addService(JobService(config, vm))
+
         serverBuilder.addService(ProtoReflectionService.newInstance())
         //TODO add health check. See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 

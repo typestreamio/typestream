@@ -35,7 +35,7 @@ internal class FileSystemTest {
         @JvmStatic
         @BeforeAll
         fun beforeAll() {
-            fileSystem = FileSystem(testConfig(testKafka).sources, Dispatchers.IO)
+            fileSystem = FileSystem(testConfig(testKafka), Dispatchers.IO)
 
             val author = Author(name = "Octavia E. Butler")
             testKafka.produceRecords("authors", "avro", author)

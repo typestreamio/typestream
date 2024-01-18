@@ -96,9 +96,15 @@ spec:
             requests:
               cpu: "4"
               memory: "2048Mi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/typestream
       restartPolicy: Always
 status: {}
-
+volumes:
+- name: config-volume
+  configMap:
+    name: server-config
 ---
 
 apiVersion: v1

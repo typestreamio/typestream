@@ -18,7 +18,7 @@ class Worker(val config: Config) {
         val dispatcher = Dispatchers.IO
 
         logger.info { "starting filesystem" }
-        val fileSystem = FileSystem(config.sources, dispatcher)
+        val fileSystem = FileSystem(config, dispatcher)
 
         fileSystem.refresh()
 
@@ -27,6 +27,6 @@ class Worker(val config: Config) {
         val vm = Vm(fileSystem, Scheduler(true, dispatcher))
 
         logger.info { "executing program $id" }
-        vm.exec(payload, Env())
+        vm.exec(payload, Env(config))
     }
 }

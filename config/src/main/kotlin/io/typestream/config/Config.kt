@@ -1,22 +1,44 @@
 package io.typestream.config
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.typestream.k8s.K8sClient
-import java.io.InputStream
+import net.peanuuutz.tomlkt.Toml
+import net.peanuuutz.tomlkt.TomlTable
+import java.io.File
 import java.net.InetAddress
 import java.nio.file.Paths
-import kotlin.system.exitProcess
-
 
 data class Config(
     val sources: SourcesConfig,
     val grpc: GrpcConfig,
+    val mounts: MountsConfig,
     val k8sMode: Boolean,
     val versionInfo: VersionInfo,
+    val configPath: String,
 ) {
     companion object {
+        private fun fetchAutoConfigFile(configPath: String): File {
+            val autoConfigPath = Paths.get(configPath, "typestream.auto.toml")
+            val configFile = autoConfigPath.toFile()
+
+            if (!configFile.exists()) {
+                configFile.createNewFile()
+            }
+
+            return configFile
+        }
+
+
+        private fun fetchAutoConfig(configPath: String): TomlTable? {
+            val configFile = fetchAutoConfigFile(configPath) ?: return null
+
+            return Toml.decodeFromString(TomlTable.serializer(), configFile.readText())
+        }
+
         fun fetch(): Config {
             val logger = KotlinLogging.logger {}
+
+            // Not convinced this should be public for now (which is why it's not officially documented)
+            val systemConfigPath = SystemEnv["TYPESTREAM_SYSTEM_CONFIG_PATH"] ?: "/etc/typestream"
 
             var kubernetesMode = false
             try {
@@ -25,44 +47,96 @@ data class Config(
             } catch (_: Exception) {
             }
 
-            val envFile = System.getenv("TYPESTREAM_CONFIG")
+            val envFile = SystemEnv["TYPESTREAM_CONFIG"]
 
-            val serverConfig: InputStream? = if (envFile != null) {
+            val configFilePath: String = if (envFile != null) {
                 logger.info { "loading configuration from TYPESTREAM_CONFIG" }
-                logger.info { "configuration: $envFile" }
 
-                envFile.byteInputStream()
-            } else if (kubernetesMode) {
-                val k8sClient = K8sClient()
+                val defaultPath = Paths.get(systemConfigPath, "typestream.toml")
+                Paths.get(systemConfigPath).toFile().mkdir()
+                val configFile = defaultPath.toFile()
+                configFile.createNewFile()
 
-                logger.info { "fetching config via config map" }
+                configFile.writeText(envFile)
 
-                k8sClient.use { it.getServerConfig() }
+                systemConfigPath
             } else {
                 val paths =
-                    System.getenv("TYPESTREAM_CONFIG_PATH") ?: ".:${System.getProperty("user.home")}:/etc/typestream"
+                    SystemEnv["TYPESTREAM_CONFIG_PATH"] ?: ".:$systemConfigPath"
 
                 val configFilePath = paths.split(":").map { Paths.get(it, "typestream.toml") }
                     .firstOrNull { it.toFile().exists() }
 
                 if (configFilePath != null) {
                     logger.info { "loading configuration from $configFilePath" }
-                    configFilePath.toFile().inputStream()
+                    configFilePath.parent.toRealPath().toString()
                 } else {
-                    Config::class.java.getResourceAsStream("/typestream.toml")
+                    logger.info { "loading default configuration from resources" }
+                    val fileStream = Config::class.java.getResourceAsStream("/typestream.toml")
+
+                    require(fileStream != null) { "default configuration not found" }
+
+                    val defaultPath = Paths.get(systemConfigPath, "typestream.toml")
+                    Paths.get(systemConfigPath).toFile().mkdir()
+                    val configFile = defaultPath.toFile()
+                    configFile.createNewFile()
+
+                    configFile.writeText(fileStream.readAllBytes().decodeToString().trimIndent())
+
+                    systemConfigPath
                 }
             }
 
-            if (serverConfig == null) {
-                logger.info { "cannot load configuration" }
-                exitProcess(1)
-            }
+            val serverConfig = Paths.get(configFilePath, "typestream.toml").toFile().inputStream()
 
             val versionInfo = VersionInfo.fetch()
 
             val tomlConfig = TomlConfig.from(serverConfig.readAllBytes().decodeToString())
 
-            return Config(tomlConfig.sources, tomlConfig.grpc, kubernetesMode, versionInfo)
+            val autoConfigTable = fetchAutoConfig(configFilePath)
+
+            if (autoConfigTable != null) {
+                logger.info { "loading auto configuration from $configFilePath/typestream.auto.toml" }
+                val mountsConfig = MountsConfig.from(autoConfigTable)
+                tomlConfig.mergeWith(mountsConfig)
+            }
+
+            val config = Config(
+                tomlConfig.sources,
+                tomlConfig.grpc,
+                tomlConfig.mounts,
+                kubernetesMode,
+                versionInfo,
+                configFilePath
+            )
+
+            logger.info { "loaded configuration: $config" }
+
+            return config
         }
     }
+
+    fun mount(mountsConfig: MountsConfig) {
+        mounts.random.putAll(mountsConfig.random)
+        writeAutoConfigFile()
+    }
+
+    fun unmount(path: String) {
+        mounts.random.entries.removeIf { it.value.endpoint == path }
+
+        writeAutoConfigFile()
+    }
+
+    private fun writeAutoConfigFile() {
+        val autoConfigFile = fetchAutoConfigFile(configPath)
+
+        autoConfigFile.writeText("# THIS FILE IS AUTOGENERATED. DO NOT EDIT")
+        autoConfigFile.appendText(
+            Toml.encodeToString(
+                AutoConfig.serializer(),
+                AutoConfig(MountsConfig(mounts.random.toSortedMap()))
+            )
+        )
+    }
+
 }
