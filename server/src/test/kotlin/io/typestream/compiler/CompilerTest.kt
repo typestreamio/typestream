@@ -37,8 +37,9 @@ internal class CompilerTest {
 
     @BeforeEach
     fun beforeEach() {
-        fileSystem = FileSystem(testConfig(testKafka).sources, testDispatcher)
-        session = Session(fileSystem, Scheduler(false, testDispatcher), Env())
+        val testConfig = testConfig(testKafka)
+        fileSystem = FileSystem(testConfig, testDispatcher)
+        session = Session(fileSystem, Scheduler(false, testDispatcher), Env(testConfig))
     }
 
     @Nested

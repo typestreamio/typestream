@@ -5,6 +5,7 @@ import io.typestream.compiler.lexer.CursorPosition
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
+import io.typestream.config.Config
 import io.typestream.grpc.interactive_session_service.InteractiveSession
 import io.typestream.grpc.interactive_session_service.InteractiveSession.CompleteProgramRequest
 import io.typestream.grpc.interactive_session_service.InteractiveSession.GetProgramOutputRequest
@@ -22,14 +23,14 @@ import kotlinx.coroutines.flow.map
 import java.util.Collections
 import java.util.UUID
 
-class InteractiveSessionService(private val vm: Vm) :
+class InteractiveSessionService(private val config: Config, private val vm: Vm) :
     InteractiveSessionServiceGrpcKt.InteractiveSessionServiceCoroutineImplBase() {
 
     private val sessions = Collections.synchronizedMap(mutableMapOf<String, Session>())
 
     override suspend fun startSession(request: InteractiveSession.StartSessionRequest) = startSessionResponse {
         val sessionId = UUID.randomUUID().toString()
-        this@InteractiveSessionService.sessions[sessionId] = Session(vm.fileSystem, vm.scheduler, Env())
+        this@InteractiveSessionService.sessions[sessionId] = Session(vm.fileSystem, vm.scheduler, Env(config))
         this.sessionId = sessionId
     }
 

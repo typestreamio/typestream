@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package io.typestream.grpc;
+
+option java_package = "io.typestream.grpc.filesystem_service";
+
+option go_package = "github.com/typestreamio/typestream/cli/pkg/filesystem_service";
+
+service FileSystemService {
+    rpc Mount(MountRequest) returns (MountResponse) {}
+    rpc Unmount(UnmountRequest) returns (UnmountResponse) {}
+}
+
+message MountRequest {
+    string user_id = 1;
+    string config = 2;
+}
+
+message MountResponse {
+    bool success = 1;
+    string error = 3;
+}
+
+message UnmountRequest {
+    string user_id = 1;
+    string endpoint = 2;
+}
+
+message UnmountResponse {
+    bool success = 1;
+    string error = 3;
+}
+
+

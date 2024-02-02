@@ -38,6 +38,8 @@ abstract class Inode(val name: String) {
         children.add(child)
     }
 
+    fun remove(child: Inode) = children.remove(child)
+
     fun replaceAll(newChildren: List<Inode>) {
         children.clear()
         newChildren.forEach(::add)

@@ -1,14 +1,20 @@
 package io.typestream.compiler.vm
 
 import io.typestream.compiler.types.Value
+import io.typestream.config.Config
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
-@Serializable
-class Env : Cloneable {
+class Env(private val config: Config) : Cloneable {
     private val store = mutableMapOf<String, String>()
     private val variables = mutableMapOf<String, Value>()
     private val history = mutableListOf<String>()
+
+    init {
+        store["TYPESTREAM_VERSION"] = config.versionInfo.version
+        store["TYPESTREAM_COMMIT_HASH"] = config.versionInfo.commitHash
+        store["TYPESTREAM_CONFIG_PATH"] = config.configPath
+    }
 
     var pwd: String
         get() = store["PWD"] ?: "/"
@@ -36,7 +42,7 @@ class Env : Cloneable {
 
     fun toList() = store.toList()
 
-    public override fun clone() = Env().also {
+    public override fun clone() = Env(config).also {
         it.store.putAll(store)
         it.variables.putAll(variables)
     }

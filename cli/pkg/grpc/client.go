@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
+	"github.com/typestreamio/typestream/cli/pkg/filesystem_service"
 	"github.com/typestreamio/typestream/cli/pkg/interactive_session_service"
 	"github.com/typestreamio/typestream/cli/pkg/job_service"
 
@@ -72,6 +73,20 @@ func (c *Client) StopSession(ctx context.Context, req *interactive_session_servi
 	client := interactive_session_service.NewInteractiveSessionServiceClient(c.conn)
 
 	return client.StopSession(ctx, req)
+}
+
+func (c *Client) Mount(ctx context.Context, config string) (*filesystem_service.MountResponse, error) {
+	client := filesystem_service.NewFileSystemServiceClient(c.conn)
+
+	// TODO get from config
+	return client.Mount(ctx, &filesystem_service.MountRequest{Config: config, UserId: "42"})
+}
+
+func (c *Client) Unmount(ctx context.Context, endpoint string) (*filesystem_service.UnmountResponse, error) {
+	client := filesystem_service.NewFileSystemServiceClient(c.conn)
+
+	// TODO get from config
+	return client.Unmount(ctx, &filesystem_service.UnmountRequest{Endpoint: endpoint, UserId: "42"})
 }
 
 func (c *Client) Close() error {

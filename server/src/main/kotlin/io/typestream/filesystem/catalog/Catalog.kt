@@ -44,7 +44,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
 
         val networkExceptionHandler: (Throwable) -> Unit = { exception ->
             when (exception) {
-                is java.net.SocketException -> logger.debug(exception) { "catalog network failed" }
+                is java.net.SocketException -> logger.info(exception) { "catalog network failed" }
                 else -> throw exception
             }
         }
@@ -85,7 +85,6 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
             } catch (e: Exception) {
                 logger.error(e) { "failed to fetch schema for $topicPath" }
             }
-
         }
     }
 

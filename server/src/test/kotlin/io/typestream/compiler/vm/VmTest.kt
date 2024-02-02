@@ -32,8 +32,9 @@ class VmTest {
     @BeforeEach
     fun beforeEach() {
         scheduler = Scheduler(false, testDispatcher)
-        fileSystem = FileSystem(testConfig(testKafka).sources, testDispatcher)
-        session = Session(fileSystem, scheduler, Env())
+        val testConfig = testConfig(testKafka)
+        fileSystem = FileSystem(testConfig, testDispatcher)
+        session = Session(fileSystem, scheduler, Env(testConfig))
         vm = Vm(fileSystem, scheduler)
     }
 
