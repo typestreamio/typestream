@@ -28,8 +28,8 @@ data class Config(
         }
 
 
-        private fun fetchAutoConfig(configPath: String): TomlTable? {
-            val configFile = fetchAutoConfigFile(configPath) ?: return null
+        private fun fetchAutoConfig(configPath: String): TomlTable {
+            val configFile = fetchAutoConfigFile(configPath)
 
             return Toml.decodeFromString(TomlTable.serializer(), configFile.readText())
         }
@@ -95,11 +95,9 @@ data class Config(
 
             val autoConfigTable = fetchAutoConfig(configFilePath)
 
-            if (autoConfigTable != null) {
-                logger.info { "loading auto configuration from $configFilePath/typestream.auto.toml" }
-                val mountsConfig = MountsConfig.from(autoConfigTable)
-                tomlConfig.mergeWith(mountsConfig)
-            }
+            logger.info { "loading auto configuration from $configFilePath/typestream.auto.toml" }
+            val mountsConfig = MountsConfig.from(autoConfigTable)
+            tomlConfig.mergeWith(mountsConfig)
 
             val config = Config(
                 tomlConfig.sources,
