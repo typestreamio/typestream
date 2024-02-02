@@ -36,7 +36,7 @@ internal class CdKtTest {
     }
 
     @Test
-    fun `changes directory correctly`() {
+    fun `changes directory`() {
         fileSystem.use {
             val cd = ShellCommand.mustFind("cd")
 

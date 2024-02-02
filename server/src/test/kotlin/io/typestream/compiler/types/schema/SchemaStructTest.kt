@@ -47,12 +47,12 @@ internal class SchemaStructTest {
     )
 
     @Test
-    fun `flattens correctly`() {
+    fun flattens() {
         assertThat(author.flatten()).isEqualTo(flattenedAuthor)
     }
 
     @Test
-    fun `nests correctly`() {
+    fun nests() {
         assertThat(flattenedAuthor.nest()).isEqualTo(author)
     }
 

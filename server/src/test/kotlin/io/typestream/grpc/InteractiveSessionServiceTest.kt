@@ -80,7 +80,7 @@ internal class InteractiveSessionServiceTest {
     }
 
     @Test
-    fun `runs sessions correctly`(): Unit = runBlocking {
+    fun `runs sessions`(): Unit = runBlocking {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
@@ -108,7 +108,7 @@ internal class InteractiveSessionServiceTest {
     }
 
     @Test
-    fun `returns stdErr correctly`(): Unit = runBlocking {
+    fun `returns stdErr`(): Unit = runBlocking {
         app.use {
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {

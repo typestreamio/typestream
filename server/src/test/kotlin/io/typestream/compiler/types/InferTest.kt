@@ -25,7 +25,7 @@ internal class InferTest {
     @Nested
     inner class InferDataStream {
         @Test
-        fun `infers type correctly`() {
+        fun `infers type`() {
             val grep = Grep(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
             grep.dataStreams.add(
                 DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema())
@@ -37,7 +37,7 @@ internal class InferTest {
         }
 
         @Test
-        fun `infers joined type correctly`() {
+        fun `infers joined type`() {
             val join = Join(
                 listOf(
                     Expr.BareWord("/dev/kafka/local/topics/books"),
@@ -58,7 +58,7 @@ internal class InferTest {
     @Nested
     inner class InferPipeline {
         @Test
-        fun `infers type correctly`() {
+        fun `infers type`() {
             val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
             cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema()))
             val grep = Grep(listOf(Expr.BareWord("Mandel")))
@@ -71,7 +71,7 @@ internal class InferTest {
         }
 
         @Test
-        fun `infers cut type correctly`() {
+        fun `infers cut type`() {
             val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
 
             cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/authors", Author.getClassSchema()))
@@ -90,7 +90,7 @@ internal class InferTest {
     @Nested
     inner class EnrichPipeline {
         @Test
-        fun `infers enrich type correctly`() {
+        fun `infers enrich type`() {
             val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/page_views")))
             cat.dataStreams.add(DataStream.fromAvroSchema("/dev/kafka/local/topics/page_views", PageView.getClassSchema()))
 

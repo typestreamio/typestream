@@ -285,7 +285,7 @@ internal class ParserTest {
     }
 
     @Test
-    fun `reports redirection errors correctly`() {
+    fun `reports redirection errors`() {
         val parser = Parser("cat word > cat")
 
         parser.parse()
@@ -296,7 +296,7 @@ internal class ParserTest {
     }
 
     @Test
-    fun `parses enrichment blocks correctly`() {
+    fun `parses enrichment blocks`() {
         val parser = Parser("cat books | enrich { book -> http | cut .title }")
 
         val statements = parser.parse()
