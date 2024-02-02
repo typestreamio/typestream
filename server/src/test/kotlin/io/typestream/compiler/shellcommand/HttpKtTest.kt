@@ -64,7 +64,7 @@ internal class HttpKtTest {
         }
 
         @Test
-        fun `posts correctly`() {
+        fun posts() {
             mockWebServer.enqueue(MockResponse().setBody("{}"))
 
             val baseUrl = mockWebServer.url("/").toString()

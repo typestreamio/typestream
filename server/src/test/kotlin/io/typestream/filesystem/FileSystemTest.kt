@@ -81,13 +81,13 @@ internal class FileSystemTest {
 
     @ParameterizedTest
     @MethodSource("completePathCases")
-    fun `completes correctly`(incompletePath: String, pwd: String, suggestions: List<String>) {
+    fun completes(incompletePath: String, pwd: String, suggestions: List<String>) {
         assertThat(fileSystem.completePath(incompletePath, pwd)).contains(*suggestions.toTypedArray())
     }
 
     @ParameterizedTest
     @MethodSource("expandPathCases")
-    fun `expands paths correctly`(path: String, pwd: String, expected: String?) {
+    fun `expands paths`(path: String, pwd: String, expected: String?) {
         assertThat(fileSystem.expandPath(path, pwd)).isEqualTo(expected)
     }
 

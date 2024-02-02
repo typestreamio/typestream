@@ -34,7 +34,7 @@ internal class SeedKtTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
-    fun `seeds correctly`(encoding: String) {
+    fun seeds(encoding: String) {
         seed(testConfig(testKafka), listOf(encoding))
 
         assertThat(adminClientWrapper.listTopics()).contains("authors", "books", "users", "ratings", "page_views")

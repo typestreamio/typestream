@@ -109,7 +109,7 @@ internal class CompilerTest {
         }
 
         @Test
-        fun `compiles simple grep correctly`() {
+        fun `compiles simple grep`() {
             val source = "grep 'Station Eleven' /dev/kafka/local/topics/books"
 
             val compiler = Compiler(session)
@@ -135,7 +135,7 @@ internal class CompilerTest {
         }
 
         @Test
-        fun `compiles inverted grep correctly`() {
+        fun `compiles inverted grep`() {
             val source = "grep -v 'Station Eleven' /dev/kafka/local/topics/books"
 
             val compiler = Compiler(session)
@@ -161,7 +161,7 @@ internal class CompilerTest {
         }
 
         @Test
-        fun `compiles grep by key correctly`() {
+        fun `compiles grep by key`() {
             val source = "grep -k 'Station Eleven' /dev/kafka/local/topics/books"
 
             val compiler = Compiler(session)
@@ -188,7 +188,7 @@ internal class CompilerTest {
         }
 
         @Test
-        fun `compiles grep with predicate correctly`() {
+        fun `compiles grep with predicate`() {
             val source = "grep [.title ~= 'the'] /dev/kafka/local/topics/books"
 
             val compiler = Compiler(session)
