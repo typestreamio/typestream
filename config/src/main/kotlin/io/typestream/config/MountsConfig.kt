@@ -7,7 +7,6 @@ import net.peanuuutz.tomlkt.TomlTable
 @Serializable
 data class MountsConfig(val random: MutableMap<String, RandomConfig>) {
     companion object {
-
         fun from(mountConfig: String): MountsConfig {
             val toml = Toml.decodeFromString(TomlTable.serializer(), mountConfig)
             return from(toml)
@@ -20,9 +19,8 @@ data class MountsConfig(val random: MutableMap<String, RandomConfig>) {
                 val randomMountsTable = otherMounts["random"]
 
                 if (randomMountsTable is TomlTable) {
-                    for (randomMount in randomMountsTable) {
-                        randomMounts[randomMount.key] =
-                            Toml.decodeFromTomlElement(RandomConfig.serializer(), randomMount.value)
+                    for ((key, value) in randomMountsTable) {
+                        randomMounts[key] = Toml.decodeFromTomlElement(RandomConfig.serializer(), value)
                     }
                 }
             }

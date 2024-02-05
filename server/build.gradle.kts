@@ -32,10 +32,11 @@ dependencies {
     implementation("com.github.os72:protobuf-dynamic:1.0.1")
 
     testImplementation(project(":libs:testing"))
+
     testImplementation(libs.bundles.testcontainers)
-    testImplementation(libs.test.containers.redpanda)
     testImplementation(libs.grpc.testing)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.test.containers.redpanda)
 }
 
 jib {

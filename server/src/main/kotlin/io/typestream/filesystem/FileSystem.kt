@@ -199,10 +199,10 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
     fun mount(mountConfig: String) {
         val mountsConfig = MountsConfig.from(mountConfig)
 
-        mountsConfig.random.values.forEach { config ->
-            val target = root.findInode(config.endpoint)
-            require(target == null) { "${config.endpoint} already exists" }
-            mntDir.add(Random(config.endpoint.substringAfterLast("/"), config.valueType))
+        mountsConfig.random.values.forEach { (valueType, endpoint) ->
+            val target = root.findInode(endpoint)
+            require(target == null) { "$endpoint already exists" }
+            randomDir.add(Random(endpoint.substringAfterLast("/"), valueType))
         }
 
         config.mount(mountsConfig)
@@ -212,7 +212,7 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
         val target = root.findInode(endpoint)
         require(target != null) { "$endpoint does not exist" }
         require(target is Random) { "$endpoint is not a random value" }
-        mntDir.remove(target)
+        randomDir.remove(target)
 
         config.unmount(endpoint)
     }

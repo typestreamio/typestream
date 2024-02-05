@@ -14,7 +14,7 @@ schemaRegistry.url="${testKafka.schemaRegistryAddress}"
 fsRefreshRate=1
 """.trimIndent()
 
-fun testConfig(testKafka: RedpandaContainer): Config {
+fun testConfig(testKafka: RedpandaContainer, configPath: String = "/etc/typestream"): Config {
     val tomlConfig = TomlConfig.from(testConfigFile(testKafka))
 
     return Config(
@@ -23,6 +23,6 @@ fun testConfig(testKafka: RedpandaContainer): Config {
         tomlConfig.mounts,
         false,
         VersionInfo("beta", "n/a"),
-        "/etc/typestream"
+        configPath
     )
 }
