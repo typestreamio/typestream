@@ -7,5 +7,5 @@ dependencies {
     implementation(libs.bundles.sf4j)
     implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
 
-    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation(libs.mockk)
 }

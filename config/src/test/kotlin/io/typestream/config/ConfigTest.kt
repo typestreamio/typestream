@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.io.path.createTempDirectory
 
-
 internal class ConfigTest {
 
     @BeforeEach
