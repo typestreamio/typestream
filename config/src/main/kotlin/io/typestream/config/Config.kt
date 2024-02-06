@@ -47,6 +47,16 @@ data class Config(
             } catch (_: Exception) {
             }
 
+            if (kubernetesMode) {
+                logger.info { "copy config from /config into /etc/typestream" }
+                val configFile = Paths.get("/config", "typestream.toml").toFile()
+                val systemConfigFile = Paths.get(systemConfigPath, "typestream.toml").toFile()
+
+                if (configFile.exists()) {
+                    configFile.copyTo(systemConfigFile, true)
+                }
+            }
+
             val envFile = SystemEnv["TYPESTREAM_CONFIG"]
 
             val configFilePath: String = if (envFile != null) {
