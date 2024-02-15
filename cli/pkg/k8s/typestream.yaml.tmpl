@@ -98,13 +98,13 @@ spec:
               memory: "2048Mi"
           volumeMounts:
             - name: config-volume
-              mountPath: /etc/typestream
+              mountPath: /config
       restartPolicy: Always
+      volumes:
+        - name: config-volume
+          configMap:
+            name: server-config
 status: {}
-volumes:
-- name: config-volume
-  configMap:
-    name: server-config
 ---
 
 apiVersion: v1

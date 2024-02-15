@@ -12,5 +12,12 @@ spec:
           imagePullPolicy: Always
           name: seed
           args: ["seed"]
+          volumeMounts:
+          - name: config-volume
+            mountPath: /config
       restartPolicy: Never
+      volumes:
+        - name: config-volume
+          configMap:
+            name: server-config
   backoffLimit: 4
