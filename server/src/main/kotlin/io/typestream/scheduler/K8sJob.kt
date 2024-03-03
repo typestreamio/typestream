@@ -1,6 +1,7 @@
 package io.typestream.scheduler
 
 import io.typestream.k8s.K8sClient
+import kotlinx.coroutines.flow.Flow
 
 class K8sJob(override val id: String) : Job {
     override fun remove() {
@@ -11,7 +12,7 @@ class K8sJob(override val id: String) : Job {
         //K8sClient().startJob(id)  maybe. Only works if the job is already there
     }
 
-    override fun output() = K8sClient().jobOutput(id)
+    override fun output(): Flow<String> = K8sClient().jobOutput(id)
 
     override fun stop() {
         //K8sClient().stopJob(id)  maybe?

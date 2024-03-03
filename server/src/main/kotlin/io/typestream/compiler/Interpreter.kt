@@ -197,12 +197,12 @@ class Interpreter(private val session: Session) : Statement.Visitor<Unit>, Expr.
         return expandString(bareWord.value)
     }
 
-    override fun visitLiteral(literal: Expr.Literal) = literal.value
+    override fun visitLiteral(literal: Expr.Literal): Value = literal.value
 
-    override fun visitBinary(binary: Expr.Binary) =
+    override fun visitBinary(binary: Expr.Binary): Value =
         Value.fromBinary(evaluate(binary.left), binary.operator, evaluate(binary.right))
 
-    override fun visitGrouping(grouping: Expr.Grouping) = evaluate(grouping.expr)
+    override fun visitGrouping(grouping: Expr.Grouping): Value = evaluate(grouping.expr)
 
     override fun visitBlock(block: Expr.Block): Value {
         // We want to bound args for the block to the block itself

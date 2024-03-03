@@ -1,54 +1,39 @@
 package io.typestream.compiler
 
-import io.typestream.compiler.RuntimeType.KAFKA
-import io.typestream.compiler.RuntimeType.SHELL
+import io.typestream.compiler.Runtime.Companion.extractFrom
 import io.typestream.compiler.node.Node
-import io.typestream.compiler.types.DataStream
-import io.typestream.filesystem.FileSystem
 import io.typestream.graph.Graph
 
 data class Program(val id: String, val graph: Graph<Node>) {
     fun runtime(): Runtime {
         val streamSourceNodes = findStreamSourceNodes()
 
-        var currentRuntimeName = ""
-
-        streamSourceNodes.forEach { streamSourceNode ->
-            val runtimeName = extractFromCommand(streamSourceNode.dataStream)
-            if (currentRuntimeName.isBlank()) {
-                currentRuntimeName = runtimeName
-            } else if (currentRuntimeName != runtimeName) {
-                error("multi runtime operation detected: $currentRuntimeName + $runtimeName")
-            }
-        }
-
-        if (currentRuntimeName.isNotBlank()) {
-            return Runtime(currentRuntimeName, KAFKA)
-        }
+        val runtimes = streamSourceNodes.mapNotNull { extractFrom(it.dataStream) }.toMutableSet()
 
         val shellSourceNodes = findShellSourceNodes()
-        if (shellSourceNodes.isNotEmpty() || streamSourceNodes.isEmpty()) {
-            return Runtime("shell", SHELL)
+        if (shellSourceNodes.isNotEmpty()) {
+            runtimes.add(Runtime("shell", Runtime.Type.SHELL))
         }
 
-        error("could not detect runtime correctly")
-    }
-
-    private fun extractFromCommand(dataStream: DataStream): String {
-        if (dataStream.path.startsWith(FileSystem.KAFKA_CLUSTERS_PREFIX).not()) {
-            return ""
+        if (shellSourceNodes.isEmpty() && streamSourceNodes.isEmpty()) {
+            return Runtime("shell", Runtime.Type.SHELL)
         }
 
-        return dataStream.path.substring(FileSystem.KAFKA_CLUSTERS_PREFIX.length)
-            .split("/").filterNot(String::isBlank).firstOrNull() ?: ""
+        return when (runtimes.size) {
+            1 -> runtimes.first()
+            2 -> runtimes.firstOrNull { it.type == Runtime.Type.MEMORY }
+                ?: error("multi runtime operation detected: ${runtimes.map(Runtime::name).joinToString(" + ")}")
+
+            else -> error("could not detect runtime correctly")
+        }
     }
 
-    fun hasStreamSources() = findStreamSourceNodes().isNotEmpty()
+    fun hasStreamSources(): Boolean = findStreamSourceNodes().isNotEmpty()
 
-    fun hasMoreOutput() =
+    fun hasMoreOutput(): Boolean =
         graph.findChildren { it.ref is Node.Sink && it.ref.output.path.endsWith("-stdout") }.isNotEmpty()
 
-    fun hasRedirections() = graph.findChildren { it.ref is Node.Sink }.isNotEmpty()
+    fun hasRedirections(): Boolean = graph.findChildren { it.ref is Node.Sink }.isNotEmpty()
 
     private fun findStreamSourceNodes(): Set<Node.StreamSource> = graph
         .findChildren { it.ref is Node.StreamSource }

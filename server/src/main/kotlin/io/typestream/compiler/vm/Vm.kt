@@ -2,8 +2,9 @@ package io.typestream.compiler.vm
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.Compiler
-import io.typestream.compiler.RuntimeType.KAFKA
-import io.typestream.compiler.RuntimeType.SHELL
+import io.typestream.compiler.Runtime.Type.KAFKA
+import io.typestream.compiler.Runtime.Type.MEMORY
+import io.typestream.compiler.Runtime.Type.SHELL
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
@@ -33,6 +34,10 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
             SHELL -> {
                 val dataStreams = eval(program.graph)
                 logger.info { dataStreams.joinToString("\n") { it.prettyPrint() } }
+            }
+
+            MEMORY -> {
+                // NOW WHA
             }
         }
     }
@@ -64,6 +69,11 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                         dataStreams.joinToString("\n") { it.prettyPrint() }, ""
                     )
                 )
+            }
+
+            MEMORY -> {
+                // NOW WHA
+                VmResult(program, ProgramOutput("", ""))
             }
         }
     }

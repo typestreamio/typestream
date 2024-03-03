@@ -9,6 +9,7 @@ import io.typestream.config.KafkaConfig
 import io.typestream.coroutine.retry
 import io.typestream.kafka.DataStreamSerde
 import io.typestream.kafka.StreamsBuilderWrapper
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -54,7 +55,7 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
         return streamsBuilder.build()
     }
 
-    override fun output() = flow {
+    override fun output(): Flow<String> = flow {
         // we retry here because we may be trying to get output before the job has started
         retry {
             require(isRunning()) { "cannot get output of a non-running job" }

@@ -1,6 +1,6 @@
 package io.typestream.compiler
 
-import io.typestream.compiler.RuntimeType.KAFKA
+import io.typestream.compiler.Runtime.Type.KAFKA
 import io.typestream.compiler.node.JoinType
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
@@ -106,14 +106,14 @@ internal class ProgramTest {
                 Graph(Node.ShellSource("ls", listOf(DataStream.fromString("/dev/ls", "dev"))))
             )
 
-            assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", RuntimeType.SHELL)
+            assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", Runtime.Type.SHELL)
         }
 
         @Test
         fun `detects shell runtime for empty graphs`() {
             val program = buildProgram(Graph(Node.NoOp("no-op")))
 
-            assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", RuntimeType.SHELL)
+            assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", Runtime.Type.SHELL)
         }
     }
 }

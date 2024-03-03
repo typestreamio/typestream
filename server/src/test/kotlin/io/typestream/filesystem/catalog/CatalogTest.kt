@@ -33,7 +33,7 @@ internal class CatalogTest {
                 rating = 5
             )
         )
-        val catalog = Catalog(testConfig(testKafka).sources, Dispatchers.IO)
+        val catalog = Catalog(testConfig(testKafka), Dispatchers.IO)
 
         catalog.refresh()
 
