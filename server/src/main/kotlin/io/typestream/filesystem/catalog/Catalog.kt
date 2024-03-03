@@ -5,7 +5,8 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.datastream.fromAvroSchema
 import io.typestream.compiler.types.datastream.fromProtoSchema
-import io.typestream.config.SourcesConfig
+import io.typestream.compiler.types.schema.Schema
+import io.typestream.config.Config
 import io.typestream.coroutine.tick
 import io.typestream.filesystem.FileSystem
 import io.typestream.kafka.protobuf.ProtoParser
@@ -20,24 +21,28 @@ import java.util.Collections
 import kotlin.time.Duration.Companion.seconds
 
 
-class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: CoroutineDispatcher) {
+class Catalog(private val config: Config, private val dispatcher: CoroutineDispatcher) {
     private val logger = KotlinLogging.logger {}
     private val store = Collections.synchronizedMap(mutableMapOf<String, Metadata>())
     private val schemaRegistries = mutableMapOf<String, SchemaRegistryClient>()
 
     init {
-        sourcesConfig.kafka.forEach { (name, config) ->
+        config.sources.kafka.forEach { (name, config) ->
             schemaRegistries[FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + name] =
                 SchemaRegistryClient(config.schemaRegistry)
         }
+
+        config.mounts.random.values.forEach { (_, endpoint) ->
+            store[endpoint] = Metadata(DataStream(endpoint, Schema.Int(0)), Encoding.JSON)
+        }
     }
 
-    operator fun get(path: String) = store[path]
+    operator fun get(path: String): Metadata? = store[path]
 
     // TODO redesign. This is an *extremely* naive implementation, just to get things going.
     // We're also ignoring keys for now.
     // Ideally what we want to do here is load subjects at startup and then watch for changes (via the _schemas topic)
-    suspend fun watch() = supervisorScope {
+    suspend fun watch(): Unit = supervisorScope {
         val handler = CoroutineExceptionHandler { _, exception ->
             logger.error(exception) { "catalog failed" }
         }
@@ -51,7 +56,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
 
         val scope = CoroutineScope(dispatcher + handler)
         // loop on subjects and default to string on fetching from the catalog is a better strategy
-        sourcesConfig.kafka.forEach { (name, config) ->
+        config.sources.kafka.forEach { (name, config) ->
             scope.tick(config.fsRefreshRate.seconds, networkExceptionHandler) {
                 refreshRegistry(name)
             }
@@ -89,6 +94,6 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
     }
 
     fun refresh() {
-        sourcesConfig.kafka.keys.forEach(::refreshRegistry)
+        config.sources.kafka.keys.forEach(::refreshRegistry)
     }
 }

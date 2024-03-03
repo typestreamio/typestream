@@ -21,37 +21,37 @@ sealed class Expr {
 
     @Serializable
     data class Assign(val name: Token, val value: Expr) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitAssign(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitAssign(this)
     }
 
     @Serializable
     data class Variable(val name: Token) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitVariable(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitVariable(this)
     }
 
     @Serializable
     data class Binary(val left: Expr, val operator: TokenType, val right: Expr) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitBinary(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitBinary(this)
     }
 
     @Serializable
     data class Grouping(val expr: Binary) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitGrouping(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitGrouping(this)
     }
 
     @Serializable
     data class BareWord(val value: String) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitBareWord(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitBareWord(this)
     }
 
     @Serializable
     data class Literal(val value: Value) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitLiteral(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitLiteral(this)
     }
 
     @Serializable
     data class Block(val argument: Token, val pipeline: Pipeline) : Expr() {
-        override fun <K> accept(visitor: Visitor<K>) = visitor.visitBlock(this)
+        override fun <K> accept(visitor: Visitor<K>): K = visitor.visitBlock(this)
     }
 
     @Serializable
