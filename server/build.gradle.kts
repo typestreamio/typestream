@@ -3,7 +3,7 @@ plugins {
 
     //TODO It would be nice to package the code here and the gradle task it depends on in the same place.
     id("typestream.version-info")
-    id("com.google.cloud.tools.jib") version "3.4.0"
+    id("com.google.cloud.tools.jib") version "3.4.2"
     application
 }
 
