@@ -18,7 +18,7 @@ jobs:
           java-version: "17"
           distribution: "corretto"
       - name: Check
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           arguments: check
         env:
