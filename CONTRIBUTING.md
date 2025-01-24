@@ -11,7 +11,7 @@ to abide to the `TypeStream` [code of conduct](/CODE_OF_CONDUCT.md).
 - [Go](https://go.dev)
 - [Protobuf](https://protobuf.dev/)
 - [Make](https://www.gnu.org/software/make/)
-- [Redpanda](https://redpanda.com/) (you need `rpk` locally)
+- [Redpanda](https://redpanda.com/) (you need `rpk` locally. Min version: `v24.1.2`)
 
 ## Set up your machine
 
