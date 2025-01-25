@@ -9,6 +9,7 @@ option go_package = "github.com/typestreamio/typestream/cli/pkg/filesystem_servi
 service FileSystemService {
     rpc Mount(MountRequest) returns (MountResponse) {}
     rpc Unmount(UnmountRequest) returns (UnmountResponse) {}
+    rpc Ls(LsRequest) returns (LsResponse) {}
 }
 
 message MountRequest {
@@ -29,6 +30,16 @@ message UnmountRequest {
 message UnmountResponse {
     bool success = 1;
     string error = 3;
+}
+
+message LsRequest {
+    string user_id = 1;
+    string path = 2;
+}
+
+message LsResponse {
+    repeated string files = 1;
+    string error = 2;
 }
 
 

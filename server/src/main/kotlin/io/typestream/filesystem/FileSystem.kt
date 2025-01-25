@@ -12,6 +12,7 @@ import io.typestream.compiler.ast.Grep
 import io.typestream.compiler.ast.Join
 import io.typestream.compiler.ast.Pipeline
 import io.typestream.compiler.ast.Wc
+import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.config.Config
 import io.typestream.config.MountsConfig
@@ -38,7 +39,7 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
     private val jobs = mutableListOf<Job>()
 
     companion object {
-        const val KAFKA_CLUSTERS_PREFIX = "/dev/kafka"
+        const val KAFKA_CLUSTERS_PREFIX: String = "/dev/kafka"
     }
 
     init {
@@ -46,8 +47,8 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
             logger.info { "starting filesystem for kafka cluster: $name" }
             kafkaDir.add(KafkaClusterDirectory(name, config, dispatcher))
         }
-        config.mounts.random.values.forEach { config ->
-            randomDir.add(Random(config.endpoint.substringAfterLast("/"), config.valueType))
+        config.mounts.random.values.forEach { (valueType, endpoint) ->
+            randomDir.add(Random(endpoint.substringAfterLast("/"), valueType))
         }
         devDir.add(kafkaDir)
         mntDir.add(randomDir)
@@ -60,7 +61,7 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
         return children.map { it.name }.sorted()
     }
 
-    suspend fun watch() = supervisorScope {
+    suspend fun watch(): Boolean = supervisorScope {
         jobs.add(launch(dispatcher) { root.watch() })
         jobs.add(launch(dispatcher) { catalog.watch() })
     }
@@ -95,7 +96,7 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
         }
     }
 
-    fun stat(path: String) = root.findInode(path)?.stat() ?: error("cannot find $path")
+    fun stat(path: String): String = root.findInode(path)?.stat() ?: error("cannot find $path")
 
     fun file(path: String, pwd: String): String {
         val targetPath = if (path.startsWith("/")) path else "$pwd/$path"
@@ -118,7 +119,7 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
         return targetNode is Directory
     }
 
-    fun findDataStream(path: String) = catalog[path]?.dataStream
+    fun findDataStream(path: String): DataStream? = catalog[path]?.dataStream
 
     private fun findEncoding(path: String) = catalog[path]?.encoding
 
@@ -158,7 +159,7 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
         jobs.forEach(Job::cancel)
     }
 
-    fun completePath(incompletePath: String, pwd: String) = buildList {
+    fun completePath(incompletePath: String, pwd: String): List<String> = buildList {
         val isAbsolute = incompletePath.startsWith("/")
         val targetPath = if (incompletePath.startsWith("/")) {
             incompletePath

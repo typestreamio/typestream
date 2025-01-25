@@ -5,6 +5,7 @@ import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
 import io.typestream.config.Config
+import io.typestream.grpc.job_service.Job
 import io.typestream.grpc.job_service.Job.CreateJobRequest
 import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
@@ -14,7 +15,7 @@ import java.util.UUID
 class JobService(private val config: Config, private val vm: Vm) :
     JobServiceGrpcKt.JobServiceCoroutineImplBase() {
 
-    override suspend fun createJob(request: CreateJobRequest) = createJobResponse {
+    override suspend fun createJob(request: CreateJobRequest): Job.CreateJobResponse = createJobResponse {
         //TODO we may want to generate uuids from the source code fingerprint
         // as it is, we'll have running apps on runtime (e.g. kafka streams) with a different id than the
         // job id that we create here
