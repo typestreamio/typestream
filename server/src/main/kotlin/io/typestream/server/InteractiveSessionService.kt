@@ -28,30 +28,32 @@ class InteractiveSessionService(private val config: Config, private val vm: Vm) 
 
     private val sessions = Collections.synchronizedMap(mutableMapOf<String, Session>())
 
-    override suspend fun startSession(request: InteractiveSession.StartSessionRequest) = startSessionResponse {
-        val sessionId = UUID.randomUUID().toString()
-        this@InteractiveSessionService.sessions[sessionId] = Session(vm.fileSystem, vm.scheduler, Env(config))
-        this.sessionId = sessionId
-    }
-
-    override suspend fun runProgram(request: RunProgramRequest) = runProgramResponse {
-        val session = this@InteractiveSessionService.sessions[request.sessionId]
-        requireNotNull(session) { "session ${request.sessionId} not found" }
-
-        val vmResult = vm.run(request.source, session)
-        if (vmResult.programOutput.stdErr.isBlank()) {
-            session.env.addHistoryEntry(request.source)
+    override suspend fun startSession(request: InteractiveSession.StartSessionRequest): InteractiveSession.StartSessionResponse =
+        startSessionResponse {
+            val sessionId = UUID.randomUUID().toString()
+            this@InteractiveSessionService.sessions[sessionId] = Session(vm.fileSystem, vm.scheduler, Env(config))
+            this.sessionId = sessionId
         }
 
-        id = vmResult.program.id
-        hasMoreOutput = vmResult.program.hasMoreOutput()
-        this.env["PWD"] = session.env.pwd
+    override suspend fun runProgram(request: RunProgramRequest): InteractiveSession.RunProgramResponse =
+        runProgramResponse {
+            val session = this@InteractiveSessionService.sessions[request.sessionId]
+            requireNotNull(session) { "session ${request.sessionId} not found" }
 
-        this.stdOut = vmResult.programOutput.stdOut
-        this.stdErr = vmResult.programOutput.stdErr
-    }
+            val vmResult = vm.run(request.source, session)
+            if (vmResult.programOutput.stdErr.isBlank()) {
+                session.env.addHistoryEntry(request.source)
+            }
 
-    override suspend fun completeProgram(request: CompleteProgramRequest) = completeProgramResponse {
+            id = vmResult.program.id
+            hasMoreOutput = vmResult.program.hasMoreOutput()
+            this.env["PWD"] = session.env.pwd
+
+            this.stdOut = vmResult.programOutput.stdOut
+            this.stdErr = vmResult.programOutput.stdErr
+        }
+
+    override suspend fun completeProgram(request: CompleteProgramRequest): InteractiveSession.CompleteProgramResponse = completeProgramResponse {
         val session = this@InteractiveSessionService.sessions[request.sessionId]
         requireNotNull(session) { "session ${request.sessionId} not found" }
 
@@ -68,11 +70,11 @@ class InteractiveSessionService(private val config: Config, private val vm: Vm) 
         return vm.scheduler.jobOutput(request.id).map { getProgramOutputResponse { stdOut = it } }
     }
 
-    override suspend fun stopSession(request: StopSessionRequest) = stopSessionResponse {
+    override suspend fun stopSession(request: StopSessionRequest): InteractiveSession.StopSessionResponse = stopSessionResponse {
         val output = StringBuilder()
-        this@InteractiveSessionService.sessions[request.sessionId]?.runningPrograms?.forEach { program ->
-            vm.scheduler.kill(program.id)
-            output.appendLine("killed ${program.id}")
+        this@InteractiveSessionService.sessions[request.sessionId]?.runningPrograms?.forEach { (id, _) ->
+            vm.scheduler.kill(id)
+            output.appendLine("killed $id")
         }
         this@InteractiveSessionService.sessions.remove(request.sessionId)
         this.stdOut = output.toString()

@@ -56,7 +56,7 @@ internal class InteractiveSessionServiceTest {
 
             until { requireNotNull(app.server) }
 
-            grpcCleanupRule.register(app.server!!)
+            grpcCleanupRule.register(app.server ?: return@use)
 
             val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
@@ -117,7 +117,7 @@ internal class InteractiveSessionServiceTest {
 
             until { requireNotNull(app.server) }
 
-            grpcCleanupRule.register(app.server!!)
+            grpcCleanupRule.register(app.server ?: return@use)
 
             val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
@@ -144,7 +144,7 @@ internal class InteractiveSessionServiceTest {
 
             until { requireNotNull(app.server) }
 
-            grpcCleanupRule.register(app.server!!)
+            grpcCleanupRule.register(app.server ?: return@use)
 
             val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
@@ -186,7 +186,7 @@ internal class InteractiveSessionServiceTest {
 
             until { requireNotNull(app.server) }
 
-            grpcCleanupRule.register(app.server!!)
+            grpcCleanupRule.register(app.server ?: return@use)
 
             val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
@@ -228,7 +228,7 @@ internal class InteractiveSessionServiceTest {
 
             until { requireNotNull(app.server) }
 
-            grpcCleanupRule.register(app.server!!)
+            grpcCleanupRule.register(app.server ?: return@use)
 
             val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
@@ -271,7 +271,7 @@ internal class InteractiveSessionServiceTest {
 
             until { requireNotNull(app.server) }
 
-            grpcCleanupRule.register(app.server!!)
+            grpcCleanupRule.register(app.server ?: return@use)
 
             val stub = InteractiveSessionServiceGrpc.newBlockingStub(
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
