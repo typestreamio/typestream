@@ -33,9 +33,12 @@ sourceSets {
     main.java.srcDirs("build/generated/source/proto/main/grpckt")
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+
+kotlin {
+    target {
+        compilerOptions {
+            freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        }
     }
 }
 
