@@ -84,13 +84,13 @@ To do so, you need to run `TypeStream` in "k8s mode". The first thing to do is
 to push the beta images to a local docker registry. In one terminal, run:
 
 ```sh
-docker run --rm -it --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube -p typestream ip):5000"
+docker run --rm -it --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5001,reuseaddr,fork TCP:$(minikube -p typestream ip):5001"
 ```
 
-so that the docker registry is available at `localhost:5000`. Then, in another terminal, run:
+so that the docker registry is available at `localhost:5001`. Then, in another terminal, run:
 
 ```sh
-./scripts/dev/push-images.sh
+docker run -d -p 5001:5000 --restart=always --name registry registry:2
 ```
 
 to push the beta images to the local registry. Finally, run:
@@ -118,7 +118,7 @@ To help people [getting started](https://docs.typestream.io), we provide a few
 docker registry:
 
 ```sh
-docker run -d -p 5000:5000 --restart=always --name registry registry:2
+docker run -d -p 5001:5000 --restart=always --name registry registry:2
 ```
 
 and then you can run:
@@ -129,40 +129,4 @@ and then you can run:
 
 You're now ready to run the server in local mode:
 
-```sh
-cd cli
-make
-./typestream local start
-./typestream local seed
 ```
-
-## Testing
-
-We try to cover as much as we can with testing. The goal is having each single
-feature covered by one or more tests. Adding more tests is a great way of
-contributing to the project!
-
-### Running the tests
-
-Once you are [set up](#set-up-your-machine), you can run the test suite with one
-command:
-
-```sh
-./gradlew test
-```
-
-## Test your change
-
-You can create a branch for your changes and try to build from the source as you
-go:
-
-```sh
-./gradlew check
-```
-
-## Submit a pull request
-
-Push your branch to your `TypeStream` fork and open a pull request against the
-main branch. We use [conventional commits](https://www.conventionalcommits.org/)
-for our commit messages so follow the convention in the title of your PR
-(otherwise, the build will fail).

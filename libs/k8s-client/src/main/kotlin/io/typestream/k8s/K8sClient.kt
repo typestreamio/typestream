@@ -52,7 +52,7 @@ class K8sClient : Closeable {
 
     fun createWorkerJob(typestreamVersion: String, workerId: String, payload: String): Job {
         val image = if (typestreamVersion == "beta") {
-            "localhost:5000/typestream/server:beta"
+            "localhost:5001/typestream/server:beta"
         } else {
             "typestream/server:$typestreamVersion"
         }

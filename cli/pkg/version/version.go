@@ -23,7 +23,7 @@ func DockerImage(imgName string) string {
 	image := fmt.Sprintf("%s:%s", imgName, DockerVersion())
 
 	if Version == "beta" {
-		image = fmt.Sprintf("localhost:5000/%s", image)
+		image = fmt.Sprintf("localhost:5001/%s", image)
 	}
 
 	return image
