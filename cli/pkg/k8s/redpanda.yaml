@@ -43,7 +43,7 @@ spec:
             - --pandaproxy-addr internal://localhost:8082,external://0.0.0.0:18082
             - --advertise-pandaproxy-addr internal://localhost:8082,external://redpanda.typestream:18082
             - --schema-registry-addr internal://localhost:8081,external://0.0.0.0:18081
-          image: docker.redpanda.com/redpandadata/redpanda:v23.3.2
+          image: docker.redpanda.com/redpandadata/redpanda:v24.2.9
           name: redpanda
           ports:
             - containerPort: 18081
