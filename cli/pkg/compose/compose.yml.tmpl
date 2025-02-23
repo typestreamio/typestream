@@ -48,3 +48,14 @@ services:
       - typestream_network
     ports:
       - 4242:4242
+  kafbat-ui:
+    container_name: kafbat-ui
+    image: ghcr.io/kafbat/kafka-ui:latest
+    ports:
+      - 8088:8080
+    networks:
+      - typestream_network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: typestream_redpanda
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: redpanda:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://redpanda:8081
