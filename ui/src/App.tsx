@@ -1,11 +1,12 @@
-import React from 'react';
+import { KafkaTopics } from './components/KafkaTopics';
 
 function App() {
   return (
-    <div>
-      Hello World
+    <div style={{ padding: '20px' }}>
+      <h1>TypeStream</h1>
+      <KafkaTopics />
     </div>
   );
 }
 
-export default App; 
+export default App;

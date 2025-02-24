@@ -9,6 +9,17 @@ dist-ssr
 
 # Local development
 *.local
+.env
+.env.*
+!.env.example
+
+# Vite specific
+.vite
+*.timestamp.mjs
+
+# Testing
+coverage
+__snapshots__
 
 # Logs
 logs
@@ -27,4 +38,4 @@ pnpm-debug.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw? 
+*.sw?

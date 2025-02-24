@@ -6,13 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "proto": "cd .. && buf generate ./protos/src/main/proto --template ./proto/buf.gen.yaml && cd ui"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "^2.2.3",
+    "@improbable-eng/grpc-web": "^0.15.0",
+    "browser-headers": "^0.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.50.0",
+    "@bufbuild/protoc-gen-es": "^1.10.0",
+    "@types/google-protobuf": "^3.15.12",
+    "@types/node": "^22.13.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
