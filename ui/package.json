@@ -12,6 +12,7 @@
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.3",
     "@improbable-eng/grpc-web": "^0.15.0",
+    "@tanstack/react-query": "^5.66.9",
     "browser-headers": "^0.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
