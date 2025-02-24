@@ -129,4 +129,40 @@ and then you can run:
 
 You're now ready to run the server in local mode:
 
+```sh
+cd cli
+make
+./typestream local start
+./typestream local seed
 ```
+
+## Testing
+
+We try to cover as much as we can with testing. The goal is having each single
+feature covered by one or more tests. Adding more tests is a great way of
+contributing to the project!
+
+### Running the tests
+
+Once you are [set up](#set-up-your-machine), you can run the test suite with one
+command:
+
+```sh
+./gradlew test
+```
+
+## Test your change
+
+You can create a branch for your changes and try to build from the source as you
+go:
+
+```sh
+./gradlew check
+```
+
+## Submit a pull request
+
+Push your branch to your `TypeStream` fork and open a pull request against the
+main branch. We use [conventional commits](https://www.conventionalcommits.org/)
+for our commit messages so follow the convention in the title of your PR
+(otherwise, the build will fail).
