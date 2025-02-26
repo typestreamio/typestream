@@ -59,3 +59,13 @@ services:
       KAFKA_CLUSTERS_0_NAME: typestream_redpanda
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: redpanda:9092
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://redpanda:8081
+  envoy:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - ${PWD}/pkg/compose/envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8080:8080"
+    networks:
+      - typestream_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
