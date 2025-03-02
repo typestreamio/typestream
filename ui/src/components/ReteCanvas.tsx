@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { NodeEditor, GetSchemes, ClassicPreset } from "rete";
 import { AreaPlugin, AreaExtensions } from "rete-area-plugin";
 import { ConnectionPlugin, Presets as ConnectionPresets } from "rete-connection-plugin";
@@ -29,13 +29,22 @@ class ExistingTopicNode extends ClassicPreset.Node {
   }
 }
 
-// Node for example topic with input only
-class ExampleTopicNode extends ClassicPreset.Node {
+// Node for new topic with input only
+class NewTopicNode extends ClassicPreset.Node {
   width = 180;
   height = 120;
+  topicName: string;
 
   constructor(socket: ClassicPreset.Socket) {
-    super("exampletopic");
+    super("newtopic");
+    this.topicName = "newtopic"; // Default name that will be changed via popup
+    
+    // Add a control to display the topic name
+    this.addControl(
+      "name",
+      new ClassicPreset.InputControl("text", { initial: "newtopic" })
+    );
+    
     this.addInput("in", new ClassicPreset.Input(socket));
   }
 }
@@ -82,6 +91,9 @@ export function ReteCanvas() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [activeNode, setActiveNode] = useState<NewTopicNode | null>(null);
+  const [newTopicName, setNewTopicName] = useState("");
 
   // Add items to dock when editor is ready
   useEffect(() => {
@@ -92,15 +104,27 @@ export function ReteCanvas() {
       editor.dock.add(() => new ExistingTopicNode(topic, editor.socket));
     });
 
-    // Add example topic node
-    editor.dock.add(() => new ExampleTopicNode(editor.socket));
+    // Add new topic node
+    editor.dock.add(() => new NewTopicNode(editor.socket));
     
-    // Add connection listener
+    // Add node creation and connection listeners
     editor.editor.addPipe(context => {
       if (context.type === 'connectioncreate') {
         const connection = context.data;
         handleConnection(connection);
       }
+      
+      // When a node is created, check if it's a NewTopicNode
+      if (context.type === 'nodecreated') {
+        const node = context.data;
+        if (node instanceof NewTopicNode) {
+          // Show the popup for naming the topic
+          setActiveNode(node);
+          setNewTopicName("");
+          setShowPopup(true);
+        }
+      }
+      
       return context;
     });
   }, [editor, topics]);
@@ -111,13 +135,13 @@ export function ReteCanvas() {
       const sourceNode = editor?.editor.getNode(connection.source);
       const targetNode = editor?.editor.getNode(connection.target);
       
-      // Check if connection is from ExistingTopicNode to ExampleTopicNode
+      // Check if connection is from ExistingTopicNode to NewTopicNode
       if (sourceNode instanceof ExistingTopicNode && 
-          targetNode instanceof ExampleTopicNode) {
+          targetNode instanceof NewTopicNode) {
         
         // Use the topicName property we added to ExistingTopicNode
         const sourceTopic = (sourceNode as ExistingTopicNode).topicName;
-        const targetTopic = 'example_output'; // Default name for example output topic
+        const targetTopic = (targetNode as NewTopicNode).topicName;
         
         setIsStreaming(true);
         setError(null);
@@ -138,6 +162,34 @@ export function ReteCanvas() {
     }
   };
 
+  // Handle topic name submission
+  const handleTopicNameSubmit = () => {
+    if (activeNode && newTopicName.trim()) {
+      const finalName = newTopicName.trim();
+      
+      // Update node label and internal topicName property
+      activeNode.label = finalName;
+      activeNode.topicName = finalName;
+      
+      // Update the control value to display the new name
+      const control = activeNode.controls["name"] as ClassicPreset.InputControl<"text", string>;
+      if (control) {
+        control.setValue(finalName);
+      }
+      
+      // Reset popup state
+      setShowPopup(false);
+      setActiveNode(null);
+    }
+  };
+  
+  // Handle Enter key press in the input field
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && newTopicName.trim()) {
+      handleTopicNameSubmit();
+    }
+  };
+
   return (
     <div>
       <h2>Kafka Topics</h2>
@@ -149,9 +201,74 @@ export function ReteCanvas() {
           border: '1px solid #ddd',
           borderRadius: '8px',
           background: '#f5f5f5',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          position: 'relative' // For popup positioning
         }}
       />
+      
+      {/* Topic Name Popup */}
+      {showPopup && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          width: '300px',
+          textAlign: 'center'
+        }}>
+          <h3>New Topic</h3>
+          <p style={{ marginBottom: '15px' }}>Please enter a name for this topic:</p>
+          <input
+            type="text"
+            value={newTopicName}
+            onChange={(e) => setNewTopicName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Enter topic name"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              border: '1px solid #ddd',
+              marginBottom: '15px',
+              fontSize: '14px'
+            }}
+            autoFocus
+          />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setShowPopup(false)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleTopicNameSubmit}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#0d6efd',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+              disabled={!newTopicName.trim()}
+            >
+              Create
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Status indicators */}
       {isStreaming && (
@@ -202,7 +319,7 @@ export function ReteCanvas() {
       
       {/* Helper text */}
       <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
-        <p>Drag topics from the dock menu to the canvas. Connect an existing topic to the example topic node to start streaming.</p>
+        <p>Drag topics from the dock menu to the canvas. Connect an existing topic to the new topic node to start streaming.</p>
       </div>
     </div>
   );
