@@ -12,7 +12,7 @@ type Schemes = ClassicScheme;
 type AreaExtra = ReactArea2D<Schemes>;
 
 // Node for Kafka topics
-class TopicNode extends ClassicPreset.Node {
+class ExistingTopicNode extends ClassicPreset.Node {
   width = 180;
   height = 120;
 
@@ -26,22 +26,16 @@ class TopicNode extends ClassicPreset.Node {
   }
 }
 
-// Node for stream operations
-class ProcessNode extends ClassicPreset.Node {
+// Node for example topic with input only
+class ExampleTopicNode extends ClassicPreset.Node {
   width = 180;
   height = 120;
 
-  constructor(name: string, socket: ClassicPreset.Socket) {
-    super(name);
-    this.addControl(
-      "text",
-      new ClassicPreset.InputControl("text", { initial: name.toLowerCase() })
-    );
+  constructor(socket: ClassicPreset.Socket) {
+    super("exampletopic");
     this.addInput("in", new ClassicPreset.Input(socket));
-    this.addOutput("out", new ClassicPreset.Output(socket));
   }
 }
-
 
 async function createEditor(container: HTMLElement) {
   const socket = new ClassicPreset.Socket("socket");
@@ -87,9 +81,13 @@ export function ReteCanvas() {
   useEffect(() => {
     if (!editor) return;
 
+    // Add existing topics
     topics.forEach(topic => {
-      editor.dock.add(() => new TopicNode(topic, editor.socket));
+      editor.dock.add(() => new ExistingTopicNode(topic, editor.socket));
     });
+
+    // Add example topic node
+    editor.dock.add(() => new ExampleTopicNode(editor.socket));
   }, [editor, topics]);
 
   return (
