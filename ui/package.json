@@ -14,9 +14,17 @@
     "@bufbuild/protobuf": "^2.2.3",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@tanstack/react-query": "^5.66.9",
+    "@types/styled-components": "^5.1.34",
     "browser-headers": "^0.4.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rete": "^2.0.5",
+    "rete-area-plugin": "^2.1.3",
+    "rete-connection-plugin": "^2.0.5",
+    "rete-dock-plugin": "^2.0.3",
+    "rete-react-plugin": "^2.0.7",
+    "rete-render-utils": "^2.0.3",
+    "styled-components": "^6.1.15"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.50.0",

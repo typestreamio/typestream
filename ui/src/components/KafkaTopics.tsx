@@ -1,22 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { fileSystemClient } from '../services/grpc-client';
+import { useKafkaTopics } from '../services/kafka';
 
 export function KafkaTopics() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['kafka-topics'],
-    queryFn: async () => {
-      const response = await fileSystemClient.Ls({
-        userId: 'local',
-        path: '/dev/kafka/local/topics'
-      });
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.files;
-    }
-  });
+  const { data, isLoading, error } = useKafkaTopics();
 
   if (isLoading) {
     return <div>Loading topics...</div>;
