@@ -1,8 +1,0 @@
-version: v1
-plugins:
-  - plugin: buf.build/protocolbuffers/js
-    out: ../ui/src/generated
-    opt: import_style=commonjs,binary
-  - plugin: buf.build/grpc/web
-    out: ../ui/src/generated
-    opt: import_style=commonjs+dts,mode=grpcweb
