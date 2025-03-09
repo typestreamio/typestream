@@ -6,6 +6,8 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { grpc } from "@improbable-eng/grpc-web";
+import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "io.typestream.grpc";
 
@@ -496,43 +498,171 @@ export const LsResponse: MessageFns<LsResponse> = {
 };
 
 export interface FileSystemService {
-  Mount(request: MountRequest): Promise<MountResponse>;
-  Unmount(request: UnmountRequest): Promise<UnmountResponse>;
-  Ls(request: LsRequest): Promise<LsResponse>;
+  Mount(request: DeepPartial<MountRequest>, metadata?: grpc.Metadata): Promise<MountResponse>;
+  Unmount(request: DeepPartial<UnmountRequest>, metadata?: grpc.Metadata): Promise<UnmountResponse>;
+  Ls(request: DeepPartial<LsRequest>, metadata?: grpc.Metadata): Promise<LsResponse>;
 }
 
-export const FileSystemServiceServiceName = "io.typestream.grpc.FileSystemService";
 export class FileSystemServiceClientImpl implements FileSystemService {
   private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || FileSystemServiceServiceName;
+
+  constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.Mount = this.Mount.bind(this);
     this.Unmount = this.Unmount.bind(this);
     this.Ls = this.Ls.bind(this);
   }
-  Mount(request: MountRequest): Promise<MountResponse> {
-    const data = MountRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Mount", data);
-    return promise.then((data) => MountResponse.decode(new BinaryReader(data)));
+
+  Mount(request: DeepPartial<MountRequest>, metadata?: grpc.Metadata): Promise<MountResponse> {
+    return this.rpc.unary(FileSystemServiceMountDesc, MountRequest.fromPartial(request), metadata);
   }
 
-  Unmount(request: UnmountRequest): Promise<UnmountResponse> {
-    const data = UnmountRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Unmount", data);
-    return promise.then((data) => UnmountResponse.decode(new BinaryReader(data)));
+  Unmount(request: DeepPartial<UnmountRequest>, metadata?: grpc.Metadata): Promise<UnmountResponse> {
+    return this.rpc.unary(FileSystemServiceUnmountDesc, UnmountRequest.fromPartial(request), metadata);
   }
 
-  Ls(request: LsRequest): Promise<LsResponse> {
-    const data = LsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Ls", data);
-    return promise.then((data) => LsResponse.decode(new BinaryReader(data)));
+  Ls(request: DeepPartial<LsRequest>, metadata?: grpc.Metadata): Promise<LsResponse> {
+    return this.rpc.unary(FileSystemServiceLsDesc, LsRequest.fromPartial(request), metadata);
   }
 }
 
+export const FileSystemServiceDesc = { serviceName: "io.typestream.grpc.FileSystemService" };
+
+export const FileSystemServiceMountDesc: UnaryMethodDefinitionish = {
+  methodName: "Mount",
+  service: FileSystemServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return MountRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = MountResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FileSystemServiceUnmountDesc: UnaryMethodDefinitionish = {
+  methodName: "Unmount",
+  service: FileSystemServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UnmountRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = UnmountResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FileSystemServiceLsDesc: UnaryMethodDefinitionish = {
+  methodName: "Ls",
+  service: FileSystemServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return LsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = LsResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+  requestStream: any;
+  responseStream: any;
+}
+
+type UnaryMethodDefinitionish = UnaryMethodDefinitionishR;
+
 interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  unary<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Promise<any>;
+}
+
+export class GrpcWebImpl {
+  private host: string;
+  private options: {
+    transport?: grpc.TransportFactory;
+
+    debug?: boolean;
+    metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
+  };
+
+  constructor(
+    host: string,
+    options: {
+      transport?: grpc.TransportFactory;
+
+      debug?: boolean;
+      metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
+    },
+  ) {
+    this.host = host;
+    this.options = options;
+  }
+
+  unary<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    _request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Promise<any> {
+    const request = { ..._request, ...methodDesc.requestType };
+    const maybeCombinedMetadata = metadata && this.options.metadata
+      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+      : metadata ?? this.options.metadata;
+    return new Promise((resolve, reject) => {
+      grpc.unary(methodDesc, {
+        request,
+        host: this.host,
+        metadata: maybeCombinedMetadata ?? {},
+        ...(this.options.transport !== undefined ? { transport: this.options.transport } : {}),
+        debug: this.options.debug ?? false,
+        onEnd: function (response) {
+          if (response.status === grpc.Code.OK) {
+            resolve(response.message!.toObject());
+          } else {
+            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            reject(err);
+          }
+        },
+      });
+    });
+  }
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
@@ -549,6 +679,12 @@ export type Exact<P, I extends P> = P extends Builtin ? P
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends globalThis.Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }
 
 export interface MessageFns<T> {

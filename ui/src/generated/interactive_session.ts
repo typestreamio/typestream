@@ -6,8 +6,10 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { grpc } from "@improbable-eng/grpc-web";
+import { BrowserHeaders } from "browser-headers";
 import { Observable } from "rxjs";
-import { map } from "rxjs/operators";
+import { share } from "rxjs/operators";
 
 export const protobufPackage = "io.typestream.grpc";
 
@@ -914,19 +916,23 @@ export const StopSessionResponse: MessageFns<StopSessionResponse> = {
 };
 
 export interface InteractiveSessionService {
-  StartSession(request: StartSessionRequest): Promise<StartSessionResponse>;
-  RunProgram(request: RunProgramRequest): Promise<RunProgramResponse>;
-  GetProgramOutput(request: GetProgramOutputRequest): Observable<GetProgramOutputResponse>;
-  CompleteProgram(request: CompleteProgramRequest): Promise<CompleteProgramResponse>;
-  StopSession(request: StopSessionRequest): Promise<StopSessionResponse>;
+  StartSession(request: DeepPartial<StartSessionRequest>, metadata?: grpc.Metadata): Promise<StartSessionResponse>;
+  RunProgram(request: DeepPartial<RunProgramRequest>, metadata?: grpc.Metadata): Promise<RunProgramResponse>;
+  GetProgramOutput(
+    request: DeepPartial<GetProgramOutputRequest>,
+    metadata?: grpc.Metadata,
+  ): Observable<GetProgramOutputResponse>;
+  CompleteProgram(
+    request: DeepPartial<CompleteProgramRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CompleteProgramResponse>;
+  StopSession(request: DeepPartial<StopSessionRequest>, metadata?: grpc.Metadata): Promise<StopSessionResponse>;
 }
 
-export const InteractiveSessionServiceServiceName = "io.typestream.grpc.InteractiveSessionService";
 export class InteractiveSessionServiceClientImpl implements InteractiveSessionService {
   private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || InteractiveSessionServiceServiceName;
+
+  constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.StartSession = this.StartSession.bind(this);
     this.RunProgram = this.RunProgram.bind(this);
@@ -934,42 +940,274 @@ export class InteractiveSessionServiceClientImpl implements InteractiveSessionSe
     this.CompleteProgram = this.CompleteProgram.bind(this);
     this.StopSession = this.StopSession.bind(this);
   }
-  StartSession(request: StartSessionRequest): Promise<StartSessionResponse> {
-    const data = StartSessionRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "StartSession", data);
-    return promise.then((data) => StartSessionResponse.decode(new BinaryReader(data)));
+
+  StartSession(request: DeepPartial<StartSessionRequest>, metadata?: grpc.Metadata): Promise<StartSessionResponse> {
+    return this.rpc.unary(
+      InteractiveSessionServiceStartSessionDesc,
+      StartSessionRequest.fromPartial(request),
+      metadata,
+    );
   }
 
-  RunProgram(request: RunProgramRequest): Promise<RunProgramResponse> {
-    const data = RunProgramRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "RunProgram", data);
-    return promise.then((data) => RunProgramResponse.decode(new BinaryReader(data)));
+  RunProgram(request: DeepPartial<RunProgramRequest>, metadata?: grpc.Metadata): Promise<RunProgramResponse> {
+    return this.rpc.unary(InteractiveSessionServiceRunProgramDesc, RunProgramRequest.fromPartial(request), metadata);
   }
 
-  GetProgramOutput(request: GetProgramOutputRequest): Observable<GetProgramOutputResponse> {
-    const data = GetProgramOutputRequest.encode(request).finish();
-    const result = this.rpc.serverStreamingRequest(this.service, "GetProgramOutput", data);
-    return result.pipe(map((data) => GetProgramOutputResponse.decode(new BinaryReader(data))));
+  GetProgramOutput(
+    request: DeepPartial<GetProgramOutputRequest>,
+    metadata?: grpc.Metadata,
+  ): Observable<GetProgramOutputResponse> {
+    return this.rpc.invoke(
+      InteractiveSessionServiceGetProgramOutputDesc,
+      GetProgramOutputRequest.fromPartial(request),
+      metadata,
+    );
   }
 
-  CompleteProgram(request: CompleteProgramRequest): Promise<CompleteProgramResponse> {
-    const data = CompleteProgramRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "CompleteProgram", data);
-    return promise.then((data) => CompleteProgramResponse.decode(new BinaryReader(data)));
+  CompleteProgram(
+    request: DeepPartial<CompleteProgramRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CompleteProgramResponse> {
+    return this.rpc.unary(
+      InteractiveSessionServiceCompleteProgramDesc,
+      CompleteProgramRequest.fromPartial(request),
+      metadata,
+    );
   }
 
-  StopSession(request: StopSessionRequest): Promise<StopSessionResponse> {
-    const data = StopSessionRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "StopSession", data);
-    return promise.then((data) => StopSessionResponse.decode(new BinaryReader(data)));
+  StopSession(request: DeepPartial<StopSessionRequest>, metadata?: grpc.Metadata): Promise<StopSessionResponse> {
+    return this.rpc.unary(InteractiveSessionServiceStopSessionDesc, StopSessionRequest.fromPartial(request), metadata);
   }
 }
 
+export const InteractiveSessionServiceDesc = { serviceName: "io.typestream.grpc.InteractiveSessionService" };
+
+export const InteractiveSessionServiceStartSessionDesc: UnaryMethodDefinitionish = {
+  methodName: "StartSession",
+  service: InteractiveSessionServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return StartSessionRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = StartSessionResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+export const InteractiveSessionServiceRunProgramDesc: UnaryMethodDefinitionish = {
+  methodName: "RunProgram",
+  service: InteractiveSessionServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return RunProgramRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = RunProgramResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+export const InteractiveSessionServiceGetProgramOutputDesc: UnaryMethodDefinitionish = {
+  methodName: "GetProgramOutput",
+  service: InteractiveSessionServiceDesc,
+  requestStream: false,
+  responseStream: true,
+  requestType: {
+    serializeBinary() {
+      return GetProgramOutputRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = GetProgramOutputResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+export const InteractiveSessionServiceCompleteProgramDesc: UnaryMethodDefinitionish = {
+  methodName: "CompleteProgram",
+  service: InteractiveSessionServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CompleteProgramRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = CompleteProgramResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+export const InteractiveSessionServiceStopSessionDesc: UnaryMethodDefinitionish = {
+  methodName: "StopSession",
+  service: InteractiveSessionServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return StopSessionRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = StopSessionResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+  requestStream: any;
+  responseStream: any;
+}
+
+type UnaryMethodDefinitionish = UnaryMethodDefinitionishR;
+
 interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
-  clientStreamingRequest(service: string, method: string, data: Observable<Uint8Array>): Promise<Uint8Array>;
-  serverStreamingRequest(service: string, method: string, data: Uint8Array): Observable<Uint8Array>;
-  bidirectionalStreamingRequest(service: string, method: string, data: Observable<Uint8Array>): Observable<Uint8Array>;
+  unary<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Promise<any>;
+  invoke<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Observable<any>;
+}
+
+export class GrpcWebImpl {
+  private host: string;
+  private options: {
+    transport?: grpc.TransportFactory;
+    streamingTransport?: grpc.TransportFactory;
+    debug?: boolean;
+    metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
+  };
+
+  constructor(
+    host: string,
+    options: {
+      transport?: grpc.TransportFactory;
+      streamingTransport?: grpc.TransportFactory;
+      debug?: boolean;
+      metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
+    },
+  ) {
+    this.host = host;
+    this.options = options;
+  }
+
+  unary<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    _request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Promise<any> {
+    const request = { ..._request, ...methodDesc.requestType };
+    const maybeCombinedMetadata = metadata && this.options.metadata
+      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+      : metadata ?? this.options.metadata;
+    return new Promise((resolve, reject) => {
+      grpc.unary(methodDesc, {
+        request,
+        host: this.host,
+        metadata: maybeCombinedMetadata ?? {},
+        ...(this.options.transport !== undefined ? { transport: this.options.transport } : {}),
+        debug: this.options.debug ?? false,
+        onEnd: function (response) {
+          if (response.status === grpc.Code.OK) {
+            resolve(response.message!.toObject());
+          } else {
+            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            reject(err);
+          }
+        },
+      });
+    });
+  }
+
+  invoke<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    _request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Observable<any> {
+    const upStreamCodes = this.options.upStreamRetryCodes ?? [];
+    const DEFAULT_TIMEOUT_TIME: number = 3_000;
+    const request = { ..._request, ...methodDesc.requestType };
+    const transport = this.options.streamingTransport ?? this.options.transport;
+    const maybeCombinedMetadata = metadata && this.options.metadata
+      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+      : metadata ?? this.options.metadata;
+    return new Observable((observer) => {
+      const upStream = () => {
+        const client = grpc.invoke(methodDesc, {
+          host: this.host,
+          request,
+          ...(transport !== undefined ? { transport } : {}),
+          metadata: maybeCombinedMetadata ?? {},
+          debug: this.options.debug ?? false,
+          onMessage: (next) => observer.next(next),
+          onEnd: (code: grpc.Code, message: string, trailers: grpc.Metadata) => {
+            if (code === 0) {
+              observer.complete();
+            } else if (upStreamCodes.includes(code)) {
+              setTimeout(upStream, DEFAULT_TIMEOUT_TIME);
+            } else {
+              const err = new Error(message) as any;
+              err.code = code;
+              err.metadata = trailers;
+              observer.error(err);
+            }
+          },
+        });
+        observer.add(() => client.close());
+      };
+      upStream();
+    }).pipe(share());
+  }
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
@@ -990,6 +1228,12 @@ function isObject(value: any): boolean {
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends globalThis.Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }
 
 export interface MessageFns<T> {

@@ -6,6 +6,8 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { grpc } from "@improbable-eng/grpc-web";
+import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "io.typestream.grpc";
 
@@ -189,27 +191,113 @@ export const CreateJobResponse: MessageFns<CreateJobResponse> = {
 };
 
 export interface JobService {
-  CreateJob(request: CreateJobRequest): Promise<CreateJobResponse>;
+  CreateJob(request: DeepPartial<CreateJobRequest>, metadata?: grpc.Metadata): Promise<CreateJobResponse>;
 }
 
-export const JobServiceServiceName = "io.typestream.grpc.JobService";
 export class JobServiceClientImpl implements JobService {
   private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || JobServiceServiceName;
+
+  constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.CreateJob = this.CreateJob.bind(this);
   }
-  CreateJob(request: CreateJobRequest): Promise<CreateJobResponse> {
-    const data = CreateJobRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "CreateJob", data);
-    return promise.then((data) => CreateJobResponse.decode(new BinaryReader(data)));
+
+  CreateJob(request: DeepPartial<CreateJobRequest>, metadata?: grpc.Metadata): Promise<CreateJobResponse> {
+    return this.rpc.unary(JobServiceCreateJobDesc, CreateJobRequest.fromPartial(request), metadata);
   }
 }
 
+export const JobServiceDesc = { serviceName: "io.typestream.grpc.JobService" };
+
+export const JobServiceCreateJobDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateJob",
+  service: JobServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateJobRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      const value = CreateJobResponse.decode(data);
+      return {
+        ...value,
+        toObject() {
+          return value;
+        },
+      };
+    },
+  } as any,
+};
+
+interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+  requestStream: any;
+  responseStream: any;
+}
+
+type UnaryMethodDefinitionish = UnaryMethodDefinitionishR;
+
 interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  unary<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Promise<any>;
+}
+
+export class GrpcWebImpl {
+  private host: string;
+  private options: {
+    transport?: grpc.TransportFactory;
+
+    debug?: boolean;
+    metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
+  };
+
+  constructor(
+    host: string,
+    options: {
+      transport?: grpc.TransportFactory;
+
+      debug?: boolean;
+      metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
+    },
+  ) {
+    this.host = host;
+    this.options = options;
+  }
+
+  unary<T extends UnaryMethodDefinitionish>(
+    methodDesc: T,
+    _request: any,
+    metadata: grpc.Metadata | undefined,
+  ): Promise<any> {
+    const request = { ..._request, ...methodDesc.requestType };
+    const maybeCombinedMetadata = metadata && this.options.metadata
+      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+      : metadata ?? this.options.metadata;
+    return new Promise((resolve, reject) => {
+      grpc.unary(methodDesc, {
+        request,
+        host: this.host,
+        metadata: maybeCombinedMetadata ?? {},
+        ...(this.options.transport !== undefined ? { transport: this.options.transport } : {}),
+        debug: this.options.debug ?? false,
+        onEnd: function (response) {
+          if (response.status === grpc.Code.OK) {
+            resolve(response.message!.toObject());
+          } else {
+            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            reject(err);
+          }
+        },
+      });
+    });
+  }
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
@@ -226,6 +314,12 @@ export type Exact<P, I extends P> = P extends Builtin ? P
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends globalThis.Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }
 
 export interface MessageFns<T> {
