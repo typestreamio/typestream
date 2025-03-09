@@ -188,6 +188,30 @@ export const CreateJobResponse: MessageFns<CreateJobResponse> = {
   },
 };
 
+export interface JobService {
+  CreateJob(request: CreateJobRequest): Promise<CreateJobResponse>;
+}
+
+export const JobServiceServiceName = "io.typestream.grpc.JobService";
+export class JobServiceClientImpl implements JobService {
+  private readonly rpc: Rpc;
+  private readonly service: string;
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || JobServiceServiceName;
+    this.rpc = rpc;
+    this.CreateJob = this.CreateJob.bind(this);
+  }
+  CreateJob(request: CreateJobRequest): Promise<CreateJobResponse> {
+    const data = CreateJobRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "CreateJob", data);
+    return promise.then((data) => CreateJobResponse.decode(new BinaryReader(data)));
+  }
+}
+
+interface Rpc {
+  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+}
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin ? T

@@ -6,6 +6,8 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export const protobufPackage = "io.typestream.grpc";
 
@@ -910,6 +912,65 @@ export const StopSessionResponse: MessageFns<StopSessionResponse> = {
     return message;
   },
 };
+
+export interface InteractiveSessionService {
+  StartSession(request: StartSessionRequest): Promise<StartSessionResponse>;
+  RunProgram(request: RunProgramRequest): Promise<RunProgramResponse>;
+  GetProgramOutput(request: GetProgramOutputRequest): Observable<GetProgramOutputResponse>;
+  CompleteProgram(request: CompleteProgramRequest): Promise<CompleteProgramResponse>;
+  StopSession(request: StopSessionRequest): Promise<StopSessionResponse>;
+}
+
+export const InteractiveSessionServiceServiceName = "io.typestream.grpc.InteractiveSessionService";
+export class InteractiveSessionServiceClientImpl implements InteractiveSessionService {
+  private readonly rpc: Rpc;
+  private readonly service: string;
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || InteractiveSessionServiceServiceName;
+    this.rpc = rpc;
+    this.StartSession = this.StartSession.bind(this);
+    this.RunProgram = this.RunProgram.bind(this);
+    this.GetProgramOutput = this.GetProgramOutput.bind(this);
+    this.CompleteProgram = this.CompleteProgram.bind(this);
+    this.StopSession = this.StopSession.bind(this);
+  }
+  StartSession(request: StartSessionRequest): Promise<StartSessionResponse> {
+    const data = StartSessionRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "StartSession", data);
+    return promise.then((data) => StartSessionResponse.decode(new BinaryReader(data)));
+  }
+
+  RunProgram(request: RunProgramRequest): Promise<RunProgramResponse> {
+    const data = RunProgramRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "RunProgram", data);
+    return promise.then((data) => RunProgramResponse.decode(new BinaryReader(data)));
+  }
+
+  GetProgramOutput(request: GetProgramOutputRequest): Observable<GetProgramOutputResponse> {
+    const data = GetProgramOutputRequest.encode(request).finish();
+    const result = this.rpc.serverStreamingRequest(this.service, "GetProgramOutput", data);
+    return result.pipe(map((data) => GetProgramOutputResponse.decode(new BinaryReader(data))));
+  }
+
+  CompleteProgram(request: CompleteProgramRequest): Promise<CompleteProgramResponse> {
+    const data = CompleteProgramRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "CompleteProgram", data);
+    return promise.then((data) => CompleteProgramResponse.decode(new BinaryReader(data)));
+  }
+
+  StopSession(request: StopSessionRequest): Promise<StopSessionResponse> {
+    const data = StopSessionRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "StopSession", data);
+    return promise.then((data) => StopSessionResponse.decode(new BinaryReader(data)));
+  }
+}
+
+interface Rpc {
+  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  clientStreamingRequest(service: string, method: string, data: Observable<Uint8Array>): Promise<Uint8Array>;
+  serverStreamingRequest(service: string, method: string, data: Uint8Array): Observable<Uint8Array>;
+  bidirectionalStreamingRequest(service: string, method: string, data: Observable<Uint8Array>): Observable<Uint8Array>;
+}
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 

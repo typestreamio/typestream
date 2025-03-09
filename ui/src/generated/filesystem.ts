@@ -495,6 +495,46 @@ export const LsResponse: MessageFns<LsResponse> = {
   },
 };
 
+export interface FileSystemService {
+  Mount(request: MountRequest): Promise<MountResponse>;
+  Unmount(request: UnmountRequest): Promise<UnmountResponse>;
+  Ls(request: LsRequest): Promise<LsResponse>;
+}
+
+export const FileSystemServiceServiceName = "io.typestream.grpc.FileSystemService";
+export class FileSystemServiceClientImpl implements FileSystemService {
+  private readonly rpc: Rpc;
+  private readonly service: string;
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || FileSystemServiceServiceName;
+    this.rpc = rpc;
+    this.Mount = this.Mount.bind(this);
+    this.Unmount = this.Unmount.bind(this);
+    this.Ls = this.Ls.bind(this);
+  }
+  Mount(request: MountRequest): Promise<MountResponse> {
+    const data = MountRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "Mount", data);
+    return promise.then((data) => MountResponse.decode(new BinaryReader(data)));
+  }
+
+  Unmount(request: UnmountRequest): Promise<UnmountResponse> {
+    const data = UnmountRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "Unmount", data);
+    return promise.then((data) => UnmountResponse.decode(new BinaryReader(data)));
+  }
+
+  Ls(request: LsRequest): Promise<LsResponse> {
+    const data = LsRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "Ls", data);
+    return promise.then((data) => LsResponse.decode(new BinaryReader(data)));
+  }
+}
+
+interface Rpc {
+  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+}
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin ? T
