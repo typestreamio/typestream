@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "proto": "cd .. && buf generate ./protos/src/main/proto --template ./proto/buf.gen.yaml && cd ui",
+    "proto": "protoc --proto_path=../protos/src/main/proto --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=paths=source_relative:./src/generated --ts_proto_opt=esModuleInterop=true,outputClientImpl=grpc-web ../protos/src/main/proto/*.proto",
     "test": "vitest"
   },
   "dependencies": {
@@ -16,7 +16,8 @@
     "@tanstack/react-query": "^5.66.9",
     "browser-headers": "^0.4.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "ts-proto": "^2.6.1"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.50.0",
