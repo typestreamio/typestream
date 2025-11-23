@@ -102,6 +102,8 @@ documentation](https://docs.typestream.io/).
 
 ## Getting started
 
+### Homebrew (MacOS)
+
 If you use [Homebrew](https://brew.sh/):
 
 ```sh
@@ -115,7 +117,33 @@ if you see something like this:
 typestream version 2023.08.31+3 42f7762daac1872416bebab7a34d0b79a838d40a (2023-09-02 09:20:52)
 ```
 
-then you're good to go! You can now run:
+then you're good to go!
+
+### Nix (MacOS/Linux)
+
+We use flakes to build the environments.
+
+```sh
+$ nix develop
+```
+
+Then to build the images:
+
+```sh
+$ ./gradle build
+$ ./scripts/dev/build-images.sh
+```
+
+Then to build the CLI:
+
+```sh
+$ cd cli && make
+$ ./typestream --help
+```
+
+### Common
+
+You can now run:
 
 ```sh
 typestream local start

@@ -6,3 +6,6 @@ out
 .typestream-history.txt
 /typestream
 /*.cast
+.divenv/
+.direnv
+.envrc
