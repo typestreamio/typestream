@@ -8,6 +8,7 @@ option go_package = "github.com/typestreamio/typestream/cli/pkg/job_service";
 
 service JobService {
     rpc CreateJob(CreateJobRequest) returns (CreateJobResponse) {}
+    rpc CreateJobFromGraph(CreateJobFromGraphRequest) returns (CreateJobResponse) {}
 }
 
 message CreateJobRequest {
@@ -21,3 +22,94 @@ message CreateJobResponse {
     string error = 3;
 }
 
+enum Encoding {
+  STRING = 0;
+  NUMBER = 1;
+  JSON = 2;
+  AVRO = 3;
+  PROTOBUF = 4;
+}
+
+message JoinTypeProto {
+  bool by_key = 1;
+  bool is_lookup = 2;
+}
+
+message DataStreamProto {
+  string path = 1;
+}
+
+message PredicateProto {
+  string expr = 1;
+}
+
+message CountNode {}
+
+message FilterNode {
+  bool by_key = 1;
+  PredicateProto predicate = 2;
+}
+
+message GroupNode {
+  string key_mapper_expr = 1;
+}
+
+message JoinNode {
+  DataStreamProto with = 1;
+  JoinTypeProto join_type = 2;
+}
+
+message MapNode {
+  string mapper_expr = 1;
+}
+
+message NoOpNode {}
+
+message ShellSourceNode {
+  repeated DataStreamProto data = 1;
+}
+
+message StreamSourceNode {
+  DataStreamProto data_stream = 1;
+  Encoding encoding = 2;
+}
+
+message EachNode {
+  string fn_expr = 1;
+}
+
+message SinkNode {
+  DataStreamProto output = 1;
+  Encoding encoding = 2;
+}
+
+message PipelineNode {
+  string id = 1;
+  oneof node_type {
+    CountNode count = 2;
+    FilterNode filter = 3;
+    GroupNode group = 4;
+    JoinNode join = 5;
+    MapNode map = 6;
+    NoOpNode noop = 7;
+    ShellSourceNode shell_source = 8;
+    StreamSourceNode stream_source = 9;
+    EachNode each = 10;
+    SinkNode sink = 11;
+  }
+}
+
+message PipelineEdge {
+  string from_id = 1;
+  string to_id = 2;
+}
+
+message PipelineGraph {
+  repeated PipelineNode nodes = 1;
+  repeated PipelineEdge edges = 2;
+}
+
+message CreateJobFromGraphRequest {
+  string user_id = 1;
+  PipelineGraph graph = 2;
+}
