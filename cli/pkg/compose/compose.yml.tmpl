@@ -5,6 +5,7 @@ networks:
     driver: bridge
 volumes:
   redpanda: null
+  uiv2_node_modules: null
 services:
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v24.2.9
@@ -62,10 +63,28 @@ services:
   envoy:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
-      - ${PWD}/pkg/compose/envoy.yaml:/etc/envoy/envoy.yaml
+      - {{ .ProjectRoot }}/cli/pkg/compose/envoy.yaml:/etc/envoy/envoy.yaml
     ports:
       - "8080:8080"
     networks:
       - typestream_network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  uiv2:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      # Mount uiv2 directory for live reloading
+      - {{ .ProjectRoot }}/uiv2:/app
+      # Use named volume for node_modules to avoid platform issues
+      - uiv2_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - typestream_network
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
+    depends_on:
+      - envoy
+      - server
+    environment:
+      - VITE_SERVER_URL=http://localhost:8080

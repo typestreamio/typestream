@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 
 	"github.com/charmbracelet/log"
@@ -26,6 +27,26 @@ func NewRunner() *Runner {
 	}
 }
 
+func getProjectRoot() string {
+	// Get the directory of the current executable
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Warn("⚠️  Could not determine executable path, using current directory")
+		return "."
+	}
+
+	// Resolve symlinks
+	execPath, err = filepath.EvalSymlinks(execPath)
+	if err != nil {
+		log.Warn("⚠️  Could not resolve symlinks, using current directory")
+		return "."
+	}
+
+	// Go up from cli/typestream to project root (2 levels)
+	projectRoot := filepath.Dir(filepath.Dir(execPath))
+	return projectRoot
+}
+
 func (runner *Runner) Show() string {
 	buf := bytes.Buffer{}
 	tmpl, err := template.New("compose-template").Parse(composeFile)
@@ -33,7 +54,13 @@ func (runner *Runner) Show() string {
 		log.Fatal("💥 failed to parse compose template: %v", err)
 	}
 
-	err = tmpl.Execute(&buf, struct{ Image string }{Image: version.DockerImage("typestream/server")})
+	err = tmpl.Execute(&buf, struct {
+		Image       string
+		ProjectRoot string
+	}{
+		Image:       version.DockerImage("typestream/server"),
+		ProjectRoot: getProjectRoot(),
+	})
 	if err != nil {
 		log.Fatal("💥 failed to execute compose template: %v", err)
 	}
@@ -52,7 +79,13 @@ func (runner *Runner) RunCommand(arg ...string) error {
 		log.Fatal("💥 failed to parse compose template: %v", err)
 	}
 
-	err = tmpl.Execute(tmpFile, struct{ Image string }{Image: version.DockerImage("typestream/server")})
+	err = tmpl.Execute(tmpFile, struct {
+		Image       string
+		ProjectRoot string
+	}{
+		Image:       version.DockerImage("typestream/server"),
+		ProjectRoot: getProjectRoot(),
+	})
 
 	if err != nil {
 		log.Fatal("💥 failed to execute compose template: %v", err)
@@ -91,3 +124,4 @@ func (runner *Runner) RunCommand(arg ...string) error {
 
 	return cmd.Wait()
 }
+
