@@ -3,7 +3,7 @@
   description = "A Nix-flake-based Kotlin development environment";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
   };
 
   outputs =
@@ -12,7 +12,7 @@
       nixpkgs,
     }:
     let
-      javaVersion = 20;
+      javaVersion = 21;
       # Some overlay to inject your dependencies (pkgs.jdk, pkgs.gradle, pkgs.kotlin) should be defined
       overlays = [
         (final: prev: rec {
@@ -43,12 +43,9 @@
       devShells = forEachSupportedSystem (
         { pkgs }:
         {
-          # https://ryantm.github.io/nixpkgs/builders/special/fhs-environments/#sec-fhs-environments
-          # WARNING! As I understand, with this configuration your shell will be running in a namespace.
-          # It isolates the filesystem (or at least a part of the filesystem) to behave as a standard
-          # FHS system. gradlew should work normally, thus handling all your dependencies by itself.
-          # With this configuration, your only required dependency is the jdk17.
-          # Thus it is not a packaging flake, but rather a flake to enable development for your tool.
+          # Standard Nix development shell using mkShell.
+          # Packages are added to PATH and available for development.
+          # The gradle wrapper will use the JDK from this shell as the bootstrap JDK.
           default = pkgs.mkShell {
             packages = with pkgs; [
               jdk
@@ -60,7 +57,21 @@
               pkg-config
               minikube
               bash
+              nodePackages.pnpm
+              buf
+              nodejs_24
+              nix-ld
+              patchelf
+              protobuf
             ];
+
+            shellHook = ''
+              export NIX_LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.glibc.out}/lib"
+              export NIX_LD="${pkgs.stdenv.cc.bintools.dynamicLinker}"
+
+              # Use nixpkgs protoc instead of Gradle-downloaded version to avoid NixOS linking issues
+              export PROTOC_BINARY_PATH="${pkgs.protobuf}/bin/protoc"
+            '';
           };
         }
       );
