@@ -1,43 +1,41 @@
 import { useState } from 'react';
 import { QueryProvider } from './providers/QueryProvider';
 import { KafkaTopicBrowser } from './components/KafkaTopicBrowser';
-import { GraphJobSubmitter } from './components/GraphJobSubmitter';
+import { ReteEditor } from './components/ReteEditor';
 import { JobMonitor } from './components/JobMonitor';
 import './App.css';
 
-type ActiveJob = {
-  data?: any;
-} | null;
-
 function App() {
-  const [activeJob, setActiveJob] = useState<ActiveJob>(null);
-  const [showMonitor, setShowMonitor] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const handleJobCreated = (jobId: string, data?: any) => {
+  const handleJobCreated = (jobId: string) => {
     console.log(`Job created: ${jobId}`);
-    setActiveJob({ data });
-    setShowMonitor(true);
+    setActiveJobId(jobId);
   };
 
   return (
     <QueryProvider>
       <div style={{ padding: '20px' }}>
-        <h1>TypeStream UI v2</h1>
-        <p>Phase 5: Visual Pipeline Builder</p>
+        <h1>TypeStream Visual Editor</h1>
+        <p>Phase 6: Drag-and-drop pipeline builder with Rete.js</p>
 
         <section style={{ marginBottom: '40px' }}>
+          <h2>Available Topics</h2>
           <KafkaTopicBrowser />
         </section>
 
         <section style={{ marginBottom: '40px' }}>
-          <GraphJobSubmitter onJobCreated={handleJobCreated} />
+          <h2>Pipeline Editor</h2>
+          <p>Drag nodes from the left sidebar onto the canvas to build your pipeline</p>
+          <ReteEditor onJobCreated={handleJobCreated} />
         </section>
 
-        {showMonitor && activeJob && (
+        {activeJobId && (
           <section style={{ marginBottom: '40px' }}>
+            <h2>Job Output</h2>
             <JobMonitor
               pipelineType="graph"
-              pipelineData={activeJob.data}
+              pipelineData={{ jobId: activeJobId }}
             />
           </section>
         )}
