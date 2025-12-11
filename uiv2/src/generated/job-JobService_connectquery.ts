@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, ListJobsRequest, ListJobsResponse } from "./job_pb.js";
 
 /**
  * @generated from rpc io.typestream.grpc.JobService.CreateJob
@@ -29,6 +29,20 @@ export const createJobFromGraph = {
   kind: MethodKind.Unary,
   I: CreateJobFromGraphRequest,
   O: CreateJobResponse,
+  service: {
+    typeName: "io.typestream.grpc.JobService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.JobService.ListJobs
+ */
+export const listJobs = {
+  localName: "listJobs",
+  name: "ListJobs",
+  kind: MethodKind.Unary,
+  I: ListJobsRequest,
+  O: ListJobsResponse,
   service: {
     typeName: "io.typestream.grpc.JobService"
   }

@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import { Message, proto3, protoInt64 } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum io.typestream.grpc.Encoding
@@ -873,6 +873,141 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
 
   static equals(a: CreateJobFromGraphRequest | PlainMessage<CreateJobFromGraphRequest> | undefined, b: CreateJobFromGraphRequest | PlainMessage<CreateJobFromGraphRequest> | undefined): boolean {
     return proto3.util.equals(CreateJobFromGraphRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.ListJobsRequest
+ */
+export class ListJobsRequest extends Message<ListJobsRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<ListJobsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ListJobsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListJobsRequest {
+    return new ListJobsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListJobsRequest {
+    return new ListJobsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListJobsRequest {
+    return new ListJobsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListJobsRequest | PlainMessage<ListJobsRequest> | undefined, b: ListJobsRequest | PlainMessage<ListJobsRequest> | undefined): boolean {
+    return proto3.util.equals(ListJobsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.JobInfo
+ */
+export class JobInfo extends Message<JobInfo> {
+  /**
+   * @generated from field: string job_id = 1;
+   */
+  jobId = "";
+
+  /**
+   * RUNNING, STOPPED, FAILED, etc.
+   *
+   * @generated from field: string state = 2;
+   */
+  state = "";
+
+  /**
+   * Unix timestamp in milliseconds
+   *
+   * @generated from field: int64 start_time = 3;
+   */
+  startTime = protoInt64.zero;
+
+  /**
+   * Optional: the job's pipeline graph
+   *
+   * @generated from field: io.typestream.grpc.PipelineGraph graph = 4;
+   */
+  graph?: PipelineGraph;
+
+  constructor(data?: PartialMessage<JobInfo>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.JobInfo";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "job_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "state", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "start_time", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 4, name: "graph", kind: "message", T: PipelineGraph },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JobInfo {
+    return new JobInfo().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): JobInfo {
+    return new JobInfo().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): JobInfo {
+    return new JobInfo().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: JobInfo | PlainMessage<JobInfo> | undefined, b: JobInfo | PlainMessage<JobInfo> | undefined): boolean {
+    return proto3.util.equals(JobInfo, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.ListJobsResponse
+ */
+export class ListJobsResponse extends Message<ListJobsResponse> {
+  /**
+   * @generated from field: repeated io.typestream.grpc.JobInfo jobs = 1;
+   */
+  jobs: JobInfo[] = [];
+
+  constructor(data?: PartialMessage<ListJobsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ListJobsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "jobs", kind: "message", T: JobInfo, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListJobsResponse {
+    return new ListJobsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListJobsResponse {
+    return new ListJobsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListJobsResponse {
+    return new ListJobsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListJobsResponse | PlainMessage<ListJobsResponse> | undefined, b: ListJobsResponse | PlainMessage<ListJobsResponse> | undefined): boolean {
+    return proto3.util.equals(ListJobsResponse, a, b);
   }
 }
 

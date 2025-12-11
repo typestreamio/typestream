@@ -8,7 +8,7 @@ interface JobSubmitterProps {
 
 export function JobSubmitter({ userId = 'local', onJobCreated }: JobSubmitterProps) {
   const [source, setSource] = useState('cat /dev/kafka/local/topics/books | grep Station');
-  const mutation = useJobSubmit(userId);
+  const mutation = useJobSubmit();
 
   useEffect(() => {
     if (mutation.isSuccess && onJobCreated) {

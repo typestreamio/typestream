@@ -13,7 +13,7 @@ export function TopicBrowserControl({ value, onChange }: {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">Select a topic...</option>
-      {data?.files?.map((file) => (
+      {data?.files?.map((file: any) => (
         <option key={file.path} value={file.path}>
           {file.name}
         </option>

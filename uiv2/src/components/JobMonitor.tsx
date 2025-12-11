@@ -14,7 +14,7 @@ export function JobMonitor({ userId = 'local', pipelineType, pipelineData }: Job
   const [isRunning, setIsRunning] = useState(false);
   const [programId, setProgramId] = useState<string>('');
 
-  const sessionMutation = useSession(userId);
+  const sessionMutation = useSession();
   const runProgramMutation = useRunProgram();
   const outputQuery = useProgramOutput(
     sessionMutation.data?.sessionId || '',

@@ -10,7 +10,7 @@ export function KafkaTopicBrowser({ userId = 'local' }: { userId?: string }) {
     <div>
       <h2>Kafka Topics</h2>
       <ul>
-        {data?.files?.map((file, index) => (
+        {data?.files?.map((file: any, index: number) => (
           <li key={typeof file === 'string' ? file : file.name || index}>
             {typeof file === 'string' ? (
               <strong>{file}</strong>

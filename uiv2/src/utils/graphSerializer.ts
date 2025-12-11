@@ -1,5 +1,5 @@
 import type { NodeEditor } from 'rete';
-import type { Schemes } from '../types/rete';
+import type { Schemes, TypeStreamNode } from '../types/rete';
 import { PipelineGraph, PipelineEdge } from '../generated/job_pb';
 
 export function serializeToPipelineGraph(editor: NodeEditor<Schemes>): PipelineGraph {
@@ -7,7 +7,8 @@ export function serializeToPipelineGraph(editor: NodeEditor<Schemes>): PipelineG
 
   // Convert all nodes
   for (const node of editor.getNodes()) {
-    nodes.push(node.toProto(node.id));
+    const typedNode = node as unknown as TypeStreamNode;
+    nodes.push(typedNode.toProto(node.id));
   }
 
   const edges: PipelineEdge[] = [];

@@ -1,7 +1,14 @@
 import { useEffect } from 'react';
 import { useGraphJobSubmit } from '../hooks/useGraphJobSubmit';
-import type { CreateJobFromGraphRequest } from '../generated/job_pb';
-import { Encoding } from '../generated/job_pb';
+import {
+  CreateJobFromGraphRequest,
+  Encoding,
+  PipelineGraph,
+  PipelineNode,
+  PipelineEdge,
+  DataStreamProto,
+  PredicateProto
+} from '../generated/job_pb';
 
 interface GraphJobSubmitterProps {
   userId?: string;
@@ -9,41 +16,41 @@ interface GraphJobSubmitterProps {
 }
 
 export function GraphJobSubmitter({ userId = 'local', onJobCreated }: GraphJobSubmitterProps) {
-  const mutation = useGraphJobSubmit(userId);
+  const mutation = useGraphJobSubmit();
 
-  const request: CreateJobFromGraphRequest = {
+  const request = new CreateJobFromGraphRequest({
     userId,
-    graph: {
+    graph: new PipelineGraph({
       nodes: [
-        {
+        new PipelineNode({
           id: 'source-1',
           nodeType: {
             case: 'streamSource',
             value: {
-              stream: { path: '/dev/kafka/local/topics/books' },
+              dataStream: new DataStreamProto({ path: '/dev/kafka/local/topics/books' }),
               encoding: Encoding.STRING,
             },
           },
-        },
-        {
+        }),
+        new PipelineNode({
           id: 'filter-1',
           nodeType: {
             case: 'filter',
             value: {
               byKey: false,
-              predicate: { expr: 'Station' },
+              predicate: new PredicateProto({ expr: 'Station' }),
             },
           },
-        },
+        }),
       ],
       edges: [
-        {
+        new PipelineEdge({
           fromId: 'source-1',
           toId: 'filter-1',
-        },
+        }),
       ],
-    },
-  };
+    }),
+  });
 
   useEffect(() => {
     if (mutation.isSuccess && onJobCreated) {

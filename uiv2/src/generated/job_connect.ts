@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, ListJobsRequest, ListJobsResponse } from "./job_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -28,6 +28,15 @@ export const JobService = {
       name: "CreateJobFromGraph",
       I: CreateJobFromGraphRequest,
       O: CreateJobResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.JobService.ListJobs
+     */
+    listJobs: {
+      name: "ListJobs",
+      I: ListJobsRequest,
+      O: ListJobsResponse,
       kind: MethodKind.Unary,
     },
   }

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback } from 'react';
 import { useReteEditor } from '../hooks/useReteEditor';
 import { useGraphJobSubmit } from '../hooks/useGraphJobSubmit';
 import { serializeToPipelineGraph } from '../utils/graphSerializer';
@@ -124,11 +124,10 @@ export function ReteEditor({ onJobCreated }: {
   onJobCreated?: (jobId: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hasChanges, setHasChanges] = useState(false);
   const graphJobMutation = useGraphJobSubmit();
 
   const handleNodesChange = useCallback(() => {
-    setHasChanges(true);
+    // Track changes if needed in the future
   }, []);
 
   const editor = useReteEditor(containerRef.current, handleNodesChange);
@@ -155,7 +154,6 @@ export function ReteEditor({ onJobCreated }: {
       });
 
       console.log('✅ Job created:', response);
-      setHasChanges(false);
 
       if (onJobCreated && response.jobId) {
         onJobCreated(response.jobId);

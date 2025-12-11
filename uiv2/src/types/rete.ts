@@ -1,4 +1,4 @@
-import { ClassicPreset } from "rete";
+import { ClassicPreset, type GetSchemes } from "rete";
 import type { PipelineNode } from "../generated/job_pb";
 
 // Socket type for data stream connections
@@ -9,7 +9,10 @@ export interface TypeStreamNode extends ClassicPreset.Node {
   toProto(nodeId: string): PipelineNode;
 }
 
-// Rete editor schemes - use ClassicPreset.Node as the constraint
-export type Schemes = ClassicPreset.ClassicScheme;
+// Rete editor schemes
+export type Schemes = GetSchemes<
+  ClassicPreset.Node,
+  ClassicPreset.Connection<ClassicPreset.Node, ClassicPreset.Node>
+>;
 
-export type AreaExtra = ClassicPreset.AreaExtra;
+export type AreaExtra = any;
