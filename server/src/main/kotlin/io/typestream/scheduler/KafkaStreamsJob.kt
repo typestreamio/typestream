@@ -25,6 +25,8 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
     private var running: Boolean = false
     private val logger = KotlinLogging.logger {}
     private var kafkaStreams: KafkaStreams? = null
+    override var startTime: Long = 0L
+        private set
 
     private fun buildTopology(): Topology {
         val streamsBuilder = StreamsBuilderWrapper(config())
@@ -82,6 +84,7 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
         logger.debug { topology.describe().toString() }
 
         logger.info { "starting ${program.id}" }
+        startTime = System.currentTimeMillis()
         kafkaStreams?.start()
         running = true
     }
