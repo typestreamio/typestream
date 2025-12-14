@@ -1,21 +1,29 @@
 package io.typestream.server
 
 import io.typestream.compiler.Compiler
+import io.typestream.compiler.GraphCompiler
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
 import io.typestream.config.Config
-import io.typestream.grpc.job_service.Job
+import io.typestream.grpc.job_service.Job as ProtoJob
 import io.typestream.grpc.job_service.Job.CreateJobRequest
+import io.typestream.grpc.job_service.Job.CreateJobFromGraphRequest
+import io.typestream.grpc.job_service.Job.ListJobsRequest
 import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
+import io.typestream.grpc.job_service.listJobsResponse
+import io.typestream.grpc.job_service.jobInfo
 import io.typestream.k8s.K8sClient
+import io.typestream.scheduler.Job
 import java.util.UUID
 
 class JobService(private val config: Config, private val vm: Vm) :
     JobServiceGrpcKt.JobServiceCoroutineImplBase() {
 
-    override suspend fun createJob(request: CreateJobRequest): Job.CreateJobResponse = createJobResponse {
+    private val graphCompiler = GraphCompiler(vm.fileSystem)
+
+    override suspend fun createJob(request: CreateJobRequest): ProtoJob.CreateJobResponse = createJobResponse {
         //TODO we may want to generate uuids from the source code fingerprint
         // as it is, we'll have running apps on runtime (e.g. kafka streams) with a different id than the
         // job id that we create here
@@ -38,5 +46,49 @@ class JobService(private val config: Config, private val vm: Vm) :
         }
 
         this.jobId = id
+    }
+
+    override suspend fun createJobFromGraph(request: CreateJobFromGraphRequest): ProtoJob.CreateJobResponse = createJobResponse {
+        try {
+            val program = graphCompiler.compile(request)
+
+            this.success = true
+            this.jobId = program.id
+            this.error = ""
+
+            // Pass program to scheduler (same path as text compiler)
+            if (config.k8sMode) {
+                // TODO: Phase 4 - Serialize program to JSON for K8s worker
+                // For now, K8s mode is not supported for graph-based jobs
+                this.success = false
+                this.error = "K8s mode not yet supported for graph-based jobs (Phase 4)"
+            } else {
+                vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
+            }
+        } catch (e: Exception) {
+            this.success = false
+            this.jobId = ""
+            this.error = e.message ?: "Unknown error during graph compilation"
+        }
+    }
+
+    override suspend fun listJobs(request: ListJobsRequest): ProtoJob.ListJobsResponse = listJobsResponse {
+        try {
+            // Get list of running jobs from scheduler
+            val runningJobs = vm.scheduler.ps()
+
+            runningJobs.forEach { schedulerJob ->
+                jobs.add(jobInfo {
+                    this.jobId = schedulerJob.id
+                    this.state = schedulerJob.state().toString()
+                    this.startTime = schedulerJob.startTime
+                    // Graph is optional, may not be available for all jobs
+                    // If we need to include it, we'd need to store it when creating jobs
+                })
+            }
+        } catch (e: Exception) {
+            // Return empty list on error
+            // Could also add error field to response if needed
+        }
     }
 }
