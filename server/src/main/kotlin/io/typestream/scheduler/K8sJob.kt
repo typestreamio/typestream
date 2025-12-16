@@ -3,6 +3,8 @@ package io.typestream.scheduler
 import io.typestream.k8s.K8sClient
 
 class K8sJob(override val id: String) : Job {
+    // TODO: Query actual start time from K8s API
+    override val startTime: Long = System.currentTimeMillis()
     override fun remove() {
         K8sClient().deleteJob(id)
     }

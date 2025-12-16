@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 sealed interface Job {
     val id: String
+    val startTime: Long // Unix timestamp in milliseconds
 
     fun remove()
     fun start()

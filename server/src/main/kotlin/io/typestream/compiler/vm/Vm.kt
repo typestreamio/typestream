@@ -43,6 +43,10 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
             return VmResult(program, ProgramOutput("", errors.joinToString("\n")))
         }
 
+        return runProgram(program, session)
+    }
+
+    suspend fun runProgram(program: io.typestream.compiler.Program, session: Session): VmResult {
         val runtime = program.runtime()
         if (runtime.type != SHELL && !program.hasMoreOutput()) {
             session.runningPrograms.add(program)
