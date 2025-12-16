@@ -1,9 +1,8 @@
 {
-  # Adapted from: https://github.com/the-nix-way/dev-templates/blob/main/kotlin/flake.nix
   description = "A Nix-flake-based Kotlin development environment";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
   };
 
   outputs =
@@ -12,8 +11,7 @@
       nixpkgs,
     }:
     let
-      javaVersion = 20;
-      # Some overlay to inject your dependencies (pkgs.jdk, pkgs.gradle, pkgs.kotlin) should be defined
+      javaVersion = 21;
       overlays = [
         (final: prev: rec {
           jdk = prev."jdk${toString javaVersion}";
@@ -42,13 +40,50 @@
     {
       devShells = forEachSupportedSystem (
         { pkgs }:
+        let
+          patchProto = pkgs.writeShellScriptBin "patchProto" ''
+            set -euo pipefail
+
+            GRADLE_CACHE="$HOME/.gradle/caches"
+            INTERPRETER="${pkgs.stdenv.cc.bintools.dynamicLinker}"
+            RPATH="${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.glibc.out}/lib"
+
+            echo "🔍 Searching for protoc-gen-grpc-java binaries..."
+
+            binaries=$(find "$GRADLE_CACHE" -name "protoc-gen-grpc-java-*-linux-x86_64.exe" 2>/dev/null || true)
+
+            if [[ -z "$binaries" ]]; then
+              echo "❌ No binaries found. Run './gradlew generateProto' first to download them."
+              exit 1
+            fi
+
+            patched=0
+            skipped=0
+
+            while IFS= read -r binary; do
+              current_interp=$(${pkgs.patchelf}/bin/patchelf --print-interpreter "$binary" 2>/dev/null || echo "")
+              if [[ "$current_interp" == "$INTERPRETER" ]]; then
+                echo "⏭️  Already patched: $(basename "$binary")"
+                skipped=$((skipped + 1))
+                continue
+              fi
+
+              if ${pkgs.patchelf}/bin/patchelf --set-interpreter "$INTERPRETER" --set-rpath "$RPATH" "$binary" 2>/dev/null; then
+                echo "✅ Patched: $(basename "$binary")"
+                patched=$((patched + 1))
+              else
+                echo "❌ Failed: $(basename "$binary")"
+              fi
+            done <<< "$binaries"
+
+            echo ""
+            echo "Done! Patched: $patched, Skipped: $skipped"
+            if [[ $patched -gt 0 ]]; then
+              echo "Run './gradlew generateProto' again."
+            fi
+          '';
+        in
         {
-          # https://ryantm.github.io/nixpkgs/builders/special/fhs-environments/#sec-fhs-environments
-          # WARNING! As I understand, with this configuration your shell will be running in a namespace.
-          # It isolates the filesystem (or at least a part of the filesystem) to behave as a standard
-          # FHS system. gradlew should work normally, thus handling all your dependencies by itself.
-          # With this configuration, your only required dependency is the jdk17.
-          # Thus it is not a packaging flake, but rather a flake to enable development for your tool.
           default = pkgs.mkShell {
             packages = with pkgs; [
               jdk
@@ -60,7 +95,21 @@
               pkg-config
               minikube
               bash
+              nodePackages.pnpm
+              buf
+              nodejs_22
+              patchelf
+              protobuf
+              patchProto
             ];
+
+            shellHook = ''
+              export NIX_LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.glibc.out}/lib"
+              export NIX_LD="${pkgs.stdenv.cc.bintools.dynamicLinker}"
+
+              echo "🔧 TypeStream dev environment"
+              echo "   Run 'patchProto' after './gradlew generateProto' fails on NixOS"
+            '';
           };
         }
       );
