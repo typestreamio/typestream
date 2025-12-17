@@ -62,14 +62,23 @@ data class Config(
             val configFilePath: String = if (envFile != null) {
                 logger.info { "loading configuration from TYPESTREAM_CONFIG" }
 
-                val defaultPath = Paths.get(systemConfigPath, "typestream.toml")
-                Paths.get(systemConfigPath).toFile().mkdir()
-                val configFile = defaultPath.toFile()
-                configFile.createNewFile()
+                val parentDir = Paths.get(systemConfigPath).toFile()
 
+                // Try to create the system config directory, fall back to temp if it fails
+                val actualConfigPath = if (!parentDir.exists() && !parentDir.mkdirs()) {
+                    logger.warn { "cannot write to $systemConfigPath, using temporary directory" }
+                    val tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "typestream").toFile()
+                    tempDir.mkdirs()
+                    tempDir.absolutePath
+                } else {
+                    systemConfigPath
+                }
+
+                val configFile = Paths.get(actualConfigPath, "typestream.toml").toFile()
+                configFile.createNewFile()
                 configFile.writeText(envFile)
 
-                systemConfigPath
+                actualConfigPath
             } else {
                 val paths =
                     SystemEnv["TYPESTREAM_CONFIG_PATH"] ?: ".:$systemConfigPath"
@@ -87,13 +96,23 @@ data class Config(
                     require(fileStream != null) { "default configuration not found" }
 
                     val defaultPath = Paths.get(systemConfigPath, "typestream.toml")
-                    Paths.get(systemConfigPath).toFile().mkdir()
-                    val configFile = defaultPath.toFile()
-                    configFile.createNewFile()
+                    val parentDir = Paths.get(systemConfigPath).toFile()
 
-                    configFile.writeText(fileStream.readAllBytes().decodeToString().trimIndent())
+                    // Try to create the system config directory, fall back to temp if it fails
+                    val actualConfigPath = if (!parentDir.exists() && !parentDir.mkdirs()) {
+                        logger.warn { "cannot write to $systemConfigPath, using temporary directory" }
+                        val tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "typestream").toFile()
+                        tempDir.mkdirs()
+                        tempDir.absolutePath
+                    } else {
+                        systemConfigPath
+                    }
 
-                    systemConfigPath
+                    val actualConfigFile = Paths.get(actualConfigPath, "typestream.toml").toFile()
+                    actualConfigFile.createNewFile()
+                    actualConfigFile.writeText(fileStream.readAllBytes().decodeToString().trimIndent())
+
+                    actualConfigPath
                 }
             }
 
