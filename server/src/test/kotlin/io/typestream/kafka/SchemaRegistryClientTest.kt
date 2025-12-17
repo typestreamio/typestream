@@ -15,12 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @Testcontainers
 internal class SchemaRegistryClientTest {
 
-    companion object {
-        // Shared container - starts once for all test methods in this class
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
-    }
+    @Container
+    private val testKafka = TestKafka()
 
     @Test
     fun `fetches schemas`() {
