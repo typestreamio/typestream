@@ -1,0 +1,74 @@
+networks:
+  typestream_network:
+    driver: bridge
+volumes:
+  redpanda: null
+  uiv2_node_modules: null
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.9
+    command:
+      - redpanda start
+      - --smp 1
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+    ports:
+      - 18081:18081
+      - 18082:18082
+      - 19092:19092
+      - 19644:9644
+    volumes:
+      - redpanda:/var/lib/redpanda/data
+    networks:
+      - typestream_network
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  # NOTE: server service is NOT included - runs on host for development
+  kafbat-ui:
+    container_name: kafbat-ui
+    image: ghcr.io/kafbat/kafka-ui:latest
+    ports:
+      - 8088:8080
+    networks:
+      - typestream_network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: typestream_redpanda
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: redpanda:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://redpanda:8081
+  envoy:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - {{ .ProjectRoot }}/cli/pkg/compose/envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8080:8080"
+    networks:
+      - typestream_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  uiv2:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      # Mount uiv2 directory for live reloading
+      - {{ .ProjectRoot }}/uiv2:/app
+      # Use named volume for node_modules to avoid platform issues
+      - uiv2_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - typestream_network
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
+    depends_on:
+      - envoy
+    environment:
+      - VITE_SERVER_URL=http://localhost:8080

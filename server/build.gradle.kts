@@ -16,6 +16,11 @@ application {
     mainClass.set("io.typestream.MainKt")
 }
 
+tasks.named<JavaExec>("run") {
+    // Inherit all environment variables from the shell
+    environment(System.getenv())
+}
+
 dependencies {
     implementation(project(":config"))
     implementation(project(":libs:k8s-client"))
@@ -35,6 +40,7 @@ dependencies {
 
     testImplementation(libs.bundles.testcontainers)
     testImplementation(libs.grpc.testing)
+    testImplementation(libs.mockk)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.test.containers.redpanda)
 }
