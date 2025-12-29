@@ -2,69 +2,79 @@ package compose
 
 import (
 	"bufio"
-	"bytes"
 	_ "embed"
-	"html/template"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 
 	"github.com/charmbracelet/log"
 	"github.com/typestreamio/typestream/cli/pkg/version"
 )
 
-//go:embed compose.yml.tmpl
-var composeFile string
+// getComposeDir returns the directory containing compose files
+func getComposeDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Failed to get executable path: %v", err)
+	}
+
+	// Resolve symlinks to get the real path
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		log.Fatalf("Failed to resolve symlinks: %v", err)
+	}
+
+	// The CLI binary is at <project>/cli/typestream (or similar)
+	// Compose files are at <project>/cli/pkg/compose/
+	cliDir := filepath.Dir(exe)
+	composeDir := filepath.Join(cliDir, "pkg", "compose")
+
+	// Check if the compose directory exists
+	if _, err := os.Stat(composeDir); os.IsNotExist(err) {
+		// Fallback: try relative to current working directory
+		cwd, _ := os.Getwd()
+		composeDir = filepath.Join(cwd, "cli", "pkg", "compose")
+	}
+
+	return composeDir
+}
 
 type Runner struct {
-	StdOut chan string
+	StdOut     chan string
+	composeDir string
+	projectEnv []string
 }
 
 func NewRunner() *Runner {
+	composeDir := getComposeDir()
 	return &Runner{
-		StdOut: make(chan string),
+		StdOut:     make(chan string),
+		composeDir: composeDir,
+		projectEnv: []string{
+			"TYPESTREAM_IMAGE=" + version.DockerImage("typestream/server"),
+		},
 	}
 }
 
 func (runner *Runner) Show() string {
-	buf := bytes.Buffer{}
-	tmpl, err := template.New("compose-template").Parse(composeFile)
+	composePath := filepath.Join(runner.composeDir, "compose.yml")
+	content, err := os.ReadFile(composePath)
 	if err != nil {
-		log.Fatal("💥 failed to parse compose template: %v", err)
+		log.Fatalf("Failed to read compose file: %v", err)
 	}
-
-	err = tmpl.Execute(&buf, struct{ Image string }{Image: version.DockerImage("typestream/server")})
-	if err != nil {
-		log.Fatal("💥 failed to execute compose template: %v", err)
-	}
-	return buf.String()
+	return string(content)
 }
 
 func (runner *Runner) RunCommand(arg ...string) error {
-	tmpFile, err := os.CreateTemp("", "docker-compose.*.yml")
-	if err != nil {
-		log.Fatalf("💥 failed to create temporary file: %v", err)
-	}
-	defer os.Remove(tmpFile.Name())
+	composePath := filepath.Join(runner.composeDir, "compose.yml")
 
-	tmpl, err := template.New("compose-template").Parse(composeFile)
-	if err != nil {
-		log.Fatal("💥 failed to parse compose template: %v", err)
-	}
+	args := []string{"-p", "typestream", "-f", composePath}
+	args = append(args, arg...)
 
-	err = tmpl.Execute(tmpFile, struct{ Image string }{Image: version.DockerImage("typestream/server")})
-
-	if err != nil {
-		log.Fatal("💥 failed to execute compose template: %v", err)
-	}
-
-	err = tmpFile.Close()
-	if err != nil {
-		log.Fatalf("💥 failed to close temporary file: %v", err)
-	}
-
-	args := append([]string{"-f", tmpFile.Name()}, arg...)
 	cmd := exec.Command("docker-compose", args...)
+	cmd.Dir = runner.composeDir
+	cmd.Env = append(os.Environ(), runner.projectEnv...)
 
 	stdErr, err := cmd.StderrPipe()
 	if err != nil {

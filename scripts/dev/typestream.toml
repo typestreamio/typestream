@@ -1,6 +1,6 @@
 [grpc]
 port=4242
 [sources.kafka.local]
-bootstrapServers="localhost:9092"
-schemaRegistry.url="http://localhost:8081"
+bootstrapServers="localhost:19092"
+schemaRegistry.url="http://localhost:18081"
 fsRefreshRate=10

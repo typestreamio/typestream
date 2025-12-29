@@ -16,6 +16,11 @@ application {
     mainClass.set("io.typestream.MainKt")
 }
 
+tasks.named<JavaExec>("run") {
+    // Inherit all environment variables from the shell
+    environment(System.getenv())
+}
+
 dependencies {
     implementation(project(":config"))
     implementation(project(":libs:k8s-client"))

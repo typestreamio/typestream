@@ -1,5 +1,3 @@
-version: '3.7'
-name: typestream
 networks:
   typestream_network:
     driver: bridge
@@ -35,7 +33,7 @@ services:
       retries: 5
       start_period: 5s
   server:
-    image: {{ .Image }}
+    image: ${TYPESTREAM_IMAGE:-typestream/server:latest}
     environment:
       TYPESTREAM_CONFIG: |-
         [grpc]
@@ -48,8 +46,10 @@ services:
       - typestream_network
     ports:
       - 4242:4242
+    depends_on:
+      redpanda:
+        condition: service_healthy
   kafbat-ui:
-    container_name: kafbat-ui
     image: ghcr.io/kafbat/kafka-ui:latest
     ports:
       - 8088:8080
@@ -59,10 +59,13 @@ services:
       KAFKA_CLUSTERS_0_NAME: typestream_redpanda
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: redpanda:9092
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://redpanda:8081
+    depends_on:
+      redpanda:
+        condition: service_healthy
   envoy:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
-      - ${PWD}/pkg/compose/envoy.yaml:/etc/envoy/envoy.yaml
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
     ports:
       - "8080:8080"
     networks:
