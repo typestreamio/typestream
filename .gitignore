@@ -9,3 +9,5 @@ out
 .divenv/
 .direnv
 .envrc
+.kotlin/
+kls_database.db
