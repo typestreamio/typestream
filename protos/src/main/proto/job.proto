@@ -9,6 +9,7 @@ option go_package = "github.com/typestreamio/typestream/cli/pkg/job_service";
 service JobService {
     rpc CreateJob(CreateJobRequest) returns (CreateJobResponse) {}
     rpc CreateJobFromGraph(CreateJobFromGraphRequest) returns (CreateJobResponse) {}
+    rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
 }
 
 message CreateJobRequest {
@@ -112,4 +113,29 @@ message PipelineGraph {
 message CreateJobFromGraphRequest {
   string user_id = 1;
   PipelineGraph graph = 2;
+}
+
+message ListJobsRequest {
+  string user_id = 1;
+}
+
+enum JobState {
+  JOB_STATE_UNSPECIFIED = 0;
+  STARTING = 1;
+  RUNNING = 2;
+  STOPPING = 3;
+  STOPPED = 4;
+  FAILED = 5;
+  UNKNOWN = 6;
+}
+
+message JobInfo {
+  string job_id = 1;
+  JobState state = 2;
+  int64 start_time = 3;  // Unix timestamp in milliseconds
+  PipelineGraph graph = 4;  // Optional: the job's pipeline graph
+}
+
+message ListJobsResponse {
+  repeated JobInfo jobs = 1;
 }

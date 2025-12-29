@@ -6,8 +6,13 @@ import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.filesystem.FileSystem
 import io.typestream.graph.Graph
+import io.typestream.grpc.job_service.Job as ProtoJob
 
-data class Program(val id: String, val graph: Graph<Node>) {
+data class Program(
+    val id: String,
+    val graph: Graph<Node>,
+    val pipelineGraph: ProtoJob.PipelineGraph? = null
+) {
     fun runtime(): Runtime {
         val streamSourceNodes = findStreamSourceNodes()
 

@@ -123,6 +123,11 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
 
     private fun findEncoding(path: String) = catalog[path]?.encoding
 
+    fun inferEncodingForPath(path: String): Encoding {
+        return findEncoding(path)
+            ?: error("cannot infer encoding for path $path: not found in catalog")
+    }
+
     fun inferEncoding(command: Command): Encoding {
         if (command !is DataCommand) {
             return Encoding.JSON
