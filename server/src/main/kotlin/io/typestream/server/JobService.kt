@@ -79,11 +79,20 @@ class JobService(private val config: Config, private val vm: Vm) :
 
             runningJobs.forEach { schedulerJob ->
                 jobs.add(jobInfo {
-                    this.jobId = schedulerJob.id
-                    this.state = schedulerJob.state().toString()
-                    this.startTime = schedulerJob.startTime
-                    // Graph is optional, may not be available for all jobs
-                    // If we need to include it, we'd need to store it when creating jobs
+                    jobId = schedulerJob.id
+                    state = when (schedulerJob.state()) {
+                        Job.State.STARTING -> ProtoJob.JobState.STARTING
+                        Job.State.RUNNING -> ProtoJob.JobState.RUNNING
+                        Job.State.STOPPING -> ProtoJob.JobState.STOPPING
+                        Job.State.STOPPED -> ProtoJob.JobState.STOPPED
+                        Job.State.FAILED -> ProtoJob.JobState.FAILED
+                        Job.State.UNKNOWN -> ProtoJob.JobState.UNKNOWN
+                    }
+                    startTime = schedulerJob.startTime
+                    // Include graph if available (only for graph-based jobs)
+                    if (schedulerJob is io.typestream.scheduler.KafkaStreamsJob) {
+                        schedulerJob.program.pipelineGraph?.let { graph = it }
+                    }
                 })
             }
         } catch (e: Exception) {

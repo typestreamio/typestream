@@ -217,7 +217,7 @@ internal class JobServiceTest {
             // If there are any jobs, verify they have the correct structure
             listResponse.jobsList.forEach { job ->
                 assertThat(job.jobId).isNotEmpty()
-                assertThat(job.state).isNotEmpty()
+                assertThat(job.state).isNotEqualTo(Job.JobState.JOB_STATE_UNSPECIFIED)
                 // startTime should be set (0 or valid timestamp)
                 assertThat(job.startTime).isGreaterThanOrEqualTo(0L)
             }

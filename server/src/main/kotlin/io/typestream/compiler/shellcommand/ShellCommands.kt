@@ -133,5 +133,5 @@ private fun pwd(session: Session, args: List<String>) = if (args.isNotEmpty()) {
 private fun ps(session: Session, args: List<String>) = if (args.isNotEmpty()) {
     ShellCommandOutput.withError("Usage: ps")
 } else {
-    ShellCommandOutput.withOutput(session.scheduler.ps().map { DataStream("/bin/ps", Schema.String(it)) })
+    ShellCommandOutput.withOutput(session.scheduler.ps().map { DataStream("/bin/ps", Schema.String(it.displayName())) })
 }

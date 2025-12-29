@@ -51,7 +51,7 @@ class VmTest {
 
             val vmResult = vm.run("cat /dev/kafka/local/topics/smoke-type", session)
 
-            until { scheduler.ps().first { it.contains(vmResult.program.id) } }
+            until { scheduler.ps().any { it.id == vmResult.program.id } }
 
             scheduler.jobOutput(vmResult.program.id).collect { output ->
                 val json = Json.parseToJsonElement(output).jsonObject

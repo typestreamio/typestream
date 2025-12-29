@@ -36,7 +36,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     root.addChild(programGraph)
     Infer.infer(root)  // Validation still works!
     val programId = UUID.randomUUID().toString()
-    return Program(programId, root)
+    return Program(programId, root, graphProto)
   }
 
   private fun buildGraph(

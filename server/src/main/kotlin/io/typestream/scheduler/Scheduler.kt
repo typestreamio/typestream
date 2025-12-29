@@ -61,7 +61,7 @@ class Scheduler(private val k8sMode: Boolean, private val dispatcher: CoroutineD
         runningJobs.remove(job)
     }
 
-    fun ps() = runningJobs.map(Job::displayName).toList()
+    fun ps() = runningJobs.toList()
 
     override fun close() {
         runningJobs.filterNot { it is K8sJob }.forEach { job ->
