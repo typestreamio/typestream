@@ -39,10 +39,8 @@ var devCmd = &cobra.Command{
 The TypeStream server should be run separately on the host for fast iteration.
 
 After running this command:
-1. In another terminal, run: ./gradlew server:run --continuous
+1. In another terminal, run: ./scripts/dev/server.sh
 2. Edit Kotlin files and watch them reload automatically (~5s)
-
-Or use the helper script: ./scripts/dev/server.sh
 
 To stop dev services: ./typestream local dev stop`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -89,9 +87,8 @@ To stop dev services: ./typestream local dev stop`,
 		log.Info("Infrastructure ready")
 		log.Info("")
 		log.Info("Next steps:")
-		log.Info("   1. Run the server: ./gradlew server:run --continuous")
-		log.Info("   2. Or use the script: ./scripts/dev/server.sh")
-		log.Info("   3. Edit Kotlin files and watch auto-reload!")
+		log.Info("   1. Run the server: ./scripts/dev/server.sh")
+		log.Info("   2. Edit Kotlin files and watch auto-reload!")
 		log.Info("")
 		log.Info("Services:")
 		log.Info("   React UI:     http://localhost:5173")
