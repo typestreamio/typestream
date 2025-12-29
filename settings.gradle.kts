@@ -25,7 +25,7 @@ dependencyResolutionManagement {
             version("protobuf", "3.24.2")
             version("rocksdbjni", "6.29.4.1")
             version("slf4j", "2.0.7")
-            version("testcontainers", "1.20.4")
+            version("testcontainers", "2.0.3")
 
             library("avro", "org.apache.avro", "avro").versionRef("avro")
             library("grpc-netty", "io.grpc", "grpc-netty").versionRef("grpc")
@@ -43,8 +43,8 @@ dependencyResolutionManagement {
             library("slf4j-simple", "org.slf4j", "slf4j-simple").versionRef("slf4j")
             library("slf4j-api", "org.slf4j", "slf4j-api").versionRef("slf4j")
             library("test-containers", "org.testcontainers", "testcontainers-bom").versionRef("testcontainers")
-            library("test-containers-junit", "org.testcontainers", "junit-jupiter").versionRef("testcontainers")
-            library("test-containers-redpanda", "org.testcontainers", "redpanda").versionRef("testcontainers")
+            library("test-containers-junit", "org.testcontainers", "testcontainers-junit-jupiter").versionRef("testcontainers")
+            library("test-containers-redpanda", "org.testcontainers", "testcontainers-redpanda").versionRef("testcontainers")
 
             bundle("sf4j", listOf("slf4j-api", "slf4j-simple"))
             bundle("kafka", listOf("kafka-clients", "kafka-streams", "rocksdbjni"))
