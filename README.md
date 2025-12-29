@@ -141,6 +141,24 @@ $ cd cli && make
 $ ./typestream --help
 ```
 
+### Development Workflow
+
+For fast iteration when developing TypeStream:
+
+```sh
+$ ./typestream local dev
+```
+
+This starts infrastructure services (Redpanda, Envoy, UI) in Docker. Then in another terminal:
+
+```sh
+$ ./scripts/dev/server.sh
+```
+
+This runs the TypeStream server on your host with hot reload. Edit Kotlin files and watch them auto-reload in ~5 seconds!
+
+To stop dev services: `./typestream local dev stop`
+
 ### Common
 
 You can now run:
