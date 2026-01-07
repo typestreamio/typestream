@@ -85,8 +85,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       val ss = proto.streamSource
       val path = ss.dataStream.path
       val ds = findDataStreamOrError(path)
-      // Query catalog for actual encoding (AVRO, STRING, etc.), don't trust proto
-      val encoding = fileSystem.inferEncodingForPath(path)
+      // Use inferred encoding from Phase 1 (from catalog)
+      val encoding = inferredEncodings[proto.id]
+        ?: error("No inferred encoding for stream source ${proto.id}")
       Node.StreamSource(proto.id, ds, encoding)
     }
     proto.hasEach() -> Node.Each(proto.id) { _ -> }

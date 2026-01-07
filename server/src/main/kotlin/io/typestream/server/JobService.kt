@@ -1,5 +1,6 @@
 package io.typestream.server
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.Compiler
 import io.typestream.compiler.GraphCompiler
 import io.typestream.compiler.vm.Env
@@ -21,6 +22,7 @@ import java.util.UUID
 class JobService(private val config: Config, private val vm: Vm) :
     JobServiceGrpcKt.JobServiceCoroutineImplBase() {
 
+    private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
 
     override suspend fun createJob(request: CreateJobRequest): ProtoJob.CreateJobResponse = createJobResponse {
@@ -96,8 +98,8 @@ class JobService(private val config: Config, private val vm: Vm) :
                 })
             }
         } catch (e: Exception) {
+            logger.error(e) { "Error listing jobs" }
             // Return empty list on error
-            // Could also add error field to response if needed
         }
     }
 }
