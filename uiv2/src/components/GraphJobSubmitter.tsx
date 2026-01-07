@@ -27,7 +27,7 @@ export function GraphJobSubmitter({ userId = 'local', onJobCreated }: GraphJobSu
         case: 'streamSource',
         value: new StreamSourceNode({
           dataStream: new DataStreamProto({ path: '/dev/kafka/local/topics/books' }),
-          encoding: Encoding.STRING,
+          encoding: Encoding.AVRO,
         }),
       },
     });
