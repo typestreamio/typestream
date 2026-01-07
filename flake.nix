@@ -2,7 +2,7 @@
   description = "A Nix-flake-based Kotlin development environment";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
   };
 
   outputs =
@@ -11,7 +11,7 @@
       nixpkgs,
     }:
     let
-      javaVersion = 21;
+      javaVersion = 25;
       overlays = [
         (final: prev: rec {
           jdk = prev."jdk${toString javaVersion}";
