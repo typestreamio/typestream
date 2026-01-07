@@ -1,0 +1,14 @@
+version: v2
+plugins:
+  - local: protoc-gen-es
+    out: src/generated
+    opt:
+      - target=ts
+  - local: protoc-gen-connect-es
+    out: src/generated
+    opt:
+      - target=ts
+  - local: protoc-gen-connect-query
+    out: src/generated
+    opt:
+      - target=ts
