@@ -11,7 +11,7 @@
       nixpkgs,
     }:
     let
-      javaVersion = 25;
+      javaVersion = 21;
       overlays = [
         (final: prev: rec {
           jdk = prev."jdk${toString javaVersion}";
