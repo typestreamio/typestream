@@ -14,8 +14,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.3.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1")
@@ -41,7 +41,7 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 
     target {
         compilerOptions {
@@ -51,8 +51,8 @@ kotlin {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 testlogger {
