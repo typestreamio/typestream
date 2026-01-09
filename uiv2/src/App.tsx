@@ -1,40 +1,17 @@
-import { useState, useCallback } from 'react';
-import { QueryProvider } from './providers/QueryProvider';
-import { KafkaTopicBrowser } from './components/KafkaTopicBrowser';
-import { GraphJobSubmitter } from './components/GraphJobSubmitter';
-import { JobsList } from './components/JobsList';
-import type { PipelineGraph } from './generated/job_pb';
-import './App.css';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AppLayout } from './components/layout/AppLayout';
+import { JobsPage } from './pages/JobsPage';
+import { JobDetailPage } from './pages/JobDetailPage';
 
 function App() {
-  const [, setActiveJobGraph] = useState<PipelineGraph | null>(null);
-  const [jobsKey, setJobsKey] = useState(0);
-
-  const handleJobCreated = useCallback((jobId: string, graph: PipelineGraph) => {
-    console.log(`Job created: ${jobId}`);
-    setActiveJobGraph(graph);
-    // Trigger jobs list refresh
-    setJobsKey((k) => k + 1);
-  }, []);
-
   return (
-    <QueryProvider>
-      <div style={{ padding: '20px' }}>
-        <h1>TypeStream</h1>
-
-        <section style={{ marginBottom: '40px' }}>
-          <KafkaTopicBrowser />
-        </section>
-
-        <section style={{ marginBottom: '40px' }}>
-          <GraphJobSubmitter onJobCreated={handleJobCreated} />
-        </section>
-
-        <section style={{ marginBottom: '40px' }}>
-          <JobsList key={jobsKey} />
-        </section>
-      </div>
-    </QueryProvider>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route index element={<Navigate to="/jobs" replace />} />
+        <Route path="/jobs" element={<JobsPage />} />
+        <Route path="/jobs/:jobId" element={<JobDetailPage />} />
+      </Route>
+    </Routes>
   );
 }
 
