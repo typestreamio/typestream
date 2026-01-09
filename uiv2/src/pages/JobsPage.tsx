@@ -14,60 +14,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import { useNavigate } from 'react-router-dom';
 import { useListJobs } from '../hooks/useListJobs';
-import { useCreateJob } from '../hooks/useCreateJob';
 import { JobStatusChip } from '../components/JobStatusChip';
-import {
-  CreateJobFromGraphRequest,
-  PipelineGraph,
-  PipelineNode,
-  PipelineEdge,
-  StreamSourceNode,
-  FilterNode,
-  DataStreamProto,
-  PredicateProto,
-  Encoding,
-} from '../generated/job_pb';
 
 export function JobsPage() {
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useListJobs('local');
-  const createJob = useCreateJob();
 
   const jobs = data?.jobs ?? [];
-
-  const handleCreateTestJob = () => {
-    const sourceNode = new PipelineNode({
-      id: 'source-1',
-      nodeType: {
-        case: 'streamSource',
-        value: new StreamSourceNode({
-          dataStream: new DataStreamProto({ path: '/dev/kafka/local/topics/books' }),
-          encoding: Encoding.AVRO,
-        }),
-      },
-    });
-
-    const filterNode = new PipelineNode({
-      id: 'filter-1',
-      nodeType: {
-        case: 'filter',
-        value: new FilterNode({
-          byKey: false,
-          predicate: new PredicateProto({ expr: 'Station' }),
-        }),
-      },
-    });
-
-    const graph = new PipelineGraph({
-      nodes: [sourceNode, filterNode],
-      edges: [new PipelineEdge({ fromId: 'source-1', toId: 'filter-1' })],
-    });
-
-    const request = new CreateJobFromGraphRequest({ userId: 'local', graph });
-    createJob.mutate(request, {
-      onSuccess: () => refetch(),
-    });
-  };
 
   return (
     <Box>
@@ -77,10 +30,9 @@ export function JobsPage() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={handleCreateTestJob}
-            disabled={createJob.isPending}
+            onClick={() => navigate('/jobs/new')}
           >
-            {createJob.isPending ? 'Creating...' : 'Create Test Job'}
+            Create Job
           </Button>
           <Button
             variant="outlined"
@@ -91,18 +43,6 @@ export function JobsPage() {
           </Button>
         </Box>
       </Box>
-
-      {createJob.isError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Error creating job: {createJob.error.message}
-        </Alert>
-      )}
-
-      {createJob.isSuccess && createJob.data?.success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          Job created: {createJob.data.jobId}
-        </Alert>
-      )}
 
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
