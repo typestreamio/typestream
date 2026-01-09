@@ -1,13 +1,16 @@
 package io.typestream.server
 
+import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.vm.Vm
 import io.typestream.grpc.filesystem_service.FileSystemServiceGrpcKt
 import io.typestream.grpc.filesystem_service.Filesystem
 import io.typestream.grpc.filesystem_service.Filesystem.MountRequest
 import io.typestream.grpc.filesystem_service.Filesystem.UnmountRequest
+import io.typestream.grpc.filesystem_service.fileInfo
 import io.typestream.grpc.filesystem_service.lsResponse
 import io.typestream.grpc.filesystem_service.mountResponse
 import io.typestream.grpc.filesystem_service.unmountResponse
+import io.typestream.grpc.job_service.Job
 
 class FileSystemService(private val vm: Vm) :
     FileSystemServiceGrpcKt.FileSystemServiceCoroutineImplBase() {
@@ -24,6 +27,22 @@ class FileSystemService(private val vm: Vm) :
     }
 
     override suspend fun ls(request: Filesystem.LsRequest): Filesystem.LsResponse = lsResponse {
-        vm.fileSystem.ls(request.path).forEach { files += it }
+        val basePath = request.path.removeSuffix("/")
+        vm.fileSystem.ls(request.path).forEach { fileName ->
+            val fullPath = if (basePath == "/") "/$fileName" else "$basePath/$fileName"
+            val encoding = vm.fileSystem.findEncodingForPath(fullPath)
+            files += fileInfo {
+                name = fileName
+                this.encoding = encoding?.toProtoEncoding() ?: Job.Encoding.STRING
+            }
+        }
     }
+}
+
+private fun Encoding.toProtoEncoding(): Job.Encoding = when (this) {
+    Encoding.STRING -> Job.Encoding.STRING
+    Encoding.NUMBER -> Job.Encoding.NUMBER
+    Encoding.JSON -> Job.Encoding.JSON
+    Encoding.AVRO -> Job.Encoding.AVRO
+    Encoding.PROTOBUF -> Job.Encoding.PROTOBUF
 }

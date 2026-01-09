@@ -20,7 +20,6 @@ import { nodeTypes, type AppNode } from './nodes';
 import { serializeGraph } from '../../utils/graphSerializer';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { CreateJobFromGraphRequest } from '../../generated/job_pb';
-import { Encoding } from '../../generated/job_pb';
 
 let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
@@ -59,10 +58,7 @@ export function GraphBuilder() {
         id: getId(),
         type,
         position,
-        data:
-          type === 'kafkaSource'
-            ? { topicPath: '', encoding: Encoding.STRING }
-            : { topicPath: '', encoding: Encoding.STRING },
+        data: { topicPath: '' },
       };
 
       setNodes((nds) => [...nds, newNode]);
