@@ -25,3 +25,4 @@ services:
       - envoy
     environment:
       - VITE_SERVER_URL=http://localhost:8080
+      - NODE_OPTIONS=--max-old-space-size=4096
