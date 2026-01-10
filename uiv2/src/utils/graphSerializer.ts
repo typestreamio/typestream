@@ -27,12 +27,13 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
 
     if (node.type === 'kafkaSink') {
       const data = node.data as KafkaSinkNodeData;
+      const fullPath = `/dev/kafka/local/topics/${data.topicName}`;
       return new PipelineNode({
         id: node.id,
         nodeType: {
           case: 'sink',
           value: new SinkNode({
-            output: new DataStreamProto({ path: data.topicPath }),
+            output: new DataStreamProto({ path: fullPath }),
             // Encoding is propagated from source by the backend
           }),
         },

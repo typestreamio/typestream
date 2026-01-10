@@ -54,11 +54,12 @@ export function GraphBuilder() {
         y: event.clientY - bounds.top - 50,
       };
 
+      const data = type === 'kafkaSink' ? { topicName: '' } : { topicPath: '' };
       const newNode: Node = {
         id: getId(),
         type,
         position,
-        data: { topicPath: '' },
+        data,
       };
 
       setNodes((nds) => [...nds, newNode]);
