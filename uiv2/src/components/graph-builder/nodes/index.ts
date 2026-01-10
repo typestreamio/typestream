@@ -7,7 +7,7 @@ export interface KafkaSourceNodeData {
 }
 
 export interface KafkaSinkNodeData {
-  topicPath: string;
+  topicName: string;
 }
 
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
