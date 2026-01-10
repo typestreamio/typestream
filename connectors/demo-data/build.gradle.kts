@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.kafka.avro.serializer)
     implementation(libs.bundles.sf4j)
     implementation(libs.okhttp)
+    implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
 
     implementation("com.github.ajalt.clikt:clikt:5.0.3")
 }

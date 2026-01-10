@@ -1,15 +1,15 @@
 # Demo Data Connectors TODO
 
-## Coinbase Crypto Tickers (Priority: High)
+## Coinbase Crypto Tickers (Priority: High) - DONE
 
-- [ ] Implement WebSocket client using Ktor
-- [ ] Connect to `wss://ws-feed.exchange.coinbase.com`
-- [ ] Subscribe to ticker channel for product pairs
-- [ ] Parse ticker messages (price, volume_24h, timestamp)
-- [ ] Create topic with 15-minute retention
-- [ ] Produce to `crypto_tickers` topic
-- [ ] Add reconnect logic on disconnect
-- [ ] CLI args: `--products ETH-USD,BTC-USD`
+- [x] Implement WebSocket client using OkHttp
+- [x] Connect to `wss://ws-feed.exchange.coinbase.com`
+- [x] Subscribe to ticker channel for product pairs
+- [x] Parse ticker messages (price, volume_24h, timestamp)
+- [x] Create topic with 15-minute retention
+- [x] Produce to `crypto_tickers` topic
+- [x] Add reconnect logic on disconnect
+- [x] CLI args: `--products ETH-USD,BTC-USD`
 
 **Volume:** 100-1000+ events/sec | **Retention:** 15 minutes
 **Auth:** None required for public data
@@ -17,14 +17,14 @@
 
 ---
 
-## Wikipedia Recent Changes (Priority: High)
+## Wikipedia Recent Changes (Priority: High) - DONE
 
-- [ ] Implement SSE client
-- [ ] Connect to `https://stream.wikimedia.org/v2/stream/recentchange`
-- [ ] Parse edit events (wiki, title, user, type, timestamp)
-- [ ] Create topic with 1-hour retention
-- [ ] Produce to `wikipedia_changes` topic
-- [ ] CLI args: `--wikis enwiki,dewiki` (filter by wiki)
+- [x] Implement SSE client using OkHttp SSE
+- [x] Connect to `https://stream.wikimedia.org/v2/stream/recentchange`
+- [x] Parse edit events (wiki, title, user, type, timestamp)
+- [x] Create topic with 1-hour retention
+- [x] Produce to `wikipedia_changes` topic
+- [x] CLI args: `--wikis enwiki,dewiki` (filter by wiki)
 
 **Volume:** 100-500 events/sec | **Retention:** 1 hour
 **Auth:** None required
