@@ -1,0 +1,20 @@
+{
+  "namespace": "io.typestream.connectors.avro",
+  "type": "record",
+  "name": "WikipediaChange",
+  "fields": [
+    {"name": "id", "type": "long"},
+    {"name": "wiki", "type": "string"},
+    {"name": "title", "type": "string"},
+    {"name": "user", "type": "string"},
+    {"name": "type", "type": "string"},
+    {"name": "namespace", "type": "int"},
+    {"name": "bot", "type": "boolean", "default": false},
+    {"name": "minor", "type": "boolean", "default": false},
+    {"name": "comment", "type": ["null", "string"], "default": null},
+    {"name": "old_length", "type": "int", "default": 0},
+    {"name": "new_length", "type": "int", "default": 0},
+    {"name": "server_name", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+  ]
+}

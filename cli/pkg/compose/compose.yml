@@ -62,7 +62,7 @@ services:
     depends_on:
       redpanda:
         condition: service_healthy
-  demo-data:
+  demo-data-coinbase:
     build:
       context: ${TYPESTREAM_PROJECT_ROOT:-../../..}
       dockerfile: connectors/demo-data/Dockerfile
@@ -72,6 +72,19 @@ services:
     networks:
       - typestream_network
     command: ["coinbase", "--products", "BTC-USD,ETH-USD"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+  demo-data-wikipedia:
+    build:
+      context: ${TYPESTREAM_PROJECT_ROOT:-../../..}
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["wikipedia", "--wikis", "enwiki"]
     depends_on:
       redpanda:
         condition: service_healthy
