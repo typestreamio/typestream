@@ -1,0 +1,34 @@
+plugins {
+    id("typestream.kotlin-conventions")
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
+    id("com.gradleup.shadow") version "8.3.0"
+    application
+}
+
+repositories {
+    mavenCentral()
+    maven("https://packages.confluent.io/maven/")
+}
+
+application {
+    mainClass.set("io.typestream.connectors.MainKt")
+}
+
+tasks.named<JavaExec>("run") {
+    environment(System.getenv())
+}
+
+dependencies {
+    implementation(libs.avro)
+    implementation(libs.kafka.clients)
+    implementation(libs.kafka.avro.serializer)
+    implementation(libs.bundles.sf4j)
+    implementation(libs.okhttp)
+
+    implementation("com.github.ajalt.clikt:clikt:5.0.3")
+}
+
+avro {
+    setCreateSetters(false)
+    setFieldVisibility("PRIVATE")
+}

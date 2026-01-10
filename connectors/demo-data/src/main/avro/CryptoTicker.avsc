@@ -1,0 +1,20 @@
+{
+  "namespace": "io.typestream.connectors.avro",
+  "type": "record",
+  "name": "CryptoTicker",
+  "fields": [
+    {"name": "product_id", "type": "string"},
+    {"name": "price", "type": "string"},
+    {"name": "open_24h", "type": "string", "default": ""},
+    {"name": "volume_24h", "type": "string", "default": ""},
+    {"name": "low_24h", "type": "string", "default": ""},
+    {"name": "high_24h", "type": "string", "default": ""},
+    {"name": "best_bid", "type": "string", "default": ""},
+    {"name": "best_ask", "type": "string", "default": ""},
+    {"name": "side", "type": "string", "default": ""},
+    {"name": "last_size", "type": "string", "default": ""},
+    {"name": "trade_id", "type": "long", "default": 0},
+    {"name": "sequence", "type": "long", "default": 0},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+  ]
+}
