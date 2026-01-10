@@ -2,6 +2,7 @@ rootProject.name = "typestream"
 
 include(
     "config",
+    "connectors:demo-data",
     "libs:testing",
     "libs:k8s-client",
     "libs:option",
