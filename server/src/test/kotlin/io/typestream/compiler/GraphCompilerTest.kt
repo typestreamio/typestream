@@ -99,6 +99,28 @@ internal class GraphCompilerTest {
         assertThatThrownBy { compiler.compile(request) }.hasMessageContaining("filter")
     }
 
+    @Test
+    fun `fails when sink writes to same topic as source`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Self Loop", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                sinkNode("sink", "/dev/kafka/local/topics/books")
+            ),
+            edges = listOf(edge("source", "sink"))
+        )
+
+        assertThatThrownBy { compiler.compile(request) }
+            .hasMessageContaining("Cannot write to the same topic being read")
+            .hasMessageContaining("/dev/kafka/local/topics/books")
+    }
+
     private fun streamSourceNode(id: String, path: String, encoding: Job.Encoding): Job.PipelineNode =
         Job.PipelineNode.newBuilder()
             .setId(id)
@@ -116,6 +138,15 @@ internal class GraphCompilerTest {
                 Job.FilterNode.newBuilder()
                     .setByKey(byKey)
                     .setPredicate(Job.PredicateProto.newBuilder().setExpr(expr))
+            )
+            .build()
+
+    private fun sinkNode(id: String, path: String): Job.PipelineNode =
+        Job.PipelineNode.newBuilder()
+            .setId(id)
+            .setSink(
+                Job.SinkNode.newBuilder()
+                    .setOutput(Job.DataStreamProto.newBuilder().setPath(path))
             )
             .build()
 

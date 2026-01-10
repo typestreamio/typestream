@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -29,6 +29,7 @@ export function GraphBuilder() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
 
   const onConnect: OnConnect = useCallback(
@@ -68,6 +69,7 @@ export function GraphBuilder() {
   );
 
   const handleCreateJob = () => {
+    setCreateError(null);
     const graph = serializeGraph(nodes, edges);
     const request = new CreateJobFromGraphRequest({ userId: 'local', graph });
 
@@ -75,6 +77,8 @@ export function GraphBuilder() {
       onSuccess: (response) => {
         if (response.success && response.jobId) {
           navigate(`/jobs/${response.jobId}`);
+        } else if (response.error) {
+          setCreateError(response.error);
         }
       },
     });
@@ -86,8 +90,10 @@ export function GraphBuilder() {
     <Box sx={{ display: 'flex', height: '100%', gap: 2 }}>
       <NodePalette />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {createJob.isError && (
-          <Alert severity="error">Error creating job: {createJob.error.message}</Alert>
+        {(createJob.isError || createError) && (
+          <Alert severity="error">
+            {createJob.isError ? createJob.error.message : createError}
+          </Alert>
         )}
         <Box
           ref={reactFlowWrapper}

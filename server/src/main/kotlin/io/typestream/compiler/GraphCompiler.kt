@@ -30,6 +30,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     }
     val sources = nodesById.keys - adjList.values.flatten().toSet()
     validateAcyclic(nodesById.keys, adjList)
+    validateNoSelfLoop(graphProto)
     val rootGraphs = sources.map { buildGraph(it, nodesById, adjList, inferredSchemas, inferredEncodings) }
     val programGraph = if (rootGraphs.size == 1) rootGraphs.first() else error("Multi-source not supported yet")
     val root: Graph<Node> = Graph(Node.NoOp("root"))
@@ -226,6 +227,22 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       }
     }
     if (processed != nodes.size) error("Cycle detected")
+  }
+
+  private fun validateNoSelfLoop(graph: Job.PipelineGraph) {
+    val sourcePaths = graph.nodesList
+      .filter { it.hasStreamSource() }
+      .map { it.streamSource.dataStream.path }
+      .toSet()
+
+    val sinkPaths = graph.nodesList
+      .filter { it.hasSink() }
+      .map { it.sink.output.path }
+
+    val conflicts = sinkPaths.filter { it in sourcePaths }
+    if (conflicts.isNotEmpty()) {
+      error("Cannot write to the same topic being read: ${conflicts.joinToString(", ")}")
+    }
   }
 }
 
