@@ -121,6 +121,8 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
 
     fun findDataStream(path: String): DataStream? = catalog[path]?.dataStream
 
+    fun findEncodingForPath(path: String): Encoding? = catalog[path]?.encoding
+
     private fun findEncoding(path: String) = catalog[path]?.encoding
 
     fun inferEncodingForPath(path: String): Encoding {

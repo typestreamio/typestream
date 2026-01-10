@@ -7,7 +7,9 @@ import io.typestream.Server
 import io.typestream.config.testing.testConfig
 import io.typestream.grpc.filesystem_service.FileSystemServiceGrpc
 import io.typestream.grpc.filesystem_service.lsRequest
+import io.typestream.grpc.job_service.Job
 import io.typestream.testing.TestKafka
+import io.typestream.testing.model.Author
 import io.typestream.testing.until
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,10 +56,60 @@ internal class FileSystemServiceTest {
 
             val path = lsRequest { path = "/" }
 
-            assertThat(stub.ls(path))
-                .extracting("filesList")
+            assertThat(stub.ls(path).filesList.map { it.name })
                 .isEqualTo(listOf("dev", "mnt"))
 
+        }
+    }
+
+    @Test
+    fun `returns default STRING encoding for directories`(): Unit = runBlocking {
+        app.use {
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = FileSystemServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            val response = stub.ls(lsRequest { path = "/" })
+
+            assertThat(response.filesList).allSatisfy { fileInfo ->
+                assertThat(fileInfo.encoding).isEqualTo(Job.Encoding.STRING)
+            }
+        }
+    }
+
+    @Test
+    fun `returns correct encoding for topics`(): Unit = runBlocking {
+        val author = Author(name = "Octavia E. Butler")
+        testKafka.produceRecords("authors", "avro", author)
+
+        app.use {
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = FileSystemServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            val response = stub.ls(lsRequest { path = "/dev/kafka/local/topics" })
+            val authorsFile = response.filesList.find { it.name == "authors" }
+
+            assertThat(authorsFile).isNotNull
+            assertThat(authorsFile!!.encoding).isEqualTo(Job.Encoding.AVRO)
         }
     }
 

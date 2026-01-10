@@ -19,7 +19,7 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           case: 'streamSource',
           value: new StreamSourceNode({
             dataStream: new DataStreamProto({ path: data.topicPath }),
-            encoding: data.encoding,
+            // Encoding is auto-detected from Schema Registry by the backend
           }),
         },
       });
@@ -33,7 +33,7 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           case: 'sink',
           value: new SinkNode({
             output: new DataStreamProto({ path: data.topicPath }),
-            encoding: data.encoding,
+            // Encoding is propagated from source by the backend
           }),
         },
       });

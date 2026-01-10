@@ -5,6 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
+import { Encoding } from "./job_pb.js";
 
 /**
  * @generated from message io.typestream.grpc.MountRequest
@@ -222,13 +223,56 @@ export class LsRequest extends Message<LsRequest> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.FileInfo
+ */
+export class FileInfo extends Message<FileInfo> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.Encoding encoding = 2;
+   */
+  encoding = Encoding.STRING;
+
+  constructor(data?: PartialMessage<FileInfo>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.FileInfo";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "encoding", kind: "enum", T: proto3.getEnumType(Encoding) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FileInfo {
+    return new FileInfo().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FileInfo {
+    return new FileInfo().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FileInfo {
+    return new FileInfo().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FileInfo | PlainMessage<FileInfo> | undefined, b: FileInfo | PlainMessage<FileInfo> | undefined): boolean {
+    return proto3.util.equals(FileInfo, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.LsResponse
  */
 export class LsResponse extends Message<LsResponse> {
   /**
-   * @generated from field: repeated string files = 1;
+   * @generated from field: repeated io.typestream.grpc.FileInfo files = 1;
    */
-  files: string[] = [];
+  files: FileInfo[] = [];
 
   /**
    * @generated from field: string error = 2;
@@ -243,7 +287,7 @@ export class LsResponse extends Message<LsResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "io.typestream.grpc.LsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 1, name: "files", kind: "message", T: FileInfo, repeated: true },
     { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 

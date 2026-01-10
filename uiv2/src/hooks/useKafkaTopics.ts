@@ -1,5 +1,6 @@
 import { useQuery } from '@connectrpc/connect-query';
 import { FileSystemService } from '../generated/filesystem_connect';
+import type { FileInfo } from '../generated/filesystem_pb';
 
 export function useKafkaTopics(userId: string = 'local') {
   const query = useQuery(
@@ -7,7 +8,7 @@ export function useKafkaTopics(userId: string = 'local') {
     { userId, path: '/dev/kafka/local/topics' }
   );
 
-  const topics = query.data?.files ?? [];
+  const topics: FileInfo[] = query.data?.files ?? [];
 
   return {
     ...query,
