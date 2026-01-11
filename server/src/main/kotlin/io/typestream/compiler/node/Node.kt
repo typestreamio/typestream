@@ -38,4 +38,7 @@ sealed interface Node {
 
     @Serializable
     data class Sink(override val id: String, val output: DataStream, val encoding: Encoding) : Node
+
+    @Serializable
+    data class Inspector(override val id: String, val label: String = "") : Node
 }

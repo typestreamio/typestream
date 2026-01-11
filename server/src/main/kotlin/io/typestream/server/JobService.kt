@@ -11,19 +11,31 @@ import io.typestream.grpc.job_service.Job as ProtoJob
 import io.typestream.grpc.job_service.Job.CreateJobRequest
 import io.typestream.grpc.job_service.Job.CreateJobFromGraphRequest
 import io.typestream.grpc.job_service.Job.ListJobsRequest
+import io.typestream.grpc.job_service.Job.CreatePreviewJobRequest
+import io.typestream.grpc.job_service.Job.StopPreviewJobRequest
+import io.typestream.grpc.job_service.Job.StreamPreviewRequest
 import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
+import io.typestream.grpc.job_service.createPreviewJobResponse
+import io.typestream.grpc.job_service.stopPreviewJobResponse
+import io.typestream.grpc.job_service.streamPreviewResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
 import io.typestream.k8s.K8sClient
 import io.typestream.scheduler.Job
+import io.typestream.scheduler.KafkaStreamsJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class JobService(private val config: Config, private val vm: Vm) :
     JobServiceGrpcKt.JobServiceCoroutineImplBase() {
 
     private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
+    // Track preview jobs for cleanup
+    private val previewJobs = ConcurrentHashMap<String, String>() // jobId -> inspectorNodeId
 
     override suspend fun createJob(request: CreateJobRequest): ProtoJob.CreateJobResponse = createJobResponse {
         //TODO we may want to generate uuids from the source code fingerprint
@@ -80,6 +92,9 @@ class JobService(private val config: Config, private val vm: Vm) :
             val runningJobs = vm.scheduler.ps()
 
             runningJobs.forEach { schedulerJob ->
+                // Skip preview jobs from the listing
+                if (previewJobs.containsKey(schedulerJob.id)) return@forEach
+
                 jobs.add(jobInfo {
                     jobId = schedulerJob.id
                     state = when (schedulerJob.state()) {
@@ -100,6 +115,66 @@ class JobService(private val config: Config, private val vm: Vm) :
         } catch (e: Exception) {
             logger.error(e) { "Error listing jobs" }
             // Return empty list on error
+        }
+    }
+
+    override suspend fun createPreviewJob(request: CreatePreviewJobRequest): ProtoJob.CreatePreviewJobResponse = createPreviewJobResponse {
+        try {
+            val program = graphCompiler.compile(
+                ProtoJob.CreateJobFromGraphRequest.newBuilder()
+                    .setUserId("preview")
+                    .setGraph(request.graph)
+                    .build()
+            )
+
+            val inspectTopic = "${program.id}-inspect-${request.inspectorNodeId}"
+
+            if (config.k8sMode) {
+                this.success = false
+                this.error = "Preview jobs not supported in K8s mode"
+            } else {
+                vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
+                previewJobs[program.id] = request.inspectorNodeId
+                this.success = true
+                this.jobId = program.id
+                this.inspectTopic = inspectTopic
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Error creating preview job" }
+            this.success = false
+            this.error = e.message ?: "Unknown error creating preview job"
+        }
+    }
+
+    override suspend fun stopPreviewJob(request: StopPreviewJobRequest): ProtoJob.StopPreviewJobResponse = stopPreviewJobResponse {
+        try {
+            val jobId = request.jobId
+            if (previewJobs.containsKey(jobId)) {
+                vm.scheduler.kill(jobId)
+                previewJobs.remove(jobId)
+                this.success = true
+            } else {
+                this.success = false
+                this.error = "Preview job not found: $jobId"
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Error stopping preview job" }
+            this.success = false
+            this.error = e.message ?: "Unknown error stopping preview job"
+        }
+    }
+
+    override fun streamPreview(request: StreamPreviewRequest): Flow<ProtoJob.StreamPreviewResponse> = flow {
+        val jobId = request.jobId
+        val inspectorNodeId = previewJobs[jobId] ?: error("Preview job not found: $jobId")
+        val inspectTopic = "$jobId-inspect-$inspectorNodeId"
+
+        // Reuse existing output mechanism - consume from inspect topic
+        vm.scheduler.jobOutput(jobId).collect { output ->
+            emit(streamPreviewResponse {
+                this.value = output
+                this.timestamp = System.currentTimeMillis()
+            })
         }
     }
 }

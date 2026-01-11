@@ -132,4 +132,10 @@ data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBui
 
         stream = groupedStream!!.count().mapValues { v -> DataStream.fromLong("", v) }.toStream()
     }
+
+    fun toInspector(inspector: Node.Inspector, programId: String) {
+        // Write to an inspector topic for preview consumption
+        val inspectTopic = "$programId-inspect-${inspector.id}"
+        stream.to(inspectTopic)
+    }
 }

@@ -2,6 +2,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import InputIcon from '@mui/icons-material/Input';
 import OutputIcon from '@mui/icons-material/Output';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -65,6 +66,11 @@ export function NodePalette() {
         type="kafkaSink"
         label="Kafka Sink"
         icon={<OutputIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="inspector"
+        label="Inspector"
+        icon={<VisibilityIcon fontSize="small" />}
       />
     </Paper>
   );

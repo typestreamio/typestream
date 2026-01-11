@@ -5,9 +5,10 @@ import {
   PipelineEdge,
   StreamSourceNode,
   SinkNode,
+  InspectorNode,
   DataStreamProto,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, InspectorNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = nodes.map((node) => {
@@ -35,6 +36,19 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           value: new SinkNode({
             output: new DataStreamProto({ path: fullPath }),
             // Encoding is propagated from source by the backend
+          }),
+        },
+      });
+    }
+
+    if (node.type === 'inspector') {
+      const data = node.data as InspectorNodeData;
+      return new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'inspector',
+          value: new InspectorNode({
+            label: data.label || '',
           }),
         },
       });

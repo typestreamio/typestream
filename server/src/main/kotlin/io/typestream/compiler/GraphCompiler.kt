@@ -102,6 +102,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         ?: error("No inferred encoding for sink ${proto.id}")
       Node.Sink(proto.id, out, encoding)
     }
+    proto.hasInspector() -> {
+      Node.Inspector(proto.id, proto.inspector.label)
+    }
     else -> error("Unknown node type: $proto")
   }
 
@@ -199,6 +202,11 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         }
         val out = io.typestream.compiler.types.TypeRules.inferShellSource(dataStreams)
         out to Encoding.JSON
+      }
+      proto.hasInspector() -> {
+        // Inspector passes through input unchanged
+        val out = input ?: error("inspector $nodeId missing input")
+        out to (inputEncoding ?: Encoding.AVRO)
       }
       else -> error("Unknown node type: $nodeId")
     }
