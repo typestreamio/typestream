@@ -10,9 +10,10 @@ Basically we can build a graph of multiple data streams that go together, that a
 
 For detailed architecture documentation, see:
 
-- **[server/ARCHITECTURE.md](server/ARCHITECTURE.md)** - Server architecture including the node graph builder, job system, and compilation pipeline
+- **[server/ARCHITECTURE.md](server/ARCHITECTURE.md)** - Kotlin Server architecture including the node graph builder, job system, and compilation pipeline
 - **[uiv2/ARCHITECTURE.md](uiv2/ARCHITECTURE.md)** - React UI architecture with visual graph builder and job management
 - **[connectors/demo-data/ARCHITECTURE.md](connectors/demo-data/ARCHITECTURE.md)** - Demo data generators for Coinbase, Wikipedia, and synthetic web visits
+- cli/ - A Go program to start and stop docker compose containers etc
 
 # Developing
 
@@ -36,10 +37,3 @@ See [VISION.md](./VISION.md) for the demo vision plan. This document describes:
 - Sample data schemas
 
 Use this as a reference point for how features should be built to support the core demo narrative: "Build visual data pipelines on Kafka and query results in real-time—no code, no databases."
-
-We have architecture docs for the different projects in this repo:
-
-- Server - Kotlin based. See README.md as needed
-- uiv2/ - The frontend GUI for building Typestream Graph datastreams
-- protos/ - for the grpc communication between the server, uiv2, and the cli 
-- cli/ - A Go program to start and stop docker compose containers etc
