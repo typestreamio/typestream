@@ -102,6 +102,10 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         ?: error("No inferred encoding for sink ${proto.id}")
       Node.Sink(proto.id, out, encoding)
     }
+    proto.hasGeoIp() -> {
+      val g = proto.geoIp
+      Node.GeoIp(proto.id, g.ipField, g.outputField)
+    }
     else -> error("Unknown node type: $proto")
   }
 
@@ -199,6 +203,14 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         }
         val out = io.typestream.compiler.types.TypeRules.inferShellSource(dataStreams)
         out to Encoding.JSON
+      }
+      proto.hasGeoIp() -> {
+        val geoIp = proto.geoIp
+        val out = io.typestream.compiler.types.TypeRules.inferGeoIp(
+          input ?: error("geoip $nodeId missing input"),
+          geoIp.outputField
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
       }
       else -> error("Unknown node type: $nodeId")
     }

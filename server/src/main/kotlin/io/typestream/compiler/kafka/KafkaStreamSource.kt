@@ -13,6 +13,8 @@ import io.typestream.compiler.types.datastream.toAvroSchema
 import io.typestream.compiler.types.datastream.toBytes
 import io.typestream.compiler.types.datastream.toProtoMessage
 import io.typestream.compiler.types.datastream.toProtoSchema
+import io.typestream.compiler.types.schema.Schema
+import io.typestream.geoip.GeoIpService
 import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.ProtoSerde
 import io.typestream.kafka.StreamsBuilderWrapper
@@ -26,7 +28,11 @@ import org.apache.kafka.streams.kstream.Produced
 import java.time.Duration
 
 // TODO we need to support schemas for keys
-data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBuilder: StreamsBuilderWrapper) {
+data class KafkaStreamSource(
+    val node: Node.StreamSource,
+    private val streamsBuilder: StreamsBuilderWrapper,
+    private val geoIpService: GeoIpService? = null
+) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
 
@@ -131,5 +137,16 @@ data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBui
         requireNotNull(groupedStream) { "cannot count a non-grouped stream" }
 
         stream = groupedStream!!.count().mapValues { v -> DataStream.fromLong("", v) }.toStream()
+    }
+
+    fun geoIp(geoIp: Node.GeoIp) {
+        stream = stream.mapValues { value ->
+            val ip = value[geoIp.ipField].value?.toString() ?: ""
+            val countryCode = geoIpService?.lookup(ip) ?: "UNKNOWN"
+            val currentSchema = value.schema
+            require(currentSchema is Schema.Struct) { "GeoIp requires struct schema" }
+            val newFields = currentSchema.value + Schema.Field(geoIp.outputField, Schema.String(countryCode))
+            value.copy(schema = Schema.Struct(newFields))
+        }
     }
 }

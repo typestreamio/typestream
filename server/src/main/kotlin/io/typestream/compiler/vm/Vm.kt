@@ -7,12 +7,14 @@ import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
+import io.typestream.geoip.GeoIpService
 import io.typestream.graph.Graph
 import io.typestream.scheduler.KafkaStreamsJob
 import io.typestream.scheduler.Scheduler
 
-class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
+class Vm(val fileSystem: FileSystem, val scheduler: Scheduler, private val geoIpService: GeoIpService? = null) {
     private val logger = KotlinLogging.logger {}
 
     fun exec(source: String, env: Env) {
@@ -85,6 +87,15 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                 is Node.Each -> {
                     dataStreams.forEach { node.ref.fn(KeyValue(it, it)) }
                     dataStreams
+                }
+
+                is Node.GeoIp -> dataStreams.map { ds ->
+                    val ipValue = ds[node.ref.ipField].value?.toString() ?: ""
+                    val countryCode = geoIpService?.lookup(ipValue) ?: "UNKNOWN"
+                    val currentSchema = ds.schema
+                    require(currentSchema is Schema.Struct) { "GeoIp requires struct schema" }
+                    val newFields = currentSchema.value + Schema.Field(node.ref.outputField, Schema.String(countryCode))
+                    ds.copy(schema = Schema.Struct(newFields))
                 }
 
                 is Node.ShellSource -> dataStreams

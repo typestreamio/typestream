@@ -38,4 +38,7 @@ sealed interface Node {
 
     @Serializable
     data class Sink(override val id: String, val output: DataStream, val encoding: Encoding) : Node
+
+    @Serializable
+    data class GeoIp(override val id: String, val ipField: String, val outputField: String) : Node
 }

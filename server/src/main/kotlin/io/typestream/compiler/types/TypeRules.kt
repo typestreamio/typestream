@@ -141,4 +141,26 @@ object TypeRules {
    * @return Same schema as input (pass-through)
    */
   fun inferNoOp(input: DataStream): DataStream = input
+
+  /**
+   * Type inference for GeoIp nodes.
+   * Adds a new field to the schema containing the country code from IP lookup.
+   *
+   * @param input The input stream schema
+   * @param outputField The name of the field to add (e.g., "country_code")
+   * @return Schema with the new output field added
+   */
+  fun inferGeoIp(input: DataStream, outputField: String): DataStream {
+    val inputSchema = input.schema
+    require(inputSchema is io.typestream.compiler.types.schema.Schema.Struct) {
+      "GeoIp requires a struct schema, got: $inputSchema"
+    }
+
+    val newFields = inputSchema.value + io.typestream.compiler.types.schema.Schema.Field(
+      outputField,
+      io.typestream.compiler.types.schema.Schema.String.zeroValue
+    )
+
+    return input.copy(schema = io.typestream.compiler.types.schema.Schema.Struct(newFields))
+  }
 }

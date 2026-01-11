@@ -7,6 +7,7 @@ import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
 import io.typestream.coroutine.retry
+import io.typestream.geoip.GeoIpService
 import io.typestream.kafka.DataStreamSerde
 import io.typestream.kafka.StreamsBuilderWrapper
 import kotlinx.coroutines.flow.flow
@@ -21,7 +22,12 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 
-class KafkaStreamsJob(override val id: String, val program: Program, private val kafkaConfig: KafkaConfig) : Job {
+class KafkaStreamsJob(
+    override val id: String,
+    val program: Program,
+    private val kafkaConfig: KafkaConfig,
+    private val geoIpService: GeoIpService? = null
+) : Job {
     private var running: Boolean = false
     private val logger = KotlinLogging.logger {}
     private var kafkaStreams: KafkaStreams? = null
@@ -35,7 +41,7 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
             val source = sourceNode.ref
             require(source is Node.StreamSource) { "source node must be a StreamSource" }
 
-            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder)
+            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService)
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
@@ -45,6 +51,7 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
                     is Node.Join -> kafkaStreamSource.join(currentNode.ref)
                     is Node.Map -> kafkaStreamSource.map(currentNode.ref)
                     is Node.Each -> kafkaStreamSource.each(currentNode.ref)
+                    is Node.GeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)

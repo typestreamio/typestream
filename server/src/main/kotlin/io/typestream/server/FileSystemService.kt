@@ -6,7 +6,9 @@ import io.typestream.grpc.filesystem_service.FileSystemServiceGrpcKt
 import io.typestream.grpc.filesystem_service.Filesystem
 import io.typestream.grpc.filesystem_service.Filesystem.MountRequest
 import io.typestream.grpc.filesystem_service.Filesystem.UnmountRequest
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.grpc.filesystem_service.fileInfo
+import io.typestream.grpc.filesystem_service.getSchemaResponse
 import io.typestream.grpc.filesystem_service.lsResponse
 import io.typestream.grpc.filesystem_service.mountResponse
 import io.typestream.grpc.filesystem_service.unmountResponse
@@ -37,6 +39,25 @@ class FileSystemService(private val vm: Vm) :
             }
         }
     }
+
+    override suspend fun getSchema(request: Filesystem.GetSchemaRequest): Filesystem.GetSchemaResponse =
+        getSchemaResponse {
+            try {
+                val dataStream = vm.fileSystem.findDataStream(request.path)
+                if (dataStream == null) {
+                    error = "Topic not found: ${request.path}"
+                } else {
+                    val schema = dataStream.schema
+                    if (schema is Schema.Struct) {
+                        fields += schema.value.map { it.name }
+                    } else {
+                        error = "Schema is not a struct type"
+                    }
+                }
+            } catch (e: Exception) {
+                error = e.message ?: "Unknown error"
+            }
+        }
 }
 
 private fun Encoding.toProtoEncoding(): Job.Encoding = when (this) {
