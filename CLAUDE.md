@@ -28,3 +28,10 @@ See [VISION.md](./VISION.md) for the demo vision plan. This document describes:
 - Sample data schemas
 
 Use this as a reference point for how features should be built to support the core demo narrative: "Build visual data pipelines on Kafka and query results in real-time—no code, no databases."
+
+We have architecture docs for the different projects in this repo:
+
+- Server - Kotlin based. See README.md as needed
+- uiv2/ - The frontend GUI for building Typestream Graph datastreams
+- protos/ - for the grpc communication between the server, uiv2, and the cli 
+- cli/ - A Go program to start and stop docker compose containers etc
