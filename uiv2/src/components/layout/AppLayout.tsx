@@ -3,7 +3,8 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Outlet } from 'react-router-dom';
-import { Sidebar, DRAWER_WIDTH } from './Sidebar';
+import { Sidebar } from './Sidebar';
+import { DRAWER_WIDTH } from './constants';
 
 export function AppLayout() {
   return (

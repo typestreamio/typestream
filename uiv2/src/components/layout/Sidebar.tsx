@@ -7,8 +7,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Toolbar from '@mui/material/Toolbar';
 import WorkIcon from '@mui/icons-material/Work';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-const DRAWER_WIDTH = 240;
+import { DRAWER_WIDTH } from './constants';
 
 export function Sidebar() {
   const location = useLocation();
@@ -45,5 +44,3 @@ export function Sidebar() {
     </Drawer>
   );
 }
-
-export { DRAWER_WIDTH };
