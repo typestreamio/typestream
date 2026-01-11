@@ -1,7 +1,7 @@
 plugins {
     id("typestream.kotlin-conventions")
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
-    id("com.gradleup.shadow") version "8.3.0"
+    id("com.gradleup.shadow") version "9.0.0"
     application
 }
 
