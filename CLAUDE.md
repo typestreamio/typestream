@@ -18,3 +18,13 @@ You can also use grpcurl to hit the server directly to query it
 You can bootstrap topics and test data with ./scripts/dev/seed.sh
 
 You can use `fd` instead of `find` if you want. `ripgrep` using `rg` is avaiable too.
+
+# Vision
+
+See [VISION.md](./VISION.md) for the demo vision plan. This document describes:
+- The target demo story and flow
+- Architecture for the demo (Postgres → Debezium → Kafka → TypeStream)
+- Implementation phases and success criteria
+- Sample data schemas
+
+Use this as a reference point for how features should be built to support the core demo narrative: "Build visual data pipelines on Kafka and query results in real-time—no code, no databases."
