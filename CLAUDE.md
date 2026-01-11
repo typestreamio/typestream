@@ -6,6 +6,14 @@
 
 Basically we can build a graph of multiple data streams that go together, that are all typed from the source (topic, debezium table etc), the transformations into the sink.
 
+# Architecture Deep Dives
+
+For detailed architecture documentation, see:
+
+- **[server/ARCHITECTURE.md](server/ARCHITECTURE.md)** - Server architecture including the node graph builder, job system, and compilation pipeline
+- **[uiv2/ARCHITECTURE.md](uiv2/ARCHITECTURE.md)** - React UI architecture with visual graph builder and job management
+- **[connectors/demo-data/ARCHITECTURE.md](connectors/demo-data/ARCHITECTURE.md)** - Demo data generators for Coinbase, Wikipedia, and synthetic web visits
+
 # Developing
 
 Start the docker containers: cd cli && ./typestream local dev start
