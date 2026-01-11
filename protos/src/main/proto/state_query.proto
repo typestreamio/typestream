@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package io.typestream.grpc;
+
+option java_package = "io.typestream.grpc.state_query_service";
+
+option go_package = "github.com/typestreamio/typestream/cli/pkg/state_query_service";
+
+service StateQueryService {
+    rpc ListStores(ListStoresRequest) returns (ListStoresResponse) {}
+    rpc GetAllValues(GetAllValuesRequest) returns (stream KeyValuePair) {}
+    rpc GetValue(GetValueRequest) returns (GetValueResponse) {}
+}
+
+message ListStoresRequest {}
+
+message StoreInfo {
+    string name = 1;
+    string job_id = 2;
+    int64 approximate_count = 3;
+}
+
+message ListStoresResponse {
+    repeated StoreInfo stores = 1;
+}
+
+message GetAllValuesRequest {
+    string store_name = 1;
+    int32 limit = 2;
+    string from_key = 3;  // For pagination
+}
+
+message KeyValuePair {
+    string key = 1;
+    string value = 2;  // JSON representation
+}
+
+message GetValueRequest {
+    string store_name = 1;
+    string key = 2;
+}
+
+message GetValueResponse {
+    bool found = 1;
+    string value = 2;
+}

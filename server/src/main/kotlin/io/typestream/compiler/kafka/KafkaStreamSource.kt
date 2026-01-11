@@ -19,12 +19,15 @@ import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.ProtoSerde
 import io.typestream.kafka.StreamsBuilderWrapper
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KeyValue.pair
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.JoinWindows
 import org.apache.kafka.streams.kstream.KGroupedStream
 import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.state.KeyValueStore
 import java.time.Duration
 
 // TODO we need to support schemas for keys
@@ -35,6 +38,9 @@ data class KafkaStreamSource(
 ) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
+    private var countStoreName: String? = null
+
+    fun getCountStoreName(): String? = countStoreName
 
     private fun stream(dataStream: DataStream): KStream<DataStream, DataStream> {
         val config = streamsBuilder.config.toMutableMap()
@@ -133,10 +139,12 @@ data class KafkaStreamSource(
         groupedStream = stream.groupBy { k, v -> group.keyMapper(KeyValue(k, v)) }
     }
 
-    fun count() {
+    fun count(storeName: String) {
         requireNotNull(groupedStream) { "cannot count a non-grouped stream" }
 
-        stream = groupedStream!!.count().mapValues { v -> DataStream.fromLong("", v) }.toStream()
+        countStoreName = storeName
+        val materialized = Materialized.`as`<DataStream, Long, KeyValueStore<Bytes, ByteArray>>(storeName)
+        stream = groupedStream!!.count(materialized).mapValues { v -> DataStream.fromLong("", v) }.toStream()
     }
 
     fun geoIp(geoIp: Node.GeoIp) {

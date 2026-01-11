@@ -34,8 +34,15 @@ class KafkaStreamsJob(
     override var startTime: Long = 0L
         private set
 
+    private val stateStoreNames = mutableListOf<String>()
+
+    fun getKafkaStreams(): KafkaStreams? = kafkaStreams
+
+    fun getStateStoreNames(): List<String> = stateStoreNames.toList()
+
     private fun buildTopology(): Topology {
         val streamsBuilder = StreamsBuilderWrapper(config())
+        var countStoreIndex = 0
 
         program.graph.children.forEach { sourceNode ->
             val source = sourceNode.ref
@@ -45,7 +52,12 @@ class KafkaStreamsJob(
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
-                    is Node.Count -> kafkaStreamSource.count()
+                    is Node.Count -> {
+                        val storeName = "${program.id}-count-store-$countStoreIndex"
+                        countStoreIndex++
+                        kafkaStreamSource.count(storeName)
+                        kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
+                    }
                     is Node.Filter -> kafkaStreamSource.filter(currentNode.ref)
                     is Node.Group -> kafkaStreamSource.group(currentNode.ref)
                     is Node.Join -> kafkaStreamSource.join(currentNode.ref)
