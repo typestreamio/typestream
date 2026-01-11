@@ -45,8 +45,11 @@ jobs:
           nix develop --command bash -c '
             set -euo pipefail
 
-            # Export nix PATH entries (filter to /nix/store paths only)
-            echo "$PATH" | tr ":" "\n" | grep "^/nix/store" >> "$GITHUB_PATH"
+            # Prepend nix PATH entries to ensure nix tools take precedence
+            nix_paths=$(echo "$PATH" | tr ":" "\n" | grep "^/nix/store" | tr "\n" ":")
+            echo "${nix_paths%:}" > "$GITHUB_PATH.nix"
+            cat "$GITHUB_PATH" >> "$GITHUB_PATH.nix"
+            mv "$GITHUB_PATH.nix" "$GITHUB_PATH"
 
             # Install frontend dependencies
             cd uiv2 && pnpm install
@@ -54,6 +57,15 @@ jobs:
             # Install docs dependencies
             cd ../docs && npm ci
           '
+
+      - name: Verify environment
+        run: |
+          echo "=== Environment Verification ==="
+          echo "Java: $(java -version 2>&1 | head -1)"
+          echo "Node: $(node --version)"
+          echo "Go: $(go version)"
+          echo "pnpm: $(pnpm --version)"
+          echo "Gradle: $(gradle --version | grep '^Gradle')"
 
       - name: Run Claude Code
         id: claude
