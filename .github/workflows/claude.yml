@@ -34,9 +34,15 @@ jobs:
       # Uses flake.nix - same environment as local development
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
+        with:
+          # Disable FlakeHub (requires paid Team plan for org repos)
+          flakehub: false
 
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          # Use GitHub Actions cache only (not FlakeHub)
+          use-flakehub: false
 
       - name: Setup dev environment and install dependencies
         run: |
