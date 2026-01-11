@@ -30,6 +30,44 @@ jobs:
         with:
           fetch-depth: 1
 
+      # ===== Nix Development Environment =====
+      # Uses flake.nix - same environment as local development
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Setup dev environment and install dependencies
+        run: |
+          set -euo pipefail
+
+          nix develop --command bash -c '
+            set -euo pipefail
+
+            # Export Nix store paths to GITHUB_PATH (one per line, as required)
+            echo "$PATH" | tr ":" "\n" | grep "^/nix/store" >> "$GITHUB_PATH"
+
+            # Persist NIX_LD variables for dynamically linked Nix binaries
+            echo "NIX_LD=$NIX_LD" >> "$GITHUB_ENV"
+            echo "NIX_LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+
+            # Install frontend dependencies
+            cd uiv2 && pnpm install
+
+            # Install docs dependencies
+            cd ../docs && npm ci
+          '
+
+      - name: Verify environment
+        run: |
+          echo "=== Environment Verification ==="
+          echo "Java: $(java -version 2>&1 | head -1)"
+          echo "Node: $(node --version)"
+          echo "Go: $(go version)"
+          echo "pnpm: $(pnpm --version)"
+          echo "Gradle: $(gradle --version | grep '^Gradle')"
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
