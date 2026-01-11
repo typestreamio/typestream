@@ -33,21 +33,27 @@ jobs:
       # ===== Nix Development Environment =====
       # Uses flake.nix - same environment as local development
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: DeterminateSystems/nix-installer-action@v21
 
       - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Setup dev environment and install dependencies
         run: |
-          # Add nix develop PATH to GITHUB_PATH for subsequent steps
-          nix develop --command bash -c 'echo "$PATH"' | tr ':' '\n' | head -20 >> $GITHUB_PATH
+          set -euo pipefail
 
-          # Install frontend dependencies
-          nix develop --command bash -c "cd uiv2 && pnpm install"
+          nix develop --command bash -c '
+            set -euo pipefail
 
-          # Install docs dependencies
-          nix develop --command bash -c "cd docs && npm ci"
+            # Export nix PATH entries (filter to /nix/store paths only)
+            echo "$PATH" | tr ":" "\n" | grep "^/nix/store" >> "$GITHUB_PATH"
+
+            # Install frontend dependencies
+            cd uiv2 && pnpm install
+
+            # Install docs dependencies
+            cd ../docs && npm ci
+          '
 
       - name: Run Claude Code
         id: claude
