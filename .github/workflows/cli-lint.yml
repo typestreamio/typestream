@@ -2,8 +2,14 @@ name: cli-lint
 on:
   push:
     branches: [main]
+    paths:
+      - 'cli/**'
+      - '.github/workflows/cli-lint.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'cli/**'
+      - '.github/workflows/cli-lint.yml'
 permissions:
   contents: read
 jobs:

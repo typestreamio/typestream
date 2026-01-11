@@ -3,8 +3,36 @@ name: server check
 on:
   push:
     branches: [main]
+    paths:
+      - 'server/**'
+      - 'buildSrc/**'
+      - 'protos/**'
+      - 'gradle/**'
+      - 'libs/**'
+      - 'connectors/**'
+      - 'stub/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/server-check.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'server/**'
+      - 'buildSrc/**'
+      - 'protos/**'
+      - 'gradle/**'
+      - 'libs/**'
+      - 'connectors/**'
+      - 'stub/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/server-check.yml'
 
 jobs:
   build:
