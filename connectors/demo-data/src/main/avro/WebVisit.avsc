@@ -1,0 +1,21 @@
+{
+  "namespace": "io.typestream.connectors.avro",
+  "type": "record",
+  "name": "WebVisit",
+  "fields": [
+    {"name": "ip_address", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "url_path", "type": "string"},
+    {"name": "http_method", "type": "string", "default": "GET"},
+    {"name": "status_code", "type": "int"},
+    {"name": "response_bytes", "type": "long"},
+    {"name": "user_agent", "type": "string"},
+    {"name": "referrer", "type": ["null", "string"], "default": null},
+    {"name": "session_id", "type": "string"},
+    {"name": "page_load_time_ms", "type": "int"},
+    {"name": "is_bot", "type": "boolean", "default": false},
+    {"name": "device_type", "type": "string"},
+    {"name": "browser", "type": "string"},
+    {"name": "os", "type": "string"}
+  ]
+}

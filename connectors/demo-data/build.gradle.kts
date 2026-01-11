@@ -27,9 +27,27 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
 
     implementation("com.github.ajalt.clikt:clikt:5.0.3")
+
+    // Web visits connector dependencies
+    implementation("net.datafaker:datafaker:2.4.2")
+    implementation("commons-net:commons-net:3.11.1")
 }
 
 avro {
     setCreateSetters(false)
     setFieldVisibility("PRIVATE")
+}
+
+// Ensure Avro generation happens before Kotlin compilation
+tasks.named("compileKotlin") {
+    dependsOn("generateAvroJava")
+}
+
+// Add generated Avro sources to source set
+sourceSets {
+    main {
+        java {
+            srcDir(layout.buildDirectory.dir("generated-main-avro-java"))
+        }
+    }
 }
