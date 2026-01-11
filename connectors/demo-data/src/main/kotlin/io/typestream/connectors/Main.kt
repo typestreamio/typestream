@@ -5,8 +5,10 @@ import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.double
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.connectors.coinbase.CoinbaseConnector
+import io.typestream.connectors.webvisits.WebVisitsConnector
 import io.typestream.connectors.wikipedia.WikipediaConnector
 
 private val logger = KotlinLogging.logger {}
@@ -55,6 +57,43 @@ class WikipediaCommand : CliktCommand(name = "wikipedia") {
     }
 }
 
+class WebVisitsCommand : CliktCommand(name = "webvisits") {
+    private val rate by option("--rate", "-r", help = "Average events per second")
+        .double()
+        .default(10.0)
+
+    private val countries by option("--countries", "-c", help = "Comma-separated country codes (default: weighted distribution)")
+        .default("")
+
+    private val topic by option("--topic", "-t", help = "Kafka topic name")
+        .default("web_visits")
+
+    override fun run() {
+        val countryList = countries.takeIf { it.isNotBlank() }
+            ?.split(",")
+            ?.map { it.trim().uppercase() }
+
+        logger.info { "Starting WebVisits connector" }
+        logger.info { "  Rate: ~$rate events/sec" }
+        logger.info { "  Countries: ${countryList?.joinToString(",") ?: "default weighted distribution"}" }
+        logger.info { "  Topic: $topic" }
+
+        val connector = WebVisitsConnector(
+            ratePerSecond = rate,
+            countries = countryList,
+            topic = topic
+        )
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            logger.info { "Received shutdown signal" }
+            connector.close()
+        })
+
+        connector.start()
+        connector.awaitTermination()
+    }
+}
+
 fun main(args: Array<String>) = DemoData()
-    .subcommands(CoinbaseCommand(), WikipediaCommand())
+    .subcommands(CoinbaseCommand(), WikipediaCommand(), WebVisitsCommand())
     .main(args)
