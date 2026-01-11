@@ -45,11 +45,12 @@ jobs:
           nix develop --command bash -c '
             set -euo pipefail
 
-            # Prepend nix PATH entries to ensure nix tools take precedence
-            nix_paths=$(echo "$PATH" | tr ":" "\n" | grep "^/nix/store" | tr "\n" ":")
-            echo "${nix_paths%:}" > "$GITHUB_PATH.nix"
-            cat "$GITHUB_PATH" >> "$GITHUB_PATH.nix"
-            mv "$GITHUB_PATH.nix" "$GITHUB_PATH"
+            # Export Nix store paths to GITHUB_PATH (one per line, as required)
+            echo "$PATH" | tr ":" "\n" | grep "^/nix/store" >> "$GITHUB_PATH"
+
+            # Persist NIX_LD variables for dynamically linked Nix binaries
+            echo "NIX_LD=$NIX_LD" >> "$GITHUB_ENV"
+            echo "NIX_LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH" >> "$GITHUB_ENV"
 
             # Install frontend dependencies
             cd uiv2 && pnpm install
