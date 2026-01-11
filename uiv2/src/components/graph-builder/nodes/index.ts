@@ -2,11 +2,11 @@ import type { Node, NodeTypes } from '@xyflow/react';
 import { KafkaSourceNode } from './KafkaSourceNode';
 import { KafkaSinkNode } from './KafkaSinkNode';
 
-export interface KafkaSourceNodeData {
+export interface KafkaSourceNodeData extends Record<string, unknown> {
   topicPath: string;
 }
 
-export interface KafkaSinkNodeData {
+export interface KafkaSinkNodeData extends Record<string, unknown> {
   topicName: string;
 }
 

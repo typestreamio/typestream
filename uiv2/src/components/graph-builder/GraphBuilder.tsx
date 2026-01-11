@@ -7,7 +7,6 @@ import {
   useNodesState,
   useEdgesState,
   type OnConnect,
-  type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Box from '@mui/material/Box';
@@ -56,12 +55,12 @@ export function GraphBuilder() {
       };
 
       const data = type === 'kafkaSink' ? { topicName: '' } : { topicPath: '' };
-      const newNode: Node = {
+      const newNode: AppNode = {
         id: getId(),
         type,
         position,
         data,
-      };
+      } as AppNode;
 
       setNodes((nds) => [...nds, newNode]);
     },
