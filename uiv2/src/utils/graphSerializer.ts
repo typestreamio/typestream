@@ -41,6 +41,20 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
       });
     }
 
+    if (node.type === 'geoIp') {
+      const data = node.data as GeoIpNodeData;
+      return new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'geoIp',
+          value: new GeoIpNodeProto({
+            ipField: data.ipField,
+            outputField: data.outputField || 'country_code',
+          }),
+        },
+      });
+    }
+
     throw new Error(`Unknown node type: ${node.type}`);
   });
 
