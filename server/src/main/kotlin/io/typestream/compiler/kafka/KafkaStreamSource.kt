@@ -13,7 +13,7 @@ import io.typestream.compiler.types.datastream.toAvroSchema
 import io.typestream.compiler.types.datastream.toBytes
 import io.typestream.compiler.types.datastream.toProtoMessage
 import io.typestream.compiler.types.datastream.toProtoSchema
-import io.typestream.compiler.types.schema.Schema
+import io.typestream.geoip.GeoIpExecution
 import io.typestream.geoip.GeoIpService
 import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.ProtoSerde
@@ -140,10 +140,6 @@ data class KafkaStreamSource(
     }
 
     fun geoIp(geoIp: Node.GeoIp) {
-        stream = stream.mapValues { value ->
-            val ip = value.selectFieldAsString(geoIp.ipField) ?: ""
-            val country = geoIpService.lookup(ip) ?: "UNKNOWN"
-            value.addField(geoIp.outputField, Schema.String(country))
-        }
+        stream = GeoIpExecution.applyToKafka(geoIp, stream, geoIpService)
     }
 }

@@ -7,8 +7,8 @@ import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
-import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
+import io.typestream.geoip.GeoIpExecution
 import io.typestream.geoip.GeoIpService
 import io.typestream.graph.Graph
 import io.typestream.scheduler.KafkaStreamsJob
@@ -90,11 +90,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                     dataStreams
                 }
 
-                is Node.GeoIp -> dataStreams.map { ds ->
-                    val ipValue = ds.selectFieldAsString(node.ref.ipField) ?: ""
-                    val countryCode = geoIpService.lookup(ipValue) ?: "UNKNOWN"
-                    ds.addField(node.ref.outputField, Schema.String(countryCode))
-                }
+                is Node.GeoIp -> GeoIpExecution.applyToShell(node.ref, dataStreams, geoIpService)
 
                 is Node.ShellSource -> dataStreams
                 else -> error("unexpected node type: ${node.ref}")

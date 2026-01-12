@@ -6,6 +6,7 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
+import io.typestream.geoip.GeoIpNodeHandler
 import io.typestream.graph.Graph
 import io.typestream.grpc.job_service.Job
 import java.util.ArrayDeque
@@ -102,10 +103,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         ?: error("No inferred encoding for sink ${proto.id}")
       Node.Sink(proto.id, out, encoding)
     }
-    proto.hasGeoIp() -> {
-      val g = proto.geoIp
-      Node.GeoIp(proto.id, g.ipField, g.outputField)
-    }
+    proto.hasGeoIp() -> GeoIpNodeHandler.fromProto(proto)
     else -> error("Unknown node type: $proto")
   }
 
@@ -205,7 +203,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         out to Encoding.JSON
       }
       proto.hasGeoIp() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferGeoIp(
+        val out = GeoIpNodeHandler.inferType(
           input ?: error("geoIp $nodeId missing input"),
           proto.geoIp.outputField
         )
