@@ -28,7 +28,11 @@ import org.apache.kafka.streams.kstream.Produced
 import java.time.Duration
 
 // TODO we need to support schemas for keys
-data class KafkaStreamSource(val node: Node.StreamSource, private val streamsBuilder: StreamsBuilderWrapper) {
+data class KafkaStreamSource(
+    val node: Node.StreamSource,
+    private val streamsBuilder: StreamsBuilderWrapper,
+    private val geoIpService: GeoIpService = GeoIpService()
+) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
 
