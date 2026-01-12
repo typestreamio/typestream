@@ -7,7 +7,9 @@ import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
+import io.typestream.geoip.GeoIpService
 import io.typestream.graph.Graph
 import io.typestream.scheduler.KafkaStreamsJob
 import io.typestream.scheduler.Scheduler
