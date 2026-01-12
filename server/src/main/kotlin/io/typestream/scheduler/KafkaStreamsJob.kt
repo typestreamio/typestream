@@ -64,26 +64,48 @@ class KafkaStreamsJob(
         return streamsBuilder.build()
     }
 
-    override fun output() = flow {
+    override fun output() = output("${program.id}-stdout")
+
+    fun output(topic: String) = flow {
+        logger.info { "output($topic) called for job ${program.id}" }
+        logger.info { "job state: ${state()}, kafkaStreams state: ${kafkaStreams?.state()}" }
+
         // we retry here because we may be trying to get output before the job has started
         retry {
             require(isRunning()) { "cannot get output of a non-running job" }
         }
-        val consumer = KafkaConsumer<DataStream, DataStream>(consumerProps())
-        consumer.subscribe(listOf("${program.id}-stdout"))
+        logger.info { "output($topic): job is running, creating consumer" }
 
+        val consumer = KafkaConsumer<DataStream, DataStream>(consumerProps(topic))
+        consumer.subscribe(listOf(topic))
+        logger.info { "output($topic): subscribed to topic, consumer group: $topic-consumer" }
+
+        var pollCount = 0
+        var totalRecords = 0
         while (isRunning()) {
             val records = consumer.poll(1.seconds.toJavaDuration())
+            pollCount++
+            if (records.count() > 0) {
+                logger.info { "output($topic): poll #$pollCount returned ${records.count()} records" }
+                totalRecords += records.count()
+            }
             records.forEach {
                 val valueElement = it.value().schema.toJsonElement()
+                logger.debug { "output($topic): emitting record" }
                 emit(valueElement.toString())
             }
+            if (pollCount % 10 == 0) {
+                logger.debug { "output($topic): poll #$pollCount, total records: $totalRecords, isRunning: ${isRunning()}" }
+            }
         }
+
+        logger.info { "output($topic): exiting loop, total polls: $pollCount, total records: $totalRecords" }
 
         if (kafkaStreams?.state()?.equals(KafkaStreams.State.ERROR) == true) {
             emit("${program.id} exited with error")
         }
         consumer.close()
+        logger.info { "output($topic): consumer closed" }
     }
 
     override fun start() {
@@ -120,10 +142,10 @@ class KafkaStreamsJob(
         return props
     }
 
-    private fun consumerProps(): Properties {
+    private fun consumerProps(topic: String): Properties {
         val props = Properties()
         props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaConfig.bootstrapServers
-        props[ConsumerConfig.GROUP_ID_CONFIG] = "${program.id}-stdout-consumer"
+        props[ConsumerConfig.GROUP_ID_CONFIG] = "$topic-consumer"
         props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = DataStreamSerde::class.java
         props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = DataStreamSerde::class.java
         props[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"

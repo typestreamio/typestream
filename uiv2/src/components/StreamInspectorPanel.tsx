@@ -33,6 +33,9 @@ export function StreamInspectorPanel({
     usePreviewJob();
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
+  // Use ref to avoid cleanup effect re-running when stopPreview changes
+  const stopPreviewRef = useRef(stopPreview);
+  stopPreviewRef.current = stopPreview;
 
   const handleStart = useCallback(() => {
     const nodes = getNodes();
@@ -52,14 +55,14 @@ export function StreamInspectorPanel({
     }
   }, [open, handleStart]);
 
-  // Stop preview when panel closes
+  // Stop preview when component unmounts (empty deps = only on unmount)
   useEffect(() => {
     return () => {
       if (hasStartedRef.current) {
-        stopPreview();
+        stopPreviewRef.current();
       }
     };
-  }, [stopPreview]);
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -102,7 +105,7 @@ export function StreamInspectorPanel({
             <Typography variant="h6">Stream Inspector</Typography>
             {isStreaming && <CircularProgress size={20} />}
           </Box>
-          <IconButton onClick={handleClose} size="small">
+          <IconButton onClick={handleClose} size="small" aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Box>

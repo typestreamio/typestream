@@ -52,6 +52,15 @@ class Scheduler(private val k8sMode: Boolean, private val dispatcher: CoroutineD
 
     fun jobOutput(id: String) = findJob(id).output()
 
+    fun jobOutput(id: String, topic: String): kotlinx.coroutines.flow.Flow<String> {
+        val job = findJob(id)
+        return if (job is KafkaStreamsJob) {
+            job.output(topic)
+        } else {
+            job.output()
+        }
+    }
+
     private fun findJob(id: String) = runningJobs.find { it.id == id } ?: error("job $id is not running")
 
     fun kill(id: String) {

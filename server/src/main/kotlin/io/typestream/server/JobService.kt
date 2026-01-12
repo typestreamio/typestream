@@ -166,15 +166,22 @@ class JobService(private val config: Config, private val vm: Vm) :
 
     override fun streamPreview(request: StreamPreviewRequest): Flow<ProtoJob.StreamPreviewResponse> = flow {
         val jobId = request.jobId
+        logger.info { "streamPreview called for jobId=$jobId" }
+        logger.info { "previewJobs keys: ${previewJobs.keys}" }
+
         val inspectorNodeId = previewJobs[jobId] ?: error("Preview job not found: $jobId")
         val inspectTopic = "$jobId-inspect-$inspectorNodeId"
 
-        // Reuse existing output mechanism - consume from inspect topic
-        vm.scheduler.jobOutput(jobId).collect { output ->
+        logger.info { "streamPreview: inspectorNodeId=$inspectorNodeId, inspectTopic=$inspectTopic" }
+
+        // Consume from the inspector topic
+        vm.scheduler.jobOutput(jobId, inspectTopic).collect { output ->
+            logger.debug { "streamPreview emitting: ${output.take(100)}" }
             emit(streamPreviewResponse {
                 this.value = output
                 this.timestamp = System.currentTimeMillis()
             })
         }
+        logger.info { "streamPreview: flow completed for jobId=$jobId" }
     }
 }
