@@ -39,7 +39,7 @@ object Infer {
             is Node.Sink -> input ?: error("sink ${ref.id} missing input stream")
             is Node.GeoIp -> {
                 val stream = input ?: error("geoIp ${ref.id} missing input stream")
-                TypeRules.inferGeoIp(stream, ref.outputField)
+                TypeRules.inferGeoIp(stream, ref.ipField, ref.outputField)
             }
         }
 

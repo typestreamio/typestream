@@ -2,14 +2,16 @@ package io.typestream.geoip
 
 import com.maxmind.geoip2.DatabaseReader
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.Closeable
 import java.io.File
 import java.net.InetAddress
 
 /**
- * Service for performing GeoIP lookups using MaxMind GeoLite2 database.
+ * Service for performing GeoIP lookups using a local MMDB database.
+ * Supports both MaxMind GeoLite2 and DB-IP formats.
  * This is a local database file (.mmdb) - no API calls, purely local lookups.
  */
-class GeoIpService(private val databasePath: String = DEFAULT_DATABASE_PATH) {
+open class GeoIpService(private val databasePath: String = defaultDatabasePath()) : Closeable {
     private val logger = KotlinLogging.logger {}
 
     private val reader: DatabaseReader? by lazy {
@@ -28,7 +30,7 @@ class GeoIpService(private val databasePath: String = DEFAULT_DATABASE_PATH) {
      * @param ipAddress The IP address to lookup (IPv4 or IPv6)
      * @return ISO country code (e.g., "US", "GB") or null if not found
      */
-    fun lookup(ipAddress: String): String? {
+    open fun lookup(ipAddress: String): String? {
         return try {
             reader?.country(InetAddress.getByName(ipAddress))?.country?.isoCode
         } catch (e: Exception) {
@@ -42,7 +44,17 @@ class GeoIpService(private val databasePath: String = DEFAULT_DATABASE_PATH) {
      */
     fun isAvailable(): Boolean = reader != null
 
+    /**
+     * Close the database reader to release resources.
+     */
+    override fun close() {
+        reader?.close()
+    }
+
     companion object {
-        const val DEFAULT_DATABASE_PATH = "/etc/typestream/GeoLite2-Country.mmdb"
+        fun defaultDatabasePath(): String {
+            val home = System.getProperty("user.home")
+            return "$home/.typestream/geoip/dbip-country-lite.mmdb"
+        }
     }
 }

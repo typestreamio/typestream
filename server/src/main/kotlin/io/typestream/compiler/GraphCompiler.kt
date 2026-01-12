@@ -205,6 +205,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       proto.hasGeoIp() -> {
         val out = GeoIpNodeHandler.inferType(
           input ?: error("geoIp $nodeId missing input"),
+          proto.geoIp.ipField,
           proto.geoIp.outputField
         )
         out to (inputEncoding ?: Encoding.AVRO)

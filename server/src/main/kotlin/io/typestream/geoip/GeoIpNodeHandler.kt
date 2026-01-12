@@ -33,10 +33,12 @@ object GeoIpNodeHandler {
      * Adds a string field (country code) to the input schema.
      *
      * @param input The input DataStream schema
+     * @param ipField Name of the field containing the IP address to lookup
      * @param outputField Name of the field to add (default: "country_code")
      * @return DataStream with the new field added
+     * @throws IllegalArgumentException if ipField doesn't exist in the input schema
      */
-    fun inferType(input: DataStream, outputField: String): DataStream {
-        return TypeRules.inferGeoIp(input, outputField)
+    fun inferType(input: DataStream, ipField: String, outputField: String): DataStream {
+        return TypeRules.inferGeoIp(input, ipField, outputField)
     }
 }

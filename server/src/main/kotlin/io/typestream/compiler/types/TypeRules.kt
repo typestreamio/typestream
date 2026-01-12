@@ -149,12 +149,17 @@ object TypeRules {
    * The GeoIp node takes an IP field from the input and adds a country code field to the output.
    *
    * @param input The input stream schema
+   * @param ipField The name of the field containing the IP address to lookup
    * @param outputField The name of the output field for the country code (e.g., "country_code")
    * @return Input schema with the new country code field added
+   * @throws IllegalArgumentException if input schema is not a struct or if ipField doesn't exist
    */
-  fun inferGeoIp(input: DataStream, outputField: String): DataStream {
+  fun inferGeoIp(input: DataStream, ipField: String, outputField: String): DataStream {
     val inputSchema = input.schema
     require(inputSchema is Schema.Struct) { "GeoIp requires struct schema, got: ${inputSchema::class.simpleName}" }
+
+    val hasIpField = inputSchema.value.any { it.name == ipField }
+    require(hasIpField) { "GeoIp IP field '$ipField' not found in schema. Available fields: ${inputSchema.value.map { it.name }}" }
 
     val newField = Schema.Field(outputField, Schema.String.zeroValue)
     val newFields = inputSchema.value + newField

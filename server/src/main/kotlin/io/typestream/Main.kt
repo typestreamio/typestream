@@ -2,6 +2,7 @@ package io.typestream
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.config.Config
+import io.typestream.geoip.GeoIpDatabaseManager
 
 fun main() {
     val logger = KotlinLogging.logger {}
@@ -15,6 +16,14 @@ fun main() {
     }
 
     logger.info { "running in Typestream (${config.versionInfo}) in server mode" }
+
+    // Ensure GeoIP database is available (downloads if missing)
+    val geoIpManager = GeoIpDatabaseManager()
+    if (geoIpManager.ensureDatabase()) {
+        logger.info { "GeoIP database ready at ${geoIpManager.databasePath}" }
+    } else {
+        logger.warn { "GeoIP lookups will return UNKNOWN until database is available" }
+    }
 
     val server = Server(config)
 
