@@ -99,4 +99,26 @@ internal class AvroExtKtTest {
         require(optionalField is Schema.Optional)
         assertThat(optionalField.value?.value.toString()).isEqualTo(smokeType.get("optionalField"))
     }
+
+    @Test
+    fun toAvroGenericRecord() {
+        val originalAvro = SmokeType().toAvro()
+        val dataStream = DataStream.fromAvroGenericRecord("smokeType", originalAvro)
+        val avroRecord = dataStream.toAvroGenericRecord()
+
+        // Verify primitive fields
+        assertThat(avroRecord.get("booleanField")).isEqualTo(true)
+        assertThat(avroRecord.get("intField")).isEqualTo(3)
+        assertThat(avroRecord.get("longField")).isEqualTo(4L)
+        assertThat(avroRecord.get("stringField")).isEqualTo("5")
+
+        // Verify temporal fields are converted to correct primitive types (the actual fix)
+        assertThat(avroRecord.get("dateField")).isInstanceOf(java.lang.Integer::class.java)
+        assertThat(avroRecord.get("timestampMillisField")).isInstanceOf(java.lang.Long::class.java)
+        assertThat(avroRecord.get("timestampMicrosField")).isInstanceOf(java.lang.Long::class.java)
+        assertThat(avroRecord.get("localTimestampMillisField")).isInstanceOf(java.lang.Long::class.java)
+        assertThat(avroRecord.get("localTimestampMicrosField")).isInstanceOf(java.lang.Long::class.java)
+        assertThat(avroRecord.get("timeMillisField")).isInstanceOf(java.lang.Integer::class.java)
+        assertThat(avroRecord.get("timeMicrosField")).isInstanceOf(java.lang.Long::class.java)
+    }
 }
