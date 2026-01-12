@@ -67,6 +67,11 @@ export function NodePalette() {
         label="Kafka Sink"
         icon={<OutputIcon fontSize="small" />}
       />
+      <PaletteItem
+        type="geoIp"
+        label="GeoIP Lookup"
+        icon={<PublicIcon fontSize="small" />}
+      />
     </Paper>
   );
 }
