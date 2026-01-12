@@ -203,7 +203,7 @@ func Exec(source string) error {
 		return err
 	}
 
-	defer s.close()
+	defer func() { _ = s.close() }()
 
 	runProgramResponse, err := s.runProgram(ctx, source)
 	if err != nil {
