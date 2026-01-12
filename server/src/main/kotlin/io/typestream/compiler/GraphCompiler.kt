@@ -102,6 +102,10 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         ?: error("No inferred encoding for sink ${proto.id}")
       Node.Sink(proto.id, out, encoding)
     }
+    proto.hasGeoIp() -> {
+      val g = proto.geoIp
+      Node.GeoIp(proto.id, g.ipField, g.outputField)
+    }
     else -> error("Unknown node type: $proto")
   }
 
