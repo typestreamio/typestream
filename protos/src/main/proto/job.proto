@@ -10,6 +10,12 @@ service JobService {
     rpc CreateJob(CreateJobRequest) returns (CreateJobResponse) {}
     rpc CreateJobFromGraph(CreateJobFromGraphRequest) returns (CreateJobResponse) {}
     rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
+    // Server-streaming RPC for real-time job updates
+    rpc WatchJobs(WatchJobsRequest) returns (stream JobInfo) {}
+}
+
+message WatchJobsRequest {
+    string user_id = 1;
 }
 
 message CreateJobRequest {

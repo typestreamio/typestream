@@ -11,12 +11,18 @@ import io.typestream.grpc.job_service.Job as ProtoJob
 import io.typestream.grpc.job_service.Job.CreateJobRequest
 import io.typestream.grpc.job_service.Job.CreateJobFromGraphRequest
 import io.typestream.grpc.job_service.Job.ListJobsRequest
+import io.typestream.grpc.job_service.Job.WatchJobsRequest
 import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
 import io.typestream.k8s.K8sClient
 import io.typestream.scheduler.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import java.util.UUID
 
 class JobService(private val config: Config, private val vm: Vm) :
@@ -101,5 +107,50 @@ class JobService(private val config: Config, private val vm: Vm) :
             logger.error(e) { "Error listing jobs" }
             // Return empty list on error
         }
+    }
+
+    override fun watchJobs(request: WatchJobsRequest): Flow<ProtoJob.JobInfo> = flow {
+        // Track previously seen jobs to detect changes
+        var previousJobs = mapOf<String, Job.State>()
+
+        while (currentCoroutineContext().isActive) {
+            try {
+                val currentJobs = vm.scheduler.ps()
+                val currentJobMap = currentJobs.associate { it.id to it.state() }
+
+                // Emit all jobs on state change or new job
+                val hasChanges = currentJobMap != previousJobs
+
+                if (hasChanges) {
+                    currentJobs.forEach { schedulerJob ->
+                        emit(jobInfo {
+                            jobId = schedulerJob.id
+                            state = mapJobState(schedulerJob.state())
+                            startTime = schedulerJob.startTime
+                            // Include graph if available (only for graph-based jobs)
+                            if (schedulerJob is io.typestream.scheduler.KafkaStreamsJob) {
+                                schedulerJob.program.pipelineGraph?.let { graph = it }
+                            }
+                        })
+                    }
+                    previousJobs = currentJobMap
+                }
+
+                // Poll every second
+                delay(1000)
+            } catch (e: Exception) {
+                logger.error(e) { "Error watching jobs" }
+                delay(1000) // Continue polling even on error
+            }
+        }
+    }
+
+    private fun mapJobState(state: Job.State): ProtoJob.JobState = when (state) {
+        Job.State.STARTING -> ProtoJob.JobState.STARTING
+        Job.State.RUNNING -> ProtoJob.JobState.RUNNING
+        Job.State.STOPPING -> ProtoJob.JobState.STOPPING
+        Job.State.STOPPED -> ProtoJob.JobState.STOPPED
+        Job.State.FAILED -> ProtoJob.JobState.FAILED
+        Job.State.UNKNOWN -> ProtoJob.JobState.UNKNOWN
     }
 }

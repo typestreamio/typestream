@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, ListJobsRequest, ListJobsResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, JobInfo, ListJobsRequest, ListJobsResponse, WatchJobsRequest } from "./job_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -38,6 +38,17 @@ export const JobService = {
       I: ListJobsRequest,
       O: ListJobsResponse,
       kind: MethodKind.Unary,
+    },
+    /**
+     * Server-streaming RPC for real-time job updates
+     *
+     * @generated from rpc io.typestream.grpc.JobService.WatchJobs
+     */
+    watchJobs: {
+      name: "WatchJobs",
+      I: WatchJobsRequest,
+      O: JobInfo,
+      kind: MethodKind.ServerStreaming,
     },
   }
 } as const;
