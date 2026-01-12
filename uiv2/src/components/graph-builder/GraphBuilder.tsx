@@ -54,7 +54,14 @@ export function GraphBuilder() {
         y: event.clientY - bounds.top - 50,
       };
 
-      const data = type === 'kafkaSink' ? { topicName: '' } : { topicPath: '' };
+      let data: Record<string, unknown>;
+      if (type === 'kafkaSink') {
+        data = { topicName: '' };
+      } else if (type === 'geoIp') {
+        data = { ipField: '', outputField: 'country_code' };
+      } else {
+        data = { topicPath: '' };
+      }
       const newNode: AppNode = {
         id: getId(),
         type,
