@@ -50,4 +50,12 @@ message LsResponse {
     string error = 2;
 }
 
+message GetSchemaRequest {
+    string user_id = 1;
+    string path = 2;  // Topic path
+}
 
+message GetSchemaResponse {
+    repeated string fields = 1;
+    string error = 2;
+}
