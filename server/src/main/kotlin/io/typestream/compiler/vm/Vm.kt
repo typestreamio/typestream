@@ -16,6 +16,7 @@ import io.typestream.scheduler.Scheduler
 
 class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
     private val logger = KotlinLogging.logger {}
+    private val geoIpService = GeoIpService()
 
     fun exec(source: String, env: Env) {
         val (program, errors) = Compiler(Session(fileSystem, scheduler, env)).compile(source)
