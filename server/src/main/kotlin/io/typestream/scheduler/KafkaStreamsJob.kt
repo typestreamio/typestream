@@ -55,6 +55,7 @@ class KafkaStreamsJob(
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)
+                    is Node.Inspector -> kafkaStreamSource.toInspector(currentNode.ref, program.id)
                     is Node.ShellSource -> error("cannot resolve ShellSource node")
                 }
             }

@@ -41,4 +41,7 @@ sealed interface Node {
 
     @Serializable
     data class GeoIp(override val id: String, val ipField: String, val outputField: String) : Node
+
+    @Serializable
+    data class Inspector(override val id: String, val label: String = "") : Node
 }

@@ -5,10 +5,11 @@ import {
   PipelineEdge,
   StreamSourceNode,
   SinkNode,
+  InspectorNode,
   DataStreamProto,
   GeoIpNode as GeoIpNodeProto,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = nodes.map((node) => {
@@ -50,6 +51,19 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           value: new GeoIpNodeProto({
             ipField: data.ipField,
             outputField: data.outputField || 'country_code',
+          }),
+        },
+      });
+    }
+
+    if (node.type === 'inspector') {
+      const data = node.data as InspectorNodeData;
+      return new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'inspector',
+          value: new InspectorNode({
+            label: data.label || '',
           }),
         },
       });

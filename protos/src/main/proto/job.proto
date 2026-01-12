@@ -10,6 +10,9 @@ service JobService {
     rpc CreateJob(CreateJobRequest) returns (CreateJobResponse) {}
     rpc CreateJobFromGraph(CreateJobFromGraphRequest) returns (CreateJobResponse) {}
     rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
+    rpc CreatePreviewJob(CreatePreviewJobRequest) returns (CreatePreviewJobResponse) {}
+    rpc StopPreviewJob(StopPreviewJobRequest) returns (StopPreviewJobResponse) {}
+    rpc StreamPreview(StreamPreviewRequest) returns (stream StreamPreviewResponse) {}
 }
 
 message CreateJobRequest {
@@ -89,6 +92,10 @@ message GeoIpNode {
   string output_field = 2;  // Output field name (default: country_code)
 }
 
+message InspectorNode {
+  string label = 1;  // Optional label for the inspector
+}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -103,6 +110,7 @@ message PipelineNode {
     EachNode each = 10;
     SinkNode sink = 11;
     GeoIpNode geo_ip = 12;
+    InspectorNode inspector = 13;
   }
 }
 
@@ -144,4 +152,36 @@ message JobInfo {
 
 message ListJobsResponse {
   repeated JobInfo jobs = 1;
+}
+
+// Preview job messages
+message CreatePreviewJobRequest {
+  PipelineGraph graph = 1;
+  string inspector_node_id = 2;  // Which inspector node triggered this
+}
+
+message CreatePreviewJobResponse {
+  bool success = 1;
+  string job_id = 2;
+  string inspect_topic = 3;  // Topic to consume for preview data
+  string error = 4;
+}
+
+message StopPreviewJobRequest {
+  string job_id = 1;
+}
+
+message StopPreviewJobResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message StreamPreviewRequest {
+  string job_id = 1;
+}
+
+message StreamPreviewResponse {
+  string key = 1;
+  string value = 2;
+  int64 timestamp = 3;
 }
