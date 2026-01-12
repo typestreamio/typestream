@@ -15,6 +15,7 @@ import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
+import io.typestream.grpc.job_service.jobThroughput
 import io.typestream.k8s.K8sClient
 import io.typestream.scheduler.Job
 import java.util.UUID
@@ -94,6 +95,12 @@ class JobService(private val config: Config, private val vm: Vm) :
                     // Include graph if available (only for graph-based jobs)
                     if (schedulerJob is io.typestream.scheduler.KafkaStreamsJob) {
                         schedulerJob.program.pipelineGraph?.let { graph = it }
+                    }
+                    // Include throughput metrics
+                    val jobThroughputData = schedulerJob.throughput()
+                    throughput = jobThroughput {
+                        messagesPerSecond = jobThroughputData.messagesPerSecond
+                        totalMessages = jobThroughputData.totalMessages
                     }
                 })
             }

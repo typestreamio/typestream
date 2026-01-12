@@ -137,6 +137,36 @@ class KafkaStreamsJob(override val id: String, val program: Program, private val
     private fun isRunning() = running && ((kafkaStreams?.state()?.hasNotStarted()
         ?: false) || (kafkaStreams?.state()?.isRunningOrRebalancing ?: false))
 
+    override fun throughput(): Job.Throughput {
+        val streams = kafkaStreams ?: return Job.Throughput(0.0, 0)
+
+        val metrics = streams.metrics()
+
+        // Find process-rate metric (messages processed per second)
+        // This is a stream-thread level metric
+        var processRate = 0.0
+        var totalRecords = 0L
+
+        for ((name, metric) in metrics) {
+            // process-rate gives us the rate of records processed per second
+            if (name.name() == "process-rate" && name.group() == "stream-thread-metrics") {
+                val value = metric.metricValue()
+                if (value is Number) {
+                    processRate += value.toDouble()
+                }
+            }
+            // process-total gives us total records processed
+            if (name.name() == "process-total" && name.group() == "stream-thread-metrics") {
+                val value = metric.metricValue()
+                if (value is Number) {
+                    totalRecords += value.toLong()
+                }
+            }
+        }
+
+        return Job.Throughput(processRate, totalRecords)
+    }
+
     override fun state(): Job.State = when (kafkaStreams?.state()) {
         KafkaStreams.State.CREATED -> Job.State.STARTING
         //TODO not quite good enough but does the job (no pun intended) for now

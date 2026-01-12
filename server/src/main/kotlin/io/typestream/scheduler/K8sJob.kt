@@ -23,4 +23,9 @@ class K8sJob(override val id: String) : Job {
         //TODO get from k8s
         return Job.State.RUNNING
     }
+
+    override fun throughput(): Job.Throughput {
+        // TODO: Get throughput metrics from K8s pods (e.g., via JMX or metrics endpoint)
+        return Job.Throughput(0.0, 0)
+    }
 }

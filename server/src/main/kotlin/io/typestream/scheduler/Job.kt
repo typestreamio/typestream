@@ -12,6 +12,12 @@ sealed interface Job {
     fun stop()
     fun state(): State
     fun displayName() = "${id}\t${state()}"
+    fun throughput(): Throughput
+
+    data class Throughput(
+        val messagesPerSecond: Double, // Messages per second (rate over recent window)
+        val totalMessages: Long        // Total messages processed
+    )
 
     enum class State {
         STARTING,
