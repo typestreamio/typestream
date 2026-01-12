@@ -3,22 +3,32 @@ syntax = "proto3";
 package io.typestream.grpc;
 
 option java_package = "io.typestream.grpc.state_query_service";
-
 option go_package = "github.com/typestreamio/typestream/cli/pkg/state_query_service";
 
 // StateQueryService provides interactive query capabilities for KTable state stores
 // from running Kafka Streams jobs. State stores are only queryable when the underlying
 // Kafka Streams application is in RUNNING state.
+//
+// Key Serialization:
+// Keys returned by GetAllValues are JSON-serialized representations of the key schema.
+// For example: a string key "hello" becomes the JSON string "\"hello\"", a struct becomes {"field": "value"}.
+//
+// Limitation:
+// GetValue currently only supports simple string keys. For complex keys (structs, etc.),
+// use GetAllValues and filter on the client side.
 service StateQueryService {
     // Lists all queryable state stores from running Kafka Streams jobs.
     // Only stores from jobs in RUNNING state are included.
+    // Stores that cannot be queried (e.g., during rebalancing) are omitted.
     rpc ListStores(ListStoresRequest) returns (ListStoresResponse) {}
     
-    // Streams all key-value pairs from a state store with optional pagination.
+    // Streams all key-value pairs from a state store with optional limit.
+    // Keys are JSON-serialized and may be primitives or complex objects depending on the key schema.
     // Returns NOT_FOUND if the store doesn't exist, UNAVAILABLE if the job isn't running.
     rpc GetAllValues(GetAllValuesRequest) returns (stream KeyValuePair) {}
     
     // Retrieves a single value from a state store by key.
+    // Note: Currently only supports simple string keys. For complex keys, use GetAllValues.
     // Returns NOT_FOUND if the store doesn't exist, UNAVAILABLE if the job isn't running.
     rpc GetValue(GetValueRequest) returns (GetValueResponse) {}
 }
@@ -30,7 +40,7 @@ message StoreInfo {
     string name = 1;
     // The ID of the job that owns this store
     string job_id = 2;
-    // Approximate number of entries in the store, -1 if unavailable
+    // Approximate number of entries in the store (from RocksDB metadata)
     int64 approximate_count = 3;
 }
 
@@ -48,7 +58,11 @@ message GetAllValuesRequest {
 }
 
 message KeyValuePair {
-    // JSON serialization of the key's schema
+    // JSON-serialized representation of the key.
+    // Format depends on the key's schema type:
+    // - String: "\"value\"" (JSON string)
+    // - Int/Long: "123" (JSON number)
+    // - Struct: "{\"field\": \"value\"}" (JSON object)
     string key = 1;
     // String representation of the value (for count operations, this is the count as a string)
     string value = 2;
@@ -57,7 +71,9 @@ message KeyValuePair {
 message GetValueRequest {
     // Name of the state store to query
     string store_name = 1;
-    // The key to look up (used to construct a DataStream key)
+    // The key to look up.
+    // Note: This is used directly as a string key. Complex key types (structs, etc.) are not supported.
+    // For stores with complex keys, use GetAllValues and filter client-side.
     string key = 2;
 }
 
