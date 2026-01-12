@@ -22,6 +22,31 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 
+/**
+ * A Kafka Streams-based job that executes a compiled TypeStream program.
+ *
+ * This class manages the lifecycle of a Kafka Streams application, including building
+ * the processing topology, starting/stopping the streams, and tracking state stores.
+ *
+ * ## State Store Naming
+ *
+ * State stores created by count operations are named using the pattern:
+ * `{program.id}-count-store-{index}` where index is assigned sequentially as count
+ * operations are encountered during topology building.
+ *
+ * **Important**: Store names are tied to the position of count operations in the program
+ * graph. If a program is modified (e.g., count operations added/removed/reordered),
+ * the store names may change on the next deployment. This can affect:
+ * - Interactive query clients that rely on specific store names
+ * - Kafka Streams state restoration (stores may be rebuilt from scratch)
+ *
+ * Consider using stable, user-defined store names in the future if this becomes an issue.
+ *
+ * @param id Unique identifier for this job
+ * @param program The compiled TypeStream program to execute
+ * @param kafkaConfig Kafka cluster configuration
+ * @param geoIpService Service for GeoIP lookups in transformations
+ */
 class KafkaStreamsJob(
     override val id: String,
     val program: Program,
