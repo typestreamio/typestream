@@ -138,4 +138,12 @@ data class KafkaStreamSource(
 
         stream = groupedStream!!.count().mapValues { v -> DataStream.fromLong("", v) }.toStream()
     }
+
+    fun geoIp(geoIp: Node.GeoIp) {
+        stream = stream.mapValues { value ->
+            val ip = value.selectFieldAsString(geoIp.ipField) ?: ""
+            val country = geoIpService.lookup(ip) ?: "UNKNOWN"
+            value.addField(geoIp.outputField, Schema.String(country))
+        }
+    }
 }
