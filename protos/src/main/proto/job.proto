@@ -102,6 +102,7 @@ message PipelineNode {
     StreamSourceNode stream_source = 9;
     EachNode each = 10;
     SinkNode sink = 11;
+    GeoIpNode geo_ip = 12;
   }
 }
 
