@@ -16,6 +16,8 @@ on:
       - 'gradle.properties'
       - 'gradlew'
       - 'gradlew.bat'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/server-check.yml'
   pull_request:
     branches: [main]
@@ -32,6 +34,8 @@ on:
       - 'gradle.properties'
       - 'gradlew'
       - 'gradlew.bat'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/server-check.yml'
 
 jobs:
@@ -40,14 +44,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
         with:
-          java-version: "21"
-          distribution: "corretto"
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
       - name: Check
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          arguments: check
+        run: nix develop --command gradle check
         env:
           GRADLE_TOKEN: ${{ secrets.GRADLE_TOKEN }}
