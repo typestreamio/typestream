@@ -12,20 +12,27 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import Chip from '@mui/material/Chip';
 import { useNavigate } from 'react-router-dom';
-import { useListJobs } from '../hooks/useListJobs';
+import { useWatchJobs } from '../hooks/useWatchJobs';
 import { JobStatusChip } from '../components/JobStatusChip';
 
 export function JobsPage() {
   const navigate = useNavigate();
-  const { data, isLoading, error, refetch } = useListJobs('local');
-
-  const jobs = data?.jobs ?? [];
+  const { jobs, isLoading, error, isConnected, reconnect } = useWatchJobs('local');
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Jobs</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="h4">Jobs</Typography>
+          <Chip
+            size="small"
+            label={isConnected ? 'Live' : 'Disconnected'}
+            color={isConnected ? 'success' : 'default'}
+            variant="outlined"
+          />
+        </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             variant="contained"
@@ -37,9 +44,9 @@ export function JobsPage() {
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
-            onClick={() => refetch()}
+            onClick={reconnect}
           >
-            Refresh
+            Reconnect
           </Button>
         </Box>
       </Box>

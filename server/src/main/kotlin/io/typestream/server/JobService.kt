@@ -14,6 +14,7 @@ import io.typestream.grpc.job_service.Job.ListJobsRequest
 import io.typestream.grpc.job_service.Job.CreatePreviewJobRequest
 import io.typestream.grpc.job_service.Job.StopPreviewJobRequest
 import io.typestream.grpc.job_service.Job.StreamPreviewRequest
+import io.typestream.grpc.job_service.Job.WatchJobsRequest
 import io.typestream.grpc.job_service.JobServiceGrpcKt
 import io.typestream.grpc.job_service.createJobResponse
 import io.typestream.grpc.job_service.createPreviewJobResponse
@@ -182,17 +183,10 @@ class JobService(private val config: Config, private val vm: Vm) :
 
                 jobs.add(jobInfo {
                     jobId = schedulerJob.id
-                    state = when (schedulerJob.state()) {
-                        SchedulerJob.State.STARTING -> ProtoJob.JobState.STARTING
-                        SchedulerJob.State.RUNNING -> ProtoJob.JobState.RUNNING
-                        SchedulerJob.State.STOPPING -> ProtoJob.JobState.STOPPING
-                        SchedulerJob.State.STOPPED -> ProtoJob.JobState.STOPPED
-                        SchedulerJob.State.FAILED -> ProtoJob.JobState.FAILED
-                        SchedulerJob.State.UNKNOWN -> ProtoJob.JobState.UNKNOWN
-                    }
+                    state = mapJobState(schedulerJob.state())
                     startTime = schedulerJob.startTime
                     // Include graph if available (only for graph-based jobs)
-                    if (schedulerJob is io.typestream.scheduler.KafkaStreamsJob) {
+                    if (schedulerJob is KafkaStreamsJob) {
                         schedulerJob.program.pipelineGraph?.let { graph = it }
                     }
                 })
@@ -271,5 +265,53 @@ class JobService(private val config: Config, private val vm: Vm) :
                 cleanupPreviewJob(jobId)
             }
         }
+    }
+
+    override fun watchJobs(request: WatchJobsRequest): Flow<ProtoJob.JobInfo> = flow {
+        // Track previously seen jobs to detect changes
+        var previousJobs = mapOf<String, SchedulerJob.State>()
+
+        while (currentCoroutineContext().isActive) {
+            try {
+                val currentJobs = vm.scheduler.ps()
+                val currentJobMap = currentJobs.associate { it.id to it.state() }
+
+                // Emit all jobs on state change or new job
+                val hasChanges = currentJobMap != previousJobs
+
+                if (hasChanges) {
+                    currentJobs.forEach { schedulerJob ->
+                        // Skip preview jobs from the watch stream
+                        if (previewJobs.containsKey(schedulerJob.id)) return@forEach
+
+                        emit(jobInfo {
+                            jobId = schedulerJob.id
+                            state = mapJobState(schedulerJob.state())
+                            startTime = schedulerJob.startTime
+                            // Include graph if available (only for graph-based jobs)
+                            if (schedulerJob is KafkaStreamsJob) {
+                                schedulerJob.program.pipelineGraph?.let { graph = it }
+                            }
+                        })
+                    }
+                    previousJobs = currentJobMap
+                }
+
+                // Poll every second
+                delay(1000)
+            } catch (e: Exception) {
+                logger.error(e) { "Error watching jobs" }
+                delay(1000) // Continue polling even on error
+            }
+        }
+    }
+
+    private fun mapJobState(state: SchedulerJob.State): ProtoJob.JobState = when (state) {
+        SchedulerJob.State.STARTING -> ProtoJob.JobState.STARTING
+        SchedulerJob.State.RUNNING -> ProtoJob.JobState.RUNNING
+        SchedulerJob.State.STOPPING -> ProtoJob.JobState.STOPPING
+        SchedulerJob.State.STOPPED -> ProtoJob.JobState.STOPPED
+        SchedulerJob.State.FAILED -> ProtoJob.JobState.FAILED
+        SchedulerJob.State.UNKNOWN -> ProtoJob.JobState.UNKNOWN
     }
 }

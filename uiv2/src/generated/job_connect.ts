@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, ListJobsRequest, ListJobsResponse, StopPreviewJobRequest, StopPreviewJobResponse, StreamPreviewRequest, StreamPreviewResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, JobInfo, ListJobsRequest, ListJobsResponse, StopPreviewJobRequest, StopPreviewJobResponse, StreamPreviewRequest, StreamPreviewResponse, WatchJobsRequest } from "./job_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -66,6 +66,16 @@ export const JobService = {
       O: StreamPreviewResponse,
       kind: MethodKind.ServerStreaming,
     },
+    /**
+     * Server-streaming RPC for real-time job updates
+     *
+     * @generated from rpc io.typestream.grpc.JobService.WatchJobs
+     */
+    watchJobs: {
+      name: "WatchJobs",
+      I: WatchJobsRequest,
+      O: JobInfo,
+      kind: MethodKind.ServerStreaming,
+    },
   }
 } as const;
-

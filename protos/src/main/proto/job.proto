@@ -13,6 +13,12 @@ service JobService {
     rpc CreatePreviewJob(CreatePreviewJobRequest) returns (CreatePreviewJobResponse) {}
     rpc StopPreviewJob(StopPreviewJobRequest) returns (StopPreviewJobResponse) {}
     rpc StreamPreview(StreamPreviewRequest) returns (stream StreamPreviewResponse) {}
+    // Server-streaming RPC for real-time job updates
+    rpc WatchJobs(WatchJobsRequest) returns (stream JobInfo) {}
+}
+
+message WatchJobsRequest {
+    string user_id = 1;
 }
 
 message CreateJobRequest {

@@ -13,6 +13,7 @@ import io.typestream.testing.until
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.jupiter.api.BeforeEach
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 @Testcontainers
 internal class JobServiceTest {
@@ -282,6 +284,118 @@ internal class JobServiceTest {
             assertThat(response.success).isFalse()
             assertThat(response.error).contains("Cycle detected")
             assertThat(response.jobId).isEmpty()
+        }
+    }
+
+    @Test
+    fun `watchJobs streams job updates`(): Unit = runBlocking {
+        app.use {
+            testKafka.produceRecords(
+                "books",
+                "avro",
+                Book(title = "Watch Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+
+            // First create a job so we have something to watch
+            val createRequest = Job.CreateJobRequest.newBuilder()
+                .setUserId("test-user")
+                .setSource("cat /dev/kafka/local/topics/books | grep 'Watch'")
+                .build()
+
+            val createResponse = blockingStub.createJob(createRequest)
+            assertThat(createResponse.success).isTrue()
+
+            // Now watch for job updates using the blocking stub's server streaming
+            val watchRequest = Job.WatchJobsRequest.newBuilder()
+                .setUserId("test-user")
+                .build()
+
+            // Use iterator from server streaming call
+            val jobStream = blockingStub.withDeadlineAfter(5, TimeUnit.SECONDS).watchJobs(watchRequest)
+
+            // Collect first batch of job updates
+            val receivedJobs = mutableListOf<Job.JobInfo>()
+
+            withTimeout(5000) {
+                // The stream should emit the job we just created
+                if (jobStream.hasNext()) {
+                    val jobInfo = jobStream.next()
+                    receivedJobs.add(jobInfo)
+
+                    // Verify the job info structure
+                    assertThat(jobInfo.jobId).isNotEmpty()
+                    assertThat(jobInfo.state).isNotEqualTo(Job.JobState.JOB_STATE_UNSPECIFIED)
+                    assertThat(jobInfo.startTime).isGreaterThanOrEqualTo(0L)
+                }
+            }
+
+            // Verify we received at least one job update
+            // Note: The job ID from createJob() differs from the scheduler's internal ID
+            // (see TODO in JobService.kt). So we just verify we got a job with valid structure.
+            assertThat(receivedJobs).isNotEmpty()
+            assertThat(receivedJobs.first().jobId).startsWith("typestream-app-")
+        }
+    }
+
+    @Test
+    fun `watchJobs returns empty stream when no jobs`(): Unit = runBlocking {
+        app.use {
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+
+            // Watch for jobs without creating any
+            val watchRequest = Job.WatchJobsRequest.newBuilder()
+                .setUserId("test-user")
+                .build()
+
+            val jobStream = blockingStub.withDeadlineAfter(2, TimeUnit.SECONDS).watchJobs(watchRequest)
+
+            // The stream should start but not emit anything initially since no jobs exist
+            // After deadline, we should gracefully handle the cancellation
+            val receivedJobs = mutableListOf<Job.JobInfo>()
+
+            try {
+                withTimeout(3000) {
+                    while (jobStream.hasNext()) {
+                        receivedJobs.add(jobStream.next())
+                    }
+                }
+            } catch (e: io.grpc.StatusRuntimeException) {
+                // Expected - deadline exceeded since no jobs to report changes
+                assertThat(e.status.code).isIn(
+                    io.grpc.Status.Code.DEADLINE_EXCEEDED,
+                    io.grpc.Status.Code.CANCELLED
+                )
+            }
+
+            // With no jobs, the initial state has no changes to report
+            // The stream only emits when there are changes
+            assertThat(receivedJobs).isEmpty()
         }
     }
 }
