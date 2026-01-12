@@ -7,10 +7,12 @@ import io.typestream.grpc.filesystem_service.Filesystem
 import io.typestream.grpc.filesystem_service.Filesystem.MountRequest
 import io.typestream.grpc.filesystem_service.Filesystem.UnmountRequest
 import io.typestream.grpc.filesystem_service.fileInfo
+import io.typestream.grpc.filesystem_service.getSchemaResponse
 import io.typestream.grpc.filesystem_service.lsResponse
 import io.typestream.grpc.filesystem_service.mountResponse
 import io.typestream.grpc.filesystem_service.unmountResponse
 import io.typestream.grpc.job_service.Job
+import io.typestream.compiler.types.schema.Schema
 
 class FileSystemService(private val vm: Vm) :
     FileSystemServiceGrpcKt.FileSystemServiceCoroutineImplBase() {
