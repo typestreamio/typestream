@@ -20,8 +20,11 @@ internal class WebVisitsConnectorTest {
 
         val mockSender = object : MessageSender {
             override fun send(key: String, value: SpecificRecord) {
-                receivedMessages.add(key to value as WebVisit)
-                messageLatch.countDown()
+                // Only collect messages while we still need more (avoid race condition)
+                if (messageLatch.count > 0) {
+                    receivedMessages.add(key to value as WebVisit)
+                    messageLatch.countDown()
+                }
             }
             override fun close() {}
         }
