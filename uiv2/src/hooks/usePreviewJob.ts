@@ -95,8 +95,9 @@ export function usePreviewJob() {
       const client = createClient(JobService, transport);
       try {
         await client.stopPreviewJob(new StopPreviewJobRequest({ jobId }));
-      } catch {
-        // Silently handle stop errors - job may already be stopped
+      } catch (e) {
+        // Log stop errors for debugging - job may already be stopped
+        console.debug('Failed to stop preview job (may already be stopped):', e);
       }
       setJobId(null);
     }

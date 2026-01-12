@@ -35,7 +35,11 @@ export function StreamInspectorPanel({
   const hasStartedRef = useRef(false);
   // Use ref to avoid cleanup effect re-running when stopPreview changes
   const stopPreviewRef = useRef(stopPreview);
-  stopPreviewRef.current = stopPreview;
+
+  // Update ref in useEffect to avoid "Cannot update ref during render" warning
+  useEffect(() => {
+    stopPreviewRef.current = stopPreview;
+  }, [stopPreview]);
 
   const handleStart = useCallback(() => {
     const nodes = getNodes();

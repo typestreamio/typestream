@@ -23,10 +23,13 @@ import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
 import io.typestream.k8s.K8sClient
 import io.typestream.kafka.KafkaAdminClient
-import io.typestream.scheduler.Job
+import io.typestream.scheduler.Job as SchedulerJob
 import io.typestream.scheduler.KafkaStreamsJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job as CoroutineJob
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -34,7 +37,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.Closeable
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.minutes
@@ -45,7 +50,7 @@ data class PreviewJobInfo(
 )
 
 class JobService(private val config: Config, private val vm: Vm) :
-    JobServiceGrpcKt.JobServiceCoroutineImplBase() {
+    JobServiceGrpcKt.JobServiceCoroutineImplBase(), Closeable {
 
     private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
@@ -56,6 +61,10 @@ class JobService(private val config: Config, private val vm: Vm) :
     // TTL for preview jobs (cleanup if no client connected for this long)
     private val previewJobTtl = 10.minutes
 
+    // Managed coroutine scope for background cleanup - can be cancelled on shutdown
+    private val cleanupScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var cleanupJob: CoroutineJob? = null
+
     // Lazy admin client for topic cleanup
     private val kafkaAdminClient by lazy {
         val kafkaConfig = vm.fileSystem.config.sources.kafka.values.firstOrNull()
@@ -65,12 +74,22 @@ class JobService(private val config: Config, private val vm: Vm) :
 
     init {
         // Start background cleanup for orphaned preview jobs
-        CoroutineScope(Dispatchers.Default).launch {
-            while (true) {
+        cleanupJob = cleanupScope.launch {
+            while (isActive) {
                 delay(1.minutes)
                 cleanupExpiredPreviewJobs()
             }
         }
+    }
+
+    /**
+     * Shuts down the background cleanup coroutine.
+     * Should be called when the service is being stopped.
+     */
+    override fun close() {
+        logger.info { "Shutting down JobService cleanup coroutine" }
+        cleanupJob?.cancel()
+        cleanupScope.cancel()
     }
 
     private fun cleanupExpiredPreviewJobs() {
@@ -164,12 +183,12 @@ class JobService(private val config: Config, private val vm: Vm) :
                 jobs.add(jobInfo {
                     jobId = schedulerJob.id
                     state = when (schedulerJob.state()) {
-                        Job.State.STARTING -> ProtoJob.JobState.STARTING
-                        Job.State.RUNNING -> ProtoJob.JobState.RUNNING
-                        Job.State.STOPPING -> ProtoJob.JobState.STOPPING
-                        Job.State.STOPPED -> ProtoJob.JobState.STOPPED
-                        Job.State.FAILED -> ProtoJob.JobState.FAILED
-                        Job.State.UNKNOWN -> ProtoJob.JobState.UNKNOWN
+                        SchedulerJob.State.STARTING -> ProtoJob.JobState.STARTING
+                        SchedulerJob.State.RUNNING -> ProtoJob.JobState.RUNNING
+                        SchedulerJob.State.STOPPING -> ProtoJob.JobState.STOPPING
+                        SchedulerJob.State.STOPPED -> ProtoJob.JobState.STOPPED
+                        SchedulerJob.State.FAILED -> ProtoJob.JobState.FAILED
+                        SchedulerJob.State.UNKNOWN -> ProtoJob.JobState.UNKNOWN
                     }
                     startTime = schedulerJob.startTime
                     // Include graph if available (only for graph-based jobs)

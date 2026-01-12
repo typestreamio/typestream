@@ -7,7 +7,7 @@ import { BaseNode } from './BaseNode';
 import { StreamInspectorPanel } from '../../StreamInspectorPanel';
 import type { InspectorNodeType } from './index';
 
-export function InspectorNode({ id, data: _data }: NodeProps<InspectorNodeType>) {
+export function InspectorNode({ id }: NodeProps<InspectorNodeType>) {
   const [panelOpen, setPanelOpen] = useState(false);
 
   return (

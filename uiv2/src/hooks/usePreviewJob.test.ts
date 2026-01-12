@@ -19,7 +19,8 @@ vi.mock('@connectrpc/connect', () => ({
 }));
 
 describe('usePreviewJob', () => {
-  const mockTransport = {} as any;
+  // Use unknown type to avoid explicit any, then cast when needed
+  const mockTransport = {} as unknown;
 
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     createElement(TransportProvider, { transport: mockTransport }, children);
@@ -141,7 +142,9 @@ describe('usePreviewJob', () => {
       resolveStream = resolve;
     });
 
+    // eslint-disable-next-line require-yield
     mockStreamPreview.mockImplementationOnce(async function* () {
+      // Generator that waits indefinitely without yielding - simulates a hanging stream
       await streamPromise;
     });
 
@@ -183,7 +186,9 @@ describe('usePreviewJob', () => {
     });
 
     // Stream that throws AbortError
+    // eslint-disable-next-line require-yield
     mockStreamPreview.mockImplementationOnce(async function* () {
+      // Generator that immediately throws - simulates aborted stream
       const error = new Error('Aborted');
       error.name = 'AbortError';
       throw error;

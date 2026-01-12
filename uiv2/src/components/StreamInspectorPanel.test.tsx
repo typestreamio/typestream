@@ -37,7 +37,8 @@ vi.mock('@xyflow/react', async () => {
 });
 
 describe('StreamInspectorPanel', () => {
-  const mockTransport = {} as any;
+  // Use unknown type to avoid explicit any, then cast when needed
+  const mockTransport = {} as unknown;
   const mockOnClose = vi.fn();
 
   const renderPanel = (open = true) => {
