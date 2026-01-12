@@ -20,7 +20,7 @@ var mountCmd = &cobra.Command{
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		config := readFile(args[0])
 
