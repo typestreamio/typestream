@@ -6,8 +6,9 @@ import {
   StreamSourceNode,
   SinkNode,
   DataStreamProto,
+  GeoIpNode as GeoIpNodeProto,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = nodes.map((node) => {
