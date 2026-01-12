@@ -39,6 +39,21 @@ class FileSystemService(private val vm: Vm) :
             }
         }
     }
+
+    override suspend fun getSchema(request: Filesystem.GetSchemaRequest): Filesystem.GetSchemaResponse = getSchemaResponse {
+        val dataStream = vm.fileSystem.findDataStream(request.path)
+        if (dataStream == null) {
+            error = "Topic not found: ${request.path}"
+            return@getSchemaResponse
+        }
+
+        val schema = dataStream.schema
+        if (schema is Schema.Struct) {
+            fields += schema.value.map { it.name }
+        } else {
+            error = "Schema is not a struct type"
+        }
+    }
 }
 
 private fun Encoding.toProtoEncoding(): Job.Encoding = when (this) {
