@@ -12,6 +12,7 @@ service FileSystemService {
     rpc Mount(MountRequest) returns (MountResponse) {}
     rpc Unmount(UnmountRequest) returns (UnmountResponse) {}
     rpc Ls(LsRequest) returns (LsResponse) {}
+    rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse) {}
 }
 
 message MountRequest {
