@@ -90,6 +90,12 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                     dataStreams
                 }
 
+                is Node.GeoIp -> dataStreams.map { ds ->
+                    val ipValue = ds.selectFieldAsString(node.ref.ipField) ?: ""
+                    val countryCode = geoIpService.lookup(ipValue) ?: "UNKNOWN"
+                    ds.addField(node.ref.outputField, Schema.String(countryCode))
+                }
+
                 is Node.ShellSource -> dataStreams
                 else -> error("unexpected node type: ${node.ref}")
             }
