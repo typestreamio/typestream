@@ -102,7 +102,7 @@ func Run() {
 		return
 	}
 
-	defer s.close()
+	defer func() { _ = s.close() }()
 
 	p := NewPrompt()
 
