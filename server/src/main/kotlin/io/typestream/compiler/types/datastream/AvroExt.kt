@@ -2,6 +2,8 @@ package io.typestream.compiler.types.datastream
 
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import org.apache.avro.LogicalTypes
 import org.apache.avro.LogicalTypes.Decimal
 import org.apache.avro.generic.GenericData
@@ -230,7 +232,58 @@ fun DataStream.toAvroGenericRecord(): GenericRecord {
     //TODO we shouldn't assume top level value is a struct
     require(schema is Schema.Struct) { "Top level value must be a struct" }
 
-    schema.value.forEach { field -> genericRecord.put(field.name, field.value.value) }
+    schema.value.forEach { field -> genericRecord.put(field.name, field.value.toAvroValue()) }
 
     return genericRecord
+}
+
+/**
+ * Convert a Schema value to an Avro-compatible value.
+ * Handles temporal types that need conversion from kotlinx.datetime to Long/Int.
+ */
+private fun Schema.toAvroValue(): Any? {
+    return when (this) {
+        is Schema.Instant -> when (precision) {
+            Schema.Instant.Precision.MILLIS -> value.toEpochMilliseconds()
+            Schema.Instant.Precision.MICROS -> value.toEpochMilliseconds() * 1000 + (value.nanosecondsOfSecond / 1000) % 1000
+        }
+        is Schema.DateTime -> {
+            val instant = value.toInstant(kotlinx.datetime.TimeZone.UTC)
+            when (precision) {
+                Schema.DateTime.Precision.MILLIS -> instant.toEpochMilliseconds()
+                Schema.DateTime.Precision.MICROS -> instant.toEpochMilliseconds() * 1000 + (instant.nanosecondsOfSecond / 1000) % 1000
+            }
+        }
+        is Schema.Date -> value.toEpochDays()
+        is Schema.Time -> when (precision) {
+            Schema.Time.Precision.MILLIS -> value.toMillisecondOfDay()
+            Schema.Time.Precision.MICROS -> value.toMillisecondOfDay() * 1000L + (value.nanosecond / 1000) % 1000
+        }
+        is Schema.Struct -> {
+            val nestedSchema = this.toAvroSchema()
+            val nestedRecord = GenericData.Record(nestedSchema)
+            value.forEach { field -> nestedRecord.put(field.name, field.value.toAvroValue()) }
+            nestedRecord
+        }
+        is Schema.List -> value.map { it.toAvroValue() }
+        is Schema.Map -> value.mapValues { it.value.toAvroValue() }
+        is Schema.Optional -> value?.toAvroValue()
+        else -> value
+    }
+}
+
+private fun Schema.Struct.toAvroSchema(): AvroSchema {
+    val parser = AvroSchema.Parser()
+    val fields = value.joinToString(",") { field ->
+        """{"name": "${field.name}","type": ${toAvroType(field.value)}}"""
+    }
+    val schemaDefinition = """
+        {
+            "type": "record",
+            "name": "${value.joinToString("_") { it.name }}",
+            "namespace": "io.typestream.avro",
+            "fields": [${fields}]
+        }
+    """.trimIndent()
+    return parser.parse(schemaDefinition)
 }

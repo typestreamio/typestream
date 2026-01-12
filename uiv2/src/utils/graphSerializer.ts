@@ -6,8 +6,9 @@ import {
   StreamSourceNode,
   SinkNode,
   DataStreamProto,
+  GeoIpNode as GeoIpNodeProto,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = nodes.map((node) => {
@@ -35,6 +36,20 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           value: new SinkNode({
             output: new DataStreamProto({ path: fullPath }),
             // Encoding is propagated from source by the backend
+          }),
+        },
+      });
+    }
+
+    if (node.type === 'geoIp') {
+      const data = node.data as GeoIpNodeData;
+      return new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'geoIp',
+          value: new GeoIpNodeProto({
+            ipField: data.ipField,
+            outputField: data.outputField || 'country_code',
           }),
         },
       });

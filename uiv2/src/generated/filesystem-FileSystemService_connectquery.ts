@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { LsRequest, LsResponse, MountRequest, MountResponse, UnmountRequest, UnmountResponse } from "./filesystem_pb.js";
+import { GetSchemaRequest, GetSchemaResponse, LsRequest, LsResponse, MountRequest, MountResponse, UnmountRequest, UnmountResponse } from "./filesystem_pb.js";
 
 /**
  * @generated from rpc io.typestream.grpc.FileSystemService.Mount
@@ -43,6 +43,20 @@ export const ls = {
   kind: MethodKind.Unary,
   I: LsRequest,
   O: LsResponse,
+  service: {
+    typeName: "io.typestream.grpc.FileSystemService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.FileSystemService.GetSchema
+ */
+export const getSchema = {
+  localName: "getSchema",
+  name: "GetSchema",
+  kind: MethodKind.Unary,
+  I: GetSchemaRequest,
+  O: GetSchemaResponse,
   service: {
     typeName: "io.typestream.grpc.FileSystemService"
   }

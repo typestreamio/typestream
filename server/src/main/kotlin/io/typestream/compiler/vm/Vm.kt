@@ -8,12 +8,15 @@ import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.filesystem.FileSystem
+import io.typestream.geoip.GeoIpExecution
+import io.typestream.geoip.GeoIpService
 import io.typestream.graph.Graph
 import io.typestream.scheduler.KafkaStreamsJob
 import io.typestream.scheduler.Scheduler
 
 class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
     private val logger = KotlinLogging.logger {}
+    private val geoIpService = GeoIpService()
 
     fun exec(source: String, env: Env) {
         val (program, errors) = Compiler(Session(fileSystem, scheduler, env)).compile(source)
@@ -86,6 +89,8 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                     dataStreams.forEach { node.ref.fn(KeyValue(it, it)) }
                     dataStreams
                 }
+
+                is Node.GeoIp -> GeoIpExecution.applyToShell(node.ref, dataStreams, geoIpService)
 
                 is Node.ShellSource -> dataStreams
                 else -> error("unexpected node type: ${node.ref}")

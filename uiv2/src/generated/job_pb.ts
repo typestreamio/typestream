@@ -686,6 +686,53 @@ export class SinkNode extends Message<SinkNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.GeoIpNode
+ */
+export class GeoIpNode extends Message<GeoIpNode> {
+  /**
+   * Field containing IP address
+   *
+   * @generated from field: string ip_field = 1;
+   */
+  ipField = "";
+
+  /**
+   * Output field name (default: country_code)
+   *
+   * @generated from field: string output_field = 2;
+   */
+  outputField = "";
+
+  constructor(data?: PartialMessage<GeoIpNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GeoIpNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "ip_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "output_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GeoIpNode {
+    return new GeoIpNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GeoIpNode {
+    return new GeoIpNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GeoIpNode {
+    return new GeoIpNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GeoIpNode | PlainMessage<GeoIpNode> | undefined, b: GeoIpNode | PlainMessage<GeoIpNode> | undefined): boolean {
+    return proto3.util.equals(GeoIpNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -757,6 +804,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: SinkNode;
     case: "sink";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.GeoIpNode geo_ip = 12;
+     */
+    value: GeoIpNode;
+    case: "geoIp";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -778,6 +831,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 9, name: "stream_source", kind: "message", T: StreamSourceNode, oneof: "node_type" },
     { no: 10, name: "each", kind: "message", T: EachNode, oneof: "node_type" },
     { no: 11, name: "sink", kind: "message", T: SinkNode, oneof: "node_type" },
+    { no: 12, name: "geo_ip", kind: "message", T: GeoIpNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { LsRequest, LsResponse, MountRequest, MountResponse, UnmountRequest, UnmountResponse } from "./filesystem_pb.js";
+import { GetSchemaRequest, GetSchemaResponse, LsRequest, LsResponse, MountRequest, MountResponse, UnmountRequest, UnmountResponse } from "./filesystem_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -37,6 +37,15 @@ export const FileSystemService = {
       name: "Ls",
       I: LsRequest,
       O: LsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.FileSystemService.GetSchema
+     */
+    getSchema: {
+      name: "GetSchema",
+      I: GetSchemaRequest,
+      O: GetSchemaResponse,
       kind: MethodKind.Unary,
     },
   }

@@ -3,6 +3,7 @@ build
 out
 .idea
 .vscode
+.typestream/
 .typestream-history.txt
 /typestream
 /*.cast

@@ -2,6 +2,7 @@ package io.typestream.compiler
 
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
+import io.typestream.compiler.types.TypeRules
 import io.typestream.compiler.types.datastream.join
 import io.typestream.graph.Graph
 
@@ -36,6 +37,10 @@ object Infer {
             is Node.Count -> input ?: error("count ${ref.id} missing input stream")
             is Node.Each -> input ?: error("each ${ref.id} missing input stream")
             is Node.Sink -> input ?: error("sink ${ref.id} missing input stream")
+            is Node.GeoIp -> {
+                val stream = input ?: error("geoIp ${ref.id} missing input stream")
+                TypeRules.inferGeoIp(stream, ref.ipField, ref.outputField)
+            }
         }
 
         node.children.forEach { infer(it, output) }
