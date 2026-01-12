@@ -20,7 +20,7 @@ var unmountCmd = &cobra.Command{
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		res, err := client.Unmount(ctx, args[0])
 		if err != nil {
