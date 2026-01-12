@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation("com.squareup.wire:wire-schema:4.0.0")
     implementation("com.github.os72:protobuf-dynamic:1.0.1")
+    implementation("com.maxmind.geoip2:geoip2:4.2.0")
 
     testImplementation(project(":libs:testing"))
 
