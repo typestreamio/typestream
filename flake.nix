@@ -91,6 +91,7 @@
               kotlin
               docker-compose
               go
+              golangci-lint
               gcc
               pkg-config
               minikube
