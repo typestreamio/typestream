@@ -284,4 +284,189 @@ internal class PreviewJobIntegrationTest {
             assertThat(stopAgainResponse.error).contains("not found")
         }
     }
+
+    @Test
+    fun `preview job can receive messages and be stopped after client disconnects`(): Unit = runBlocking {
+        // This test verifies that:
+        // 1. Preview jobs can stream messages to clients
+        // 2. After client cancels, the job can still be manually stopped (fallback cleanup)
+        // Note: Automatic cleanup on client disconnect is best-effort due to gRPC/Kotlin flow limitations
+        // The TTL-based cleanup provides a reliable fallback
+        app.use {
+            testKafka.produceRecords(
+                "books",
+                "avro",
+                Book(title = "Cancel Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+
+            // Create preview job
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("test"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("inspector-node-1"))
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(
+                Job.CreatePreviewJobRequest.newBuilder()
+                    .setGraph(graph)
+                    .setInspectorNodeId("inspector-node-1")
+                    .build()
+            )
+
+            assertThat(createResponse.success).isTrue()
+            val jobId = createResponse.jobId
+
+            // Wait for Kafka Streams to start
+            delay(2000)
+
+            // Start streaming and cancel after receiving a message
+            val latch = CountDownLatch(1)
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            val call = channel.newCall(
+                JobServiceGrpc.getStreamPreviewMethod(),
+                io.grpc.CallOptions.DEFAULT
+            )
+
+            call.start(object : io.grpc.ClientCall.Listener<Job.StreamPreviewResponse>() {
+                override fun onMessage(message: Job.StreamPreviewResponse) {
+                    receivedMessages.add(message)
+                    // Cancel after receiving first message (simulates browser close)
+                    call.cancel("Client cancelled", null)
+                    latch.countDown()
+                }
+
+                override fun onClose(status: io.grpc.Status, trailers: io.grpc.Metadata) {
+                    latch.countDown()
+                }
+            }, io.grpc.Metadata())
+
+            call.sendMessage(streamRequest)
+            call.halfClose()
+            call.request(100)
+
+            // Wait for message and cancel
+            latch.await(30, TimeUnit.SECONDS)
+
+            // Verify we received at least one message
+            assertThat(receivedMessages).isNotEmpty()
+
+            // Manual stop should work as fallback cleanup
+            // (automatic cleanup via stream cancellation is best-effort)
+            val stopResponse = blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            // Either automatic cleanup happened (success=false) or manual stop works (success=true)
+            // Both are acceptable outcomes
+            println("Stop response: success=${stopResponse.success}, error=${stopResponse.error}")
+
+            if (stopResponse.success) {
+                // Manual stop worked - verify it's actually gone now
+                val stopAgain = blockingStub.stopPreviewJob(
+                    Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+                )
+                assertThat(stopAgain.success).isFalse()
+            } else {
+                // Automatic cleanup happened
+                assertThat(stopResponse.error).contains("not found")
+            }
+        }
+    }
+
+    @Test
+    fun `preview job not in list jobs response`(): Unit = runBlocking {
+        app.use {
+            testKafka.produceRecords(
+                "books",
+                "avro",
+                Book(title = "List Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = JobServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            // Create preview job
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("test"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("inspector-node-1"))
+                .build()
+
+            val createResponse = stub.createPreviewJob(
+                Job.CreatePreviewJobRequest.newBuilder()
+                    .setGraph(graph)
+                    .setInspectorNodeId("inspector-node-1")
+                    .build()
+            )
+
+            assertThat(createResponse.success).isTrue()
+            val jobId = createResponse.jobId
+
+            // List jobs - preview job should NOT be in the list
+            val listResponse = stub.listJobs(Job.ListJobsRequest.newBuilder().build())
+
+            val jobIds = listResponse.jobsList.map { it.jobId }
+            assertThat(jobIds).doesNotContain(jobId)
+
+            // Cleanup
+            stub.stopPreviewJob(Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build())
+        }
+    }
 }

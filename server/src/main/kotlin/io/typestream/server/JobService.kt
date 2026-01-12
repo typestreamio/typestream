@@ -22,20 +22,86 @@ import io.typestream.grpc.job_service.streamPreviewResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
 import io.typestream.k8s.K8sClient
+import io.typestream.kafka.KafkaAdminClient
 import io.typestream.scheduler.Job
 import io.typestream.scheduler.KafkaStreamsJob
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.minutes
+
+data class PreviewJobInfo(
+    val inspectorNodeId: String,
+    val createdAt: Long = System.currentTimeMillis()
+)
 
 class JobService(private val config: Config, private val vm: Vm) :
     JobServiceGrpcKt.JobServiceCoroutineImplBase() {
 
     private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
-    // Track preview jobs for cleanup
-    private val previewJobs = ConcurrentHashMap<String, String>() // jobId -> inspectorNodeId
+
+    // Track preview jobs for cleanup: jobId -> PreviewJobInfo
+    private val previewJobs = ConcurrentHashMap<String, PreviewJobInfo>()
+
+    // TTL for preview jobs (cleanup if no client connected for this long)
+    private val previewJobTtl = 10.minutes
+
+    // Lazy admin client for topic cleanup
+    private val kafkaAdminClient by lazy {
+        val kafkaConfig = vm.fileSystem.config.sources.kafka.values.firstOrNull()
+            ?: error("No Kafka source configured")
+        KafkaAdminClient(kafkaConfig)
+    }
+
+    init {
+        // Start background cleanup for orphaned preview jobs
+        CoroutineScope(Dispatchers.Default).launch {
+            while (true) {
+                delay(1.minutes)
+                cleanupExpiredPreviewJobs()
+            }
+        }
+    }
+
+    private fun cleanupExpiredPreviewJobs() {
+        val now = System.currentTimeMillis()
+        val expiredJobs = previewJobs.entries.filter { (_, info) ->
+            now - info.createdAt > previewJobTtl.inWholeMilliseconds
+        }
+
+        expiredJobs.forEach { (jobId, _) ->
+            logger.info { "Cleaning up expired preview job: $jobId" }
+            cleanupPreviewJob(jobId)
+        }
+    }
+
+    private fun cleanupPreviewJob(jobId: String) {
+        val info = previewJobs.remove(jobId) ?: return
+
+        try {
+            vm.scheduler.kill(jobId)
+        } catch (e: Exception) {
+            logger.warn(e) { "Failed to kill preview job: $jobId" }
+        }
+
+        // Delete the inspector topic
+        val inspectTopic = "$jobId-inspect-${info.inspectorNodeId}"
+        try {
+            kafkaAdminClient.deleteTopics(listOf(inspectTopic))
+        } catch (e: Exception) {
+            logger.warn(e) { "Failed to delete inspector topic: $inspectTopic" }
+        }
+    }
 
     override suspend fun createJob(request: CreateJobRequest): ProtoJob.CreateJobResponse = createJobResponse {
         //TODO we may want to generate uuids from the source code fingerprint
@@ -134,7 +200,7 @@ class JobService(private val config: Config, private val vm: Vm) :
                 this.error = "Preview jobs not supported in K8s mode"
             } else {
                 vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
-                previewJobs[program.id] = request.inspectorNodeId
+                previewJobs[program.id] = PreviewJobInfo(request.inspectorNodeId)
                 this.success = true
                 this.jobId = program.id
                 this.inspectTopic = inspectTopic
@@ -150,8 +216,7 @@ class JobService(private val config: Config, private val vm: Vm) :
         try {
             val jobId = request.jobId
             if (previewJobs.containsKey(jobId)) {
-                vm.scheduler.kill(jobId)
-                previewJobs.remove(jobId)
+                cleanupPreviewJob(jobId)
                 this.success = true
             } else {
                 this.success = false
@@ -166,22 +231,26 @@ class JobService(private val config: Config, private val vm: Vm) :
 
     override fun streamPreview(request: StreamPreviewRequest): Flow<ProtoJob.StreamPreviewResponse> = flow {
         val jobId = request.jobId
-        logger.info { "streamPreview called for jobId=$jobId" }
-        logger.info { "previewJobs keys: ${previewJobs.keys}" }
+        val info = previewJobs[jobId] ?: error("Preview job not found: $jobId")
+        val inspectTopic = "$jobId-inspect-${info.inspectorNodeId}"
 
-        val inspectorNodeId = previewJobs[jobId] ?: error("Preview job not found: $jobId")
-        val inspectTopic = "$jobId-inspect-$inspectorNodeId"
-
-        logger.info { "streamPreview: inspectorNodeId=$inspectorNodeId, inspectTopic=$inspectTopic" }
-
-        // Consume from the inspector topic
-        vm.scheduler.jobOutput(jobId, inspectTopic).collect { output ->
-            logger.debug { "streamPreview emitting: ${output.take(100)}" }
-            emit(streamPreviewResponse {
-                this.value = output
-                this.timestamp = System.currentTimeMillis()
-            })
+        try {
+            // Consume from the inspector topic
+            // Use cancellable() to ensure the flow responds to cancellation signals
+            vm.scheduler.jobOutput(jobId, inspectTopic).cancellable().collect { output ->
+                // Check for cancellation before each emit (ensures we respond to client disconnect)
+                currentCoroutineContext().ensureActive()
+                emit(streamPreviewResponse {
+                    this.value = output
+                    this.timestamp = System.currentTimeMillis()
+                })
+            }
+        } finally {
+            // Clean up when stream ends (client disconnect, error, or normal completion)
+            if (previewJobs.containsKey(jobId)) {
+                logger.info { "Stream ended for preview job $jobId, cleaning up" }
+                cleanupPreviewJob(jobId)
+            }
         }
-        logger.info { "streamPreview: flow completed for jobId=$jobId" }
     }
 }

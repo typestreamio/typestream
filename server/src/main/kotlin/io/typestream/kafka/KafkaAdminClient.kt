@@ -41,4 +41,9 @@ class KafkaAdminClient(kafkaConfig: KafkaConfig) {
     fun consumerGroupIds() = kafkaAdminClient.listConsumerGroups().all().get().map { it.groupId() }.toSet()
 
     fun brokerIds() = kafkaAdminClient.describeCluster().nodes().get().map { it.idString() }.toSet()
+
+    fun deleteTopics(topics: Collection<String>) {
+        logger.info { "deleting topics: $topics" }
+        kafkaAdminClient.deleteTopics(topics).all().get()
+    }
 }
