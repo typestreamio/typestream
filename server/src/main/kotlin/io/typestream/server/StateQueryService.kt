@@ -17,6 +17,7 @@ import io.typestream.grpc.state_query_service.keyValuePair
 import io.typestream.grpc.state_query_service.listStoresResponse
 import io.typestream.grpc.state_query_service.storeInfo
 import io.typestream.scheduler.KafkaStreamsJob
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.apache.kafka.streams.KafkaStreams
@@ -31,6 +32,16 @@ import org.apache.kafka.streams.state.QueryableStoreTypes
  *
  * Note: State stores are only queryable when the underlying Kafka Streams application is in RUNNING state.
  * Stores from jobs that are rebalancing, starting, or stopped will not be accessible.
+ *
+ * ## Key Serialization
+ *
+ * Keys returned by [getAllValues] are JSON-serialized representations of the key's schema.
+ * For example:
+ * - A string key "hello" is serialized as `"hello"` (JSON string with quotes)
+ * - A struct key is serialized as `{"field": "value"}` (JSON object)
+ *
+ * The [getValue] endpoint currently only supports simple string keys. For complex keys
+ * (structs, lists, etc.), use [getAllValues] with appropriate filtering on the client side.
  *
  * @param vm The virtual machine instance providing access to the scheduler and running jobs
  */
@@ -87,8 +98,12 @@ class StateQueryService(private val vm: Vm) :
      * Note: The `from_key` field in the request is reserved for future pagination support
      * but is not currently implemented. All queries start from the beginning of the store.
      *
+     * Keys are serialized as JSON strings. The exact format depends on the key's schema type:
+     * - Primitive types (string, int, long): JSON primitive
+     * - Struct types: JSON object with field names and values
+     *
      * @param request Request containing the store name and optional limit
-     * @return Flow of key-value pairs where keys and values are JSON-serialized strings
+     * @return Flow of key-value pairs where keys are JSON-serialized and values are string representations
      * @throws StatusException with NOT_FOUND if the store doesn't exist or isn't queryable
      * @throws StatusException with UNAVAILABLE if the store exists but job isn't in RUNNING state
      * @throws StatusException with INTERNAL if an error occurs during iteration
@@ -119,18 +134,26 @@ class StateQueryService(private val vm: Vm) :
 
             store.all().use { iterator ->
                 var count = 0
-                while (iterator.hasNext() && count < limit) {
-                    val kv = iterator.next()
-                    emit(keyValuePair {
-                        // Serialize key using schema's JSON representation
-                        key = kv.key.schema.toJsonElement().toString()
-                        // Value is a Long from count operations
-                        value = kv.value.toString()
-                    })
-                    count++
+                try {
+                    while (iterator.hasNext() && count < limit) {
+                        val kv = iterator.next()
+                        emit(keyValuePair {
+                            // Serialize key using schema's JSON representation
+                            key = kv.key.schema.toJsonElement().toString()
+                            // Value is a Long from count operations
+                            value = kv.value.toString()
+                        })
+                        count++
+                    }
+                } catch (e: CancellationException) {
+                    // Flow was cancelled (e.g., client disconnect) - iterator will be closed by .use
+                    logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
+                    throw e
                 }
             }
         } catch (e: StatusException) {
+            throw e
+        } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             logger.error(e) { "Error querying store $storeName" }
@@ -140,6 +163,11 @@ class StateQueryService(private val vm: Vm) :
 
     /**
      * Retrieves a single value from a state store by key.
+     *
+     * **Important Limitation**: This method currently only supports simple string keys.
+     * The provided key string is used directly to construct a DataStream with Schema.String.
+     * For stores with complex keys (structs, etc.), this method may not find matching entries.
+     * Use [getAllValues] instead for stores with complex key types.
      *
      * @param request Request containing the store name and key to look up
      * @return Response indicating whether the key was found and its value (as a string)
@@ -171,7 +199,9 @@ class StateQueryService(private val vm: Vm) :
                 )
             )
 
-            // Create a DataStream key from the string
+            // Note: This only works for string keys. The keyStr is wrapped in Schema.String,
+            // so it won't match stores with struct or other complex key types.
+            // For complex keys, clients should use getAllValues and filter client-side.
             val key = DataStream.fromString("", keyStr)
             val result = store.get(key)
 
