@@ -32,6 +32,28 @@ var devStopCmd = &cobra.Command{
 	},
 }
 
+var devCleanCmd = &cobra.Command{
+	Use:   "clean",
+	Short: "Stop services and remove all data volumes",
+	Long: `Stops all development services and removes Docker volumes.
+This will delete all Kafka topics, schemas, and any other persisted data.
+Use this for a completely fresh start.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Info("Stopping services and removing volumes")
+		runner := compose.NewDevRunner()
+		go func() {
+			for m := range runner.StdOut {
+				log.Info(m)
+			}
+		}()
+		err := runner.RunCommand("down", "--volumes", "--remove-orphans")
+		if err != nil {
+			log.Fatalf("Failed to clean dev services: %v", err)
+		}
+		log.Info("Development services stopped and volumes removed")
+	},
+}
+
 var devCmd = &cobra.Command{
 	Use:   "dev",
 	Short: "Start TypeStream in development mode (dependencies only)",
@@ -79,7 +101,7 @@ To stop dev services: ./typestream local dev stop`,
 			}
 		}()
 
-		err := runner.RunCommand("up", "--detach", "--wait", "--force-recreate", "--remove-orphans")
+		err := runner.RunCommand("up", "--detach", "--wait", "--force-recreate", "--remove-orphans", "--build")
 		if err != nil {
 			log.Fatalf("Failed to run docker compose: %v", err)
 		}
@@ -101,5 +123,6 @@ To stop dev services: ./typestream local dev stop`,
 
 func init() {
 	devCmd.AddCommand(devStopCmd)
+	devCmd.AddCommand(devCleanCmd)
 	localCmd.AddCommand(devCmd)
 }
