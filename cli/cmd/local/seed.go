@@ -49,7 +49,7 @@ var seedCmd = &cobra.Command{
 			log.Fatalf("💥 failed to read image pull output: %v", err)
 		}
 
-		defer out.Close()
+		defer func() { _ = out.Close() }()
 		log.Info("⛽ starting seeding process")
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
