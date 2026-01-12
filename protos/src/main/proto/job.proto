@@ -84,6 +84,11 @@ message SinkNode {
   Encoding encoding = 2;
 }
 
+message GeoIpNode {
+  string ip_field = 1;      // Field containing IP address
+  string output_field = 2;  // Output field name (default: country_code)
+}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
