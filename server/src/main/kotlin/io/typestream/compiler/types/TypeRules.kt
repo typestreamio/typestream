@@ -1,5 +1,6 @@
 package io.typestream.compiler.types
 
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
 
 /**
