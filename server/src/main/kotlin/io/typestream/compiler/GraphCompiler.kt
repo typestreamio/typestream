@@ -204,6 +204,13 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         val out = io.typestream.compiler.types.TypeRules.inferShellSource(dataStreams)
         out to Encoding.JSON
       }
+      proto.hasGeoIp() -> {
+        val out = io.typestream.compiler.types.TypeRules.inferGeoIp(
+          input ?: error("geoIp $nodeId missing input"),
+          proto.geoIp.outputField
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
       else -> error("Unknown node type: $nodeId")
     }
 
