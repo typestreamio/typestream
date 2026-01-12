@@ -2,6 +2,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import InputIcon from '@mui/icons-material/Input';
 import OutputIcon from '@mui/icons-material/Output';
+import PublicIcon from '@mui/icons-material/Public';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
