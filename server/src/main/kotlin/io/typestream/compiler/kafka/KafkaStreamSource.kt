@@ -31,7 +31,7 @@ import java.time.Duration
 data class KafkaStreamSource(
     val node: Node.StreamSource,
     private val streamsBuilder: StreamsBuilderWrapper,
-    private val geoIpService: GeoIpService = GeoIpService()
+    private val geoIpService: GeoIpService
 ) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null

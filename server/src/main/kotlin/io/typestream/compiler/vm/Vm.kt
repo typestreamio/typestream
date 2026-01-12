@@ -30,7 +30,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
 
                 logger.info { "starting kafka streams job for ${program.id}" }
 
-                KafkaStreamsJob(program.id, program, kafkaConfig).start()
+                KafkaStreamsJob(program.id, program, kafkaConfig, geoIpService).start()
             }
 
             SHELL -> {
@@ -59,7 +59,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                 val kafkaConfig = fileSystem.config.sources.kafka[runtime.name]
                     ?: error("cluster ${runtime.name} not found")
 
-                scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig))
+                scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig, geoIpService))
                 val stdOut = if (!program.hasMoreOutput()) "running ${program.id} in the background" else ""
                 VmResult(program, ProgramOutput(stdOut, ""))
             }
