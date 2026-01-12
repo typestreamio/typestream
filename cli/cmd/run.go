@@ -36,7 +36,7 @@ var runCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
 
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		source := readFile(args[0])
 
