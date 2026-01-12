@@ -1,28 +1,41 @@
 name: cli-lint
+
 on:
   push:
     branches: [main]
     paths:
       - 'cli/**'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/cli-lint.yml'
   pull_request:
     branches: [main]
     paths:
       - 'cli/**'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/cli-lint.yml'
+
 permissions:
   contents: read
+
 jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
         with:
-          go-version: 1.20.1
-      - uses: actions/checkout@v3
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: latest
-          working-directory: cli
+        working-directory: cli
+        run: nix develop --command golangci-lint run

@@ -7,6 +7,8 @@ on:
       - 'uiv2/**'
       - 'docs/**'
       - 'protos/**'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/frontend-check.yml'
   pull_request:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - 'uiv2/**'
       - 'docs/**'
       - 'protos/**'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/frontend-check.yml'
 
 jobs:
@@ -21,36 +25,52 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
         with:
-          node-version: '22'
-      - name: Enable Corepack
-        run: corepack enable
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
       - name: Install dependencies
         working-directory: uiv2
-        run: pnpm install
+        run: nix develop --command pnpm install
+
       - name: Lint
         working-directory: uiv2
-        run: pnpm lint
+        run: nix develop --command pnpm lint
+
       - name: Build
         working-directory: uiv2
-        run: pnpm build
+        run: nix develop --command pnpm build
 
   docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
         with:
-          node-version: '22'
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
       - name: Install dependencies
         working-directory: docs
-        run: npm ci
+        run: nix develop --command npm ci
+
       - name: Type check
         working-directory: docs
-        run: npm run typecheck
+        run: nix develop --command npm run typecheck
+
       - name: Build
         working-directory: docs
-        run: npm run build
+        run: nix develop --command npm run build
