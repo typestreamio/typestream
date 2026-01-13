@@ -15,6 +15,7 @@ services:
     working_dir: /app
     volumes:
       - ${TYPESTREAM_PROJECT_ROOT:-.}/uiv2:/app
+      - ${TYPESTREAM_PROJECT_ROOT:-.}/protos:/protos:ro
       - uiv2_node_modules:/app/node_modules
     ports:
       - "5173:5173"
