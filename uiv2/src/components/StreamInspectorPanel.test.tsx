@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createElement } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { TransportProvider } from '@connectrpc/connect-query';
+import type { Transport } from '@connectrpc/connect';
 import { StreamInspectorPanel } from './StreamInspectorPanel';
 
 // Track calls to startPreview and stopPreview
@@ -37,8 +38,7 @@ vi.mock('@xyflow/react', async () => {
 });
 
 describe('StreamInspectorPanel', () => {
-  // Use unknown type to avoid explicit any, then cast when needed
-  const mockTransport = {} as unknown;
+  const mockTransport = {} as Transport;
   const mockOnClose = vi.fn();
 
   const renderPanel = (open = true) => {

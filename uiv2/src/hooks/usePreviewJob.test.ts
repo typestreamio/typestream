@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 import { TransportProvider } from '@connectrpc/connect-query';
+import type { Transport } from '@connectrpc/connect';
 import { usePreviewJob } from './usePreviewJob';
 import { PipelineGraph } from '../generated/job_pb';
 
@@ -19,8 +20,7 @@ vi.mock('@connectrpc/connect', () => ({
 }));
 
 describe('usePreviewJob', () => {
-  // Use unknown type to avoid explicit any, then cast when needed
-  const mockTransport = {} as unknown;
+  const mockTransport = {} as Transport;
 
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     createElement(TransportProvider, { transport: mockTransport }, children);
