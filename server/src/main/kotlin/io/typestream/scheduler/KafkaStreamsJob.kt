@@ -55,6 +55,7 @@ class KafkaStreamsJob(
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)
+                    is Node.Inspector -> kafkaStreamSource.toInspector(currentNode.ref, program.id)
                     is Node.ShellSource -> error("cannot resolve ShellSource node")
                 }
             }
@@ -63,13 +64,16 @@ class KafkaStreamsJob(
         return streamsBuilder.build()
     }
 
-    override fun output() = flow {
-        // we retry here because we may be trying to get output before the job has started
+    override fun output() = output("${program.id}-stdout")
+
+    fun output(topic: String) = flow {
+        // Retry until job is running (may be starting up)
         retry {
             require(isRunning()) { "cannot get output of a non-running job" }
         }
-        val consumer = KafkaConsumer<DataStream, DataStream>(consumerProps())
-        consumer.subscribe(listOf("${program.id}-stdout"))
+
+        val consumer = KafkaConsumer<DataStream, DataStream>(consumerProps(topic))
+        consumer.subscribe(listOf(topic))
 
         while (isRunning()) {
             val records = consumer.poll(1.seconds.toJavaDuration())
@@ -119,10 +123,10 @@ class KafkaStreamsJob(
         return props
     }
 
-    private fun consumerProps(): Properties {
+    private fun consumerProps(topic: String): Properties {
         val props = Properties()
         props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaConfig.bootstrapServers
-        props[ConsumerConfig.GROUP_ID_CONFIG] = "${program.id}-stdout-consumer"
+        props[ConsumerConfig.GROUP_ID_CONFIG] = "$topic-consumer"
         props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = DataStreamSerde::class.java
         props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = DataStreamSerde::class.java
         props[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"

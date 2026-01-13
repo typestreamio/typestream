@@ -94,7 +94,12 @@ class KafkaClusterDirectory(
 
     private fun refreshTopicsDir() {
         logger.info { "$name topics refresh" }
-        topicsDir.replaceAll(kafkaAdminClient.topicNames().filterNot { it.startsWith("typestream-app-") }
+        topicsDir.replaceAll(kafkaAdminClient.topicNames()
+            .filterNot {
+                it.startsWith("typestream-app-") ||
+                it.contains("-inspect-") ||
+                it.endsWith("-stdout")  // Filter preview job output topics
+            }
             .map { t -> Topic(t, kafkaAdminClient) })
     }
 

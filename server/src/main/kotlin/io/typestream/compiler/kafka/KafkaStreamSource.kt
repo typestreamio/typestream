@@ -142,4 +142,10 @@ data class KafkaStreamSource(
     fun geoIp(geoIp: Node.GeoIp) {
         stream = GeoIpExecution.applyToKafka(geoIp, stream, geoIpService)
     }
+
+    fun toInspector(inspector: Node.Inspector, programId: String) {
+        // Write to an inspector topic for preview consumption
+        val inspectTopic = "$programId-inspect-${inspector.id}"
+        stream.to(inspectTopic)
+    }
 }

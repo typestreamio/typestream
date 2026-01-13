@@ -104,6 +104,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       Node.Sink(proto.id, out, encoding)
     }
     proto.hasGeoIp() -> GeoIpNodeHandler.fromProto(proto)
+    proto.hasInspector() -> {
+      Node.Inspector(proto.id, proto.inspector.label)
+    }
     else -> error("Unknown node type: $proto")
   }
 
@@ -208,6 +211,11 @@ class GraphCompiler(private val fileSystem: FileSystem) {
           proto.geoIp.ipField,
           proto.geoIp.outputField
         )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasInspector() -> {
+        // Inspector passes through input unchanged
+        val out = input ?: error("inspector $nodeId missing input")
         out to (inputEncoding ?: Encoding.AVRO)
       }
       else -> error("Unknown node type: $nodeId")

@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, ListJobsRequest, ListJobsResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, ListJobsRequest, ListJobsResponse, StopPreviewJobRequest, StopPreviewJobResponse } from "./job_pb.js";
 
 /**
  * @generated from rpc io.typestream.grpc.JobService.CreateJob
@@ -43,6 +43,34 @@ export const listJobs = {
   kind: MethodKind.Unary,
   I: ListJobsRequest,
   O: ListJobsResponse,
+  service: {
+    typeName: "io.typestream.grpc.JobService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.JobService.CreatePreviewJob
+ */
+export const createPreviewJob = {
+  localName: "createPreviewJob",
+  name: "CreatePreviewJob",
+  kind: MethodKind.Unary,
+  I: CreatePreviewJobRequest,
+  O: CreatePreviewJobResponse,
+  service: {
+    typeName: "io.typestream.grpc.JobService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.JobService.StopPreviewJob
+ */
+export const stopPreviewJob = {
+  localName: "stopPreviewJob",
+  name: "StopPreviewJob",
+  kind: MethodKind.Unary,
+  I: StopPreviewJobRequest,
+  O: StopPreviewJobResponse,
   service: {
     typeName: "io.typestream.grpc.JobService"
   }

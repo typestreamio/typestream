@@ -733,6 +733,45 @@ export class GeoIpNode extends Message<GeoIpNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.InspectorNode
+ */
+export class InspectorNode extends Message<InspectorNode> {
+  /**
+   * Optional label for the inspector
+   *
+   * @generated from field: string label = 1;
+   */
+  label = "";
+
+  constructor(data?: PartialMessage<InspectorNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.InspectorNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InspectorNode {
+    return new InspectorNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InspectorNode {
+    return new InspectorNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InspectorNode {
+    return new InspectorNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InspectorNode | PlainMessage<InspectorNode> | undefined, b: InspectorNode | PlainMessage<InspectorNode> | undefined): boolean {
+    return proto3.util.equals(InspectorNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -810,6 +849,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: GeoIpNode;
     case: "geoIp";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.InspectorNode inspector = 13;
+     */
+    value: InspectorNode;
+    case: "inspector";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -832,6 +877,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 10, name: "each", kind: "message", T: EachNode, oneof: "node_type" },
     { no: 11, name: "sink", kind: "message", T: SinkNode, oneof: "node_type" },
     { no: 12, name: "geo_ip", kind: "message", T: GeoIpNode, oneof: "node_type" },
+    { no: 13, name: "inspector", kind: "message", T: InspectorNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {
@@ -1110,6 +1156,276 @@ export class ListJobsResponse extends Message<ListJobsResponse> {
 
   static equals(a: ListJobsResponse | PlainMessage<ListJobsResponse> | undefined, b: ListJobsResponse | PlainMessage<ListJobsResponse> | undefined): boolean {
     return proto3.util.equals(ListJobsResponse, a, b);
+  }
+}
+
+/**
+ * Preview job messages
+ *
+ * @generated from message io.typestream.grpc.CreatePreviewJobRequest
+ */
+export class CreatePreviewJobRequest extends Message<CreatePreviewJobRequest> {
+  /**
+   * @generated from field: io.typestream.grpc.PipelineGraph graph = 1;
+   */
+  graph?: PipelineGraph;
+
+  /**
+   * Which inspector node triggered this
+   *
+   * @generated from field: string inspector_node_id = 2;
+   */
+  inspectorNodeId = "";
+
+  constructor(data?: PartialMessage<CreatePreviewJobRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreatePreviewJobRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 2, name: "inspector_node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePreviewJobRequest {
+    return new CreatePreviewJobRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePreviewJobRequest {
+    return new CreatePreviewJobRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePreviewJobRequest {
+    return new CreatePreviewJobRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreatePreviewJobRequest | PlainMessage<CreatePreviewJobRequest> | undefined, b: CreatePreviewJobRequest | PlainMessage<CreatePreviewJobRequest> | undefined): boolean {
+    return proto3.util.equals(CreatePreviewJobRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.CreatePreviewJobResponse
+ */
+export class CreatePreviewJobResponse extends Message<CreatePreviewJobResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string job_id = 2;
+   */
+  jobId = "";
+
+  /**
+   * Topic to consume for preview data
+   *
+   * @generated from field: string inspect_topic = 3;
+   */
+  inspectTopic = "";
+
+  /**
+   * @generated from field: string error = 4;
+   */
+  error = "";
+
+  constructor(data?: PartialMessage<CreatePreviewJobResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreatePreviewJobResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "job_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "inspect_topic", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePreviewJobResponse {
+    return new CreatePreviewJobResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePreviewJobResponse {
+    return new CreatePreviewJobResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePreviewJobResponse {
+    return new CreatePreviewJobResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreatePreviewJobResponse | PlainMessage<CreatePreviewJobResponse> | undefined, b: CreatePreviewJobResponse | PlainMessage<CreatePreviewJobResponse> | undefined): boolean {
+    return proto3.util.equals(CreatePreviewJobResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.StopPreviewJobRequest
+ */
+export class StopPreviewJobRequest extends Message<StopPreviewJobRequest> {
+  /**
+   * @generated from field: string job_id = 1;
+   */
+  jobId = "";
+
+  constructor(data?: PartialMessage<StopPreviewJobRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.StopPreviewJobRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "job_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopPreviewJobRequest {
+    return new StopPreviewJobRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopPreviewJobRequest {
+    return new StopPreviewJobRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopPreviewJobRequest {
+    return new StopPreviewJobRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopPreviewJobRequest | PlainMessage<StopPreviewJobRequest> | undefined, b: StopPreviewJobRequest | PlainMessage<StopPreviewJobRequest> | undefined): boolean {
+    return proto3.util.equals(StopPreviewJobRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.StopPreviewJobResponse
+ */
+export class StopPreviewJobResponse extends Message<StopPreviewJobResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  constructor(data?: PartialMessage<StopPreviewJobResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.StopPreviewJobResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopPreviewJobResponse {
+    return new StopPreviewJobResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopPreviewJobResponse {
+    return new StopPreviewJobResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopPreviewJobResponse {
+    return new StopPreviewJobResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopPreviewJobResponse | PlainMessage<StopPreviewJobResponse> | undefined, b: StopPreviewJobResponse | PlainMessage<StopPreviewJobResponse> | undefined): boolean {
+    return proto3.util.equals(StopPreviewJobResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.StreamPreviewRequest
+ */
+export class StreamPreviewRequest extends Message<StreamPreviewRequest> {
+  /**
+   * @generated from field: string job_id = 1;
+   */
+  jobId = "";
+
+  constructor(data?: PartialMessage<StreamPreviewRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.StreamPreviewRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "job_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamPreviewRequest {
+    return new StreamPreviewRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamPreviewRequest {
+    return new StreamPreviewRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamPreviewRequest {
+    return new StreamPreviewRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StreamPreviewRequest | PlainMessage<StreamPreviewRequest> | undefined, b: StreamPreviewRequest | PlainMessage<StreamPreviewRequest> | undefined): boolean {
+    return proto3.util.equals(StreamPreviewRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.StreamPreviewResponse
+ */
+export class StreamPreviewResponse extends Message<StreamPreviewResponse> {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key = "";
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value = "";
+
+  /**
+   * @generated from field: int64 timestamp = 3;
+   */
+  timestamp = protoInt64.zero;
+
+  constructor(data?: PartialMessage<StreamPreviewResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.StreamPreviewResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "timestamp", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamPreviewResponse {
+    return new StreamPreviewResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamPreviewResponse {
+    return new StreamPreviewResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamPreviewResponse {
+    return new StreamPreviewResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StreamPreviewResponse | PlainMessage<StreamPreviewResponse> | undefined, b: StreamPreviewResponse | PlainMessage<StreamPreviewResponse> | undefined): boolean {
+    return proto3.util.equals(StreamPreviewResponse, a, b);
   }
 }
 

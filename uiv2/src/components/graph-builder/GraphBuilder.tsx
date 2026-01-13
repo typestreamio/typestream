@@ -59,9 +59,12 @@ export function GraphBuilder() {
         data = { topicName: '' };
       } else if (type === 'geoIp') {
         data = { ipField: '', outputField: 'country_code' };
+      } else if (type === 'inspector') {
+        data = { label: '' };
       } else {
         data = { topicPath: '' };
       }
+
       const newNode: AppNode = {
         id: getId(),
         type,
