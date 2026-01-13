@@ -113,12 +113,12 @@ internal class AvroExtKtTest {
         assertThat(avroRecord.get("stringField")).isEqualTo("5")
 
         // Verify temporal fields are converted to correct primitive types (the actual fix)
-        assertThat(avroRecord.get("dateField")).isInstanceOf(java.lang.Integer::class.java)
-        assertThat(avroRecord.get("timestampMillisField")).isInstanceOf(java.lang.Long::class.java)
-        assertThat(avroRecord.get("timestampMicrosField")).isInstanceOf(java.lang.Long::class.java)
-        assertThat(avroRecord.get("localTimestampMillisField")).isInstanceOf(java.lang.Long::class.java)
-        assertThat(avroRecord.get("localTimestampMicrosField")).isInstanceOf(java.lang.Long::class.java)
-        assertThat(avroRecord.get("timeMillisField")).isInstanceOf(java.lang.Integer::class.java)
-        assertThat(avroRecord.get("timeMicrosField")).isInstanceOf(java.lang.Long::class.java)
+        assertThat(avroRecord.get("dateField")).isInstanceOf(Int::class.javaObjectType)
+        assertThat(avroRecord.get("timestampMillisField")).isInstanceOf(Long::class.javaObjectType)
+        assertThat(avroRecord.get("timestampMicrosField")).isInstanceOf(Long::class.javaObjectType)
+        assertThat(avroRecord.get("localTimestampMillisField")).isInstanceOf(Long::class.javaObjectType)
+        assertThat(avroRecord.get("localTimestampMicrosField")).isInstanceOf(Long::class.javaObjectType)
+        assertThat(avroRecord.get("timeMillisField")).isInstanceOf(Int::class.javaObjectType)
+        assertThat(avroRecord.get("timeMicrosField")).isInstanceOf(Long::class.javaObjectType)
     }
 }
