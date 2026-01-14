@@ -1,0 +1,7 @@
+FROM quay.io/debezium/connect:3.4
+
+# Debezium 3.4 includes:
+# - PostgresConnector for CDC
+# - JdbcSinkConnector for database sinks
+# - PostgreSQL JDBC driver
+# No additional plugins needed for the MVP

@@ -111,3 +111,48 @@ services:
       - typestream_network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: typestream
+      POSTGRES_PASSWORD: typestream
+      POSTGRES_DB: demo
+    volumes:
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - typestream_network
+    command: ["postgres", "-c", "wal_level=logical"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U typestream -d demo"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+  kafka-connect:
+    build:
+      context: .
+      dockerfile: Dockerfile.kafka-connect
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: redpanda:9092
+      GROUP_ID: typestream-connect
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "true"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+    networks:
+      - typestream_network
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
