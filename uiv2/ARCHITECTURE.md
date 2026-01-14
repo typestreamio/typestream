@@ -64,16 +64,7 @@ The UI communicates with the TypeStream server via gRPC using the Connect Protoc
 
 ### Real-time Job Updates
 
-The `useWatchJobs` hook establishes a server-streaming connection for real-time job state updates. When job state changes on the server (STARTING → RUNNING → STOPPED), updates are pushed immediately via gRPC streaming.
-
-To maintain consistency across components, `useWatchJobs` syncs stream updates to React Query's cache. This allows `useListJobs` (used by `JobDetailPage`) to see the same real-time data without needing its own stream connection.
-
-```
-Server stream → useWatchJobs → setJobs(local state)
-                            → queryClient.setQueryData (React Query cache)
-                                         ↓
-                            useListJobs reads from cache
-```
+The `useWatchJobs` hook establishes a server-streaming connection for real-time job state updates. When job state changes on the server (STARTING → RUNNING → STOPPED), updates are pushed immediately via gRPC streaming. Both `JobsPage` and `JobDetailPage` use this hook directly for consistent real-time data.
 
 ## Data Flow
 
@@ -107,8 +98,7 @@ Run `buf generate` to regenerate after proto changes.
 | `src/App.tsx` | Router setup |
 | `src/providers/QueryProvider.tsx` | Root provider chain |
 | `src/services/transport.ts` | gRPC transport config (localhost:8080) |
-| `src/hooks/useWatchJobs.ts` | Real-time job streaming + React Query sync |
-| `src/hooks/useListJobs.ts` | Query-based job fetching |
+| `src/hooks/useWatchJobs.ts` | Real-time job streaming |
 | `src/hooks/useCreateJob.ts` | Job creation mutation |
 | `src/components/graph-builder/GraphBuilder.tsx` | Main graph editor |
 | `src/utils/graphSerializer.ts` | React Flow → Proto conversion |

@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useListJobs } from '../hooks/useListJobs';
+import { useWatchJobs } from '../hooks/useWatchJobs';
 import { useListStores } from '../hooks/useListStores';
 import { JobStatusChip } from '../components/JobStatusChip';
 import { JobState } from '../generated/job_pb';
@@ -16,10 +16,10 @@ import { JobState } from '../generated/job_pb';
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
-  const { data, isLoading, error } = useListJobs('local');
+  const { jobs, isLoading, error } = useWatchJobs('local');
   const { data: storesData } = useListStores();
 
-  const job = data?.jobs.find((j) => j.jobId === jobId);
+  const job = jobs.find((j) => j.jobId === jobId);
   const jobStores = storesData?.stores.filter((s) => s.jobId === jobId) ?? [];
 
   if (isLoading) {
