@@ -10,7 +10,9 @@ import io.typestream.grpc.job_service.JobServiceGrpc
 import io.typestream.testing.TestKafka
 import io.typestream.testing.model.Book
 import io.typestream.testing.until
+import io.grpc.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -396,6 +398,90 @@ internal class JobServiceTest {
             // With no jobs, the initial state has no changes to report
             // The stream only emits when there are changes
             assertThat(receivedJobs).isEmpty()
+        }
+    }
+
+    @Test
+    fun `watchJobs handles client cancellation gracefully`(): Unit = runBlocking {
+        app.use {
+            testKafka.produceRecords(
+                "books",
+                "avro",
+                Book(title = "Cancel Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+
+            // Create a job so the stream has something to emit
+            val createRequest = Job.CreateJobRequest.newBuilder()
+                .setUserId("test-user")
+                .setSource("cat /dev/kafka/local/topics/books | grep 'Cancel'")
+                .build()
+
+            val createResponse = blockingStub.createJob(createRequest)
+            assertThat(createResponse.success).isTrue()
+
+            // Start watching in a cancellable context
+            val cancellableContext = Context.current().withCancellation()
+
+            val watchRequest = Job.WatchJobsRequest.newBuilder()
+                .setUserId("test-user")
+                .build()
+
+            var receivedAtLeastOne = false
+            var caughtCancellation = false
+
+            // Run the stream in the cancellable context
+            val streamJob = launch(dispatcher) {
+                cancellableContext.run {
+                    try {
+                        val jobStream = blockingStub.watchJobs(watchRequest)
+                        if (jobStream.hasNext()) {
+                            jobStream.next()
+                            receivedAtLeastOne = true
+                        }
+                        // Try to get more - this will block until cancelled
+                        while (jobStream.hasNext()) {
+                            jobStream.next()
+                        }
+                    } catch (e: io.grpc.StatusRuntimeException) {
+                        // Expected when context is cancelled
+                        caughtCancellation = e.status.code == io.grpc.Status.Code.CANCELLED
+                    }
+                }
+            }
+
+            // Wait for at least one message, then cancel
+            withTimeout(5000) {
+                while (!receivedAtLeastOne) {
+                    delay(100)
+                }
+            }
+
+            // Cancel the context (simulates client disconnect)
+            cancellableContext.cancel(null)
+
+            // Wait for stream to finish
+            withTimeout(2000) {
+                streamJob.join()
+            }
+
+            // Verify we received data before cancellation
+            assertThat(receivedAtLeastOne).isTrue()
+            // Server should handle cancellation without throwing errors
+            // (The test passes if no unhandled exceptions occur)
         }
     }
 }
