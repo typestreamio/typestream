@@ -68,6 +68,7 @@ class KafkaStreamsJob(
     private fun buildTopology(): Topology {
         val streamsBuilder = StreamsBuilderWrapper(config())
         var countStoreIndex = 0
+        var reduceStoreIndex = 0
 
         program.graph.children.forEach { sourceNode ->
             val source = sourceNode.ref
@@ -82,6 +83,12 @@ class KafkaStreamsJob(
                         countStoreIndex++
                         kafkaStreamSource.count(storeName)
                         kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
+                    }
+                    is Node.ReduceLatest -> {
+                        val storeName = "${program.id}-reduce-store-$reduceStoreIndex"
+                        reduceStoreIndex++
+                        kafkaStreamSource.reduceLatest(storeName)
+                        stateStoreNames.add(storeName)
                     }
                     is Node.Filter -> kafkaStreamSource.filter(currentNode.ref)
                     is Node.Group -> kafkaStreamSource.group(currentNode.ref)

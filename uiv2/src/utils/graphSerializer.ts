@@ -8,14 +8,21 @@ import {
   InspectorNode,
   DataStreamProto,
   GeoIpNode as GeoIpNodeProto,
+  GroupNode,
+  CountNode,
+  ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
-  const pipelineNodes: PipelineNode[] = nodes.map((node) => {
+  const pipelineNodes: PipelineNode[] = [];
+  const pipelineEdges: PipelineEdge[] = [];
+
+  // Process each node
+  nodes.forEach((node) => {
     if (node.type === 'kafkaSource') {
       const data = node.data as KafkaSourceNodeData;
-      return new PipelineNode({
+      pipelineNodes.push(new PipelineNode({
         id: node.id,
         nodeType: {
           case: 'streamSource',
@@ -24,13 +31,14 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
             // Encoding is auto-detected from Schema Registry by the backend
           }),
         },
-      });
+      }));
+      return;
     }
 
     if (node.type === 'kafkaSink') {
       const data = node.data as KafkaSinkNodeData;
       const fullPath = `/dev/kafka/local/topics/${data.topicName}`;
-      return new PipelineNode({
+      pipelineNodes.push(new PipelineNode({
         id: node.id,
         nodeType: {
           case: 'sink',
@@ -39,12 +47,13 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
             // Encoding is propagated from source by the backend
           }),
         },
-      });
+      }));
+      return;
     }
 
     if (node.type === 'geoIp') {
       const data = node.data as GeoIpNodeData;
-      return new PipelineNode({
+      pipelineNodes.push(new PipelineNode({
         id: node.id,
         nodeType: {
           case: 'geoIp',
@@ -53,12 +62,44 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
             outputField: data.outputField || 'country_code',
           }),
         },
-      });
+      }));
+      return;
+    }
+
+    if (node.type === 'materializedView') {
+      const data = node.data as MaterializedViewNodeData;
+      const groupId = `${node.id}-group`;
+
+      // Create Group node
+      pipelineNodes.push(new PipelineNode({
+        id: groupId,
+        nodeType: {
+          case: 'group',
+          value: new GroupNode({ keyMapperExpr: `.${data.groupByField}` }),
+        },
+      }));
+
+      // Create aggregation node based on type
+      if (data.aggregationType === 'count') {
+        pipelineNodes.push(new PipelineNode({
+          id: node.id,
+          nodeType: { case: 'count', value: new CountNode({}) },
+        }));
+      } else {
+        pipelineNodes.push(new PipelineNode({
+          id: node.id,
+          nodeType: { case: 'reduceLatest', value: new ReduceLatestNode({}) },
+        }));
+      }
+
+      // Internal edge from group to aggregation
+      pipelineEdges.push(new PipelineEdge({ fromId: groupId, toId: node.id }));
+      return;
     }
 
     if (node.type === 'inspector') {
       const data = node.data as InspectorNodeData;
-      return new PipelineNode({
+      pipelineNodes.push(new PipelineNode({
         id: node.id,
         nodeType: {
           case: 'inspector',
@@ -66,19 +107,19 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
             label: data.label || '',
           }),
         },
-      });
+      }));
+      return;
     }
 
     throw new Error(`Unknown node type: ${node.type}`);
   });
 
-  const pipelineEdges: PipelineEdge[] = edges.map(
-    (edge) =>
-      new PipelineEdge({
-        fromId: edge.source,
-        toId: edge.target,
-      })
-  );
+  // Process edges - redirect edges targeting materializedView to its group node
+  edges.forEach((edge) => {
+    const targetNode = nodes.find((n) => n.id === edge.target);
+    const toId = targetNode?.type === 'materializedView' ? `${edge.target}-group` : edge.target;
+    pipelineEdges.push(new PipelineEdge({ fromId: edge.source, toId }));
+  });
 
   return new PipelineGraph({
     nodes: pipelineNodes,

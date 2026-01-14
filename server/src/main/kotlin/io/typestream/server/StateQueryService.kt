@@ -68,16 +68,28 @@ class StateQueryService(private val vm: Vm) :
             if (kafkaStreams != null && kafkaStreams.state() == KafkaStreams.State.RUNNING) {
                 job.getStateStoreNames().forEach { storeName ->
                     try {
-                        val store = kafkaStreams.store(
-                            StoreQueryParameters.fromNameAndType(
-                                storeName,
-                                QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                        // Use naming convention to determine store type
+                        val approxCount = if (storeName.contains("reduce")) {
+                            val store = kafkaStreams.store(
+                                StoreQueryParameters.fromNameAndType(
+                                    storeName,
+                                    QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+                                )
                             )
-                        )
+                            store.approximateNumEntries()
+                        } else {
+                            val store = kafkaStreams.store(
+                                StoreQueryParameters.fromNameAndType(
+                                    storeName,
+                                    QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                                )
+                            )
+                            store.approximateNumEntries()
+                        }
                         stores.add(storeInfo {
                             name = storeName
                             jobId = job.id
-                            approximateCount = store.approximateNumEntries()
+                            approximateCount = approxCount
                         })
                     } catch (e: Exception) {
                         // Skip stores that can't be queried (e.g., during state restoration)
@@ -125,30 +137,58 @@ class StateQueryService(private val vm: Vm) :
         }
 
         try {
-            val store = kafkaStreams.store(
-                StoreQueryParameters.fromNameAndType(
-                    storeName,
-                    QueryableStoreTypes.keyValueStore<DataStream, Long>()
+            // Use naming convention to determine store type
+            if (storeName.contains("reduce")) {
+                val store = kafkaStreams.store(
+                    StoreQueryParameters.fromNameAndType(
+                        storeName,
+                        QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+                    )
                 )
-            )
 
-            store.all().use { iterator ->
-                var count = 0
-                try {
-                    while (iterator.hasNext() && count < limit) {
-                        val kv = iterator.next()
-                        emit(keyValuePair {
-                            // Serialize key using schema's JSON representation
-                            key = kv.key.schema.toJsonElement().toString()
-                            // Value is a Long from count operations
-                            value = kv.value.toString()
-                        })
-                        count++
+                store.all().use { iterator ->
+                    var count = 0
+                    try {
+                        while (iterator.hasNext() && count < limit) {
+                            val kv = iterator.next()
+                            emit(keyValuePair {
+                                // Serialize key using schema's JSON representation
+                                key = kv.key.schema.toJsonElement().toString()
+                                // Value is a DataStream from reduce operations
+                                value = kv.value.schema.toJsonElement().toString()
+                            })
+                            count++
+                        }
+                    } catch (e: CancellationException) {
+                        logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
+                        throw e
                     }
-                } catch (e: CancellationException) {
-                    // Flow was cancelled (e.g., client disconnect) - iterator will be closed by .use
-                    logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
-                    throw e
+                }
+            } else {
+                val store = kafkaStreams.store(
+                    StoreQueryParameters.fromNameAndType(
+                        storeName,
+                        QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                    )
+                )
+
+                store.all().use { iterator ->
+                    var count = 0
+                    try {
+                        while (iterator.hasNext() && count < limit) {
+                            val kv = iterator.next()
+                            emit(keyValuePair {
+                                // Serialize key using schema's JSON representation
+                                key = kv.key.schema.toJsonElement().toString()
+                                // Value is a Long from count operations
+                                value = kv.value.toString()
+                            })
+                            count++
+                        }
+                    } catch (e: CancellationException) {
+                        logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
+                        throw e
+                    }
                 }
             }
         } catch (e: StatusException) {
@@ -192,21 +232,33 @@ class StateQueryService(private val vm: Vm) :
         }
 
         try {
-            val store = kafkaStreams.store(
-                StoreQueryParameters.fromNameAndType(
-                    storeName,
-                    QueryableStoreTypes.keyValueStore<DataStream, Long>()
-                )
-            )
-
             // Note: This only works for string keys. The keyStr is wrapped in Schema.String,
             // so it won't match stores with struct or other complex key types.
             // For complex keys, clients should use getAllValues and filter client-side.
             val key = DataStream.fromString("", keyStr)
-            val result = store.get(key)
 
-            found = result != null
-            value = result?.toString() ?: ""
+            // Use naming convention to determine store type
+            if (storeName.contains("reduce")) {
+                val store = kafkaStreams.store(
+                    StoreQueryParameters.fromNameAndType(
+                        storeName,
+                        QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+                    )
+                )
+                val result = store.get(key)
+                found = result != null
+                value = result?.schema?.toJsonElement()?.toString() ?: ""
+            } else {
+                val store = kafkaStreams.store(
+                    StoreQueryParameters.fromNameAndType(
+                        storeName,
+                        QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                    )
+                )
+                val result = store.get(key)
+                found = result != null
+                value = result?.toString() ?: ""
+            }
         } catch (e: StatusException) {
             throw e
         } catch (e: Exception) {

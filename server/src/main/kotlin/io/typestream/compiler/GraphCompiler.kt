@@ -65,9 +65,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       Node.Filter(proto.id, f.byKey, Predicate.matches(f.predicate.expr))
     }
     proto.hasGroup() -> {
-      val stubSchema = Schema.Struct(listOf())
-      val stubDs = DataStream("/stub/key", stubSchema)
-      Node.Group(proto.id) { _ -> stubDs }
+      val fieldPath = proto.group.keyMapperExpr  // e.g., ".user" or ".product_id"
+      val fields = fieldPath.trimStart('.').split('.').filter { it.isNotBlank() }
+      Node.Group(proto.id) { kv -> kv.value.select(fields) }
     }
     proto.hasJoin() -> {
       val j = proto.join
@@ -107,6 +107,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     proto.hasInspector() -> {
       Node.Inspector(proto.id, proto.inspector.label)
     }
+    proto.hasReduceLatest() -> Node.ReduceLatest(proto.id)
     else -> error("Unknown node type: $proto")
   }
 
@@ -216,6 +217,10 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       proto.hasInspector() -> {
         // Inspector passes through input unchanged
         val out = input ?: error("inspector $nodeId missing input")
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasReduceLatest() -> {
+        val out = io.typestream.compiler.types.TypeRules.inferReduceLatest(input ?: error("reduce_latest $nodeId missing input"))
         out to (inputEncoding ?: Encoding.AVRO)
       }
       else -> error("Unknown node type: $nodeId")

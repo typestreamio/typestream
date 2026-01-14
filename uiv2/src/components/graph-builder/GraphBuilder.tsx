@@ -61,6 +61,8 @@ export function GraphBuilder() {
         data = { ipField: '', outputField: 'country_code' };
       } else if (type === 'inspector') {
         data = { label: '' };
+      } else if (type === 'materializedView') {
+        data = { aggregationType: 'count', groupByField: '' };
       } else {
         data = { topicPath: '' };
       }

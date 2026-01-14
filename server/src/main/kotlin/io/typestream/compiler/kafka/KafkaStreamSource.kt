@@ -39,8 +39,10 @@ data class KafkaStreamSource(
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
     private var countStoreName: String? = null
+    private var reduceStoreNames = mutableListOf<String>()
 
     fun getCountStoreName(): String? = countStoreName
+    fun getReduceStoreNames(): List<String> = reduceStoreNames.toList()
 
     private fun stream(dataStream: DataStream): KStream<DataStream, DataStream> {
         val config = streamsBuilder.config.toMutableMap()
@@ -145,6 +147,17 @@ data class KafkaStreamSource(
         countStoreName = storeName
         val materialized = Materialized.`as`<DataStream, Long, KeyValueStore<Bytes, ByteArray>>(storeName)
         stream = groupedStream!!.count(materialized).mapValues { v -> DataStream.fromLong("", v) }.toStream()
+    }
+
+    fun reduceLatest(storeName: String) {
+        requireNotNull(groupedStream) { "cannot reduce a non-grouped stream" }
+
+        reduceStoreNames.add(storeName)
+        val materialized = Materialized.`as`<DataStream, DataStream, KeyValueStore<Bytes, ByteArray>>(storeName)
+        stream = groupedStream!!.reduce(
+            { _, newValue -> newValue },  // Keep latest value
+            materialized
+        ).toStream()
     }
 
     fun geoIp(geoIp: Node.GeoIp) {
