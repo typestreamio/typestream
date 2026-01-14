@@ -51,6 +51,7 @@ export function usePreviewJob() {
         abortControllerRef.current = new AbortController();
 
         try {
+          const MAX_MESSAGES = 100;
           for await (const response of client.streamPreview(
             new StreamPreviewRequest({ jobId: createResponse.jobId }),
             { signal: abortControllerRef.current.signal }
@@ -64,8 +65,7 @@ export function usePreviewJob() {
                   timestamp: Number(response.timestamp),
                 },
               ];
-              // Keep only last 100 messages
-              return newMessages.slice(-100);
+              return newMessages.slice(-MAX_MESSAGES);
             });
           }
         } catch (streamError) {

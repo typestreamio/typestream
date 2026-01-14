@@ -174,8 +174,9 @@ describe('StreamInspectorPanel', () => {
 
     expect(screen.getByText('key1')).toBeInTheDocument();
     expect(screen.getByText('key2')).toBeInTheDocument();
-    expect(screen.getByText('{"data": "test1"}')).toBeInTheDocument();
-    expect(screen.getByText('{"data": "test2"}')).toBeInTheDocument();
+    // JSON values are syntax highlighted (split into spans), so check for parts
+    expect(screen.getByText('"test1"')).toBeInTheDocument();
+    expect(screen.getByText('"test2"')).toBeInTheDocument();
   });
 
   it('should display message count', () => {
@@ -185,7 +186,7 @@ describe('StreamInspectorPanel', () => {
     ];
     renderPanel(true);
 
-    expect(screen.getByText('2 messages (last 100 shown)')).toBeInTheDocument();
+    expect(screen.getByText('2 messages shown')).toBeInTheDocument();
   });
 
   it('should show loading indicator when streaming', () => {
@@ -210,5 +211,77 @@ describe('StreamInspectorPanel', () => {
 
     expect(screen.getByText('-')).toBeInTheDocument();
     expect(screen.getByText('value-only')).toBeInTheDocument();
+  });
+
+  it('should expand message row when clicked', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: '{"name": "test", "count": 42}', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Initially shows collapsed value with syntax highlighting
+    expect(screen.getByText('"name"')).toBeInTheDocument();
+    expect(screen.getByText('"test"')).toBeInTheDocument();
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // After expanding, the formatted JSON should be visible with proper indentation
+    // The SyntaxHighlighter renders the formatted JSON
+    expect(screen.getByText(/"name"/)).toBeInTheDocument();
+  });
+
+  it('should collapse expanded message row when clicked again', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: '{"name": "test"}', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // Click again to collapse
+    await user.click(row);
+
+    // Should show collapsed value again with syntax highlighting
+    expect(screen.getByText('"name"')).toBeInTheDocument();
+    expect(screen.getByText('"test"')).toBeInTheDocument();
+  });
+
+  it('should show expand icon for collapsed rows and collapse icon for expanded rows', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: '{"data": "test"}', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Initially should show expand button
+    expect(screen.getByRole('button', { name: /expand/i })).toBeInTheDocument();
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // Should now show collapse button
+    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
+  });
+
+  it('should handle non-JSON values when expanded', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: 'plain text message', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // Should still display the plain text
+    expect(screen.getByText('plain text message')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -13,14 +13,31 @@ import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useReactFlow } from '@xyflow/react';
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
+import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { usePreviewJob } from '../hooks/usePreviewJob';
 import { serializeGraph } from '../utils/graphSerializer';
+
+SyntaxHighlighter.registerLanguage('json', json);
 
 interface StreamInspectorPanelProps {
   open: boolean;
   onClose: () => void;
   nodeId: string;
+}
+
+// Attempt to parse and pretty-print JSON, return original if not valid JSON
+function formatValue(value: string): { formatted: string; isJson: boolean } {
+  try {
+    const parsed = JSON.parse(value);
+    return { formatted: JSON.stringify(parsed, null, 2), isJson: true };
+  } catch {
+    return { formatted: value, isJson: false };
+  }
 }
 
 export function StreamInspectorPanel({
@@ -35,6 +52,20 @@ export function StreamInspectorPanel({
   const hasStartedRef = useRef(false);
   // Use ref to avoid cleanup effect re-running when stopPreview changes
   const stopPreviewRef = useRef(stopPreview);
+  // Track which message rows are expanded
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+  const toggleRow = (index: number) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
 
   // Update ref in useEffect to avoid "Cannot update ref during render" warning
   useEffect(() => {
@@ -74,7 +105,7 @@ export function StreamInspectorPanel({
       tableContainerRef.current.scrollTop =
         tableContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages.length]);
 
   const handleClose = () => {
     stopPreview();
@@ -128,6 +159,7 @@ export function StreamInspectorPanel({
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
+                <TableCell sx={{ width: 40 }}></TableCell>
                 <TableCell sx={{ width: 100 }}>Time</TableCell>
                 <TableCell sx={{ width: 150 }}>Key</TableCell>
                 <TableCell>Value</TableCell>
@@ -136,44 +168,96 @@ export function StreamInspectorPanel({
             <TableBody>
               {messages.length === 0 && !isStreaming && !error && (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={4} align="center">
                     <Typography variant="body2" color="text.secondary">
                       No messages yet
                     </Typography>
                   </TableCell>
                 </TableRow>
               )}
-              {messages.map((msg, idx) => (
-                <TableRow key={idx}>
-                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                    {formatTimestamp(msg.timestamp)}
-                  </TableCell>
-                  <TableCell
+              {messages.map((msg, idx) => {
+                const isExpanded = expandedRows.has(idx);
+                const { formatted, isJson } = formatValue(msg.value);
+                return (
+                  <TableRow
+                    key={idx}
+                    onClick={() => toggleRow(idx)}
                     sx={{
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
-                      maxWidth: 150,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      '&:hover': { backgroundColor: 'action.hover' },
+                      verticalAlign: 'top',
                     }}
+                    data-testid={`message-row-${idx}`}
                   >
-                    {msg.key || '-'}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
-                      maxWidth: 300,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {msg.value}
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableCell sx={{ padding: '6px' }}>
+                      <IconButton size="small" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+                        {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                      </IconButton>
+                    </TableCell>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                      {formatTimestamp(msg.timestamp)}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        maxWidth: 150,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {msg.key || '-'}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        maxWidth: isExpanded ? 'none' : 300,
+                        overflow: isExpanded ? 'visible' : 'hidden',
+                        textOverflow: isExpanded ? 'clip' : 'ellipsis',
+                        whiteSpace: isExpanded ? 'pre-wrap' : 'nowrap',
+                        wordBreak: isExpanded ? 'break-word' : 'normal',
+                      }}
+                    >
+                      {isJson ? (
+                        <SyntaxHighlighter
+                          language="json"
+                          style={vs2015}
+                          customStyle={{
+                            margin: 0,
+                            padding: isExpanded ? '8px' : '0',
+                            borderRadius: isExpanded ? '4px' : '0',
+                            fontSize: '0.75rem',
+                            background: isExpanded ? undefined : 'transparent',
+                            overflow: isExpanded ? 'visible' : 'hidden',
+                            textOverflow: isExpanded ? 'clip' : 'ellipsis',
+                            whiteSpace: isExpanded ? 'pre-wrap' : 'nowrap',
+                          }}
+                        >
+                          {isExpanded ? formatted : msg.value}
+                        </SyntaxHighlighter>
+                      ) : isExpanded ? (
+                        <Box
+                          component="pre"
+                          sx={{
+                            margin: 0,
+                            padding: '8px',
+                            backgroundColor: 'grey.900',
+                            borderRadius: '4px',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {msg.value}
+                        </Box>
+                      ) : (
+                        msg.value
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -183,13 +267,10 @@ export function StreamInspectorPanel({
             p: 2,
             borderTop: '1px solid',
             borderColor: 'divider',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            {messages.length} messages (last 100 shown)
+            {messages.length} messages shown
           </Typography>
         </Box>
       </Box>
