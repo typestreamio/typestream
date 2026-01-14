@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@connectrpc/connect';
+import { createConnectQueryKey } from '@connectrpc/connect-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { transport } from '../services/transport';
 import { JobService } from '../generated/job_connect';
+import { listJobs } from '../generated/job-JobService_connectquery';
 import { JobInfo, ListJobsResponse } from '../generated/job_pb';
 
 /**
@@ -56,10 +58,9 @@ export function useWatchJobs(userId: string = 'local') {
         setJobs(allJobs);
 
         // Sync to React Query cache so useListJobs stays current
-        queryClient.setQueryData(
-          ['io.typestream.grpc.JobService', 'ListJobs', { userId }],
-          new ListJobsResponse({ jobs: allJobs })
-        );
+        // Use createConnectQueryKey to ensure key format matches connect-query
+        const queryKey = createConnectQueryKey(listJobs, { userId });
+        queryClient.setQueryData(queryKey, new ListJobsResponse({ jobs: allJobs }));
       }
     } catch (err) {
       if (abortController.signal.aborted) {
