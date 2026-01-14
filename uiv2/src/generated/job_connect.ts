@@ -79,3 +79,4 @@ export const JobService = {
     },
   }
 } as const;
+

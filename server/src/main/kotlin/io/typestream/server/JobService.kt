@@ -1,6 +1,7 @@
 package io.typestream.server
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.util.concurrent.CancellationException
 import io.typestream.compiler.Compiler
 import io.typestream.compiler.GraphCompiler
 import io.typestream.compiler.vm.Env
@@ -299,6 +300,9 @@ class JobService(private val config: Config, private val vm: Vm) :
 
                 // Poll every second
                 delay(1000)
+            } catch (e: CancellationException) {
+                // Client disconnected - expected, exit gracefully
+                break
             } catch (e: Exception) {
                 logger.error(e) { "Error watching jobs" }
                 delay(1000) // Continue polling even on error
