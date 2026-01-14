@@ -7,7 +7,10 @@ import io.typestream.connectors.Config
 import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.AdminClientConfig
+import org.apache.kafka.clients.admin.AlterConfigOp
+import org.apache.kafka.clients.admin.ConfigEntry
 import org.apache.kafka.clients.admin.NewTopic
+import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -51,6 +54,7 @@ class Producer(private val config: Config) : MessageSender {
                 .configs(
                     mapOf(
                         "retention.ms" to config.retentionMs.toString(),
+                        "segment.ms" to (config.retentionMs / 3).toString(), // Roll segments faster than retention
                         "cleanup.policy" to "delete"
                     )
                 )
@@ -58,8 +62,23 @@ class Producer(private val config: Config) : MessageSender {
             adminClient.createTopics(listOf(topic)).all().get(30, TimeUnit.SECONDS)
             logger.info { "Topic ${config.topic} created successfully" }
         } else {
-            logger.info { "Topic ${config.topic} already exists" }
+            logger.info { "Topic ${config.topic} already exists, updating retention to ${config.retentionMs}ms" }
+            updateTopicRetention()
         }
+    }
+
+    private fun updateTopicRetention() {
+        val configResource = ConfigResource(ConfigResource.Type.TOPIC, config.topic)
+        val alterOps = listOf(
+            AlterConfigOp(ConfigEntry("retention.ms", config.retentionMs.toString()), AlterConfigOp.OpType.SET),
+            AlterConfigOp(ConfigEntry("segment.ms", (config.retentionMs / 3).toString()), AlterConfigOp.OpType.SET),
+        )
+
+        adminClient.incrementalAlterConfigs(mapOf(configResource to alterOps))
+            .all()
+            .get(30, TimeUnit.SECONDS)
+
+        logger.info { "Topic ${config.topic} retention updated to ${config.retentionMs}ms (segment.ms=${config.retentionMs / 3}ms)" }
     }
 
     override fun send(key: String, value: SpecificRecord) {
