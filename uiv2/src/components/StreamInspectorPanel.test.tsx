@@ -211,4 +211,74 @@ describe('StreamInspectorPanel', () => {
     expect(screen.getByText('-')).toBeInTheDocument();
     expect(screen.getByText('value-only')).toBeInTheDocument();
   });
+
+  it('should expand message row when clicked', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: '{"name": "test", "count": 42}', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Initially shows collapsed value
+    expect(screen.getByText('{"name": "test", "count": 42}')).toBeInTheDocument();
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // After expanding, the formatted JSON should be visible
+    // The SyntaxHighlighter renders the formatted JSON
+    expect(screen.getByText(/"name"/)).toBeInTheDocument();
+  });
+
+  it('should collapse expanded message row when clicked again', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: '{"name": "test"}', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // Click again to collapse
+    await user.click(row);
+
+    // Should show collapsed value again
+    expect(screen.getByText('{"name": "test"}')).toBeInTheDocument();
+  });
+
+  it('should show expand icon for collapsed rows and collapse icon for expanded rows', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: '{"data": "test"}', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Initially should show expand button
+    expect(screen.getByRole('button', { name: /expand/i })).toBeInTheDocument();
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // Should now show collapse button
+    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
+  });
+
+  it('should handle non-JSON values when expanded', async () => {
+    const user = userEvent.setup();
+    mockMessages = [
+      { key: 'key1', value: 'plain text message', timestamp: 1704067200000 },
+    ];
+    renderPanel(true);
+
+    // Click to expand
+    const row = screen.getByTestId('message-row-0');
+    await user.click(row);
+
+    // Should still display the plain text
+    expect(screen.getByText('plain text message')).toBeInTheDocument();
+  });
 });
