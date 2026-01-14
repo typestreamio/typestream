@@ -1280,6 +1280,69 @@ export class ListJobsRequest extends Message<ListJobsRequest> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.JobThroughput
+ */
+export class JobThroughput extends Message<JobThroughput> {
+  /**
+   * Current processing rate (messages/sec)
+   *
+   * @generated from field: double messages_per_second = 1;
+   */
+  messagesPerSecond = 0;
+
+  /**
+   * Total messages processed since job start
+   *
+   * @generated from field: int64 total_messages = 2;
+   */
+  totalMessages = protoInt64.zero;
+
+  /**
+   * Current bandwidth consumption (bytes/sec)
+   *
+   * @generated from field: double bytes_per_second = 3;
+   */
+  bytesPerSecond = 0;
+
+  /**
+   * Total bytes processed since job start
+   *
+   * @generated from field: int64 total_bytes = 4;
+   */
+  totalBytes = protoInt64.zero;
+
+  constructor(data?: PartialMessage<JobThroughput>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.JobThroughput";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "messages_per_second", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 2, name: "total_messages", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 3, name: "bytes_per_second", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 4, name: "total_bytes", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JobThroughput {
+    return new JobThroughput().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): JobThroughput {
+    return new JobThroughput().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): JobThroughput {
+    return new JobThroughput().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: JobThroughput | PlainMessage<JobThroughput> | undefined, b: JobThroughput | PlainMessage<JobThroughput> | undefined): boolean {
+    return proto3.util.equals(JobThroughput, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.JobInfo
  */
 export class JobInfo extends Message<JobInfo> {
@@ -1307,6 +1370,13 @@ export class JobInfo extends Message<JobInfo> {
    */
   graph?: PipelineGraph;
 
+  /**
+   * Throughput metrics
+   *
+   * @generated from field: io.typestream.grpc.JobThroughput throughput = 5;
+   */
+  throughput?: JobThroughput;
+
   constructor(data?: PartialMessage<JobInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1319,6 +1389,7 @@ export class JobInfo extends Message<JobInfo> {
     { no: 2, name: "state", kind: "enum", T: proto3.getEnumType(JobState) },
     { no: 3, name: "start_time", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 4, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 5, name: "throughput", kind: "message", T: JobThroughput },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JobInfo {

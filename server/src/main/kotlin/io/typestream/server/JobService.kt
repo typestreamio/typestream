@@ -21,6 +21,7 @@ import io.typestream.grpc.job_service.stopPreviewJobResponse
 import io.typestream.grpc.job_service.streamPreviewResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
+import io.typestream.grpc.job_service.jobThroughput
 import io.typestream.grpc.job_service.inferGraphSchemasResponse
 import io.typestream.grpc.job_service.nodeSchemaResult
 import io.typestream.grpc.job_service.listOpenAIModelsResponse
@@ -187,6 +188,7 @@ class JobService(private val config: Config, private val vm: Vm) :
                 // Skip preview jobs from the listing
                 if (previewJobs.containsKey(schedulerJob.id)) return@forEach
 
+                val jobThroughputMetrics = schedulerJob.throughput()
                 jobs.add(jobInfo {
                     jobId = schedulerJob.id
                     state = when (schedulerJob.state()) {
@@ -201,6 +203,12 @@ class JobService(private val config: Config, private val vm: Vm) :
                     // Include graph if available (only for graph-based jobs)
                     if (schedulerJob is io.typestream.scheduler.KafkaStreamsJob) {
                         schedulerJob.program.pipelineGraph?.let { graph = it }
+                    }
+                    throughput = jobThroughput {
+                        messagesPerSecond = jobThroughputMetrics.messagesPerSecond
+                        totalMessages = jobThroughputMetrics.totalMessages
+                        bytesPerSecond = jobThroughputMetrics.bytesPerSecond
+                        totalBytes = jobThroughputMetrics.totalBytes
                     }
                 })
             }
