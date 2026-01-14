@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@connectrpc/connect';
+import { useQueryClient } from '@tanstack/react-query';
 import { transport } from '../services/transport';
 import { JobService } from '../generated/job_connect';
-import { JobInfo } from '../generated/job_pb';
+import { JobInfo, ListJobsResponse } from '../generated/job_pb';
 
 /**
  * Hook that watches for job updates via server-streaming RPC.
@@ -14,6 +15,7 @@ export function useWatchJobs(userId: string = 'local') {
   const [error, setError] = useState<Error | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
 
   const connect = useCallback(async () => {
     // Abort any existing connection
@@ -50,7 +52,14 @@ export function useWatchJobs(userId: string = 'local') {
         jobMap.set(jobInfo.jobId, jobInfo);
 
         // Update state with all jobs
-        setJobs(Array.from(jobMap.values()));
+        const allJobs = Array.from(jobMap.values());
+        setJobs(allJobs);
+
+        // Sync to React Query cache so useListJobs stays current
+        queryClient.setQueryData(
+          ['io.typestream.grpc.JobService', 'ListJobs', { userId }],
+          new ListJobsResponse({ jobs: allJobs })
+        );
       }
     } catch (err) {
       if (abortController.signal.aborted) {
@@ -62,7 +71,7 @@ export function useWatchJobs(userId: string = 'local') {
       setIsLoading(false);
       setIsConnected(false);
     }
-  }, [userId]);
+  }, [userId, queryClient]);
 
   // Start streaming on mount
   useEffect(() => {
