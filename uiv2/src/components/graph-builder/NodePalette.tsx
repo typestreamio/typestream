@@ -4,6 +4,7 @@ import InputIcon from '@mui/icons-material/Input';
 import OutputIcon from '@mui/icons-material/Output';
 import PublicIcon from '@mui/icons-material/Public';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import TableChartIcon from '@mui/icons-material/TableChart';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -77,6 +78,11 @@ export function NodePalette() {
         type="inspector"
         label="Inspector"
         icon={<VisibilityIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="materializedView"
+        label="Materialized View"
+        icon={<TableChartIcon fontSize="small" />}
       />
     </Paper>
   );

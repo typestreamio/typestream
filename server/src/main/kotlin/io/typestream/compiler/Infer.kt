@@ -35,6 +35,7 @@ object Infer {
 
             is Node.Group -> input ?: error("group ${ref.id} missing input stream")
             is Node.Count -> input ?: error("count ${ref.id} missing input stream")
+            is Node.ReduceLatest -> input ?: error("reduceLatest ${ref.id} missing input stream")
             is Node.Each -> input ?: error("each ${ref.id} missing input stream")
             is Node.Sink -> input ?: error("sink ${ref.id} missing input stream")
             is Node.GeoIp -> {

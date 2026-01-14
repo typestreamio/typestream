@@ -772,6 +772,37 @@ export class InspectorNode extends Message<InspectorNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.ReduceLatestNode
+ */
+export class ReduceLatestNode extends Message<ReduceLatestNode> {
+  constructor(data?: PartialMessage<ReduceLatestNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ReduceLatestNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReduceLatestNode {
+    return new ReduceLatestNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReduceLatestNode {
+    return new ReduceLatestNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReduceLatestNode {
+    return new ReduceLatestNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ReduceLatestNode | PlainMessage<ReduceLatestNode> | undefined, b: ReduceLatestNode | PlainMessage<ReduceLatestNode> | undefined): boolean {
+    return proto3.util.equals(ReduceLatestNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -855,6 +886,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: InspectorNode;
     case: "inspector";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.ReduceLatestNode reduce_latest = 14;
+     */
+    value: ReduceLatestNode;
+    case: "reduceLatest";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -878,6 +915,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 11, name: "sink", kind: "message", T: SinkNode, oneof: "node_type" },
     { no: 12, name: "geo_ip", kind: "message", T: GeoIpNode, oneof: "node_type" },
     { no: 13, name: "inspector", kind: "message", T: InspectorNode, oneof: "node_type" },
+    { no: 14, name: "reduce_latest", kind: "message", T: ReduceLatestNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {

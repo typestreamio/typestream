@@ -13,6 +13,7 @@ import io.typestream.server.FileSystemService
 import io.typestream.server.InteractiveSessionService
 import io.typestream.server.JobService
 import io.typestream.server.LoggerInterceptor
+import io.typestream.server.StateQueryService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         val jobService = JobService(config, vm)
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
+        serverBuilder.addService(StateQueryService(vm))
 
         serverBuilder.addService(ProtoReflectionService.newInstance())
         //TODO add health check. See https://github.com/grpc/grpc/blob/master/doc/health-checking.md

@@ -96,6 +96,8 @@ message InspectorNode {
   string label = 1;  // Optional label for the inspector
 }
 
+message ReduceLatestNode {}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -111,6 +113,7 @@ message PipelineNode {
     SinkNode sink = 11;
     GeoIpNode geo_ip = 12;
     InspectorNode inspector = 13;
+    ReduceLatestNode reduce_latest = 14;
   }
 }
 

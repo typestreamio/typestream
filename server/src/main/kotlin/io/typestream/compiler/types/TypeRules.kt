@@ -94,6 +94,16 @@ object TypeRules {
   fun inferCount(input: DataStream): DataStream = input
 
   /**
+   * Type inference for ReduceLatest nodes.
+   * Pass-through: reduce latest keeps the schema unchanged.
+   * The reduce operation produces a KTable with the same key and the latest value.
+   *
+   * @param input The input stream schema
+   * @return Same schema as input (pass-through)
+   */
+  fun inferReduceLatest(input: DataStream): DataStream = input
+
+  /**
    * Type inference for Each nodes.
    * Pass-through: side effects don't change schema.
    * Each performs actions (like println) but doesn't transform data.

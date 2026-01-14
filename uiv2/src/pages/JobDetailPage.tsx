@@ -9,14 +9,18 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useListJobs } from '../hooks/useListJobs';
+import { useListStores } from '../hooks/useListStores';
 import { JobStatusChip } from '../components/JobStatusChip';
+import { JobState } from '../generated/job_pb';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const { data, isLoading, error } = useListJobs('local');
+  const { data: storesData } = useListStores();
 
   const job = data?.jobs.find((j) => j.jobId === jobId);
+  const jobStores = storesData?.stores.filter((s) => s.jobId === jobId) ?? [];
 
   if (isLoading) {
     return (
@@ -117,6 +121,39 @@ export function JobDetailPage() {
                     </Typography>
                   ))}
                 </Box>
+              </>
+            )}
+
+            {job.state === JobState.RUNNING && jobStores.length > 0 && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" gutterBottom>
+                  State Stores
+                </Typography>
+                {jobStores.map((store) => (
+                  <Box key={store.name} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">{store.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      ~{store.approximateCount.toString()} keys
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      component="pre"
+                      sx={{
+                        mt: 1,
+                        p: 1,
+                        bgcolor: 'grey.900',
+                        borderRadius: 1,
+                        overflow: 'auto',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+{`grpcurl -plaintext -d '{"store_name":"${store.name}","limit":10}' \\
+  localhost:8080 io.typestream.grpc.StateQueryService/GetAllValues \\
+  | jq '{key: .key | fromjson, value: .value | fromjson}'`}
+                    </Typography>
+                  </Box>
+                ))}
               </>
             )}
           </Box>

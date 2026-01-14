@@ -44,4 +44,7 @@ sealed interface Node {
 
     @Serializable
     data class Inspector(override val id: String, val label: String = "") : Node
+
+    @Serializable
+    data class ReduceLatest(override val id: String) : Node
 }

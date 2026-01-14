@@ -22,6 +22,31 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 
+/**
+ * A Kafka Streams-based job that executes a compiled TypeStream program.
+ *
+ * This class manages the lifecycle of a Kafka Streams application, including building
+ * the processing topology, starting/stopping the streams, and tracking state stores.
+ *
+ * ## State Store Naming
+ *
+ * State stores created by count operations are named using the pattern:
+ * `{program.id}-count-store-{index}` where index is assigned sequentially as count
+ * operations are encountered during topology building.
+ *
+ * **Important**: Store names are tied to the position of count operations in the program
+ * graph. If a program is modified (e.g., count operations added/removed/reordered),
+ * the store names may change on the next deployment. This can affect:
+ * - Interactive query clients that rely on specific store names
+ * - Kafka Streams state restoration (stores may be rebuilt from scratch)
+ *
+ * Consider using stable, user-defined store names in the future if this becomes an issue.
+ *
+ * @param id Unique identifier for this job
+ * @param program The compiled TypeStream program to execute
+ * @param kafkaConfig Kafka cluster configuration
+ * @param geoIpService Service for GeoIP lookups in transformations
+ */
 class KafkaStreamsJob(
     override val id: String,
     val program: Program,
@@ -34,8 +59,16 @@ class KafkaStreamsJob(
     override var startTime: Long = 0L
         private set
 
+    private val stateStoreNames = mutableListOf<String>()
+
+    fun getKafkaStreams(): KafkaStreams? = kafkaStreams
+
+    fun getStateStoreNames(): List<String> = stateStoreNames.toList()
+
     private fun buildTopology(): Topology {
         val streamsBuilder = StreamsBuilderWrapper(config())
+        var countStoreIndex = 0
+        var reduceStoreIndex = 0
 
         program.graph.children.forEach { sourceNode ->
             val source = sourceNode.ref
@@ -45,7 +78,18 @@ class KafkaStreamsJob(
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
-                    is Node.Count -> kafkaStreamSource.count()
+                    is Node.Count -> {
+                        val storeName = "${program.id}-count-store-$countStoreIndex"
+                        countStoreIndex++
+                        kafkaStreamSource.count(storeName)
+                        kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
+                    }
+                    is Node.ReduceLatest -> {
+                        val storeName = "${program.id}-reduce-store-$reduceStoreIndex"
+                        reduceStoreIndex++
+                        kafkaStreamSource.reduceLatest(storeName)
+                        stateStoreNames.add(storeName)
+                    }
                     is Node.Filter -> kafkaStreamSource.filter(currentNode.ref)
                     is Node.Group -> kafkaStreamSource.group(currentNode.ref)
                     is Node.Join -> kafkaStreamSource.join(currentNode.ref)
