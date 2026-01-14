@@ -16,6 +16,11 @@ static_resources:
                     - name: local_service
                       domains: ["*"]
                       routes:
+                        - match: { prefix: "/connect/" }
+                          route:
+                            cluster: kafka_connect_service
+                            prefix_rewrite: "/"
+                            timeout: 30s
                         - match: { prefix: "/" }
                           route:
                             cluster: typestream_service
@@ -55,3 +60,17 @@ static_resources:
                     socket_address:
                       address: host.docker.internal
                       port_value: 4242
+    - name: kafka_connect_service
+      connect_timeout: 5s
+      type: strict_dns
+      dns_lookup_family: V4_ONLY
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: kafka_connect
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: kafka-connect
+                      port_value: 8083

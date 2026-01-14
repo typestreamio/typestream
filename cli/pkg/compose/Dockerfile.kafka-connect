@@ -1,0 +1,58 @@
+FROM quay.io/debezium/connect:3.4
+
+# Debezium 3.4 includes:
+# - PostgresConnector for CDC
+# - JdbcSinkConnector for database sinks
+# - PostgreSQL JDBC driver
+
+# Install Confluent Schema Registry Avro converter
+# Debezium 2.0+ doesn't include these - required for TypeStream Avro integration
+# Per Debezium docs: https://debezium.io/documentation/reference/stable/configuration/avro.html
+
+ENV CONFLUENT_VERSION=7.5.0
+ENV AVRO_VERSION=1.11.3
+ENV JACKSON_VERSION=2.14.2
+ENV GUAVA_VERSION=32.1.3-jre
+
+USER root
+
+RUN mkdir -p /kafka/connect/avro-converter
+
+# Confluent packages (from packages.confluent.io)
+RUN cd /kafka/connect/avro-converter && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-connect-avro-converter/${CONFLUENT_VERSION}/kafka-connect-avro-converter-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-connect-avro-data/${CONFLUENT_VERSION}/kafka-connect-avro-data-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-avro-serializer/${CONFLUENT_VERSION}/kafka-avro-serializer-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-schema-serializer/${CONFLUENT_VERSION}/kafka-schema-serializer-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-schema-converter/${CONFLUENT_VERSION}/kafka-schema-converter-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-schema-registry-client/${CONFLUENT_VERSION}/kafka-schema-registry-client-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/common-config/${CONFLUENT_VERSION}/common-config-${CONFLUENT_VERSION}.jar && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/common-utils/${CONFLUENT_VERSION}/common-utils-${CONFLUENT_VERSION}.jar
+
+# Transitive dependencies (from Maven Central)
+RUN cd /kafka/connect/avro-converter && \
+    curl -sLO https://repo1.maven.org/maven2/org/apache/avro/avro/${AVRO_VERSION}/avro-${AVRO_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/org/apache/commons/commons-compress/1.26.0/commons-compress-1.26.0.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/eclipsesource/minimal-json/minimal-json/0.9.5/minimal-json-0.9.5.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/google/re2j/re2j/1.7/re2j-1.7.jar && \
+    curl -sLO https://repo1.maven.org/maven2/org/yaml/snakeyaml/2.0/snakeyaml-2.0.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/swagger/swagger-annotations/1.6.9/swagger-annotations-1.6.9.jar
+
+# Jackson dependencies
+RUN cd /kafka/connect/avro-converter && \
+    curl -sLO https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/${JACKSON_VERSION}/jackson-databind-${JACKSON_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/${JACKSON_VERSION}/jackson-core-${JACKSON_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_VERSION}/jackson-annotations-${JACKSON_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-csv/${JACKSON_VERSION}/jackson-dataformat-csv-${JACKSON_VERSION}.jar
+
+# Copy connector registration script and custom entrypoint
+COPY register-connector.sh /usr/local/bin/register-connector.sh
+COPY custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
+RUN chmod +x /usr/local/bin/register-connector.sh /usr/local/bin/custom-entrypoint.sh
+
+USER 1001
+
+ENTRYPOINT ["/usr/local/bin/custom-entrypoint.sh"]
+CMD ["start"]
