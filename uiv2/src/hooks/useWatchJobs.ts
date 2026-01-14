@@ -35,6 +35,11 @@ export function useWatchJobs(userId: string = 'local') {
         { signal: abortController.signal }
       );
 
+      // Stream is open - mark as connected
+      // Server will emit updates when job state changes
+      setIsLoading(false);
+      setIsConnected(true);
+
       // Track jobs by ID for updates
       const jobMap = new Map<string, JobInfo>();
 
@@ -46,8 +51,6 @@ export function useWatchJobs(userId: string = 'local') {
 
         // Update state with all jobs
         setJobs(Array.from(jobMap.values()));
-        setIsLoading(false);
-        setIsConnected(true);
       }
     } catch (err) {
       if (abortController.signal.aborted) {
