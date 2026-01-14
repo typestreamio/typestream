@@ -145,10 +145,10 @@ services:
       CONFIG_STORAGE_REPLICATION_FACTOR: 1
       OFFSET_STORAGE_REPLICATION_FACTOR: 1
       STATUS_STORAGE_REPLICATION_FACTOR: 1
-      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      KEY_CONVERTER_SCHEMAS_ENABLE: "true"
-      VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://redpanda:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://redpanda:8081
     networks:
       - typestream_network
     depends_on:
@@ -156,3 +156,9 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
