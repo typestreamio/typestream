@@ -105,7 +105,7 @@ export function StreamInspectorPanel({
       tableContainerRef.current.scrollTop =
         tableContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages.length]);
 
   const handleClose = () => {
     stopPreview();
@@ -220,35 +220,37 @@ export function StreamInspectorPanel({
                         wordBreak: isExpanded ? 'break-word' : 'normal',
                       }}
                     >
-                      {isExpanded ? (
-                        isJson ? (
-                          <SyntaxHighlighter
-                            language="json"
-                            style={vs2015}
-                            customStyle={{
-                              margin: 0,
-                              padding: '8px',
-                              borderRadius: '4px',
-                              fontSize: '0.75rem',
-                            }}
-                          >
-                            {formatted}
-                          </SyntaxHighlighter>
-                        ) : (
-                          <Box
-                            component="pre"
-                            sx={{
-                              margin: 0,
-                              padding: '8px',
-                              backgroundColor: 'grey.900',
-                              borderRadius: '4px',
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word',
-                            }}
-                          >
-                            {formatted}
-                          </Box>
-                        )
+                      {isJson ? (
+                        <SyntaxHighlighter
+                          language="json"
+                          style={vs2015}
+                          customStyle={{
+                            margin: 0,
+                            padding: isExpanded ? '8px' : '0',
+                            borderRadius: isExpanded ? '4px' : '0',
+                            fontSize: '0.75rem',
+                            background: isExpanded ? undefined : 'transparent',
+                            overflow: isExpanded ? 'visible' : 'hidden',
+                            textOverflow: isExpanded ? 'clip' : 'ellipsis',
+                            whiteSpace: isExpanded ? 'pre-wrap' : 'nowrap',
+                          }}
+                        >
+                          {isExpanded ? formatted : msg.value}
+                        </SyntaxHighlighter>
+                      ) : isExpanded ? (
+                        <Box
+                          component="pre"
+                          sx={{
+                            margin: 0,
+                            padding: '8px',
+                            backgroundColor: 'grey.900',
+                            borderRadius: '4px',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {msg.value}
+                        </Box>
                       ) : (
                         msg.value
                       )}
@@ -265,13 +267,10 @@ export function StreamInspectorPanel({
             p: 2,
             borderTop: '1px solid',
             borderColor: 'divider',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            {messages.length} messages (last 100 shown)
+            {messages.length} messages shown
           </Typography>
         </Box>
       </Box>

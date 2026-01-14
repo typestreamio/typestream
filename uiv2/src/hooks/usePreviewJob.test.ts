@@ -103,7 +103,7 @@ describe('usePreviewJob', () => {
       inspectTopic: 'job-123-inspect-node-1',
     });
 
-    // Generate 150 messages
+    // Generate 150 messages (more than the 100 limit)
     const manyMessages = Array.from({ length: 150 }, (_, i) => ({
       key: `k${i}`,
       value: `v${i}`,
