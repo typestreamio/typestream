@@ -121,8 +121,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
    * - node ID -> DataStream with inferred schema
    * - node ID -> Encoding (propagated from sources through the pipeline)
    * These are then used in Phase 2 (buildGraph) to construct nodes.
+   * Also exposed for UI schema inference endpoint.
    */
-  private fun inferNodeSchemasAndEncodings(graph: Job.PipelineGraph): Pair<Map<String, DataStream>, Map<String, Encoding>> {
+  fun inferNodeSchemasAndEncodings(graph: Job.PipelineGraph): Pair<Map<String, DataStream>, Map<String, Encoding>> {
     val schemas = mutableMapOf<String, DataStream>()
     val encodings = mutableMapOf<String, Encoding>()
     val nodesById = graph.nodesList.associateBy { it.id }

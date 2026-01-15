@@ -7,34 +7,41 @@ import { MaterializedViewNode, type AggregationType } from './MaterializedViewNo
 import { TextExtractorNode } from './TextExtractorNode';
 import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
 
-export interface KafkaSourceNodeData extends Record<string, unknown> {
+// Common validation state for all nodes - populated by schema inference
+export interface NodeValidationState {
+  outputSchema?: string[];  // Computed output fields for this node
+  schemaError?: string;     // Validation error message
+  isInferring?: boolean;    // Loading indicator during inference
+}
+
+export interface KafkaSourceNodeData extends Record<string, unknown>, NodeValidationState {
   topicPath: string;
 }
 
-export interface KafkaSinkNodeData extends Record<string, unknown> {
+export interface KafkaSinkNodeData extends Record<string, unknown>, NodeValidationState {
   topicName: string;
 }
 
-export interface GeoIpNodeData extends Record<string, unknown> {
+export interface GeoIpNodeData extends Record<string, unknown>, NodeValidationState {
   ipField: string;
   outputField: string;
 }
 
-export interface InspectorNodeData extends Record<string, unknown> {
+export interface InspectorNodeData extends Record<string, unknown>, NodeValidationState {
   label?: string;
 }
 
-export interface MaterializedViewNodeData extends Record<string, unknown> {
+export interface MaterializedViewNodeData extends Record<string, unknown>, NodeValidationState {
   aggregationType: AggregationType;
   groupByField: string;
 }
 
-export interface TextExtractorNodeData extends Record<string, unknown> {
+export interface TextExtractorNodeData extends Record<string, unknown>, NodeValidationState {
   filePathField: string;
   outputField: string;
 }
 
-export interface EmbeddingGeneratorNodeData extends Record<string, unknown> {
+export interface EmbeddingGeneratorNodeData extends Record<string, unknown>, NodeValidationState {
   textField: string;
   outputField: string;
   model: string;

@@ -1583,3 +1583,128 @@ export class StreamPreviewResponse extends Message<StreamPreviewResponse> {
   }
 }
 
+/**
+ * Schema inference messages
+ *
+ * @generated from message io.typestream.grpc.InferGraphSchemasRequest
+ */
+export class InferGraphSchemasRequest extends Message<InferGraphSchemasRequest> {
+  /**
+   * @generated from field: io.typestream.grpc.PipelineGraph graph = 1;
+   */
+  graph?: PipelineGraph;
+
+  constructor(data?: PartialMessage<InferGraphSchemasRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.InferGraphSchemasRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "graph", kind: "message", T: PipelineGraph },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InferGraphSchemasRequest {
+    return new InferGraphSchemasRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InferGraphSchemasRequest {
+    return new InferGraphSchemasRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InferGraphSchemasRequest {
+    return new InferGraphSchemasRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InferGraphSchemasRequest | PlainMessage<InferGraphSchemasRequest> | undefined, b: InferGraphSchemasRequest | PlainMessage<InferGraphSchemasRequest> | undefined): boolean {
+    return proto3.util.equals(InferGraphSchemasRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.InferGraphSchemasResponse
+ */
+export class InferGraphSchemasResponse extends Message<InferGraphSchemasResponse> {
+  /**
+   * @generated from field: map<string, io.typestream.grpc.NodeSchemaResult> schemas = 1;
+   */
+  schemas: { [key: string]: NodeSchemaResult } = {};
+
+  constructor(data?: PartialMessage<InferGraphSchemasResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.InferGraphSchemasResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "schemas", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: NodeSchemaResult} },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InferGraphSchemasResponse {
+    return new InferGraphSchemasResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InferGraphSchemasResponse {
+    return new InferGraphSchemasResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InferGraphSchemasResponse {
+    return new InferGraphSchemasResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InferGraphSchemasResponse | PlainMessage<InferGraphSchemasResponse> | undefined, b: InferGraphSchemasResponse | PlainMessage<InferGraphSchemasResponse> | undefined): boolean {
+    return proto3.util.equals(InferGraphSchemasResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.NodeSchemaResult
+ */
+export class NodeSchemaResult extends Message<NodeSchemaResult> {
+  /**
+   * @generated from field: repeated string fields = 1;
+   */
+  fields: string[] = [];
+
+  /**
+   * @generated from field: string encoding = 2;
+   */
+  encoding = "";
+
+  /**
+   * @generated from field: string error = 3;
+   */
+  error = "";
+
+  constructor(data?: PartialMessage<NodeSchemaResult>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.NodeSchemaResult";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "fields", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "encoding", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): NodeSchemaResult {
+    return new NodeSchemaResult().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): NodeSchemaResult {
+    return new NodeSchemaResult().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): NodeSchemaResult {
+    return new NodeSchemaResult().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: NodeSchemaResult | PlainMessage<NodeSchemaResult> | undefined, b: NodeSchemaResult | PlainMessage<NodeSchemaResult> | undefined): boolean {
+    return proto3.util.equals(NodeSchemaResult, a, b);
+  }
+}
+

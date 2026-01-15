@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -18,7 +18,8 @@ import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
 import { serializeGraph } from '../../utils/graphSerializer';
 import { useCreateJob } from '../../hooks/useCreateJob';
-import { CreateJobFromGraphRequest } from '../../generated/job_pb';
+import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
+import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
 
 let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
@@ -30,6 +31,60 @@ export function GraphBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
+  const inferSchemas = useInferGraphSchemas();
+
+  // Debounced schema inference on graph changes
+  useEffect(() => {
+    if (nodes.length === 0) return;
+
+    // Mark all nodes as inferring
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: { ...n.data, isInferring: true },
+      } as AppNode))
+    );
+
+    const timeout = setTimeout(async () => {
+      try {
+        const graph = serializeGraph(nodes, edges);
+        const request = new InferGraphSchemasRequest({ graph });
+        const response = await inferSchemas.mutateAsync(request);
+
+        // Update each node with its schema result
+        setNodes((nds) =>
+          nds.map((n) => {
+            const result = response.schemas[n.id];
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                outputSchema: result?.fields ?? [],
+                schemaError: result?.error || undefined,
+                isInferring: false,
+              },
+            } as AppNode;
+          })
+        );
+      } catch {
+        // Network error - mark all nodes with error
+        setNodes((nds) =>
+          nds.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              schemaError: 'Schema inference failed',
+              isInferring: false,
+            },
+          } as AppNode))
+        );
+      }
+    }, 300);
+
+    return () => clearTimeout(timeout);
+    // Note: We intentionally exclude setNodes from deps to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length, edges.length, inferSchemas.mutateAsync]);
 
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),

@@ -21,6 +21,9 @@ import io.typestream.grpc.job_service.stopPreviewJobResponse
 import io.typestream.grpc.job_service.streamPreviewResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
+import io.typestream.grpc.job_service.inferGraphSchemasResponse
+import io.typestream.grpc.job_service.nodeSchemaResult
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.k8s.K8sClient
 import io.typestream.kafka.KafkaAdminClient
 import io.typestream.scheduler.Job as SchedulerJob
@@ -269,6 +272,29 @@ class JobService(private val config: Config, private val vm: Vm) :
             if (previewJobs.containsKey(jobId)) {
                 logger.info { "Stream ended for preview job $jobId, cleaning up" }
                 cleanupPreviewJob(jobId)
+            }
+        }
+    }
+
+    override suspend fun inferGraphSchemas(request: ProtoJob.InferGraphSchemasRequest): ProtoJob.InferGraphSchemasResponse = inferGraphSchemasResponse {
+        try {
+            val (nodeSchemas, nodeEncodings) = graphCompiler.inferNodeSchemasAndEncodings(request.graph)
+
+            request.graph.nodesList.forEach { node ->
+                val nodeSchema = nodeSchemas[node.id]
+                val nodeEncoding = nodeEncodings[node.id]
+
+                schemas[node.id] = nodeSchemaResult {
+                    if (nodeSchema?.schema is Schema.Struct) {
+                        fields += (nodeSchema.schema as Schema.Struct).value.map { it.name }
+                    }
+                    encoding = nodeEncoding?.name ?: "AVRO"
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn(e) { "Error inferring graph schemas" }
+            request.graph.nodesList.forEach { node ->
+                schemas[node.id] = nodeSchemaResult { error = e.message ?: "Inference failed" }
             }
         }
     }

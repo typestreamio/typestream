@@ -13,6 +13,7 @@ service JobService {
     rpc CreatePreviewJob(CreatePreviewJobRequest) returns (CreatePreviewJobResponse) {}
     rpc StopPreviewJob(StopPreviewJobRequest) returns (StopPreviewJobResponse) {}
     rpc StreamPreview(StreamPreviewRequest) returns (stream StreamPreviewResponse) {}
+    rpc InferGraphSchemas(InferGraphSchemasRequest) returns (InferGraphSchemasResponse) {}
 }
 
 message CreateJobRequest {
@@ -200,4 +201,19 @@ message StreamPreviewResponse {
   string key = 1;
   string value = 2;
   int64 timestamp = 3;
+}
+
+// Schema inference messages
+message InferGraphSchemasRequest {
+  PipelineGraph graph = 1;
+}
+
+message InferGraphSchemasResponse {
+  map<string, NodeSchemaResult> schemas = 1;
+}
+
+message NodeSchemaResult {
+  repeated string fields = 1;
+  string encoding = 2;
+  string error = 3;
 }
