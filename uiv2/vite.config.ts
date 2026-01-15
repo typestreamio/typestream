@@ -9,5 +9,11 @@ export default defineConfig({
       usePolling: false,
       ignored: ['**/.pnpm-store/**'],
     },
+    proxy: {
+      '/connect/': {
+        target: 'http://envoy:8080',
+        changeOrigin: true,
+      },
+    },
   },
 })

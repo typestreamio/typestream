@@ -6,6 +6,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Toolbar from '@mui/material/Toolbar';
 import WorkIcon from '@mui/icons-material/Work';
+import CableIcon from '@mui/icons-material/Cable';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DRAWER_WIDTH } from './constants';
 
@@ -38,6 +39,17 @@ export function Sidebar() {
               <WorkIcon />
             </ListItemIcon>
             <ListItemText primary="Jobs" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={isActive('/connectors')}
+            onClick={() => navigate('/connectors')}
+          >
+            <ListItemIcon>
+              <CableIcon />
+            </ListItemIcon>
+            <ListItemText primary="Connectors" />
           </ListItemButton>
         </ListItem>
       </List>
