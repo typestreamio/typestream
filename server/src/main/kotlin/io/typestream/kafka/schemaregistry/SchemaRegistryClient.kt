@@ -23,7 +23,10 @@ class SchemaRegistryClient(private val config: SchemaRegistryConfig) {
     data class RegisterSchemaRequest(val schema: String, val schemaType: String)
 
     @Serializable
-    data class SchemaResponse(val schema: String, val schemaType: String)
+    data class SchemaResponse(val schema: String, val schemaType: String? = null)
+
+    // Thread-safe cache for schema lookups
+    private val schemaCache = java.util.concurrent.ConcurrentHashMap<Int, String>()
 
     fun subjects() = Json.decodeFromString<List<String>>(fetch("/subjects"))
         .filter { s -> s.endsWith("-value") }
@@ -42,7 +45,9 @@ class SchemaRegistryClient(private val config: SchemaRegistryConfig) {
         return registerSchemaResponse.id
     }
 
-    fun schema(id: Int) = Json.decodeFromString<SchemaResponse>(fetch("/schemas/ids/$id")).schema
+    fun schema(id: Int): String = schemaCache.getOrPut(id) {
+        Json.decodeFromString<SchemaResponse>(fetch("/schemas/ids/$id")).schema
+    }
 
     private fun fetch(path: String): String {
         val requestBuilder = Request.Builder()
