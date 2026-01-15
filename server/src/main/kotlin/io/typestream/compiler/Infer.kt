@@ -46,6 +46,10 @@ object Infer {
                 val stream = input ?: error("textExtractor ${ref.id} missing input stream")
                 TypeRules.inferTextExtractor(stream, ref.filePathField, ref.outputField)
             }
+            is Node.EmbeddingGenerator -> {
+                val stream = input ?: error("embeddingGenerator ${ref.id} missing input stream")
+                TypeRules.inferEmbeddingGenerator(stream, ref.textField, ref.outputField)
+            }
             is Node.Inspector -> input ?: error("inspector ${ref.id} missing input stream")
         }
 

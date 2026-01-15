@@ -850,6 +850,61 @@ export class TextExtractorNode extends Message<TextExtractorNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.EmbeddingGeneratorNode
+ */
+export class EmbeddingGeneratorNode extends Message<EmbeddingGeneratorNode> {
+  /**
+   * Field containing text to embed
+   *
+   * @generated from field: string text_field = 1;
+   */
+  textField = "";
+
+  /**
+   * Output field name (default: embedding)
+   *
+   * @generated from field: string output_field = 2;
+   */
+  outputField = "";
+
+  /**
+   * OpenAI model (default: text-embedding-3-small)
+   *
+   * @generated from field: string model = 3;
+   */
+  model = "";
+
+  constructor(data?: PartialMessage<EmbeddingGeneratorNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.EmbeddingGeneratorNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "text_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "output_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "model", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EmbeddingGeneratorNode {
+    return new EmbeddingGeneratorNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EmbeddingGeneratorNode {
+    return new EmbeddingGeneratorNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EmbeddingGeneratorNode {
+    return new EmbeddingGeneratorNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EmbeddingGeneratorNode | PlainMessage<EmbeddingGeneratorNode> | undefined, b: EmbeddingGeneratorNode | PlainMessage<EmbeddingGeneratorNode> | undefined): boolean {
+    return proto3.util.equals(EmbeddingGeneratorNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -945,6 +1000,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: TextExtractorNode;
     case: "textExtractor";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.EmbeddingGeneratorNode embedding_generator = 16;
+     */
+    value: EmbeddingGeneratorNode;
+    case: "embeddingGenerator";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -970,6 +1031,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 13, name: "inspector", kind: "message", T: InspectorNode, oneof: "node_type" },
     { no: 14, name: "reduce_latest", kind: "message", T: ReduceLatestNode, oneof: "node_type" },
     { no: 15, name: "text_extractor", kind: "message", T: TextExtractorNode, oneof: "node_type" },
+    { no: 16, name: "embedding_generator", kind: "message", T: EmbeddingGeneratorNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {

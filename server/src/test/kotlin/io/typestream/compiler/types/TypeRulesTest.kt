@@ -229,4 +229,117 @@ internal class TypeRulesTest {
             assertThat(fieldNames).containsExactly("document_path", "content")
         }
     }
+
+    @Nested
+    inner class InferEmbeddingGenerator {
+
+        private val inputSchema = Schema.Struct(
+            listOf(
+                Schema.Field("id", Schema.String("123")),
+                Schema.Field("text_content", Schema.String("Hello world")),
+                Schema.Field("name", Schema.String("test"))
+            )
+        )
+
+        private val inputDataStream = DataStream("/test/topic", inputSchema)
+
+        @Test
+        fun `adds embedding field to output schema`() {
+            val result = TypeRules.inferEmbeddingGenerator(inputDataStream, "text_content", "embedding")
+
+            val outputSchema = result.schema as Schema.Struct
+            val fieldNames = outputSchema.value.map { it.name }
+            assertThat(fieldNames).containsExactly("id", "text_content", "name", "embedding")
+        }
+
+        @Test
+        fun `new field has List of Float type`() {
+            val result = TypeRules.inferEmbeddingGenerator(inputDataStream, "text_content", "embedding")
+
+            val outputSchema = result.schema as Schema.Struct
+            val embeddingField = outputSchema.value.find { it.name == "embedding" }
+            assertThat(embeddingField?.value).isInstanceOf(Schema.List::class.java)
+            val listSchema = embeddingField?.value as Schema.List
+            assertThat(listSchema.valueType).isInstanceOf(Schema.Float::class.java)
+        }
+
+        @Test
+        fun `preserves original fields`() {
+            val result = TypeRules.inferEmbeddingGenerator(inputDataStream, "text_content", "embedding")
+
+            val outputSchema = result.schema as Schema.Struct
+            val idField = outputSchema.value.find { it.name == "id" }
+            val textField = outputSchema.value.find { it.name == "text_content" }
+            val nameField = outputSchema.value.find { it.name == "name" }
+
+            assertThat(idField?.value).isEqualTo(Schema.String("123"))
+            assertThat(textField?.value).isEqualTo(Schema.String("Hello world"))
+            assertThat(nameField?.value).isEqualTo(Schema.String("test"))
+        }
+
+        @Test
+        fun `preserves original path`() {
+            val result = TypeRules.inferEmbeddingGenerator(inputDataStream, "text_content", "embedding")
+
+            assertThat(result.path).isEqualTo("/test/topic")
+        }
+
+        @Test
+        fun `uses custom output field name`() {
+            val result = TypeRules.inferEmbeddingGenerator(inputDataStream, "text_content", "vector")
+
+            val outputSchema = result.schema as Schema.Struct
+            val fieldNames = outputSchema.value.map { it.name }
+            assertThat(fieldNames).contains("vector")
+            assertThat(fieldNames).doesNotContain("embedding")
+        }
+
+        @Test
+        fun `throws error when text field does not exist`() {
+            assertThatThrownBy {
+                TypeRules.inferEmbeddingGenerator(inputDataStream, "nonexistent_field", "embedding")
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("text field 'nonexistent_field' not found in schema")
+                .hasMessageContaining("Available fields:")
+        }
+
+        @Test
+        fun `error message lists available fields`() {
+            assertThatThrownBy {
+                TypeRules.inferEmbeddingGenerator(inputDataStream, "nonexistent_field", "embedding")
+            }
+                .hasMessageContaining("id")
+                .hasMessageContaining("text_content")
+                .hasMessageContaining("name")
+        }
+
+        @Test
+        fun `throws error for non-struct schema`() {
+            val stringSchema = Schema.String("test")
+            val nonStructDataStream = DataStream("/test/topic", stringSchema)
+
+            assertThatThrownBy {
+                TypeRules.inferEmbeddingGenerator(nonStructDataStream, "text_content", "embedding")
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("EmbeddingGenerator requires struct schema")
+        }
+
+        @Test
+        fun `works with different field names for text`() {
+            val schemaWithDifferentTextField = Schema.Struct(
+                listOf(
+                    Schema.Field("description", Schema.String("Some description")),
+                )
+            )
+            val dataStream = DataStream("/test/topic", schemaWithDifferentTextField)
+
+            val result = TypeRules.inferEmbeddingGenerator(dataStream, "description", "desc_embedding")
+
+            val outputSchema = result.schema as Schema.Struct
+            val fieldNames = outputSchema.value.map { it.name }
+            assertThat(fieldNames).containsExactly("description", "desc_embedding")
+        }
+    }
 }

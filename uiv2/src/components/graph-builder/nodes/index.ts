@@ -5,6 +5,7 @@ import { GeoIpNode } from './GeoIpNode';
 import { InspectorNode } from './InspectorNode';
 import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
 import { TextExtractorNode } from './TextExtractorNode';
+import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
 
 export interface KafkaSourceNodeData extends Record<string, unknown> {
   topicPath: string;
@@ -33,14 +34,21 @@ export interface TextExtractorNodeData extends Record<string, unknown> {
   outputField: string;
 }
 
+export interface EmbeddingGeneratorNodeData extends Record<string, unknown> {
+  textField: string;
+  outputField: string;
+  model: string;
+}
+
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
 export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
 export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
+export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -49,4 +57,5 @@ export const nodeTypes: NodeTypes = {
   inspector: InspectorNode,
   materializedView: MaterializedViewNode,
   textExtractor: TextExtractorNode,
+  embeddingGenerator: EmbeddingGeneratorNode,
 };

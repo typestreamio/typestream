@@ -65,6 +65,8 @@ export function GraphBuilder() {
         data = { aggregationType: 'count', groupByField: '' };
       } else if (type === 'textExtractor') {
         data = { filePathField: '', outputField: 'text' };
+      } else if (type === 'embeddingGenerator') {
+        data = { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
       } else {
         data = { topicPath: '' };
       }

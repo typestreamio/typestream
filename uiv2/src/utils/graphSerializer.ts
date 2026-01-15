@@ -9,11 +9,12 @@ import {
   DataStreamProto,
   GeoIpNode as GeoIpNodeProto,
   TextExtractorNode as TextExtractorNodeProto,
+  EmbeddingGeneratorNode as EmbeddingGeneratorNodeProto,
   GroupNode,
   CountNode,
   ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = [];
@@ -121,6 +122,22 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           value: new TextExtractorNodeProto({
             filePathField: data.filePathField,
             outputField: data.outputField || 'text',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'embeddingGenerator') {
+      const data = node.data as EmbeddingGeneratorNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'embeddingGenerator',
+          value: new EmbeddingGeneratorNodeProto({
+            textField: data.textField,
+            outputField: data.outputField || 'embedding',
+            model: data.model || 'text-embedding-3-small',
           }),
         },
       }));

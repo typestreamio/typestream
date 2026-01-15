@@ -38,6 +38,7 @@ data class SampleFile(
 class FileUploadsConnector(
     private val outputDir: String = "/tmp/typestream-files",
     private val ratePerSecond: Double = 1.0,
+    private val maxMessages: Long = 50,
     topic: String = DEFAULT_TOPIC,
     private val sender: MessageSender = Producer(Config.fromEnv(topic).copy(retentionMs = RETENTION_MS))
 ) : AutoCloseable {
@@ -209,6 +210,7 @@ class FileUploadsConnector(
         logger.info { "Starting FileUploads connector" }
         logger.info { "  Output directory: $outputDir" }
         logger.info { "  Rate: ~$ratePerSecond events/sec" }
+        logger.info { "  Max messages: $maxMessages" }
 
         createSampleFiles()
 
@@ -216,7 +218,7 @@ class FileUploadsConnector(
             try {
                 val delayMs = (1000.0 / ratePerSecond).toLong().coerceAtLeast(1)
 
-                while (running.get()) {
+                while (running.get() && messageCount.get() < maxMessages) {
                     val upload = generateUpload()
                     sender.send(upload.id, upload)
 
@@ -228,6 +230,10 @@ class FileUploadsConnector(
                     }
 
                     Thread.sleep(delayMs)
+                }
+
+                if (messageCount.get() >= maxMessages) {
+                    logger.info { "Reached maximum message count ($maxMessages), stopping" }
                 }
             } catch (e: InterruptedException) {
                 logger.info { "Generator thread interrupted" }
