@@ -150,6 +150,8 @@ export function GraphBuilder() {
         data = { filePathField: '', outputField: 'text' };
       } else if (type === 'embeddingGenerator') {
         data = { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
+      } else if (type === 'openAiTransformer') {
+        data = { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
       } else {
         data = { topicPath: '' };
       }

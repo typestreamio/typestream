@@ -17,6 +17,8 @@ import io.typestream.embedding.EmbeddingGeneratorExecution
 import io.typestream.embedding.EmbeddingGeneratorService
 import io.typestream.geoip.GeoIpExecution
 import io.typestream.geoip.GeoIpService
+import io.typestream.openai.OpenAiService
+import io.typestream.openai.OpenAiTransformerExecution
 import io.typestream.textextractor.TextExtractorExecution
 import io.typestream.textextractor.TextExtractorService
 import io.typestream.kafka.avro.AvroSerde
@@ -40,7 +42,8 @@ data class KafkaStreamSource(
     private val streamsBuilder: StreamsBuilderWrapper,
     private val geoIpService: GeoIpService,
     private val textExtractorService: TextExtractorService,
-    private val embeddingGeneratorService: EmbeddingGeneratorService
+    private val embeddingGeneratorService: EmbeddingGeneratorService,
+    private val openAiService: OpenAiService
 ) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
@@ -176,6 +179,10 @@ data class KafkaStreamSource(
 
     fun embeddingGenerate(embeddingGenerator: Node.EmbeddingGenerator) {
         stream = EmbeddingGeneratorExecution.applyToKafka(embeddingGenerator, stream, embeddingGeneratorService)
+    }
+
+    fun openAiTransform(openAiTransformer: Node.OpenAiTransformer) {
+        stream = OpenAiTransformerExecution.applyToKafka(openAiTransformer, stream, openAiService)
     }
 
     fun toInspector(inspector: Node.Inspector, programId: String) {

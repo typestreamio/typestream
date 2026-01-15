@@ -905,6 +905,61 @@ export class EmbeddingGeneratorNode extends Message<EmbeddingGeneratorNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.OpenAiTransformerNode
+ */
+export class OpenAiTransformerNode extends Message<OpenAiTransformerNode> {
+  /**
+   * User's instruction prompt
+   *
+   * @generated from field: string prompt = 1;
+   */
+  prompt = "";
+
+  /**
+   * Output field name (default: ai_response)
+   *
+   * @generated from field: string output_field = 2;
+   */
+  outputField = "";
+
+  /**
+   * OpenAI model ID (default: gpt-4o-mini)
+   *
+   * @generated from field: string model = 3;
+   */
+  model = "";
+
+  constructor(data?: PartialMessage<OpenAiTransformerNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.OpenAiTransformerNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "prompt", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "output_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "model", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OpenAiTransformerNode {
+    return new OpenAiTransformerNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OpenAiTransformerNode {
+    return new OpenAiTransformerNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OpenAiTransformerNode {
+    return new OpenAiTransformerNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OpenAiTransformerNode | PlainMessage<OpenAiTransformerNode> | undefined, b: OpenAiTransformerNode | PlainMessage<OpenAiTransformerNode> | undefined): boolean {
+    return proto3.util.equals(OpenAiTransformerNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -1006,6 +1061,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: EmbeddingGeneratorNode;
     case: "embeddingGenerator";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.OpenAiTransformerNode open_ai_transformer = 17;
+     */
+    value: OpenAiTransformerNode;
+    case: "openAiTransformer";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -1032,6 +1093,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 14, name: "reduce_latest", kind: "message", T: ReduceLatestNode, oneof: "node_type" },
     { no: 15, name: "text_extractor", kind: "message", T: TextExtractorNode, oneof: "node_type" },
     { no: 16, name: "embedding_generator", kind: "message", T: EmbeddingGeneratorNode, oneof: "node_type" },
+    { no: 17, name: "open_ai_transformer", kind: "message", T: OpenAiTransformerNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {
@@ -1705,6 +1767,123 @@ export class NodeSchemaResult extends Message<NodeSchemaResult> {
 
   static equals(a: NodeSchemaResult | PlainMessage<NodeSchemaResult> | undefined, b: NodeSchemaResult | PlainMessage<NodeSchemaResult> | undefined): boolean {
     return proto3.util.equals(NodeSchemaResult, a, b);
+  }
+}
+
+/**
+ * OpenAI models listing
+ *
+ * @generated from message io.typestream.grpc.ListOpenAIModelsRequest
+ */
+export class ListOpenAIModelsRequest extends Message<ListOpenAIModelsRequest> {
+  constructor(data?: PartialMessage<ListOpenAIModelsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ListOpenAIModelsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOpenAIModelsRequest {
+    return new ListOpenAIModelsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOpenAIModelsRequest {
+    return new ListOpenAIModelsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOpenAIModelsRequest {
+    return new ListOpenAIModelsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOpenAIModelsRequest | PlainMessage<ListOpenAIModelsRequest> | undefined, b: ListOpenAIModelsRequest | PlainMessage<ListOpenAIModelsRequest> | undefined): boolean {
+    return proto3.util.equals(ListOpenAIModelsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.OpenAIModel
+ */
+export class OpenAIModel extends Message<OpenAIModel> {
+  /**
+   * e.g. "gpt-4o-mini"
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * Display name
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  constructor(data?: PartialMessage<OpenAIModel>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.OpenAIModel";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OpenAIModel {
+    return new OpenAIModel().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OpenAIModel {
+    return new OpenAIModel().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OpenAIModel {
+    return new OpenAIModel().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OpenAIModel | PlainMessage<OpenAIModel> | undefined, b: OpenAIModel | PlainMessage<OpenAIModel> | undefined): boolean {
+    return proto3.util.equals(OpenAIModel, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.ListOpenAIModelsResponse
+ */
+export class ListOpenAIModelsResponse extends Message<ListOpenAIModelsResponse> {
+  /**
+   * @generated from field: repeated io.typestream.grpc.OpenAIModel models = 1;
+   */
+  models: OpenAIModel[] = [];
+
+  constructor(data?: PartialMessage<ListOpenAIModelsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ListOpenAIModelsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "models", kind: "message", T: OpenAIModel, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOpenAIModelsResponse {
+    return new ListOpenAIModelsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOpenAIModelsResponse {
+    return new ListOpenAIModelsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOpenAIModelsResponse {
+    return new ListOpenAIModelsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOpenAIModelsResponse | PlainMessage<ListOpenAIModelsResponse> | undefined, b: ListOpenAIModelsResponse | PlainMessage<ListOpenAIModelsResponse> | undefined): boolean {
+    return proto3.util.equals(ListOpenAIModelsResponse, a, b);
   }
 }
 
