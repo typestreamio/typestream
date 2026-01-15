@@ -42,7 +42,7 @@ open class OpenAiService(
 
     /**
      * Fetch available chat models from OpenAI API.
-     * Filters to only chat-capable models (gpt-4*, gpt-3.5-turbo*).
+     * Returns all models sorted alphabetically.
      * Results are cached after the first fetch.
      */
     fun fetchModels(): List<OpenAiModel> {
@@ -65,8 +65,6 @@ open class OpenAiService(
             if (response.statusCode() == 200) {
                 val modelsResponse = json.decodeFromString(ModelsResponse.serializer(), response.body())
                 cachedModels = modelsResponse.data
-                    .filter { it.id.startsWith("gpt-4") || it.id.startsWith("gpt-3.5-turbo") }
-                    .filter { !it.id.contains("instruct") } // Exclude instruct models, keep chat models
                     .map { OpenAiModel(id = it.id, name = it.id) }
                     .sortedBy { it.id }
                 cachedModels
@@ -142,7 +140,7 @@ open class OpenAiService(
                 val completionResponse = json.decodeFromString(ChatCompletionResponse.serializer(), response.body())
                 completionResponse.choices.firstOrNull()?.message?.content
             } else {
-                logger.warn { "OpenAI chat completion failed: HTTP ${response.statusCode()} - ${response.body()}" }
+                logger.warn { "OpenAI chat completion failed: HTTP ${response.statusCode()}" }
                 null
             }
         } catch (e: Exception) {
