@@ -803,6 +803,53 @@ export class ReduceLatestNode extends Message<ReduceLatestNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.TextExtractorNode
+ */
+export class TextExtractorNode extends Message<TextExtractorNode> {
+  /**
+   * Field containing the file path
+   *
+   * @generated from field: string file_path_field = 1;
+   */
+  filePathField = "";
+
+  /**
+   * Output field name (default: text)
+   *
+   * @generated from field: string output_field = 2;
+   */
+  outputField = "";
+
+  constructor(data?: PartialMessage<TextExtractorNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.TextExtractorNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "file_path_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "output_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TextExtractorNode {
+    return new TextExtractorNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TextExtractorNode {
+    return new TextExtractorNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TextExtractorNode {
+    return new TextExtractorNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TextExtractorNode | PlainMessage<TextExtractorNode> | undefined, b: TextExtractorNode | PlainMessage<TextExtractorNode> | undefined): boolean {
+    return proto3.util.equals(TextExtractorNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -892,6 +939,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: ReduceLatestNode;
     case: "reduceLatest";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.TextExtractorNode text_extractor = 15;
+     */
+    value: TextExtractorNode;
+    case: "textExtractor";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -916,6 +969,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 12, name: "geo_ip", kind: "message", T: GeoIpNode, oneof: "node_type" },
     { no: 13, name: "inspector", kind: "message", T: InspectorNode, oneof: "node_type" },
     { no: 14, name: "reduce_latest", kind: "message", T: ReduceLatestNode, oneof: "node_type" },
+    { no: 15, name: "text_extractor", kind: "message", T: TextExtractorNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {

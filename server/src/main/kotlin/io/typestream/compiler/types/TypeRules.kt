@@ -175,4 +175,27 @@ object TypeRules {
     val newFields = inputSchema.value + newField
     return input.copy(schema = Schema.Struct(newFields))
   }
+
+  /**
+   * Type inference for TextExtractor nodes.
+   * Adds a new string field (extracted text) to the schema.
+   * The TextExtractor node takes a file path field from the input and adds an extracted text field to the output.
+   *
+   * @param input The input stream schema
+   * @param filePathField The name of the field containing the file path
+   * @param outputField The name of the output field for the extracted text (e.g., "text")
+   * @return Input schema with the new text field added
+   * @throws IllegalArgumentException if input schema is not a struct or if filePathField doesn't exist
+   */
+  fun inferTextExtractor(input: DataStream, filePathField: String, outputField: String): DataStream {
+    val inputSchema = input.schema
+    require(inputSchema is Schema.Struct) { "TextExtractor requires struct schema, got: ${inputSchema::class.simpleName}" }
+
+    val hasFilePathField = inputSchema.value.any { it.name == filePathField }
+    require(hasFilePathField) { "TextExtractor file path field '$filePathField' not found in schema. Available fields: ${inputSchema.value.map { it.name }}" }
+
+    val newField = Schema.Field(outputField, Schema.String.zeroValue)
+    val newFields = inputSchema.value + newField
+    return input.copy(schema = Schema.Struct(newFields))
+  }
 }

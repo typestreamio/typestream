@@ -63,6 +63,8 @@ export function GraphBuilder() {
         data = { label: '' };
       } else if (type === 'materializedView') {
         data = { aggregationType: 'count', groupByField: '' };
+      } else if (type === 'textExtractor') {
+        data = { filePathField: '', outputField: 'text' };
       } else {
         data = { topicPath: '' };
       }

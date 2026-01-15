@@ -4,6 +4,7 @@ import { KafkaSinkNode } from './KafkaSinkNode';
 import { GeoIpNode } from './GeoIpNode';
 import { InspectorNode } from './InspectorNode';
 import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
+import { TextExtractorNode } from './TextExtractorNode';
 
 export interface KafkaSourceNodeData extends Record<string, unknown> {
   topicPath: string;
@@ -27,13 +28,19 @@ export interface MaterializedViewNodeData extends Record<string, unknown> {
   groupByField: string;
 }
 
+export interface TextExtractorNodeData extends Record<string, unknown> {
+  filePathField: string;
+  outputField: string;
+}
+
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
 export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
 export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
+export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -41,4 +48,5 @@ export const nodeTypes: NodeTypes = {
   geoIp: GeoIpNode,
   inspector: InspectorNode,
   materializedView: MaterializedViewNode,
+  textExtractor: TextExtractorNode,
 };

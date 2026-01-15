@@ -7,6 +7,7 @@ import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
 import io.typestream.geoip.GeoIpNodeHandler
+import io.typestream.textextractor.TextExtractorNodeHandler
 import io.typestream.graph.Graph
 import io.typestream.grpc.job_service.Job
 import java.util.ArrayDeque
@@ -108,6 +109,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       Node.Inspector(proto.id, proto.inspector.label)
     }
     proto.hasReduceLatest() -> Node.ReduceLatest(proto.id)
+    proto.hasTextExtractor() -> TextExtractorNodeHandler.fromProto(proto)
     else -> error("Unknown node type: $proto")
   }
 
@@ -221,6 +223,14 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       }
       proto.hasReduceLatest() -> {
         val out = io.typestream.compiler.types.TypeRules.inferReduceLatest(input ?: error("reduce_latest $nodeId missing input"))
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasTextExtractor() -> {
+        val out = TextExtractorNodeHandler.inferType(
+          input ?: error("textExtractor $nodeId missing input"),
+          proto.textExtractor.filePathField,
+          proto.textExtractor.outputField.ifBlank { "text" }
+        )
         out to (inputEncoding ?: Encoding.AVRO)
       }
       else -> error("Unknown node type: $nodeId")
