@@ -277,24 +277,19 @@ class JobService(private val config: Config, private val vm: Vm) :
     }
 
     override suspend fun inferGraphSchemas(request: ProtoJob.InferGraphSchemasRequest): ProtoJob.InferGraphSchemasResponse = inferGraphSchemasResponse {
-        try {
-            val (nodeSchemas, nodeEncodings) = graphCompiler.inferNodeSchemasAndEncodings(request.graph)
+        // Use UI-friendly inference that handles errors gracefully per-node
+        val results = graphCompiler.inferNodeSchemasForUI(request.graph)
 
-            request.graph.nodesList.forEach { node ->
-                val nodeSchema = nodeSchemas[node.id]
-                val nodeEncoding = nodeEncodings[node.id]
-
-                schemas[node.id] = nodeSchemaResult {
-                    if (nodeSchema?.schema is Schema.Struct) {
-                        fields += (nodeSchema.schema as Schema.Struct).value.map { it.name }
-                    }
-                    encoding = nodeEncoding?.name ?: "AVRO"
+        request.graph.nodesList.forEach { node ->
+            val result = results[node.id]
+            schemas[node.id] = nodeSchemaResult {
+                if (result?.schema?.schema is Schema.Struct) {
+                    fields += (result.schema.schema as Schema.Struct).value.map { it.name }
                 }
-            }
-        } catch (e: Exception) {
-            logger.warn(e) { "Error inferring graph schemas" }
-            request.graph.nodesList.forEach { node ->
-                schemas[node.id] = nodeSchemaResult { error = e.message ?: "Inference failed" }
+                encoding = result?.encoding?.name ?: "AVRO"
+                if (result?.error != null) {
+                    error = result.error
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
 import { serializeGraph } from '../../utils/graphSerializer';
+import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
 import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
@@ -33,6 +34,18 @@ export function GraphBuilder() {
   const createJob = useCreateJob();
   const inferSchemas = useInferGraphSchemas();
 
+  // Create a stable dependency key that tracks meaningful graph changes
+  // (excludes validation state fields that we set)
+  const graphKey = useMemo(() => getGraphDependencyKey(nodes, edges), [nodes, edges]);
+
+  // Keep a ref to the latest nodes/edges for use in the async callback
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
+
   // Debounced schema inference on graph changes
   useEffect(() => {
     if (nodes.length === 0) return;
@@ -47,7 +60,10 @@ export function GraphBuilder() {
 
     const timeout = setTimeout(async () => {
       try {
-        const graph = serializeGraph(nodes, edges);
+        // Use refs to get latest values inside async callback
+        const currentNodes = nodesRef.current;
+        const currentEdges = edgesRef.current;
+        const graph = serializeGraph(currentNodes, currentEdges);
         const request = new InferGraphSchemasRequest({ graph });
         const response = await inferSchemas.mutateAsync(request);
 
@@ -82,9 +98,9 @@ export function GraphBuilder() {
     }, 300);
 
     return () => clearTimeout(timeout);
-    // Note: We intentionally exclude setNodes from deps to avoid infinite loops
+    // graphKey changes when meaningful node/edge data changes (excluding validation state)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, edges.length, inferSchemas.mutateAsync]);
+  }, [graphKey, inferSchemas.mutateAsync]);
 
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
