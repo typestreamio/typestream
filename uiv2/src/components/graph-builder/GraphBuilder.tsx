@@ -46,9 +46,15 @@ export function GraphBuilder() {
     edgesRef.current = edges;
   }, [nodes, edges]);
 
+  // Request counter to prevent stale responses from updating state
+  const requestIdRef = useRef(0);
+
   // Debounced schema inference on graph changes
   useEffect(() => {
     if (nodes.length === 0) return;
+
+    // Increment request ID for this inference cycle
+    const currentRequestId = ++requestIdRef.current;
 
     // Mark all nodes as inferring
     setNodes((nds) =>
@@ -67,6 +73,9 @@ export function GraphBuilder() {
         const request = new InferGraphSchemasRequest({ graph });
         const response = await inferSchemas.mutateAsync(request);
 
+        // Only update state if this is still the latest request
+        if (currentRequestId !== requestIdRef.current) return;
+
         // Update each node with its schema result
         setNodes((nds) =>
           nds.map((n) => {
@@ -83,6 +92,9 @@ export function GraphBuilder() {
           })
         );
       } catch {
+        // Only update state if this is still the latest request
+        if (currentRequestId !== requestIdRef.current) return;
+
         // Network error - mark all nodes with error
         setNodes((nds) =>
           nds.map((n) => ({
