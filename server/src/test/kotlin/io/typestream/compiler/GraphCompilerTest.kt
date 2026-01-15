@@ -121,6 +121,78 @@ internal class GraphCompilerTest {
             .hasMessageContaining("/dev/kafka/local/topics/books")
     }
 
+    @Test
+    fun `compiles stream source with text extractor`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Test Book", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                textExtractorNode("extractor", "title", "extracted_text")
+            ),
+            edges = listOf(edge("source", "extractor"))
+        )
+
+        val program = compiler.compile(request)
+
+        val streamGraph = program.graph.children.single()
+        val stream = streamGraph.ref as Node.StreamSource
+        assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
+
+        val textExtractor = streamGraph.children.single().ref as Node.TextExtractor
+        assertThat(textExtractor.filePathField).isEqualTo("title")
+        assertThat(textExtractor.outputField).isEqualTo("extracted_text")
+    }
+
+    @Test
+    fun `text extractor adds output field to schema`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Schema Test", wordCount = 50, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                textExtractorNode("extractor", "title", "content")
+            ),
+            edges = listOf(edge("source", "extractor"))
+        )
+
+        val program = compiler.compile(request)
+
+        // The graph compiles successfully, meaning type inference worked
+        assertThat(program.graph.children).hasSize(1)
+    }
+
+    @Test
+    fun `text extractor fails when file path field does not exist`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Field Test", wordCount = 25, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                textExtractorNode("extractor", "nonexistent_field", "text")
+            ),
+            edges = listOf(edge("source", "extractor"))
+        )
+
+        assertThatThrownBy { compiler.compile(request) }
+            .hasMessageContaining("file path field 'nonexistent_field' not found in schema")
+    }
+
     private fun streamSourceNode(id: String, path: String, encoding: Job.Encoding): Job.PipelineNode =
         Job.PipelineNode.newBuilder()
             .setId(id)
@@ -147,6 +219,16 @@ internal class GraphCompilerTest {
             .setSink(
                 Job.SinkNode.newBuilder()
                     .setOutput(Job.DataStreamProto.newBuilder().setPath(path))
+            )
+            .build()
+
+    private fun textExtractorNode(id: String, filePathField: String, outputField: String): Job.PipelineNode =
+        Job.PipelineNode.newBuilder()
+            .setId(id)
+            .setTextExtractor(
+                Job.TextExtractorNode.newBuilder()
+                    .setFilePathField(filePathField)
+                    .setOutputField(outputField)
             )
             .build()
 

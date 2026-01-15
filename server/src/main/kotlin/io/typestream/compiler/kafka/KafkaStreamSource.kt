@@ -15,6 +15,8 @@ import io.typestream.compiler.types.datastream.toProtoMessage
 import io.typestream.compiler.types.datastream.toProtoSchema
 import io.typestream.geoip.GeoIpExecution
 import io.typestream.geoip.GeoIpService
+import io.typestream.textextractor.TextExtractorExecution
+import io.typestream.textextractor.TextExtractorService
 import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.ProtoSerde
 import io.typestream.kafka.StreamsBuilderWrapper
@@ -34,7 +36,8 @@ import java.time.Duration
 data class KafkaStreamSource(
     val node: Node.StreamSource,
     private val streamsBuilder: StreamsBuilderWrapper,
-    private val geoIpService: GeoIpService
+    private val geoIpService: GeoIpService,
+    private val textExtractorService: TextExtractorService
 ) {
     private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
@@ -162,6 +165,10 @@ data class KafkaStreamSource(
 
     fun geoIp(geoIp: Node.GeoIp) {
         stream = GeoIpExecution.applyToKafka(geoIp, stream, geoIpService)
+    }
+
+    fun textExtract(textExtractor: Node.TextExtractor) {
+        stream = TextExtractorExecution.applyToKafka(textExtractor, stream, textExtractorService)
     }
 
     fun toInspector(inspector: Node.Inspector, programId: String) {

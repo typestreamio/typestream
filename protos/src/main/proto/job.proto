@@ -98,6 +98,11 @@ message InspectorNode {
 
 message ReduceLatestNode {}
 
+message TextExtractorNode {
+  string file_path_field = 1;  // Field containing the file path
+  string output_field = 2;     // Output field name (default: text)
+}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -114,6 +119,7 @@ message PipelineNode {
     GeoIpNode geo_ip = 12;
     InspectorNode inspector = 13;
     ReduceLatestNode reduce_latest = 14;
+    TextExtractorNode text_extractor = 15;
   }
 }
 

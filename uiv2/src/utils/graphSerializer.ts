@@ -8,11 +8,12 @@ import {
   InspectorNode,
   DataStreamProto,
   GeoIpNode as GeoIpNodeProto,
+  TextExtractorNode as TextExtractorNodeProto,
   GroupNode,
   CountNode,
   ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = [];
@@ -105,6 +106,21 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
           case: 'inspector',
           value: new InspectorNode({
             label: data.label || '',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'textExtractor') {
+      const data = node.data as TextExtractorNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'textExtractor',
+          value: new TextExtractorNodeProto({
+            filePathField: data.filePathField,
+            outputField: data.outputField || 'text',
           }),
         },
       }));

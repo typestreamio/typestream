@@ -5,6 +5,7 @@ import OutputIcon from '@mui/icons-material/Output';
 import PublicIcon from '@mui/icons-material/Public';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import DescriptionIcon from '@mui/icons-material/Description';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -83,6 +84,11 @@ export function NodePalette() {
         type="materializedView"
         label="Materialized View"
         icon={<TableChartIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="textExtractor"
+        label="Text Extractor"
+        icon={<DescriptionIcon fontSize="small" />}
       />
     </Paper>
   );

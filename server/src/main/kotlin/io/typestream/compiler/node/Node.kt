@@ -47,4 +47,7 @@ sealed interface Node {
 
     @Serializable
     data class ReduceLatest(override val id: String) : Node
+
+    @Serializable
+    data class TextExtractor(override val id: String, val filePathField: String, val outputField: String) : Node
 }

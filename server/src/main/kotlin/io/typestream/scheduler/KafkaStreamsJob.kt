@@ -7,6 +7,7 @@ import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
 import io.typestream.geoip.GeoIpService
+import io.typestream.textextractor.TextExtractorService
 import io.typestream.coroutine.retry
 import io.typestream.kafka.DataStreamSerde
 import io.typestream.kafka.StreamsBuilderWrapper
@@ -51,7 +52,8 @@ class KafkaStreamsJob(
     override val id: String,
     val program: Program,
     private val kafkaConfig: KafkaConfig,
-    private val geoIpService: GeoIpService
+    private val geoIpService: GeoIpService,
+    private val textExtractorService: TextExtractorService
 ) : Job {
     private var running: Boolean = false
     private val logger = KotlinLogging.logger {}
@@ -74,7 +76,7 @@ class KafkaStreamsJob(
             val source = sourceNode.ref
             require(source is Node.StreamSource) { "source node must be a StreamSource" }
 
-            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService)
+            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService, textExtractorService)
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
@@ -96,6 +98,7 @@ class KafkaStreamsJob(
                     is Node.Map -> kafkaStreamSource.map(currentNode.ref)
                     is Node.Each -> kafkaStreamSource.each(currentNode.ref)
                     is Node.GeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
+                    is Node.TextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)
