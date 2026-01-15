@@ -25,7 +25,8 @@ class SchemaRegistryClient(private val config: SchemaRegistryConfig) {
     @Serializable
     data class SchemaResponse(val schema: String, val schemaType: String? = null)
 
-    private val schemaCache = mutableMapOf<Int, String>()
+    // Thread-safe cache for schema lookups
+    private val schemaCache = java.util.concurrent.ConcurrentHashMap<Int, String>()
 
     fun subjects() = Json.decodeFromString<List<String>>(fetch("/subjects"))
         .filter { s -> s.endsWith("-value") }

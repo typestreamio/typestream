@@ -47,8 +47,8 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
         return bytes
     }
 
-    // Cache for parsed writer schemas by ID
-    private val writerSchemaCache = mutableMapOf<Int, Schema>()
+    // Cache for parsed writer schemas by ID (thread-safe for concurrent Kafka Streams access)
+    private val writerSchemaCache = java.util.concurrent.ConcurrentHashMap<Int, Schema>()
 
     override fun deserialize(topic: String?, data: ByteArray?): GenericRecord? {
         if (data == null) {
