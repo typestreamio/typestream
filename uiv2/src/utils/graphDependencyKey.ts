@@ -13,6 +13,8 @@ export function getGraphDependencyKey(
 ): string {
   const nodeData = nodes
     .map((n) => {
+      // Intentionally exclude validation state fields to avoid infinite loops
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { outputSchema, schemaError, isInferring, ...rest } = n.data as NodeValidationState &
         Record<string, unknown>;
       return { id: n.id, type: n.type, data: rest };
