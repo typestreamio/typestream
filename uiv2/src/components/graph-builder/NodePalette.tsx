@@ -5,6 +5,7 @@ import OutputIcon from '@mui/icons-material/Output';
 import PublicIcon from '@mui/icons-material/Public';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import StorageIcon from '@mui/icons-material/Storage';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -83,6 +84,11 @@ export function NodePalette() {
         type="materializedView"
         label="Materialized View"
         icon={<TableChartIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="jdbcSink"
+        label="JDBC Sink"
+        icon={<StorageIcon fontSize="small" />}
       />
     </Paper>
   );

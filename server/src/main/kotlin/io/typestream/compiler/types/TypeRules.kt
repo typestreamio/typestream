@@ -67,7 +67,8 @@ object TypeRules {
    * @return Merged schema containing fields from both streams
    */
   fun inferJoin(left: DataStream, right: DataStream): DataStream {
-    return left.merge(right)
+    // Clear originalAvroSchema since join creates a new combined schema
+    return left.merge(right).copy(originalAvroSchema = null)
   }
 
   /**
@@ -173,6 +174,7 @@ object TypeRules {
 
     val newField = Schema.Field(outputField, Schema.String.zeroValue)
     val newFields = inputSchema.value + newField
-    return input.copy(schema = Schema.Struct(newFields))
+    // Clear originalAvroSchema since we're modifying the schema
+    return input.copy(schema = Schema.Struct(newFields), originalAvroSchema = null)
   }
 }

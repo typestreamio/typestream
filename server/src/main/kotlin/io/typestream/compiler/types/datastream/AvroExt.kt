@@ -8,26 +8,42 @@ import org.apache.avro.LogicalTypes
 import org.apache.avro.LogicalTypes.Decimal
 import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericRecord
+import java.util.concurrent.atomic.AtomicInteger
 import org.apache.avro.Schema as AvroSchema
+
+// Counter for generating unique nested record names within a schema generation
+private val nestedRecordCounter = ThreadLocal.withInitial { AtomicInteger(0) }
 
 fun DataStream.Companion.fromAvroGenericRecord(path: String, genericRecord: GenericRecord): DataStream {
     val values = genericRecord.schema.fields.map { avroField ->
         avroField.toSchemaField(genericRecord)
     }
 
-    return DataStream(path, Schema.Struct(values))
+    // Preserve the original Avro schema for pass-through scenarios
+    return DataStream(path, Schema.Struct(values), originalAvroSchema = genericRecord.schema.toString())
 }
 
 fun DataStream.Companion.fromAvroSchema(path: String, avroSchema: AvroSchema): DataStream {
-    val values = avroSchema.fields.map(AvroSchema.Field::toSchemaField)
+    // When parsing schema only (no data), use schemaOnly=true to create zero values for all types
+    val values = avroSchema.fields.map { it.toSchemaField(value = null, schemaOnly = true) }
 
-    return DataStream(path, Schema.Struct(values))
+    // Preserve the original Avro schema for pass-through scenarios
+    return DataStream(path, Schema.Struct(values), originalAvroSchema = avroSchema.toString())
 }
 
 fun DataStream.toAvroSchema(): AvroSchema {
     val parser = AvroSchema.Parser()
 
+    // If we have the original Avro schema (e.g., from Debezium), use it directly
+    // This preserves exact schema structure for pass-through scenarios
+    if (originalAvroSchema != null) {
+        return parser.parse(originalAvroSchema)
+    }
+
     require(schema is Schema.Struct) { "top level value must be a struct" }
+
+    // Reset the counter for this schema generation
+    nestedRecordCounter.get().set(0)
 
     val fields = schema.value.joinToString(",") { field ->
         """{"name": "${field.name}","type": ${toAvroType(field.value)}}""".trimIndent()
@@ -71,17 +87,24 @@ private fun toAvroType(schema: Schema): String {
         is Schema.Long -> """"long""""
         is Schema.List -> """{"type":"array","items": ${toAvroType(schema.valueType)}}"""
         is Schema.Map -> """{"type":"map","values":${toAvroType(schema.valueType)}}"""
-        is Schema.Optional -> """["null","string"], "default": null"""
+        is Schema.Optional -> {
+            // Use the actual inner type if available, otherwise fallback to string
+            val innerType = schema.value?.let { toAvroType(it) } ?: """"string""""
+            """["null",$innerType], "default": null"""
+        }
 
         is Schema.Struct -> {
             val fields = schema.value.joinToString(",") { field ->
                 """{"name": "${field.name}","type": ${toAvroType(field.value)}}"""
             }
+            // Generate a unique name for nested records to avoid conflicts
+            val recordIndex = nestedRecordCounter.get().getAndIncrement()
+            val baseName = schema.value.joinToString("_") { it.name }
 
             """
                 {
                     "type": "record",
-                    "name": "${schema.value.joinToString("_") { it.name }}",
+                    "name": "${baseName}_$recordIndex",
                     "fields": [${fields}]
                 }
             """.trimIndent()
@@ -94,15 +117,21 @@ private fun toAvroType(schema: Schema): String {
     }
 }
 
-private fun AvroSchema.Field.toSchemaField(value: Any? = null): Schema.Field {
+/**
+ * Convert an Avro field to a Schema.Field.
+ * @param value The actual data value (null if not available)
+ * @param schemaOnly If true, create zero values for Optional types instead of null
+ *                   (used when parsing schema without data, e.g., for type inference)
+ */
+private fun AvroSchema.Field.toSchemaField(value: Any? = null, schemaOnly: Boolean = false): Schema.Field {
     return when (schema().type) {
         AvroSchema.Type.ARRAY -> {
             val elementType = schema().elementType
             val avroField = AvroSchema.Field(name(), elementType)
-            val schemaType = avroField.toSchemaField().value
+            val schemaType = avroField.toSchemaField(schemaOnly = schemaOnly).value
 
             if (value is List<*> && value.isNotEmpty()) {
-                Schema.Field(name(), Schema.List(value.map { avroField.toSchemaField(it).value }, schemaType))
+                Schema.Field(name(), Schema.List(value.map { avroField.toSchemaField(it, schemaOnly).value }, schemaType))
             } else {
                 Schema.Field(name(), Schema.List(listOf(), schemaType))
             }
@@ -172,13 +201,13 @@ private fun AvroSchema.Field.toSchemaField(value: Any? = null): Schema.Field {
         AvroSchema.Type.MAP -> {
             val valueType = schema().valueType
             val avroField = AvroSchema.Field(name(), valueType)
-            val schemaType = avroField.toSchemaField().value
+            val schemaType = avroField.toSchemaField(schemaOnly = schemaOnly).value
 
             if (value is Map<*, *> && value.isNotEmpty()) {
                 Schema.Field(
                     name(),
                     Schema.Map(
-                        value.map { it.key.toString() to avroField.toSchemaField(it.value).value }.toMap(),
+                        value.map { it.key.toString() to avroField.toSchemaField(it.value, schemaOnly).value }.toMap(),
                         schemaType
                     )
                 )
@@ -190,9 +219,9 @@ private fun AvroSchema.Field.toSchemaField(value: Any? = null): Schema.Field {
         AvroSchema.Type.RECORD -> {
             val fields = schema().fields.map {
                 if (value is GenericRecord) {
-                    it.toSchemaField(value.get(it.name()))
+                    it.toSchemaField(value.get(it.name()), schemaOnly)
                 } else {
-                    it.toSchemaField()
+                    it.toSchemaField(schemaOnly = schemaOnly)
                 }
             }
             Schema.Field(name(), Schema.Struct(fields))
@@ -207,9 +236,15 @@ private fun AvroSchema.Field.toSchemaField(value: Any? = null): Schema.Field {
             val types = schema().types
             if (types.size == 2 && types.count { it.type == AvroSchema.Type.NULL } == 1) {
                 val nonNullType = types.first { it.type != AvroSchema.Type.NULL }
-                val optionalType = AvroSchema.Field(name(), nonNullType, null).toSchemaField(value)
-
-                Schema.Field(name(), Schema.Optional(optionalType.value))
+                // If value is null and we're not in schemaOnly mode, create Optional(null)
+                // This preserves actual null values for Debezium before/after fields
+                // In schemaOnly mode, create zero value for the inner type
+                if (value == null && !schemaOnly) {
+                    Schema.Field(name(), Schema.Optional(null))
+                } else {
+                    val optionalType = AvroSchema.Field(name(), nonNullType, null).toSchemaField(value, schemaOnly)
+                    Schema.Field(name(), Schema.Optional(optionalType.value))
+                }
             } else {
                 error("Unsupported type: ${schema().type}")
             }
@@ -220,10 +255,11 @@ private fun AvroSchema.Field.toSchemaField(value: Any? = null): Schema.Field {
 }
 
 private fun AvroSchema.Field.toSchemaField(genericRecord: GenericRecord): Schema.Field {
+    // When parsing from actual data, schemaOnly = false to preserve actual null values
     if (schema().type == AvroSchema.Type.RECORD) {
-        return toSchemaField(genericRecord.get(pos()))
+        return toSchemaField(genericRecord.get(pos()), schemaOnly = false)
     }
-    return toSchemaField(genericRecord[name()])
+    return toSchemaField(genericRecord[name()], schemaOnly = false)
 }
 
 fun DataStream.toAvroGenericRecord(): GenericRecord {
@@ -277,10 +313,13 @@ private fun Schema.Struct.toAvroSchema(): AvroSchema {
     val fields = value.joinToString(",") { field ->
         """{"name": "${field.name}","type": ${toAvroType(field.value)}}"""
     }
+    // Generate a unique name for nested records to avoid conflicts
+    val recordIndex = nestedRecordCounter.get().getAndIncrement()
+    val baseName = value.joinToString("_") { it.name }
     val schemaDefinition = """
         {
             "type": "record",
-            "name": "${value.joinToString("_") { it.name }}",
+            "name": "${baseName}_$recordIndex",
             "namespace": "io.typestream.avro",
             "fields": [${fields}]
         }

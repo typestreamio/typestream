@@ -53,6 +53,26 @@ export interface PostgresSourceConfig {
   'value.converter.schema.registry.url': string;
 }
 
+export type JDBCSinkInsertMode = 'insert' | 'upsert' | 'update';
+
+export interface JDBCSinkConfig {
+  name: string;
+  'connector.class': 'io.debezium.connector.jdbc.JdbcSinkConnector';
+  'connection.url': string;
+  'connection.username': string;
+  'connection.password': string;
+  'topics': string;
+  'table.name.format': string;
+  'insert.mode': JDBCSinkInsertMode;
+  'primary.key.mode'?: 'record_key' | 'record_value' | 'kafka' | 'none';
+  'primary.key.fields'?: string;
+  'key.converter': string;
+  'key.converter.schema.registry.url': string;
+  'value.converter': string;
+  'value.converter.schema.registry.url': string;
+  'schema.evolution'?: 'none' | 'basic';
+}
+
 export interface CreateConnectorRequest {
   name: string;
   config: Record<string, string>;
@@ -202,6 +222,57 @@ export const connectApi = {
     }
     if (params.schemaFilter) {
       config['schema.include.list'] = params.schemaFilter;
+    }
+
+    return { name: params.name, config };
+  },
+
+  /**
+   * Build a JDBC sink connector config
+   */
+  buildJdbcSinkConfig(params: {
+    name: string;
+    databaseType: 'postgres' | 'mysql';
+    hostname: string;
+    port: string;
+    database: string;
+    username: string;
+    password: string;
+    topics: string;
+    tableName: string;
+    insertMode: 'insert' | 'upsert' | 'update';
+    primaryKeyFields?: string;
+  }): CreateConnectorRequest {
+    // Build JDBC URL based on database type
+    const jdbcUrl =
+      params.databaseType === 'postgres'
+        ? `jdbc:postgresql://${params.hostname}:${params.port}/${params.database}`
+        : `jdbc:mysql://${params.hostname}:${params.port}/${params.database}`;
+
+    const config: Record<string, string> = {
+      'connector.class': 'io.debezium.connector.jdbc.JdbcSinkConnector',
+      'connection.url': jdbcUrl,
+      'connection.username': params.username,
+      'connection.password': params.password,
+      'topics': params.topics,
+      'table.name.format': params.tableName,
+      'insert.mode': params.insertMode,
+      'key.converter': 'io.confluent.connect.avro.AvroConverter',
+      'key.converter.schema.registry.url': 'http://redpanda:8081',
+      'value.converter': 'io.confluent.connect.avro.AvroConverter',
+      'value.converter.schema.registry.url': 'http://redpanda:8081',
+      'schema.evolution': 'basic',
+    };
+
+    // For upsert/update mode, configure primary key handling
+    if (params.insertMode === 'upsert' || params.insertMode === 'update') {
+      if (params.primaryKeyFields) {
+        config['primary.key.mode'] = 'record_value';
+        config['primary.key.fields'] = params.primaryKeyFields;
+      } else {
+        // Default to using the record key
+        config['primary.key.mode'] = 'record_key';
+      }
     }
 
     return { name: params.name, config };

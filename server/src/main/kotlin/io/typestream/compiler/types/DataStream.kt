@@ -5,7 +5,12 @@ import io.typestream.compiler.types.schema.empty
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DataStream(val path: String, val schema: Schema) : Value {
+data class DataStream(
+    val path: String,
+    val schema: Schema,
+    /** Original Avro schema string for pass-through scenarios (e.g., Debezium) */
+    val originalAvroSchema: String? = null
+) : Value {
     override val value = this
     val name = path.substringAfterLast("/")
 
