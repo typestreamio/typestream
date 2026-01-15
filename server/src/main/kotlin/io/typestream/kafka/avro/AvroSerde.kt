@@ -47,6 +47,9 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
         return bytes
     }
 
+    // Cache for parsed writer schemas by ID
+    private val writerSchemaCache = mutableMapOf<Int, Schema>()
+
     override fun deserialize(topic: String?, data: ByteArray?): GenericRecord? {
         if (data == null) {
             return null
@@ -55,9 +58,16 @@ class AvroSerde(private val schema: Schema) : Serde<GenericRecord>, Deserializer
         val buffer = ByteBuffer.wrap(data)
 
         buffer.get() // skip magic byte
-        buffer.int // skip schema id
+        val schemaId = buffer.int // get schema id
 
-        val reader = GenericDatumReader<GenericRecord>(schema, schema, GenericDataWithLogicalTypes.get())
+        // Look up writer's schema from registry (with caching)
+        val writerSchema = writerSchemaCache.getOrPut(schemaId) {
+            val schemaString = schemaRegistryClient.schema(schemaId)
+            Schema.Parser().parse(schemaString)
+        }
+
+        // Use writer schema for deserialization, reader schema for projection/evolution
+        val reader = GenericDatumReader<GenericRecord>(writerSchema, writerSchema, GenericDataWithLogicalTypes.get())
 
         val length = (buffer.limit() - 1) - 4 // take magic byte into account
         val start = buffer.position() + buffer.arrayOffset()

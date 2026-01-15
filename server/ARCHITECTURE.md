@@ -152,6 +152,50 @@ Kafka topics are exposed as a UNIX-like filesystem:
 - **Catalog**: Metadata cache (schemas from Schema Registry)
 - Enables commands like `cat`, `ls`, `grep` on topics
 
+## Avro Serialization
+
+TypeStream uses Avro as its primary serialization format. The `kafka/` package handles serialization/deserialization with Schema Registry integration.
+
+### Deserialization Flow
+
+```
+Kafka Message: [magic byte (0x00)] [schema ID (4 bytes)] [avro binary data]
+                                          │
+                                          ▼
+                            Schema Registry (cached lookup)
+                                          │
+                                          ▼
+                            AvroSerde.deserialize()
+                            ├── Reads schema ID from message
+                            ├── Fetches writer schema from registry
+                            └── Deserializes using writer schema
+                                          │
+                                          ▼
+                                    GenericRecord
+```
+
+### Key Design Decision
+
+The deserializer fetches the **writer's schema** from Schema Registry using the schema ID embedded in each message. This enables TypeStream to read topics produced by external systems (like Debezium CDC) that use different schema namespaces.
+
+### External Producer Support
+
+TypeStream can consume Avro topics from any producer:
+
+| Producer | Schema Example | Works? |
+|----------|----------------|--------|
+| TypeStream demo-data | `namespace: io.typestream.connectors.avro` | ✓ |
+| Debezium CDC | `namespace: dbserver.public.users, name: Envelope` | ✓ |
+| Confluent producers | Any valid Avro schema | ✓ |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `AvroSerde.kt` | Kafka serde with schema registry lookup |
+| `SchemaRegistryClient.kt` | HTTP client for Schema Registry API |
+| `GenericDataWithLogicalTypes.kt` | Avro logical type support |
+
 ## Key Files
 
 | File | Purpose |
