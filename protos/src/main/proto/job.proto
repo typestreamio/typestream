@@ -14,6 +14,7 @@ service JobService {
     rpc StopPreviewJob(StopPreviewJobRequest) returns (StopPreviewJobResponse) {}
     rpc StreamPreview(StreamPreviewRequest) returns (stream StreamPreviewResponse) {}
     rpc InferGraphSchemas(InferGraphSchemasRequest) returns (InferGraphSchemasResponse) {}
+    rpc ListOpenAIModels(ListOpenAIModelsRequest) returns (ListOpenAIModelsResponse) {}
 }
 
 message CreateJobRequest {
@@ -110,6 +111,12 @@ message EmbeddingGeneratorNode {
   string model = 3;          // OpenAI model (default: text-embedding-3-small)
 }
 
+message OpenAiTransformerNode {
+  string prompt = 1;         // User's instruction prompt
+  string output_field = 2;   // Output field name (default: ai_response)
+  string model = 3;          // OpenAI model ID (default: gpt-4o-mini)
+}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -128,6 +135,7 @@ message PipelineNode {
     ReduceLatestNode reduce_latest = 14;
     TextExtractorNode text_extractor = 15;
     EmbeddingGeneratorNode embedding_generator = 16;
+    OpenAiTransformerNode open_ai_transformer = 17;
   }
 }
 
@@ -216,4 +224,16 @@ message NodeSchemaResult {
   repeated string fields = 1;
   string encoding = 2;
   string error = 3;
+}
+
+// OpenAI models listing
+message ListOpenAIModelsRequest {}
+
+message OpenAIModel {
+  string id = 1;    // e.g. "gpt-4o-mini"
+  string name = 2;  // Display name
+}
+
+message ListOpenAIModelsResponse {
+  repeated OpenAIModel models = 1;
 }

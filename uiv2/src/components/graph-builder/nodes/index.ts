@@ -6,6 +6,7 @@ import { InspectorNode } from './InspectorNode';
 import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
 import { TextExtractorNode } from './TextExtractorNode';
 import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
+import { OpenAiTransformerNode } from './OpenAiTransformerNode';
 
 // Common validation state for all nodes - populated by schema inference
 export interface NodeValidationState {
@@ -47,6 +48,12 @@ export interface EmbeddingGeneratorNodeData extends Record<string, unknown>, Nod
   model: string;
 }
 
+export interface OpenAiTransformerNodeData extends Record<string, unknown>, NodeValidationState {
+  prompt: string;
+  outputField: string;
+  model: string;
+}
+
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
 export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
@@ -54,8 +61,9 @@ export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
+export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -65,4 +73,5 @@ export const nodeTypes: NodeTypes = {
   materializedView: MaterializedViewNode,
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
+  openAiTransformer: OpenAiTransformerNode,
 };

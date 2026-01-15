@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, InferGraphSchemasRequest, InferGraphSchemasResponse, ListJobsRequest, ListJobsResponse, StopPreviewJobRequest, StopPreviewJobResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, InferGraphSchemasRequest, InferGraphSchemasResponse, ListJobsRequest, ListJobsResponse, ListOpenAIModelsRequest, ListOpenAIModelsResponse, StopPreviewJobRequest, StopPreviewJobResponse } from "./job_pb.js";
 
 /**
  * @generated from rpc io.typestream.grpc.JobService.CreateJob
@@ -85,6 +85,20 @@ export const inferGraphSchemas = {
   kind: MethodKind.Unary,
   I: InferGraphSchemasRequest,
   O: InferGraphSchemasResponse,
+  service: {
+    typeName: "io.typestream.grpc.JobService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.JobService.ListOpenAIModels
+ */
+export const listOpenAIModels = {
+  localName: "listOpenAIModels",
+  name: "ListOpenAIModels",
+  kind: MethodKind.Unary,
+  I: ListOpenAIModelsRequest,
+  O: ListOpenAIModelsResponse,
   service: {
     typeName: "io.typestream.grpc.JobService"
   }

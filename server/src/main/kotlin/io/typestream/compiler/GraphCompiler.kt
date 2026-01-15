@@ -8,6 +8,7 @@ import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
 import io.typestream.embedding.EmbeddingGeneratorNodeHandler
 import io.typestream.geoip.GeoIpNodeHandler
+import io.typestream.openai.OpenAiTransformerNodeHandler
 import io.typestream.textextractor.TextExtractorNodeHandler
 import io.typestream.graph.Graph
 import io.typestream.grpc.job_service.Job
@@ -112,6 +113,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     proto.hasReduceLatest() -> Node.ReduceLatest(proto.id)
     proto.hasTextExtractor() -> TextExtractorNodeHandler.fromProto(proto)
     proto.hasEmbeddingGenerator() -> EmbeddingGeneratorNodeHandler.fromProto(proto)
+    proto.hasOpenAiTransformer() -> OpenAiTransformerNodeHandler.fromProto(proto)
     else -> error("Unknown node type: $proto")
   }
 
@@ -296,6 +298,13 @@ class GraphCompiler(private val fileSystem: FileSystem) {
           input ?: error("embeddingGenerator $nodeId missing input"),
           proto.embeddingGenerator.textField,
           proto.embeddingGenerator.outputField.ifBlank { "embedding" }
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasOpenAiTransformer() -> {
+        val out = OpenAiTransformerNodeHandler.inferType(
+          input ?: error("openAiTransformer $nodeId missing input"),
+          proto.openAiTransformer.outputField.ifBlank { "ai_response" }
         )
         out to (inputEncoding ?: Encoding.AVRO)
       }

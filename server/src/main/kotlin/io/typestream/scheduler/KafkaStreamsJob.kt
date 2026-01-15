@@ -8,6 +8,7 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
 import io.typestream.embedding.EmbeddingGeneratorService
 import io.typestream.geoip.GeoIpService
+import io.typestream.openai.OpenAiService
 import io.typestream.textextractor.TextExtractorService
 import io.typestream.coroutine.retry
 import io.typestream.kafka.DataStreamSerde
@@ -55,7 +56,8 @@ class KafkaStreamsJob(
     private val kafkaConfig: KafkaConfig,
     private val geoIpService: GeoIpService,
     private val textExtractorService: TextExtractorService,
-    private val embeddingGeneratorService: EmbeddingGeneratorService
+    private val embeddingGeneratorService: EmbeddingGeneratorService,
+    private val openAiService: OpenAiService
 ) : Job {
     private var running: Boolean = false
     private val logger = KotlinLogging.logger {}
@@ -78,7 +80,7 @@ class KafkaStreamsJob(
             val source = sourceNode.ref
             require(source is Node.StreamSource) { "source node must be a StreamSource" }
 
-            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService, textExtractorService, embeddingGeneratorService)
+            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService, textExtractorService, embeddingGeneratorService, openAiService)
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
@@ -102,6 +104,7 @@ class KafkaStreamsJob(
                     is Node.GeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
                     is Node.TextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
                     is Node.EmbeddingGenerator -> kafkaStreamSource.embeddingGenerate(currentNode.ref)
+                    is Node.OpenAiTransformer -> kafkaStreamSource.openAiTransform(currentNode.ref)
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)

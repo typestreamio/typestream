@@ -10,11 +10,12 @@ import {
   GeoIpNode as GeoIpNodeProto,
   TextExtractorNode as TextExtractorNodeProto,
   EmbeddingGeneratorNode as EmbeddingGeneratorNodeProto,
+  OpenAiTransformerNode as OpenAiTransformerNodeProto,
   GroupNode,
   CountNode,
   ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
   const pipelineNodes: PipelineNode[] = [];
@@ -138,6 +139,22 @@ export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
             textField: data.textField,
             outputField: data.outputField || 'embedding',
             model: data.model || 'text-embedding-3-small',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'openAiTransformer') {
+      const data = node.data as OpenAiTransformerNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'openAiTransformer',
+          value: new OpenAiTransformerNodeProto({
+            prompt: data.prompt,
+            outputField: data.outputField || 'ai_response',
+            model: data.model || 'gpt-4o-mini',
           }),
         },
       }));

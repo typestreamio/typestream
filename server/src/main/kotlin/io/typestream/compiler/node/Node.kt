@@ -58,4 +58,12 @@ sealed interface Node {
         val outputField: String,
         val model: String
     ) : Node
+
+    @Serializable
+    data class OpenAiTransformer(
+        override val id: String,
+        val prompt: String,
+        val outputField: String,
+        val model: String
+    ) : Node
 }

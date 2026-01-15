@@ -223,4 +223,23 @@ object TypeRules {
     val newFields = inputSchema.value + newField
     return input.copy(schema = Schema.Struct(newFields))
   }
+
+  /**
+   * Type inference for OpenAiTransformer nodes.
+   * Adds a new String field (AI response) to the schema.
+   * The OpenAiTransformer node sends the full message to OpenAI and adds the response as a new field.
+   *
+   * @param input The input stream schema
+   * @param outputField The name of the output field for the AI response (e.g., "ai_response")
+   * @return Input schema with the new AI response field added
+   * @throws IllegalArgumentException if input schema is not a struct
+   */
+  fun inferOpenAiTransformer(input: DataStream, outputField: String): DataStream {
+    val inputSchema = input.schema
+    require(inputSchema is Schema.Struct) { "OpenAiTransformer requires struct schema, got: ${inputSchema::class.simpleName}" }
+
+    val newField = Schema.Field(outputField, Schema.String.zeroValue)
+    val newFields = inputSchema.value + newField
+    return input.copy(schema = Schema.Struct(newFields))
+  }
 }

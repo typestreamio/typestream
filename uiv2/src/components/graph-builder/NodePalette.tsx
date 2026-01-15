@@ -7,6 +7,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import MemoryIcon from '@mui/icons-material/Memory';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -95,6 +96,11 @@ export function NodePalette() {
         type="embeddingGenerator"
         label="Embedding Generator"
         icon={<MemoryIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="openAiTransformer"
+        label="OpenAI Transformer"
+        icon={<AutoAwesomeIcon fontSize="small" />}
       />
     </Paper>
   );

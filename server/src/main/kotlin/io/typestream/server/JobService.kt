@@ -23,6 +23,9 @@ import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
 import io.typestream.grpc.job_service.inferGraphSchemasResponse
 import io.typestream.grpc.job_service.nodeSchemaResult
+import io.typestream.grpc.job_service.listOpenAIModelsResponse
+import io.typestream.grpc.job_service.openAIModel
+import io.typestream.openai.OpenAiService
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.k8s.K8sClient
 import io.typestream.kafka.KafkaAdminClient
@@ -57,6 +60,7 @@ class JobService(private val config: Config, private val vm: Vm) :
 
     private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
+    private val openAiService = OpenAiService()
 
     // Track preview jobs for cleanup: jobId -> PreviewJobInfo
     private val previewJobs = ConcurrentHashMap<String, PreviewJobInfo>()
@@ -291,6 +295,16 @@ class JobService(private val config: Config, private val vm: Vm) :
                     error = result.error
                 }
             }
+        }
+    }
+
+    override suspend fun listOpenAIModels(request: ProtoJob.ListOpenAIModelsRequest): ProtoJob.ListOpenAIModelsResponse = listOpenAIModelsResponse {
+        val fetchedModels = openAiService.fetchModels()
+        fetchedModels.forEach { m ->
+            models.add(openAIModel {
+                id = m.id
+                name = m.name
+            })
         }
     }
 }
