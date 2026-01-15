@@ -32,7 +32,12 @@ export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
 
   return (
     <>
-      <BaseNode title="Kafka Source" icon={<InputIcon fontSize="small" />}>
+      <BaseNode
+        title="Kafka Source"
+        icon={<InputIcon fontSize="small" />}
+        error={data.schemaError}
+        isInferring={data.isInferring}
+      >
         <FormControl fullWidth size="small" className="nodrag nowheel">
           <InputLabel>Topic</InputLabel>
           <Select

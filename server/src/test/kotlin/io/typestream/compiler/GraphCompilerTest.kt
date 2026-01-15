@@ -193,6 +193,135 @@ internal class GraphCompilerTest {
             .hasMessageContaining("file path field 'nonexistent_field' not found in schema")
     }
 
+    // ===== inferNodeSchemasForUI Tests =====
+
+    @Test
+    fun `inferNodeSchemasForUI handles missing upstream gracefully`() {
+        // A text extractor node with no upstream source
+        val graph = createGraph(
+            nodes = listOf(
+                textExtractorNode("text-1", "file_path", "text")
+            ),
+            edges = emptyList()
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // Should have an error since there's no input
+        assertThat(results["text-1"]?.error).isNotNull()
+        assertThat(results["text-1"]?.error).contains("missing input")
+        // Schema should be null (no input to pass through)
+        assertThat(results["text-1"]?.schema).isNull()
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI propagates schemas through chain`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Chain Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                textExtractorNode("text-1", "title", "text"),
+                embeddingGeneratorNode("embed-1", "text", "embedding")
+            ),
+            edges = listOf(
+                edge("src-1", "text-1"),
+                edge("text-1", "embed-1")
+            )
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // All nodes should succeed without errors
+        assertThat(results["src-1"]?.error).isNull()
+        assertThat(results["text-1"]?.error).isNull()
+        assertThat(results["embed-1"]?.error).isNull()
+
+        // Verify schema propagation - text extractor should add "text" field
+        val textSchema = results["text-1"]?.schema?.schema
+        assertThat(textSchema).isInstanceOf(io.typestream.compiler.types.schema.Schema.Struct::class.java)
+        val textFields = (textSchema as io.typestream.compiler.types.schema.Schema.Struct).value.map { it.name }
+        assertThat(textFields).contains("text")
+
+        // Embedding generator should add "embedding" field
+        val embedSchema = results["embed-1"]?.schema?.schema
+        assertThat(embedSchema).isInstanceOf(io.typestream.compiler.types.schema.Schema.Struct::class.java)
+        val embedFields = (embedSchema as io.typestream.compiler.types.schema.Schema.Struct).value.map { it.name }
+        assertThat(embedFields).contains("text", "embedding")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI passes input schema to downstream on error`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Error Recovery", wordCount = 50, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        // text-1 has invalid field, but embed-1 should still get text-1's INPUT schema
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                textExtractorNode("text-1", "nonexistent_field", "text"),
+                embeddingGeneratorNode("embed-1", "title", "embedding")
+            ),
+            edges = listOf(
+                edge("src-1", "text-1"),
+                edge("text-1", "embed-1")
+            )
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // Source should succeed
+        assertThat(results["src-1"]?.error).isNull()
+
+        // Text extractor should fail but still have the input schema
+        assertThat(results["text-1"]?.error).isNotNull()
+        assertThat(results["text-1"]?.error).contains("nonexistent_field")
+        // The schema stored should be the INPUT (source) schema for dropdown population
+        val text1Schema = results["text-1"]?.schema?.schema
+        assertThat(text1Schema).isInstanceOf(io.typestream.compiler.types.schema.Schema.Struct::class.java)
+        val text1Fields = (text1Schema as io.typestream.compiler.types.schema.Schema.Struct).value.map { it.name }
+        // Avro uses snake_case field names
+        assertThat(text1Fields).contains("title", "word_count", "author_id")
+
+        // Downstream node gets the input schema (pass-through on error)
+        // It should also fail because "title" exists but we're testing schema propagation
+        val embed1Schema = results["embed-1"]?.schema?.schema
+        assertThat(embed1Schema).isInstanceOf(io.typestream.compiler.types.schema.Schema.Struct::class.java)
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI returns encoding for all nodes`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Encoding Test", wordCount = 75, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                filterNode("filter-1", "Test")
+            ),
+            edges = listOf(edge("src-1", "filter-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // Both nodes should have AVRO encoding (propagated from source)
+        assertThat(results["src-1"]?.encoding).isEqualTo(Encoding.AVRO)
+        assertThat(results["filter-1"]?.encoding).isEqualTo(Encoding.AVRO)
+    }
+
     private fun streamSourceNode(id: String, path: String, encoding: Job.Encoding): Job.PipelineNode =
         Job.PipelineNode.newBuilder()
             .setId(id)
@@ -232,8 +361,29 @@ internal class GraphCompilerTest {
             )
             .build()
 
+    private fun embeddingGeneratorNode(id: String, textField: String, outputField: String): Job.PipelineNode =
+        Job.PipelineNode.newBuilder()
+            .setId(id)
+            .setEmbeddingGenerator(
+                Job.EmbeddingGeneratorNode.newBuilder()
+                    .setTextField(textField)
+                    .setOutputField(outputField)
+                    .setModel("text-embedding-3-small")
+            )
+            .build()
+
     private fun edge(from: String, to: String): Job.PipelineEdge =
         Job.PipelineEdge.newBuilder().setFromId(from).setToId(to).build()
+
+    private fun createGraph(
+        nodes: List<Job.PipelineNode>,
+        edges: List<Job.PipelineEdge>
+    ): Job.PipelineGraph {
+        val graphBuilder = Job.PipelineGraph.newBuilder()
+        nodes.forEach(graphBuilder::addNodes)
+        edges.forEach(graphBuilder::addEdges)
+        return graphBuilder.build()
+    }
 
     private fun createRequest(
         nodes: List<Job.PipelineNode>,

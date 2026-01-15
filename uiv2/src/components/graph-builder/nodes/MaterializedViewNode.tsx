@@ -5,8 +5,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { BaseNode } from './BaseNode';
-import { useTopicSchema } from '../../../hooks/useTopicSchema';
-import type { MaterializedViewNodeType, KafkaSourceNodeData } from './index';
+import type { MaterializedViewNodeType, NodeValidationState } from './index';
 
 export type AggregationType = 'count' | 'latest';
 
@@ -15,19 +14,25 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
   const nodes = useNodes();
   const edges = useEdges();
 
-  // Find upstream source to get schema
+  // Find the upstream node to get its output schema
   const incomingEdge = edges.find((e) => e.target === id);
-  const sourceNode = incomingEdge ? nodes.find((n) => n.id === incomingEdge.source) : null;
-  const topicPath = sourceNode?.type === 'kafkaSource'
-    ? (sourceNode.data as KafkaSourceNodeData).topicPath
-    : '';
+  const upstreamNode = incomingEdge
+    ? nodes.find((n) => n.id === incomingEdge.source)
+    : null;
 
-  const { fields, isLoading } = useTopicSchema(topicPath);
+  // Get fields from upstream node's computed output schema
+  const upstreamData = upstreamNode?.data as NodeValidationState | undefined;
+  const fields = upstreamData?.outputSchema ?? [];
 
   return (
     <>
       <Handle type="target" position={Position.Left} />
-      <BaseNode title="Materialized View" icon={<TableChartIcon fontSize="small" />}>
+      <BaseNode
+        title="Materialized View"
+        icon={<TableChartIcon fontSize="small" />}
+        error={data.schemaError}
+        isInferring={data.isInferring}
+      >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>Aggregation</InputLabel>
           <Select
@@ -45,7 +50,7 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
             value={data.groupByField}
             label="Group By Field"
             onChange={(e) => updateNodeData(id, { groupByField: e.target.value })}
-            disabled={isLoading || fields.length === 0}
+            disabled={data.isInferring || fields.length === 0}
           >
             {fields.map((field) => (
               <MenuItem key={field} value={field}>

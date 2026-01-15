@@ -10,7 +10,12 @@ export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
   return (
     <>
       <Handle type="target" position={Position.Left} />
-      <BaseNode title="Kafka Sink" icon={<OutputIcon fontSize="small" />}>
+      <BaseNode
+        title="Kafka Sink"
+        icon={<OutputIcon fontSize="small" />}
+        error={data.schemaError}
+        isInferring={data.isInferring}
+      >
         <TextField
           fullWidth
           size="small"
