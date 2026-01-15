@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 export TYPESTREAM_CONFIG_PATH="$SCRIPT_DIR"
+export TIKA_URL="http://localhost:9998"
 
 cd "$PROJECT_ROOT"
 

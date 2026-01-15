@@ -106,6 +106,21 @@ services:
     depends_on:
       redpanda:
         condition: service_healthy
+  demo-data-fileuploads:
+    build:
+      context: ${TYPESTREAM_PROJECT_ROOT:-../../..}
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    volumes:
+      - /tmp/typestream-files:/tmp/typestream-files
+    networks:
+      - typestream_network
+    command: ["fileuploads", "--rate", "1"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
   envoy:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
