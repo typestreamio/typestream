@@ -1,0 +1,13 @@
+{
+  "namespace": "io.typestream.connectors.avro",
+  "type": "record",
+  "name": "FileUpload",
+  "fields": [
+    {"name": "id", "type": "string"},
+    {"name": "file_path", "type": "string"},
+    {"name": "file_name", "type": "string"},
+    {"name": "content_type", "type": "string"},
+    {"name": "uploaded_by", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}}
+  ]
+}
