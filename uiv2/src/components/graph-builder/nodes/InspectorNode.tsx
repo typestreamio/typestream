@@ -7,13 +7,18 @@ import { BaseNode } from './BaseNode';
 import { StreamInspectorPanel } from '../../StreamInspectorPanel';
 import type { InspectorNodeType } from './index';
 
-export function InspectorNode({ id }: NodeProps<InspectorNodeType>) {
+export function InspectorNode({ id, data }: NodeProps<InspectorNodeType>) {
   const [panelOpen, setPanelOpen] = useState(false);
 
   return (
     <>
       <Handle type="target" position={Position.Left} />
-      <BaseNode title="Inspector" icon={<VisibilityIcon fontSize="small" />}>
+      <BaseNode
+        title="Inspector"
+        icon={<VisibilityIcon fontSize="small" />}
+        error={data.schemaError}
+        isInferring={data.isInferring}
+      >
         <Button
           fullWidth
           size="small"

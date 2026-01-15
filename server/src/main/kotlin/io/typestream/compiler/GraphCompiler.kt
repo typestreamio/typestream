@@ -163,16 +163,10 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       adjList.getOrPut(edge.fromId) { mutableListOf() }.add(edge.toId)
     }
 
-    // Build reverse adjacency for finding inputs
-    val reverseAdj = mutableMapOf<String, String>()
-    graph.edgesList.forEach { edge ->
-      reverseAdj[edge.toId] = edge.fromId
-    }
-
     val sources = nodesById.keys - adjList.values.flatten().toSet()
 
     sources.forEach { sourceId ->
-      inferNodeTypeForUI(sourceId, nodesById, adjList, reverseAdj, null, null, results)
+      inferNodeTypeForUI(sourceId, nodesById, adjList, null, null, results)
     }
 
     return results
@@ -182,7 +176,6 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     nodeId: String,
     nodesById: Map<String, Job.PipelineNode>,
     adjList: Map<String, List<String>>,
-    reverseAdj: Map<String, String>,
     input: DataStream?,
     inputEncoding: Encoding?,
     results: MutableMap<String, NodeInferenceResult>
@@ -199,7 +192,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
 
       // Recursively process children
       adjList[nodeId]?.forEach { childId ->
-        inferNodeTypeForUI(childId, nodesById, adjList, reverseAdj, output, outputEncoding, results)
+        inferNodeTypeForUI(childId, nodesById, adjList, output, outputEncoding, results)
       }
     } catch (e: Exception) {
       // On error, store the INPUT schema (for field dropdown population) and the error message
@@ -207,7 +200,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
 
       // Still try to process children using the input schema (pass-through on error)
       adjList[nodeId]?.forEach { childId ->
-        inferNodeTypeForUI(childId, nodesById, adjList, reverseAdj, input, inputEncoding, results)
+        inferNodeTypeForUI(childId, nodesById, adjList, input, inputEncoding, results)
       }
     }
   }
@@ -325,95 +318,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     encodings: MutableMap<String, Encoding>
   ) {
     val proto = nodesById[nodeId] ?: error("Missing node $nodeId")
-
-    val (output, outputEncoding) = when {
-      proto.hasStreamSource() -> {
-        val path = proto.streamSource.dataStream.path
-        val ds = io.typestream.compiler.types.TypeRules.inferStreamSource(path, fileSystem)
-        val enc = fileSystem.inferEncodingForPath(path)
-        ds to enc
-      }
-      proto.hasFilter() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferFilter(input ?: error("filter $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasMap() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferMap(input ?: error("map $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasJoin() -> {
-        val stream = input ?: error("join $nodeId missing input")
-        val withPath = proto.join.with.path
-        val withStream = io.typestream.compiler.types.TypeRules.inferStreamSource(withPath, fileSystem)
-        val out = io.typestream.compiler.types.TypeRules.inferJoin(stream, withStream)
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasGroup() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferGroup(input ?: error("group $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasCount() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferCount(input ?: error("count $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasEach() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferEach(input ?: error("each $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasSink() -> {
-        val sink = proto.sink
-        val out = io.typestream.compiler.types.TypeRules.inferSink(
-          input ?: error("sink $nodeId missing input"),
-          sink.output.path
-        )
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasNoop() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferNoOp(input ?: error("noop $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasShellSource() -> {
-        val dataStreams = proto.shellSource.dataList.map { dsProto ->
-          io.typestream.compiler.types.TypeRules.inferStreamSource(dsProto.path, fileSystem)
-        }
-        val out = io.typestream.compiler.types.TypeRules.inferShellSource(dataStreams)
-        out to Encoding.JSON
-      }
-      proto.hasGeoIp() -> {
-        val out = GeoIpNodeHandler.inferType(
-          input ?: error("geoIp $nodeId missing input"),
-          proto.geoIp.ipField,
-          proto.geoIp.outputField
-        )
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasInspector() -> {
-        // Inspector passes through input unchanged
-        val out = input ?: error("inspector $nodeId missing input")
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasReduceLatest() -> {
-        val out = io.typestream.compiler.types.TypeRules.inferReduceLatest(input ?: error("reduce_latest $nodeId missing input"))
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasTextExtractor() -> {
-        val out = TextExtractorNodeHandler.inferType(
-          input ?: error("textExtractor $nodeId missing input"),
-          proto.textExtractor.filePathField,
-          proto.textExtractor.outputField.ifBlank { "text" }
-        )
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      proto.hasEmbeddingGenerator() -> {
-        val out = EmbeddingGeneratorNodeHandler.inferType(
-          input ?: error("embeddingGenerator $nodeId missing input"),
-          proto.embeddingGenerator.textField,
-          proto.embeddingGenerator.outputField.ifBlank { "embedding" }
-        )
-        out to (inputEncoding ?: Encoding.AVRO)
-      }
-      else -> error("Unknown node type: $nodeId")
-    }
+    val (output, outputEncoding) = inferSingleNodeType(proto, nodeId, input, inputEncoding)
 
     schemas[nodeId] = output
     encodings[nodeId] = outputEncoding
