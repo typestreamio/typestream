@@ -103,6 +103,12 @@ message TextExtractorNode {
   string output_field = 2;     // Output field name (default: text)
 }
 
+message EmbeddingGeneratorNode {
+  string text_field = 1;     // Field containing text to embed
+  string output_field = 2;   // Output field name (default: embedding)
+  string model = 3;          // OpenAI model (default: text-embedding-3-small)
+}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -120,6 +126,7 @@ message PipelineNode {
     InspectorNode inspector = 13;
     ReduceLatestNode reduce_latest = 14;
     TextExtractorNode text_extractor = 15;
+    EmbeddingGeneratorNode embedding_generator = 16;
   }
 }
 

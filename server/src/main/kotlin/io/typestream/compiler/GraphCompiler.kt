@@ -6,6 +6,7 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
+import io.typestream.embedding.EmbeddingGeneratorNodeHandler
 import io.typestream.geoip.GeoIpNodeHandler
 import io.typestream.textextractor.TextExtractorNodeHandler
 import io.typestream.graph.Graph
@@ -110,6 +111,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     }
     proto.hasReduceLatest() -> Node.ReduceLatest(proto.id)
     proto.hasTextExtractor() -> TextExtractorNodeHandler.fromProto(proto)
+    proto.hasEmbeddingGenerator() -> EmbeddingGeneratorNodeHandler.fromProto(proto)
     else -> error("Unknown node type: $proto")
   }
 
@@ -230,6 +232,14 @@ class GraphCompiler(private val fileSystem: FileSystem) {
           input ?: error("textExtractor $nodeId missing input"),
           proto.textExtractor.filePathField,
           proto.textExtractor.outputField.ifBlank { "text" }
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasEmbeddingGenerator() -> {
+        val out = EmbeddingGeneratorNodeHandler.inferType(
+          input ?: error("embeddingGenerator $nodeId missing input"),
+          proto.embeddingGenerator.textField,
+          proto.embeddingGenerator.outputField.ifBlank { "embedding" }
         )
         out to (inputEncoding ?: Encoding.AVRO)
       }

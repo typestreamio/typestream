@@ -36,6 +36,7 @@ services:
     image: ${TYPESTREAM_IMAGE:-typestream/server:latest}
     environment:
       TIKA_URL: http://tika:9998
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       TYPESTREAM_CONFIG: |-
         [grpc]
         port=4242

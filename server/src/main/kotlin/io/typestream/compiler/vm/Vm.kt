@@ -7,6 +7,8 @@ import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
+import io.typestream.embedding.EmbeddingGeneratorExecution
+import io.typestream.embedding.EmbeddingGeneratorService
 import io.typestream.filesystem.FileSystem
 import io.typestream.geoip.GeoIpExecution
 import io.typestream.geoip.GeoIpService
@@ -20,6 +22,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
     private val logger = KotlinLogging.logger {}
     private val geoIpService = GeoIpService()
     private val textExtractorService = TextExtractorService()
+    private val embeddingGeneratorService = EmbeddingGeneratorService()
 
     fun exec(source: String, env: Env) {
         val (program, errors) = Compiler(Session(fileSystem, scheduler, env)).compile(source)
@@ -33,7 +36,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
 
                 logger.info { "starting kafka streams job for ${program.id}" }
 
-                KafkaStreamsJob(program.id, program, kafkaConfig, geoIpService, textExtractorService).start()
+                KafkaStreamsJob(program.id, program, kafkaConfig, geoIpService, textExtractorService, embeddingGeneratorService).start()
             }
 
             SHELL -> {
@@ -62,7 +65,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
                 val kafkaConfig = fileSystem.config.sources.kafka[runtime.name]
                     ?: error("cluster ${runtime.name} not found")
 
-                scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig, geoIpService, textExtractorService))
+                scheduler.schedule(KafkaStreamsJob(program.id, program, kafkaConfig, geoIpService, textExtractorService, embeddingGeneratorService))
                 val stdOut = if (!program.hasMoreOutput()) "running ${program.id} in the background" else ""
                 VmResult(program, ProgramOutput(stdOut, ""))
             }
@@ -95,6 +98,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
 
                 is Node.GeoIp -> GeoIpExecution.applyToShell(node.ref, dataStreams, geoIpService)
                 is Node.TextExtractor -> TextExtractorExecution.applyToShell(node.ref, dataStreams, textExtractorService)
+                is Node.EmbeddingGenerator -> EmbeddingGeneratorExecution.applyToShell(node.ref, dataStreams, embeddingGeneratorService)
 
                 is Node.ShellSource -> dataStreams
                 else -> error("unexpected node type: ${node.ref}")

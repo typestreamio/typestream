@@ -6,6 +6,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import DescriptionIcon from '@mui/icons-material/Description';
+import MemoryIcon from '@mui/icons-material/Memory';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -89,6 +90,11 @@ export function NodePalette() {
         type="textExtractor"
         label="Text Extractor"
         icon={<DescriptionIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="embeddingGenerator"
+        label="Embedding Generator"
+        icon={<MemoryIcon fontSize="small" />}
       />
     </Paper>
   );
