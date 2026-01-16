@@ -22,7 +22,8 @@ data class DataStream(
 
     fun merge(right: DataStream) = copy(
         path = if (path == right.path) path else "${path}_${right.path.substringAfterLast("/")}",
-        schema = schema.merge(right.schema)
+        schema = schema.merge(right.schema),
+        originalAvroSchema = null
     )
 
     operator fun get(key: String) = schema.selectOne(key) ?: Schema.Struct.empty()
@@ -37,7 +38,7 @@ data class DataStream(
 
     fun prettyPrint() = schema.prettyPrint()
     fun printTypes() = schema.printTypes()
-    fun select(boundArgs: List<String>) = copy(schema = schema.select(boundArgs))
+    fun select(boundArgs: List<String>) = copy(schema = schema.select(boundArgs), originalAvroSchema = null)
 
     /**
      * Add a new field to this DataStream's schema.
@@ -49,7 +50,7 @@ data class DataStream(
         require(schema is Schema.Struct) { "can only add field to struct schema" }
         val newField = Schema.Field(fieldName, value)
         val newFields = schema.value + newField
-        return copy(schema = Schema.Struct(newFields))
+        return copy(schema = Schema.Struct(newFields), originalAvroSchema = null)
     }
 
     /**
