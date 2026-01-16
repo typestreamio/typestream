@@ -212,4 +212,54 @@ class KafkaStreamsJob(
         KafkaStreams.State.ERROR -> Job.State.FAILED
         null -> Job.State.UNKNOWN
     }
+
+    /**
+     * Returns throughput metrics from Kafka Streams.
+     *
+     * Uses built-in metrics:
+     * - stream-thread-metrics: process-rate, process-total
+     * - consumer-fetch-manager-metrics: bytes-consumed-rate, bytes-consumed-total
+     */
+    override fun throughput(): Job.Throughput {
+        val streams = kafkaStreams ?: return Job.Throughput()
+        val allMetrics = streams.metrics()
+
+        var messagesPerSecond = 0.0
+        var totalMessages = 0L
+        var bytesPerSecond = 0.0
+        var totalBytes = 0L
+
+        allMetrics.forEach { (name, metric) ->
+            val groupName = name.group()
+            val metricName = name.name()
+
+            when {
+                // Stream thread metrics for message processing rate
+                groupName == "stream-thread-metrics" && metricName == "process-rate" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) messagesPerSecond += value.toDouble()
+                }
+                groupName == "stream-thread-metrics" && metricName == "process-total" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) totalMessages += value.toLong()
+                }
+                // Consumer fetch manager metrics for bytes consumed
+                groupName == "consumer-fetch-manager-metrics" && metricName == "bytes-consumed-rate" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) bytesPerSecond += value.toDouble()
+                }
+                groupName == "consumer-fetch-manager-metrics" && metricName == "bytes-consumed-total" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) totalBytes += value.toLong()
+                }
+            }
+        }
+
+        return Job.Throughput(
+            messagesPerSecond = messagesPerSecond,
+            totalMessages = totalMessages,
+            bytesPerSecond = bytesPerSecond,
+            totalBytes = totalBytes
+        )
+    }
 }

@@ -15,6 +15,7 @@ import Alert from '@mui/material/Alert';
 import { useNavigate } from 'react-router-dom';
 import { useListJobs } from '../hooks/useListJobs';
 import { JobStatusChip } from '../components/JobStatusChip';
+import { formatThroughput, formatBytes } from '../utils/formatters';
 
 export function JobsPage() {
   const navigate = useNavigate();
@@ -71,6 +72,8 @@ export function JobsPage() {
               <TableRow>
                 <TableCell>Job ID</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Throughput</TableCell>
+                <TableCell>Bandwidth</TableCell>
                 <TableCell>Started</TableCell>
               </TableRow>
             </TableHead>
@@ -87,6 +90,12 @@ export function JobsPage() {
                   </TableCell>
                   <TableCell>
                     <JobStatusChip state={job.state} />
+                  </TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace' }}>
+                    {formatThroughput(job.throughput?.messagesPerSecond ?? 0)}
+                  </TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace' }}>
+                    {formatBytes(job.throughput?.bytesPerSecond ?? 0)}/s
                   </TableCell>
                   <TableCell>
                     {job.startTime ? new Date(Number(job.startTime)).toLocaleString() : '-'}

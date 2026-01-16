@@ -168,11 +168,19 @@ enum JobState {
   UNKNOWN = 6;
 }
 
+message JobThroughput {
+  double messages_per_second = 1;  // Current processing rate (messages/sec)
+  int64 total_messages = 2;        // Total messages processed since job start
+  double bytes_per_second = 3;     // Current bandwidth consumption (bytes/sec)
+  int64 total_bytes = 4;           // Total bytes processed since job start
+}
+
 message JobInfo {
   string job_id = 1;
   JobState state = 2;
   int64 start_time = 3;  // Unix timestamp in milliseconds
   PipelineGraph graph = 4;  // Optional: the job's pipeline graph
+  JobThroughput throughput = 5;  // Throughput metrics
 }
 
 message ListJobsResponse {
