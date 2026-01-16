@@ -121,4 +121,155 @@ internal class AvroExtKtTest {
         assertThat(avroRecord.get("timeMillisField")).isInstanceOf(Int::class.javaObjectType)
         assertThat(avroRecord.get("timeMicrosField")).isInstanceOf(Long::class.javaObjectType)
     }
+
+    @Test
+    fun `toAvroSchema preserves Optional with nested struct type`() {
+        // Create a DataStream with an optional struct field (like Debezium 'before' or 'after')
+        val valueStruct = Schema.Struct(
+            listOf(
+                Schema.Field("id", Schema.Int(0)),
+                Schema.Field("name", Schema.String("")),
+            )
+        )
+
+        val recordSchema = Schema.Struct(
+            listOf(
+                Schema.Field("payload", Schema.Optional(valueStruct)),
+                Schema.Field("op", Schema.String("")),
+            )
+        )
+
+        val dataStream = DataStream("test/record", recordSchema)
+        val avroSchema = dataStream.toAvroSchema()
+
+        // Verify the 'payload' field is a union of null and record (not null and string)
+        val payloadField = avroSchema.getField("payload")
+        assertThat(payloadField.schema().isUnion).isTrue()
+        val payloadTypes = payloadField.schema().types
+        assertThat(payloadTypes).hasSize(2)
+        assertThat(payloadTypes[0].type).isEqualTo(org.apache.avro.Schema.Type.NULL)
+        assertThat(payloadTypes[1].type).isEqualTo(org.apache.avro.Schema.Type.RECORD)
+        assertThat(payloadTypes[1].fields.map { it.name() }).containsExactly("id", "name")
+    }
+
+    @Test
+    fun `toAvroGenericRecord handles Optional struct with null value`() {
+        // Create a DataStream like a Debezium INSERT where 'before' is null
+        val valueStruct = Schema.Struct(
+            listOf(
+                Schema.Field("id", Schema.Int(42)),
+                Schema.Field("name", Schema.String("test")),
+            )
+        )
+
+        val envelopeSchema = Schema.Struct(
+            listOf(
+                Schema.Field("before", Schema.Optional(null)),  // null for INSERT
+                Schema.Field("after", Schema.Optional(valueStruct)),
+                Schema.Field("op", Schema.String("c")),
+            )
+        )
+
+        val dataStream = DataStream("test/envelope", envelopeSchema)
+        val avroRecord = dataStream.toAvroGenericRecord()
+
+        // Verify 'before' is null
+        assertThat(avroRecord.get("before")).isNull()
+
+        // Verify 'after' contains the nested record
+        val afterRecord = avroRecord.get("after") as org.apache.avro.generic.GenericRecord
+        assertThat(afterRecord.get("id")).isEqualTo(42)
+        assertThat(afterRecord.get("name")).isEqualTo("test")
+
+        // Verify 'op' is correct
+        assertThat(avroRecord.get("op")).isEqualTo("c")
+    }
+
+    @Test
+    fun `toAvroGenericRecord uses original schema names for Debezium envelope`() {
+        // Debezium-style schema with named nested record "Value" referenced by name in 'after'
+        val debeziumSchemaJson = """
+            {
+                "type": "record",
+                "name": "Envelope",
+                "namespace": "dbserver.public.users",
+                "fields": [
+                    {"name": "before", "type": ["null", {
+                        "type": "record",
+                        "name": "Value",
+                        "fields": [
+                            {"name": "id", "type": "int"},
+                            {"name": "name", "type": "string"}
+                        ]
+                    }], "default": null},
+                    {"name": "after", "type": ["null", "Value"], "default": null},
+                    {"name": "op", "type": "string"}
+                ]
+            }
+        """.trimIndent()
+
+        // Create DataStream with originalAvroSchema set (simulating Debezium pass-through)
+        val dataStream = DataStream(
+            path = "dbserver.public.users",
+            schema = Schema.Struct(
+                listOf(
+                    Schema.Field("before", Schema.Optional(null)),
+                    Schema.Field(
+                        "after", Schema.Optional(
+                            Schema.Struct(
+                                listOf(
+                                    Schema.Field("id", Schema.Int(42)),
+                                    Schema.Field("name", Schema.String("Alice"))
+                                )
+                            )
+                        )
+                    ),
+                    Schema.Field("op", Schema.String("c"))
+                )
+            ),
+            originalAvroSchema = debeziumSchemaJson
+        )
+
+        // Serialize - this should NOT throw UnresolvedUnionException
+        val genericRecord = dataStream.toAvroGenericRecord()
+
+        // Verify the envelope record uses the correct schema
+        assertThat(genericRecord.schema.name).isEqualTo("Envelope")
+        assertThat(genericRecord.schema.namespace).isEqualTo("dbserver.public.users")
+
+        // Verify the nested 'after' record has the correct schema name "Value"
+        val afterRecord = genericRecord.get("after") as org.apache.avro.generic.GenericRecord
+        assertThat(afterRecord.schema.name).isEqualTo("Value")
+        assertThat(afterRecord.get("id")).isEqualTo(42)
+        assertThat(afterRecord.get("name")).isEqualTo("Alice")
+    }
+
+    @Test
+    fun `toAvroGenericRecord reconstructs schema when originalAvroSchema is null`() {
+        // No originalAvroSchema - simulates post-transformation scenario
+        val dataStream = DataStream(
+            path = "transformed/topic",
+            schema = Schema.Struct(
+                listOf(
+                    Schema.Field(
+                        "nested", Schema.Struct(
+                            listOf(
+                                Schema.Field("value", Schema.String("test"))
+                            )
+                        )
+                    )
+                )
+            )
+            // originalAvroSchema = null (default)
+        )
+
+        val genericRecord = dataStream.toAvroGenericRecord()
+
+        // Schema should be reconstructed with generated namespace
+        assertThat(genericRecord.schema.namespace).isEqualTo("io.typestream.avro")
+
+        // Nested record should also have reconstructed schema
+        val nestedRecord = genericRecord.get("nested") as org.apache.avro.generic.GenericRecord
+        assertThat(nestedRecord.schema.namespace).isEqualTo("io.typestream.avro")
+    }
 }

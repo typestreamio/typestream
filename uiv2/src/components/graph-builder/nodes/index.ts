@@ -4,6 +4,7 @@ import { KafkaSinkNode } from './KafkaSinkNode';
 import { GeoIpNode } from './GeoIpNode';
 import { InspectorNode } from './InspectorNode';
 import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
+import { JDBCSinkNode } from './JDBCSinkNode';
 import { TextExtractorNode } from './TextExtractorNode';
 import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode } from './OpenAiTransformerNode';
@@ -37,6 +38,18 @@ export interface MaterializedViewNodeData extends Record<string, unknown>, NodeV
   groupByField: string;
 }
 
+export interface JDBCSinkNodeData extends Record<string, unknown>, NodeValidationState {
+  databaseType: 'postgres' | 'mysql';
+  hostname: string;
+  port: string;
+  database: string;
+  username: string;
+  password: string;
+  tableName: string;
+  insertMode: 'insert' | 'upsert' | 'update';
+  primaryKeyFields: string;
+}
+
 export interface TextExtractorNodeData extends Record<string, unknown>, NodeValidationState {
   filePathField: string;
   outputField: string;
@@ -59,11 +72,12 @@ export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
 export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
+export type JDBCSinkNodeType = Node<JDBCSinkNodeData, 'jdbcSink'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
 export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | JDBCSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -71,6 +85,7 @@ export const nodeTypes: NodeTypes = {
   geoIp: GeoIpNode,
   inspector: InspectorNode,
   materializedView: MaterializedViewNode,
+  jdbcSink: JDBCSinkNode,
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,

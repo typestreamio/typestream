@@ -25,6 +25,11 @@ class SchemaRegistryClient(private val config: SchemaRegistryConfig) {
     @Serializable
     data class SchemaResponse(val schema: String, val schemaType: String? = null)
 
+    @Serializable
+    data class ErrorResponse(val error_code: Int, val message: String)
+
+    class SchemaRegistryException(val errorCode: Int, message: String) : RuntimeException(message)
+
     // Thread-safe cache for schema lookups
     private val schemaCache = java.util.concurrent.ConcurrentHashMap<Int, String>()
 
@@ -70,7 +75,21 @@ class SchemaRegistryClient(private val config: SchemaRegistryConfig) {
             .post(body.toRequestBody(CONTENT_TYPE.toMediaType()))
             .build()
 
-        return okHttpClient.newCall(request).execute().body?.string() ?: error("no body")
+        val response = okHttpClient.newCall(request).execute()
+        val responseBody = response.body?.string() ?: error("no body")
+
+        if (!response.isSuccessful) {
+            try {
+                val errorResponse = Json.decodeFromString<ErrorResponse>(responseBody)
+                throw SchemaRegistryException(errorResponse.error_code, errorResponse.message)
+            } catch (e: SchemaRegistryException) {
+                throw e
+            } catch (e: Exception) {
+                throw SchemaRegistryException(response.code, "Schema Registry error: $responseBody")
+            }
+        }
+
+        return responseBody
     }
 
 }

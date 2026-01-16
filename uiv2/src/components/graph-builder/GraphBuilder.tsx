@@ -16,11 +16,12 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
-import { serializeGraph } from '../../utils/graphSerializer';
+import { serializeGraph, serializeGraphWithSinks, type JDBCSinkConnectorConfig } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
 import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
+import { connectApi } from '../../services/connectApi';
 
 let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
@@ -146,6 +147,18 @@ export function GraphBuilder() {
         data = { label: '' };
       } else if (type === 'materializedView') {
         data = { aggregationType: 'count', groupByField: '' };
+      } else if (type === 'jdbcSink') {
+        data = {
+          databaseType: 'postgres',
+          hostname: '',
+          port: '5432',
+          database: '',
+          username: '',
+          password: '',
+          tableName: '',
+          insertMode: 'upsert',
+          primaryKeyFields: '',
+        };
       } else if (type === 'textExtractor') {
         data = { filePathField: '', outputField: 'text' };
       } else if (type === 'embeddingGenerator') {
@@ -168,14 +181,50 @@ export function GraphBuilder() {
     [setNodes]
   );
 
-  const handleCreateJob = () => {
+  /**
+   * Create JDBC sink connectors for the job
+   */
+  const createJdbcSinkConnectors = async (
+    jobId: string,
+    jdbcSinkConnectors: JDBCSinkConnectorConfig[]
+  ): Promise<void> => {
+    for (const sinkConfig of jdbcSinkConnectors) {
+      const connectorName = `${jobId}-jdbc-sink-${sinkConfig.nodeId}`;
+      const connectorRequest = connectApi.buildJdbcSinkConfig({
+        name: connectorName,
+        databaseType: sinkConfig.databaseType,
+        hostname: sinkConfig.hostname,
+        port: sinkConfig.port,
+        database: sinkConfig.database,
+        username: sinkConfig.username,
+        password: sinkConfig.password,
+        topics: sinkConfig.intermediateTopic,
+        tableName: sinkConfig.tableName,
+        insertMode: sinkConfig.insertMode,
+        primaryKeyFields: sinkConfig.primaryKeyFields || undefined,
+      });
+      await connectApi.createConnector(connectorRequest);
+    }
+  };
+
+  const handleCreateJob = async () => {
     setCreateError(null);
-    const graph = serializeGraph(nodes, edges);
+    const { graph, jdbcSinkConnectors } = serializeGraphWithSinks(nodes, edges);
     const request = new CreateJobFromGraphRequest({ userId: 'local', graph });
 
     createJob.mutate(request, {
-      onSuccess: (response) => {
+      onSuccess: async (response) => {
         if (response.success && response.jobId) {
+          // Create JDBC sink connectors if any
+          if (jdbcSinkConnectors.length > 0) {
+            try {
+              await createJdbcSinkConnectors(response.jobId, jdbcSinkConnectors);
+            } catch (err) {
+              console.error('Failed to create JDBC sink connector:', err);
+              setCreateError(`Job created but JDBC sink connector failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+              // Still navigate to the job page even if connector creation failed
+            }
+          }
           navigate(`/jobs/${response.jobId}`);
         } else if (response.error) {
           setCreateError(response.error);
