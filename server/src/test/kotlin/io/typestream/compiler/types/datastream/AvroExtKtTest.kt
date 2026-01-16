@@ -184,4 +184,92 @@ internal class AvroExtKtTest {
         // Verify 'op' is correct
         assertThat(avroRecord.get("op")).isEqualTo("c")
     }
+
+    @Test
+    fun `toAvroGenericRecord uses original schema names for Debezium envelope`() {
+        // Debezium-style schema with named nested record "Value" referenced by name in 'after'
+        val debeziumSchemaJson = """
+            {
+                "type": "record",
+                "name": "Envelope",
+                "namespace": "dbserver.public.users",
+                "fields": [
+                    {"name": "before", "type": ["null", {
+                        "type": "record",
+                        "name": "Value",
+                        "fields": [
+                            {"name": "id", "type": "int"},
+                            {"name": "name", "type": "string"}
+                        ]
+                    }], "default": null},
+                    {"name": "after", "type": ["null", "Value"], "default": null},
+                    {"name": "op", "type": "string"}
+                ]
+            }
+        """.trimIndent()
+
+        // Create DataStream with originalAvroSchema set (simulating Debezium pass-through)
+        val dataStream = DataStream(
+            path = "dbserver.public.users",
+            schema = Schema.Struct(
+                listOf(
+                    Schema.Field("before", Schema.Optional(null)),
+                    Schema.Field(
+                        "after", Schema.Optional(
+                            Schema.Struct(
+                                listOf(
+                                    Schema.Field("id", Schema.Int(42)),
+                                    Schema.Field("name", Schema.String("Alice"))
+                                )
+                            )
+                        )
+                    ),
+                    Schema.Field("op", Schema.String("c"))
+                )
+            ),
+            originalAvroSchema = debeziumSchemaJson
+        )
+
+        // Serialize - this should NOT throw UnresolvedUnionException
+        val genericRecord = dataStream.toAvroGenericRecord()
+
+        // Verify the envelope record uses the correct schema
+        assertThat(genericRecord.schema.name).isEqualTo("Envelope")
+        assertThat(genericRecord.schema.namespace).isEqualTo("dbserver.public.users")
+
+        // Verify the nested 'after' record has the correct schema name "Value"
+        val afterRecord = genericRecord.get("after") as org.apache.avro.generic.GenericRecord
+        assertThat(afterRecord.schema.name).isEqualTo("Value")
+        assertThat(afterRecord.get("id")).isEqualTo(42)
+        assertThat(afterRecord.get("name")).isEqualTo("Alice")
+    }
+
+    @Test
+    fun `toAvroGenericRecord reconstructs schema when originalAvroSchema is null`() {
+        // No originalAvroSchema - simulates post-transformation scenario
+        val dataStream = DataStream(
+            path = "transformed/topic",
+            schema = Schema.Struct(
+                listOf(
+                    Schema.Field(
+                        "nested", Schema.Struct(
+                            listOf(
+                                Schema.Field("value", Schema.String("test"))
+                            )
+                        )
+                    )
+                )
+            )
+            // originalAvroSchema = null (default)
+        )
+
+        val genericRecord = dataStream.toAvroGenericRecord()
+
+        // Schema should be reconstructed with generated namespace
+        assertThat(genericRecord.schema.namespace).isEqualTo("io.typestream.avro")
+
+        // Nested record should also have reconstructed schema
+        val nestedRecord = genericRecord.get("nested") as org.apache.avro.generic.GenericRecord
+        assertThat(nestedRecord.schema.namespace).isEqualTo("io.typestream.avro")
+    }
 }

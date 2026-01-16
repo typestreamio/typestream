@@ -263,21 +263,39 @@ private fun AvroSchema.Field.toSchemaField(genericRecord: GenericRecord): Schema
 }
 
 fun DataStream.toAvroGenericRecord(): GenericRecord {
-    val genericRecord = GenericData.Record(toAvroSchema())
+    val avroSchema = toAvroSchema()
+    val genericRecord = GenericData.Record(avroSchema)
 
     //TODO we shouldn't assume top level value is a struct
     require(schema is Schema.Struct) { "Top level value must be a struct" }
 
-    schema.value.forEach { field -> genericRecord.put(field.name, field.value.toAvroValue()) }
+    schema.value.forEach { field ->
+        val fieldAvroSchema = avroSchema.getField(field.name)?.schema()
+        genericRecord.put(field.name, field.value.toAvroValue(fieldAvroSchema))
+    }
 
     return genericRecord
 }
 
 /**
+ * Extract the non-null type from a union schema ["null", T] or [T, "null"].
+ * Returns the schema itself if it's not a union.
+ */
+private fun extractNonNullFromUnion(schema: AvroSchema): AvroSchema? {
+    if (!schema.isUnion) return schema
+    return schema.types.firstOrNull { it.type != AvroSchema.Type.NULL }
+}
+
+/**
  * Convert a Schema value to an Avro-compatible value.
  * Handles temporal types that need conversion from kotlinx.datetime to Long/Int.
+ *
+ * @param avroSchema Optional Avro schema to use for nested records. When provided (pass-through
+ *                   scenarios with original Debezium schema), nested records will use the exact
+ *                   schema from the original. When null, schemas are reconstructed (transformation
+ *                   scenarios like join, geoip).
  */
-private fun Schema.toAvroValue(): Any? {
+private fun Schema.toAvroValue(avroSchema: AvroSchema? = null): Any? {
     return when (this) {
         is Schema.Instant -> when (precision) {
             Schema.Instant.Precision.MILLIS -> value.toEpochMilliseconds()
@@ -296,14 +314,28 @@ private fun Schema.toAvroValue(): Any? {
             Schema.Time.Precision.MICROS -> value.toMillisecondOfDay() * 1000L + (value.nanosecond / 1000) % 1000
         }
         is Schema.Struct -> {
-            val nestedSchema = this.toAvroSchema()
+            // Use original schema if available (pass-through), otherwise reconstruct
+            val nestedSchema = avroSchema ?: this.toAvroSchema()
             val nestedRecord = GenericData.Record(nestedSchema)
-            value.forEach { field -> nestedRecord.put(field.name, field.value.toAvroValue()) }
+            value.forEach { field ->
+                val fieldAvroSchema = nestedSchema.getField(field.name)?.schema()
+                nestedRecord.put(field.name, field.value.toAvroValue(fieldAvroSchema))
+            }
             nestedRecord
         }
-        is Schema.List -> value.map { it.toAvroValue() }
-        is Schema.Map -> value.mapValues { it.value.toAvroValue() }
-        is Schema.Optional -> value?.toAvroValue()
+        is Schema.List -> {
+            val elementSchema = avroSchema?.elementType
+            value.map { it.toAvroValue(elementSchema) }
+        }
+        is Schema.Map -> {
+            val valueSchema = avroSchema?.valueType
+            value.mapValues { it.value.toAvroValue(valueSchema) }
+        }
+        is Schema.Optional -> {
+            // For unions, get the non-null type for the nested value
+            val innerSchema = avroSchema?.let { extractNonNullFromUnion(it) }
+            value?.toAvroValue(innerSchema)
+        }
         else -> value
     }
 }
