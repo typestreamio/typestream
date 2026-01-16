@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run proto && vite",
+    "dev:fast": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

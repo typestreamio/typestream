@@ -13,6 +13,8 @@ service JobService {
     rpc CreatePreviewJob(CreatePreviewJobRequest) returns (CreatePreviewJobResponse) {}
     rpc StopPreviewJob(StopPreviewJobRequest) returns (StopPreviewJobResponse) {}
     rpc StreamPreview(StreamPreviewRequest) returns (stream StreamPreviewResponse) {}
+    rpc InferGraphSchemas(InferGraphSchemasRequest) returns (InferGraphSchemasResponse) {}
+    rpc ListOpenAIModels(ListOpenAIModelsRequest) returns (ListOpenAIModelsResponse) {}
 }
 
 message CreateJobRequest {
@@ -98,6 +100,23 @@ message InspectorNode {
 
 message ReduceLatestNode {}
 
+message TextExtractorNode {
+  string file_path_field = 1;  // Field containing the file path
+  string output_field = 2;     // Output field name (default: text)
+}
+
+message EmbeddingGeneratorNode {
+  string text_field = 1;     // Field containing text to embed
+  string output_field = 2;   // Output field name (default: embedding)
+  string model = 3;          // OpenAI model (default: text-embedding-3-small)
+}
+
+message OpenAiTransformerNode {
+  string prompt = 1;         // User's instruction prompt
+  string output_field = 2;   // Output field name (default: ai_response)
+  string model = 3;          // OpenAI model ID (default: gpt-4o-mini)
+}
+
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -114,6 +133,9 @@ message PipelineNode {
     GeoIpNode geo_ip = 12;
     InspectorNode inspector = 13;
     ReduceLatestNode reduce_latest = 14;
+    TextExtractorNode text_extractor = 15;
+    EmbeddingGeneratorNode embedding_generator = 16;
+    OpenAiTransformerNode open_ai_transformer = 17;
   }
 }
 
@@ -146,11 +168,19 @@ enum JobState {
   UNKNOWN = 6;
 }
 
+message JobThroughput {
+  double messages_per_second = 1;  // Current processing rate (messages/sec)
+  int64 total_messages = 2;        // Total messages processed since job start
+  double bytes_per_second = 3;     // Current bandwidth consumption (bytes/sec)
+  int64 total_bytes = 4;           // Total bytes processed since job start
+}
+
 message JobInfo {
   string job_id = 1;
   JobState state = 2;
   int64 start_time = 3;  // Unix timestamp in milliseconds
   PipelineGraph graph = 4;  // Optional: the job's pipeline graph
+  JobThroughput throughput = 5;  // Throughput metrics
 }
 
 message ListJobsResponse {
@@ -187,4 +217,31 @@ message StreamPreviewResponse {
   string key = 1;
   string value = 2;
   int64 timestamp = 3;
+}
+
+// Schema inference messages
+message InferGraphSchemasRequest {
+  PipelineGraph graph = 1;
+}
+
+message InferGraphSchemasResponse {
+  map<string, NodeSchemaResult> schemas = 1;
+}
+
+message NodeSchemaResult {
+  repeated string fields = 1;
+  string encoding = 2;
+  string error = 3;
+}
+
+// OpenAI models listing
+message ListOpenAIModelsRequest {}
+
+message OpenAIModel {
+  string id = 1;    // e.g. "gpt-4o-mini"
+  string name = 2;  // Display name
+}
+
+message ListOpenAIModelsResponse {
+  repeated OpenAIModel models = 1;
 }

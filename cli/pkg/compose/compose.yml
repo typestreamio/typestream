@@ -35,6 +35,8 @@ services:
   server:
     image: ${TYPESTREAM_IMAGE:-typestream/server:latest}
     environment:
+      TIKA_URL: http://tika:9998
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       TYPESTREAM_CONFIG: |-
         [grpc]
         port=4242
@@ -105,6 +107,21 @@ services:
     depends_on:
       redpanda:
         condition: service_healthy
+  demo-data-fileuploads:
+    build:
+      context: ${TYPESTREAM_PROJECT_ROOT:-../../..}
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    volumes:
+      - /tmp/typestream-files:/tmp/typestream-files
+    networks:
+      - typestream_network
+    command: ["fileuploads", "--rate", "1"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
   envoy:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
@@ -166,3 +183,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+  tika:
+    image: apache/tika:2.9.2.1
+    ports:
+      - "9998:9998"
+    networks:
+      - typestream_network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo >/dev/tcp/localhost/9998'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

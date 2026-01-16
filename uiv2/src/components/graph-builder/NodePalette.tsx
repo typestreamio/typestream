@@ -6,6 +6,9 @@ import PublicIcon from '@mui/icons-material/Public';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import StorageIcon from '@mui/icons-material/Storage';
+import DescriptionIcon from '@mui/icons-material/Description';
+import MemoryIcon from '@mui/icons-material/Memory';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import type { DragEvent } from 'react';
 
 interface PaletteItemProps {
@@ -89,6 +92,21 @@ export function NodePalette() {
         type="jdbcSink"
         label="JDBC Sink"
         icon={<StorageIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="textExtractor"
+        label="Text Extractor"
+        icon={<DescriptionIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="embeddingGenerator"
+        label="Embedding Generator"
+        icon={<MemoryIcon fontSize="small" />}
+      />
+      <PaletteItem
+        type="openAiTransformer"
+        label="OpenAI Transformer"
+        icon={<AutoAwesomeIcon fontSize="small" />}
       />
     </Paper>
   );

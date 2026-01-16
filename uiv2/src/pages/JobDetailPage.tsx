@@ -12,6 +12,7 @@ import { useListJobs } from '../hooks/useListJobs';
 import { useListStores } from '../hooks/useListStores';
 import { JobStatusChip } from '../components/JobStatusChip';
 import { JobState } from '../generated/job_pb';
+import { formatThroughput, formatBytes, formatNumber } from '../utils/formatters';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -92,6 +93,49 @@ export function JobDetailPage() {
                 {job.startTime ? new Date(Number(job.startTime)).toLocaleString() : '-'}
               </Typography>
             </Box>
+
+            {job.throughput && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" gutterBottom>
+                  Throughput
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Messages/sec
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                      {formatThroughput(job.throughput.messagesPerSecond)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Bandwidth
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                      {formatBytes(job.throughput.bytesPerSecond)}/s
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Total Messages
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                      {formatNumber(job.throughput.totalMessages)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Total Bytes
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                      {formatBytes(Number(job.throughput.totalBytes))}
+                    </Typography>
+                  </Box>
+                </Box>
+              </>
+            )}
 
             {job.graph && (
               <>

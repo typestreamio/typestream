@@ -21,6 +21,13 @@ import io.typestream.grpc.job_service.stopPreviewJobResponse
 import io.typestream.grpc.job_service.streamPreviewResponse
 import io.typestream.grpc.job_service.listJobsResponse
 import io.typestream.grpc.job_service.jobInfo
+import io.typestream.grpc.job_service.jobThroughput
+import io.typestream.grpc.job_service.inferGraphSchemasResponse
+import io.typestream.grpc.job_service.nodeSchemaResult
+import io.typestream.grpc.job_service.listOpenAIModelsResponse
+import io.typestream.grpc.job_service.openAIModel
+import io.typestream.openai.OpenAiService
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.k8s.K8sClient
 import io.typestream.kafka.KafkaAdminClient
 import io.typestream.scheduler.Job as SchedulerJob
@@ -54,6 +61,7 @@ class JobService(private val config: Config, private val vm: Vm) :
 
     private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
+    private val openAiService = OpenAiService()
 
     // Track preview jobs for cleanup: jobId -> PreviewJobInfo
     private val previewJobs = ConcurrentHashMap<String, PreviewJobInfo>()
@@ -180,6 +188,7 @@ class JobService(private val config: Config, private val vm: Vm) :
                 // Skip preview jobs from the listing
                 if (previewJobs.containsKey(schedulerJob.id)) return@forEach
 
+                val jobThroughputMetrics = schedulerJob.throughput()
                 jobs.add(jobInfo {
                     jobId = schedulerJob.id
                     state = when (schedulerJob.state()) {
@@ -194,6 +203,12 @@ class JobService(private val config: Config, private val vm: Vm) :
                     // Include graph if available (only for graph-based jobs)
                     if (schedulerJob is io.typestream.scheduler.KafkaStreamsJob) {
                         schedulerJob.program.pipelineGraph?.let { graph = it }
+                    }
+                    throughput = jobThroughput {
+                        messagesPerSecond = jobThroughputMetrics.messagesPerSecond
+                        totalMessages = jobThroughputMetrics.totalMessages
+                        bytesPerSecond = jobThroughputMetrics.bytesPerSecond
+                        totalBytes = jobThroughputMetrics.totalBytes
                     }
                 })
             }
@@ -270,6 +285,34 @@ class JobService(private val config: Config, private val vm: Vm) :
                 logger.info { "Stream ended for preview job $jobId, cleaning up" }
                 cleanupPreviewJob(jobId)
             }
+        }
+    }
+
+    override suspend fun inferGraphSchemas(request: ProtoJob.InferGraphSchemasRequest): ProtoJob.InferGraphSchemasResponse = inferGraphSchemasResponse {
+        // Use UI-friendly inference that handles errors gracefully per-node
+        val results = graphCompiler.inferNodeSchemasForUI(request.graph)
+
+        request.graph.nodesList.forEach { node ->
+            val result = results[node.id]
+            schemas[node.id] = nodeSchemaResult {
+                if (result?.schema?.schema is Schema.Struct) {
+                    fields += (result.schema.schema as Schema.Struct).value.map { it.name }
+                }
+                encoding = result?.encoding?.name ?: "AVRO"
+                if (result?.error != null) {
+                    error = result.error
+                }
+            }
+        }
+    }
+
+    override suspend fun listOpenAIModels(request: ProtoJob.ListOpenAIModelsRequest): ProtoJob.ListOpenAIModelsResponse = listOpenAIModelsResponse {
+        val fetchedModels = openAiService.fetchModels()
+        fetchedModels.forEach { m ->
+            models.add(openAIModel {
+                id = m.id
+                name = m.name
+            })
         }
     }
 }

@@ -6,7 +6,10 @@ import io.typestream.compiler.kafka.KafkaStreamSource
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
+import io.typestream.embedding.EmbeddingGeneratorService
 import io.typestream.geoip.GeoIpService
+import io.typestream.openai.OpenAiService
+import io.typestream.textextractor.TextExtractorService
 import io.typestream.coroutine.retry
 import io.typestream.kafka.DataStreamSerde
 import io.typestream.kafka.StreamsBuilderWrapper
@@ -51,7 +54,10 @@ class KafkaStreamsJob(
     override val id: String,
     val program: Program,
     private val kafkaConfig: KafkaConfig,
-    private val geoIpService: GeoIpService
+    private val geoIpService: GeoIpService,
+    private val textExtractorService: TextExtractorService,
+    private val embeddingGeneratorService: EmbeddingGeneratorService,
+    private val openAiService: OpenAiService
 ) : Job {
     private var running: Boolean = false
     private val logger = KotlinLogging.logger {}
@@ -74,7 +80,7 @@ class KafkaStreamsJob(
             val source = sourceNode.ref
             require(source is Node.StreamSource) { "source node must be a StreamSource" }
 
-            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService)
+            val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService, textExtractorService, embeddingGeneratorService, openAiService)
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
@@ -96,6 +102,9 @@ class KafkaStreamsJob(
                     is Node.Map -> kafkaStreamSource.map(currentNode.ref)
                     is Node.Each -> kafkaStreamSource.each(currentNode.ref)
                     is Node.GeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
+                    is Node.TextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
+                    is Node.EmbeddingGenerator -> kafkaStreamSource.embeddingGenerate(currentNode.ref)
+                    is Node.OpenAiTransformer -> kafkaStreamSource.openAiTransform(currentNode.ref)
                     is Node.NoOp -> {}
                     is Node.StreamSource -> {}
                     is Node.Sink -> kafkaStreamSource.to(currentNode.ref)
@@ -202,5 +211,55 @@ class KafkaStreamsJob(
         KafkaStreams.State.PENDING_ERROR -> Job.State.FAILED
         KafkaStreams.State.ERROR -> Job.State.FAILED
         null -> Job.State.UNKNOWN
+    }
+
+    /**
+     * Returns throughput metrics from Kafka Streams.
+     *
+     * Uses built-in metrics:
+     * - stream-thread-metrics: process-rate, process-total
+     * - consumer-fetch-manager-metrics: bytes-consumed-rate, bytes-consumed-total
+     */
+    override fun throughput(): Job.Throughput {
+        val streams = kafkaStreams ?: return Job.Throughput()
+        val allMetrics = streams.metrics()
+
+        var messagesPerSecond = 0.0
+        var totalMessages = 0L
+        var bytesPerSecond = 0.0
+        var totalBytes = 0L
+
+        allMetrics.forEach { (name, metric) ->
+            val groupName = name.group()
+            val metricName = name.name()
+
+            when {
+                // Stream thread metrics for message processing rate
+                groupName == "stream-thread-metrics" && metricName == "process-rate" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) messagesPerSecond += value.toDouble()
+                }
+                groupName == "stream-thread-metrics" && metricName == "process-total" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) totalMessages += value.toLong()
+                }
+                // Consumer fetch manager metrics for bytes consumed
+                groupName == "consumer-fetch-manager-metrics" && metricName == "bytes-consumed-rate" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) bytesPerSecond += value.toDouble()
+                }
+                groupName == "consumer-fetch-manager-metrics" && metricName == "bytes-consumed-total" -> {
+                    val value = metric.metricValue()
+                    if (value is Number) totalBytes += value.toLong()
+                }
+            }
+        }
+
+        return Job.Throughput(
+            messagesPerSecond = messagesPerSecond,
+            totalMessages = totalMessages,
+            bytesPerSecond = bytesPerSecond,
+            totalBytes = totalBytes
+        )
     }
 }

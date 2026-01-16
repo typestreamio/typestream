@@ -6,7 +6,10 @@ import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
+import io.typestream.embedding.EmbeddingGeneratorNodeHandler
 import io.typestream.geoip.GeoIpNodeHandler
+import io.typestream.openai.OpenAiTransformerNodeHandler
+import io.typestream.textextractor.TextExtractorNodeHandler
 import io.typestream.graph.Graph
 import io.typestream.grpc.job_service.Job
 import java.util.ArrayDeque
@@ -108,6 +111,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       Node.Inspector(proto.id, proto.inspector.label)
     }
     proto.hasReduceLatest() -> Node.ReduceLatest(proto.id)
+    proto.hasTextExtractor() -> TextExtractorNodeHandler.fromProto(proto)
+    proto.hasEmbeddingGenerator() -> EmbeddingGeneratorNodeHandler.fromProto(proto)
+    proto.hasOpenAiTransformer() -> OpenAiTransformerNodeHandler.fromProto(proto)
     else -> error("Unknown node type: $proto")
   }
 
@@ -117,8 +123,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
    * - node ID -> DataStream with inferred schema
    * - node ID -> Encoding (propagated from sources through the pipeline)
    * These are then used in Phase 2 (buildGraph) to construct nodes.
+   * Also exposed for UI schema inference endpoint.
    */
-  private fun inferNodeSchemasAndEncodings(graph: Job.PipelineGraph): Pair<Map<String, DataStream>, Map<String, Encoding>> {
+  fun inferNodeSchemasAndEncodings(graph: Job.PipelineGraph): Pair<Map<String, DataStream>, Map<String, Encoding>> {
     val schemas = mutableMapOf<String, DataStream>()
     val encodings = mutableMapOf<String, Encoding>()
     val nodesById = graph.nodesList.associateBy { it.id }
@@ -138,22 +145,78 @@ class GraphCompiler(private val fileSystem: FileSystem) {
   }
 
   /**
-   * Recursively infer the output schema and encoding for a node and its children.
-   * Uses TypeRules for all type transformations to ensure consistency.
-   * Encodings are propagated from sources through the pipeline.
+   * UI-friendly version of schema inference that handles errors gracefully.
+   * Returns schemas and errors per-node without throwing exceptions.
+   * When a node fails validation, it still stores the input schema so
+   * downstream nodes can populate field dropdowns.
    */
-  private fun inferNodeType(
+  data class NodeInferenceResult(
+    val schema: DataStream?,
+    val encoding: Encoding?,
+    val error: String?
+  )
+
+  fun inferNodeSchemasForUI(graph: Job.PipelineGraph): Map<String, NodeInferenceResult> {
+    val results = mutableMapOf<String, NodeInferenceResult>()
+    val nodesById = graph.nodesList.associateBy { it.id }
+    val adjList = mutableMapOf<String, MutableList<String>>()
+
+    graph.edgesList.forEach { edge ->
+      adjList.getOrPut(edge.fromId) { mutableListOf() }.add(edge.toId)
+    }
+
+    val sources = nodesById.keys - adjList.values.flatten().toSet()
+
+    sources.forEach { sourceId ->
+      inferNodeTypeForUI(sourceId, nodesById, adjList, null, null, results)
+    }
+
+    return results
+  }
+
+  private fun inferNodeTypeForUI(
     nodeId: String,
     nodesById: Map<String, Job.PipelineNode>,
     adjList: Map<String, List<String>>,
     input: DataStream?,
     inputEncoding: Encoding?,
-    schemas: MutableMap<String, DataStream>,
-    encodings: MutableMap<String, Encoding>
+    results: MutableMap<String, NodeInferenceResult>
   ) {
-    val proto = nodesById[nodeId] ?: error("Missing node $nodeId")
+    val proto = nodesById[nodeId]
+    if (proto == null) {
+      results[nodeId] = NodeInferenceResult(null, null, "Missing node $nodeId")
+      return
+    }
 
-    val (output, outputEncoding) = when {
+    try {
+      val (output, outputEncoding) = inferSingleNodeType(proto, nodeId, input, inputEncoding)
+      results[nodeId] = NodeInferenceResult(output, outputEncoding, null)
+
+      // Recursively process children
+      adjList[nodeId]?.forEach { childId ->
+        inferNodeTypeForUI(childId, nodesById, adjList, output, outputEncoding, results)
+      }
+    } catch (e: Exception) {
+      // On error, store the INPUT schema (for field dropdown population) and the error message
+      results[nodeId] = NodeInferenceResult(input, inputEncoding, e.message ?: "Inference failed")
+
+      // Still try to process children using the input schema (pass-through on error)
+      adjList[nodeId]?.forEach { childId ->
+        inferNodeTypeForUI(childId, nodesById, adjList, input, inputEncoding, results)
+      }
+    }
+  }
+
+  /**
+   * Infer the type for a single node. Extracted to allow reuse with error handling.
+   */
+  private fun inferSingleNodeType(
+    proto: Job.PipelineNode,
+    nodeId: String,
+    input: DataStream?,
+    inputEncoding: Encoding?
+  ): Pair<DataStream, Encoding> {
+    return when {
       proto.hasStreamSource() -> {
         val path = proto.streamSource.dataStream.path
         val ds = io.typestream.compiler.types.TypeRules.inferStreamSource(path, fileSystem)
@@ -215,7 +278,6 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         out to (inputEncoding ?: Encoding.AVRO)
       }
       proto.hasInspector() -> {
-        // Inspector passes through input unchanged
         val out = input ?: error("inspector $nodeId missing input")
         out to (inputEncoding ?: Encoding.AVRO)
       }
@@ -223,8 +285,49 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         val out = io.typestream.compiler.types.TypeRules.inferReduceLatest(input ?: error("reduce_latest $nodeId missing input"))
         out to (inputEncoding ?: Encoding.AVRO)
       }
+      proto.hasTextExtractor() -> {
+        val out = TextExtractorNodeHandler.inferType(
+          input ?: error("textExtractor $nodeId missing input"),
+          proto.textExtractor.filePathField,
+          proto.textExtractor.outputField.ifBlank { "text" }
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasEmbeddingGenerator() -> {
+        val out = EmbeddingGeneratorNodeHandler.inferType(
+          input ?: error("embeddingGenerator $nodeId missing input"),
+          proto.embeddingGenerator.textField,
+          proto.embeddingGenerator.outputField.ifBlank { "embedding" }
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
+      proto.hasOpenAiTransformer() -> {
+        val out = OpenAiTransformerNodeHandler.inferType(
+          input ?: error("openAiTransformer $nodeId missing input"),
+          proto.openAiTransformer.outputField.ifBlank { "ai_response" }
+        )
+        out to (inputEncoding ?: Encoding.AVRO)
+      }
       else -> error("Unknown node type: $nodeId")
     }
+  }
+
+  /**
+   * Recursively infer the output schema and encoding for a node and its children.
+   * Uses TypeRules for all type transformations to ensure consistency.
+   * Encodings are propagated from sources through the pipeline.
+   */
+  private fun inferNodeType(
+    nodeId: String,
+    nodesById: Map<String, Job.PipelineNode>,
+    adjList: Map<String, List<String>>,
+    input: DataStream?,
+    inputEncoding: Encoding?,
+    schemas: MutableMap<String, DataStream>,
+    encodings: MutableMap<String, Encoding>
+  ) {
+    val proto = nodesById[nodeId] ?: error("Missing node $nodeId")
+    val (output, outputEncoding) = inferSingleNodeType(proto, nodeId, input, inputEncoding)
 
     schemas[nodeId] = output
     encodings[nodeId] = outputEncoding

@@ -42,6 +42,18 @@ object Infer {
                 val stream = input ?: error("geoIp ${ref.id} missing input stream")
                 TypeRules.inferGeoIp(stream, ref.ipField, ref.outputField)
             }
+            is Node.TextExtractor -> {
+                val stream = input ?: error("textExtractor ${ref.id} missing input stream")
+                TypeRules.inferTextExtractor(stream, ref.filePathField, ref.outputField)
+            }
+            is Node.EmbeddingGenerator -> {
+                val stream = input ?: error("embeddingGenerator ${ref.id} missing input stream")
+                TypeRules.inferEmbeddingGenerator(stream, ref.textField, ref.outputField)
+            }
+            is Node.OpenAiTransformer -> {
+                val stream = input ?: error("openAiTransformer ${ref.id} missing input stream")
+                TypeRules.inferOpenAiTransformer(stream, ref.outputField)
+            }
             is Node.Inspector -> input ?: error("inspector ${ref.id} missing input stream")
         }
 

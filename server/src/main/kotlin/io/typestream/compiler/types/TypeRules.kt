@@ -177,4 +177,71 @@ object TypeRules {
     // Clear originalAvroSchema since we're modifying the schema
     return input.copy(schema = Schema.Struct(newFields), originalAvroSchema = null)
   }
+
+  /**
+   * Type inference for TextExtractor nodes.
+   * Adds a new string field (extracted text) to the schema.
+   * The TextExtractor node takes a file path field from the input and adds an extracted text field to the output.
+   *
+   * @param input The input stream schema
+   * @param filePathField The name of the field containing the file path
+   * @param outputField The name of the output field for the extracted text (e.g., "text")
+   * @return Input schema with the new text field added
+   * @throws IllegalArgumentException if input schema is not a struct or if filePathField doesn't exist
+   */
+  fun inferTextExtractor(input: DataStream, filePathField: String, outputField: String): DataStream {
+    val inputSchema = input.schema
+    require(inputSchema is Schema.Struct) { "TextExtractor requires struct schema, got: ${inputSchema::class.simpleName}" }
+
+    val hasFilePathField = inputSchema.value.any { it.name == filePathField }
+    require(hasFilePathField) { "TextExtractor file path field '$filePathField' not found in schema. Available fields: ${inputSchema.value.map { it.name }}" }
+
+    val newField = Schema.Field(outputField, Schema.String.zeroValue)
+    val newFields = inputSchema.value + newField
+    return input.copy(schema = Schema.Struct(newFields))
+  }
+
+  /**
+   * Type inference for EmbeddingGenerator nodes.
+   * Adds a new List<Float> field (embedding vector) to the schema.
+   * The EmbeddingGenerator node takes a text field from the input and adds an embedding vector field to the output.
+   *
+   * @param input The input stream schema
+   * @param textField The name of the field containing the text to embed
+   * @param outputField The name of the output field for the embedding vector (e.g., "embedding")
+   * @return Input schema with the new embedding field added
+   * @throws IllegalArgumentException if input schema is not a struct or if textField doesn't exist
+   */
+  fun inferEmbeddingGenerator(input: DataStream, textField: String, outputField: String): DataStream {
+    val inputSchema = input.schema
+    require(inputSchema is Schema.Struct) { "EmbeddingGenerator requires struct schema, got: ${inputSchema::class.simpleName}" }
+
+    val hasTextField = inputSchema.value.any { it.name == textField }
+    require(hasTextField) { "EmbeddingGenerator text field '$textField' not found in schema. Available fields: ${inputSchema.value.map { it.name }}" }
+
+    // Embedding is a List<Float>
+    val embeddingType = Schema.List(emptyList(), Schema.Float(0.0f))
+    val newField = Schema.Field(outputField, embeddingType)
+    val newFields = inputSchema.value + newField
+    return input.copy(schema = Schema.Struct(newFields))
+  }
+
+  /**
+   * Type inference for OpenAiTransformer nodes.
+   * Adds a new String field (AI response) to the schema.
+   * The OpenAiTransformer node sends the full message to OpenAI and adds the response as a new field.
+   *
+   * @param input The input stream schema
+   * @param outputField The name of the output field for the AI response (e.g., "ai_response")
+   * @return Input schema with the new AI response field added
+   * @throws IllegalArgumentException if input schema is not a struct
+   */
+  fun inferOpenAiTransformer(input: DataStream, outputField: String): DataStream {
+    val inputSchema = input.schema
+    require(inputSchema is Schema.Struct) { "OpenAiTransformer requires struct schema, got: ${inputSchema::class.simpleName}" }
+
+    val newField = Schema.Field(outputField, Schema.String.zeroValue)
+    val newFields = inputSchema.value + newField
+    return input.copy(schema = Schema.Struct(newFields))
+  }
 }

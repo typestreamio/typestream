@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, ListJobsRequest, ListJobsResponse, StopPreviewJobRequest, StopPreviewJobResponse, StreamPreviewRequest, StreamPreviewResponse } from "./job_pb.js";
+import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, InferGraphSchemasRequest, InferGraphSchemasResponse, ListJobsRequest, ListJobsResponse, ListOpenAIModelsRequest, ListOpenAIModelsResponse, StopPreviewJobRequest, StopPreviewJobResponse, StreamPreviewRequest, StreamPreviewResponse } from "./job_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -65,6 +65,24 @@ export const JobService = {
       I: StreamPreviewRequest,
       O: StreamPreviewResponse,
       kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.JobService.InferGraphSchemas
+     */
+    inferGraphSchemas: {
+      name: "InferGraphSchemas",
+      I: InferGraphSchemasRequest,
+      O: InferGraphSchemasResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.JobService.ListOpenAIModels
+     */
+    listOpenAIModels: {
+      name: "ListOpenAIModels",
+      I: ListOpenAIModelsRequest,
+      O: ListOpenAIModelsResponse,
+      kind: MethodKind.Unary,
     },
   }
 } as const;

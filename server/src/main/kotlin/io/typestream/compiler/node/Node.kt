@@ -47,4 +47,23 @@ sealed interface Node {
 
     @Serializable
     data class ReduceLatest(override val id: String) : Node
+
+    @Serializable
+    data class TextExtractor(override val id: String, val filePathField: String, val outputField: String) : Node
+
+    @Serializable
+    data class EmbeddingGenerator(
+        override val id: String,
+        val textField: String,
+        val outputField: String,
+        val model: String
+    ) : Node
+
+    @Serializable
+    data class OpenAiTransformer(
+        override val id: String,
+        val prompt: String,
+        val outputField: String,
+        val model: String
+    ) : Node
 }

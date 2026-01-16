@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.double
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.connectors.coinbase.CoinbaseConnector
+import io.typestream.connectors.fileuploads.FileUploadsConnector
 import io.typestream.connectors.webvisits.WebVisitsConnector
 import io.typestream.connectors.wikipedia.WikipediaConnector
 
@@ -94,6 +95,39 @@ class WebVisitsCommand : CliktCommand(name = "webvisits") {
     }
 }
 
+class FileUploadsCommand : CliktCommand(name = "fileuploads") {
+    private val outputDir by option("--output-dir", "-d", help = "Directory to create sample files")
+        .default("/tmp/typestream-files")
+
+    private val rate by option("--rate", "-r", help = "Messages per second")
+        .double()
+        .default(1.0)
+
+    private val topic by option("--topic", "-t", help = "Kafka topic name")
+        .default("file_uploads")
+
+    override fun run() {
+        logger.info { "Starting FileUploads connector" }
+        logger.info { "  Output directory: $outputDir" }
+        logger.info { "  Rate: ~$rate events/sec" }
+        logger.info { "  Topic: $topic" }
+
+        val connector = FileUploadsConnector(
+            outputDir = outputDir,
+            ratePerSecond = rate,
+            topic = topic
+        )
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            logger.info { "Received shutdown signal" }
+            connector.close()
+        })
+
+        connector.start()
+        connector.awaitTermination()
+    }
+}
+
 fun main(args: Array<String>) = DemoData()
-    .subcommands(CoinbaseCommand(), WikipediaCommand(), WebVisitsCommand())
+    .subcommands(CoinbaseCommand(), WikipediaCommand(), WebVisitsCommand(), FileUploadsCommand())
     .main(args)

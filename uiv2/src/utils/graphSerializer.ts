@@ -8,11 +8,14 @@ import {
   InspectorNode,
   DataStreamProto,
   GeoIpNode as GeoIpNodeProto,
+  TextExtractorNode as TextExtractorNodeProto,
+  EmbeddingGeneratorNode as EmbeddingGeneratorNodeProto,
+  OpenAiTransformerNode as OpenAiTransformerNodeProto,
   GroupNode,
   CountNode,
   ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, JDBCSinkNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, JDBCSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
 /**
  * Configuration for JDBC sink connectors that need to be created
@@ -179,6 +182,53 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
           case: 'inspector',
           value: new InspectorNode({
             label: data.label || '',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'textExtractor') {
+      const data = node.data as TextExtractorNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'textExtractor',
+          value: new TextExtractorNodeProto({
+            filePathField: data.filePathField,
+            outputField: data.outputField || 'text',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'embeddingGenerator') {
+      const data = node.data as EmbeddingGeneratorNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'embeddingGenerator',
+          value: new EmbeddingGeneratorNodeProto({
+            textField: data.textField,
+            outputField: data.outputField || 'embedding',
+            model: data.model || 'text-embedding-3-small',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'openAiTransformer') {
+      const data = node.data as OpenAiTransformerNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'openAiTransformer',
+          value: new OpenAiTransformerNodeProto({
+            prompt: data.prompt,
+            outputField: data.outputField || 'ai_response',
+            model: data.model || 'gpt-4o-mini',
           }),
         },
       }));

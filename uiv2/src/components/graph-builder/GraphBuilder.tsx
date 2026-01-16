@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -16,9 +16,11 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
-import { serializeGraphWithSinks, type JDBCSinkConnectorConfig } from '../../utils/graphSerializer';
+import { serializeGraph, serializeGraphWithSinks, type JDBCSinkConnectorConfig } from '../../utils/graphSerializer';
+import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
-import { CreateJobFromGraphRequest } from '../../generated/job_pb';
+import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
+import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
 import { connectApi } from '../../services/connectApi';
 
 let nodeId = 0;
@@ -31,6 +33,87 @@ export function GraphBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
+  const inferSchemas = useInferGraphSchemas();
+
+  // Create a stable dependency key that tracks meaningful graph changes
+  // (excludes validation state fields that we set)
+  const graphKey = useMemo(() => getGraphDependencyKey(nodes, edges), [nodes, edges]);
+
+  // Keep a ref to the latest nodes/edges for use in the async callback
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
+
+  // Request counter to prevent stale responses from updating state
+  const requestIdRef = useRef(0);
+
+  // Debounced schema inference on graph changes
+  useEffect(() => {
+    if (nodes.length === 0) return;
+
+    // Increment request ID for this inference cycle
+    const currentRequestId = ++requestIdRef.current;
+
+    // Mark all nodes as inferring
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: { ...n.data, isInferring: true },
+      } as AppNode))
+    );
+
+    const timeout = setTimeout(async () => {
+      try {
+        // Use refs to get latest values inside async callback
+        const currentNodes = nodesRef.current;
+        const currentEdges = edgesRef.current;
+        const graph = serializeGraph(currentNodes, currentEdges);
+        const request = new InferGraphSchemasRequest({ graph });
+        const response = await inferSchemas.mutateAsync(request);
+
+        // Only update state if this is still the latest request
+        if (currentRequestId !== requestIdRef.current) return;
+
+        // Update each node with its schema result
+        setNodes((nds) =>
+          nds.map((n) => {
+            const result = response.schemas[n.id];
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                outputSchema: result?.fields ?? [],
+                schemaError: result?.error || undefined,
+                isInferring: false,
+              },
+            } as AppNode;
+          })
+        );
+      } catch {
+        // Only update state if this is still the latest request
+        if (currentRequestId !== requestIdRef.current) return;
+
+        // Network error - mark all nodes with error
+        setNodes((nds) =>
+          nds.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              schemaError: 'Schema inference failed',
+              isInferring: false,
+            },
+          } as AppNode))
+        );
+      }
+    }, 300);
+
+    return () => clearTimeout(timeout);
+    // graphKey changes when meaningful node/edge data changes (excluding validation state)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphKey, inferSchemas.mutateAsync]);
 
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -76,6 +159,12 @@ export function GraphBuilder() {
           insertMode: 'upsert',
           primaryKeyFields: '',
         };
+      } else if (type === 'textExtractor') {
+        data = { filePathField: '', outputField: 'text' };
+      } else if (type === 'embeddingGenerator') {
+        data = { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
+      } else if (type === 'openAiTransformer') {
+        data = { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
       } else {
         data = { topicPath: '' };
       }

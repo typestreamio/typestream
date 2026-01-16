@@ -101,7 +101,7 @@ To stop dev services: ./typestream local dev stop`,
 			}
 		}()
 
-		err := runner.RunCommand("up", "--detach", "--wait", "--force-recreate", "--remove-orphans", "--build")
+		err := runner.RunCommand("up", "--detach", "--wait", "--remove-orphans")
 		if err != nil {
 			log.Fatalf("Failed to run docker compose: %v", err)
 		}
