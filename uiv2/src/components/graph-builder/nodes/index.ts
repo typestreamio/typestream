@@ -93,8 +93,6 @@ export const nodeTypes: NodeTypes = {
   geoIp: GeoIpNode,
   inspector: InspectorNode,
   materializedView: MaterializedViewNode,
-  jdbcSink: JDBCSinkNode,
-  dbSink: DbSinkNode,
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,
