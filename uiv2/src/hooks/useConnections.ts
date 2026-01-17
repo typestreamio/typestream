@@ -167,7 +167,7 @@ export function useTestConnection() {
       name: string;
       databaseType: 'postgres' | 'mysql';
       hostname: string;
-      port: string;
+      port: number;
       database: string;
       username: string;
       password: string;
