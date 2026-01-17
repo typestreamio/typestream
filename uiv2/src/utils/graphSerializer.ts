@@ -240,6 +240,7 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
       nodes: pipelineNodes,
       edges: pipelineEdges,
     }),
+    dbSinkConfigs,
   };
 }
 
@@ -247,5 +248,5 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
  * Serialize a graph to a PipelineGraph proto (backward compatible)
  */
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
-  return serializeGraphWithSinks(nodes, edges).graph;
+  return serializeGraphWithDbSinks(nodes, edges).graph;
 }
