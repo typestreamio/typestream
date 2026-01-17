@@ -40,18 +40,11 @@ export interface MaterializedViewNodeData extends Record<string, unknown>, NodeV
 
 
 
-// DbSinkNode - uses a pre-configured connection (full config stored in node)
+// DbSinkNode - uses a pre-configured connection (credentials resolved server-side)
 export interface DbSinkNodeData extends Record<string, unknown>, NodeValidationState {
-  connectionId: string;        // Reference to the connection
+  connectionId: string;        // Reference to the connection (server resolves credentials)
   connectionName: string;      // Display name
   databaseType: 'postgres' | 'mysql';
-  // Full connection config for JDBC sink connector creation
-  hostname: string;
-  connectorHostname: string;   // Docker network hostname for Kafka Connect
-  port: string;
-  database: string;
-  username: string;
-  password: string;
   // User-specified per-node
   tableName: string;
   insertMode: 'insert' | 'upsert' | 'update';
