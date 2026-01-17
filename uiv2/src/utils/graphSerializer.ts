@@ -20,12 +20,10 @@ import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNo
 
 
 /**
- * Result of serializing a graph, including both the proto and
- * any JDBC sink connectors that need to be created
+ * Result of serializing a graph
  */
 export interface SerializedGraph {
   graph: PipelineGraph;
-  jdbcSinkConnectors: JDBCSinkConnectorConfig[];
 }
 
 /**
