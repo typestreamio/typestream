@@ -64,16 +64,10 @@ function ConnectionSinkItem({ connection }: { connection: Connection }) {
       label={connection.name}
       icon={<StorageIcon fontSize="small" color={connection.databaseType === 'postgres' ? 'primary' : 'secondary'} />}
       data={{
+        // Only pass non-sensitive data - credentials stay server-side
         connectionId: connection.id,
         connectionName: connection.name,
         databaseType: connection.databaseType,
-        // Include full connection config for JDBC sink creation
-        hostname: connection.hostname,
-        connectorHostname: connection.connectorHostname,  // Docker network hostname
-        port: connection.port,
-        database: connection.database,
-        username: connection.username,
-        password: connection.password,
       }}
     />
   );
