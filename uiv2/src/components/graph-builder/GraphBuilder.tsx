@@ -33,6 +33,7 @@ export function GraphBuilder() {
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
   const inferSchemas = useInferGraphSchemas();
+  const createJdbcSinkConnector = useCreateJdbcSinkConnector();
 
   // Create a stable dependency key that tracks meaningful graph changes
   // (excludes validation state fields that we set)
