@@ -17,23 +17,7 @@ import {
 } from '../generated/job_pb';
 import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
-/**
- * Configuration for JDBC sink connectors that need to be created
- * after the job is successfully created
- */
-export interface JDBCSinkConnectorConfig {
-  nodeId: string;
-  intermediateTopic: string;
-  databaseType: 'postgres' | 'mysql';
-  hostname: string;  // Docker network hostname for Kafka Connect
-  port: string;
-  database: string;
-  username: string;
-  password: string;
-  tableName: string;
-  insertMode: 'insert' | 'upsert' | 'update';
-  primaryKeyFields: string;
-}
+
 
 /**
  * Result of serializing a graph, including both the proto and
