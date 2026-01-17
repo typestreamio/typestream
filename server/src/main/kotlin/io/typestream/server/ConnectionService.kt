@@ -28,14 +28,28 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Represents a monitored database connection with its current state
+ * Immutable snapshot of connection state for thread-safe reads
+ */
+data class ConnectionStateSnapshot(
+    val jdbcConnection: JdbcConnection?,
+    val state: ConnectionState,
+    val error: String?,
+    val lastChecked: Instant
+)
+
+/**
+ * Represents a monitored database connection with its current state.
+ * Uses @Volatile for thread-safe reads from gRPC handlers while
+ * being updated by background health check coroutine.
  */
 data class MonitoredConnection(
     val config: Connection.DatabaseConnectionConfig,
-    var jdbcConnection: JdbcConnection? = null,
-    var state: ConnectionState = ConnectionState.CONNECTION_STATE_UNSPECIFIED,
-    var error: String? = null,
-    var lastChecked: Instant = Instant.now()
+    @Volatile var stateSnapshot: ConnectionStateSnapshot = ConnectionStateSnapshot(
+        jdbcConnection = null,
+        state = ConnectionState.CONNECTION_STATE_UNSPECIFIED,
+        error = null,
+        lastChecked = Instant.now()
+    )
 )
 
 /**
