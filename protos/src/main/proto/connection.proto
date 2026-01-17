@@ -124,7 +124,7 @@ message DatabaseConnectionConfigPublic {
     string name = 2;
     DatabaseType database_type = 3;
     string hostname = 4;
-    string port = 5;
+    int32 port = 5;
     string database = 6;
     string username = 7;
     // password intentionally excluded

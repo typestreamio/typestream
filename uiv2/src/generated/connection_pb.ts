@@ -99,9 +99,9 @@ export class DatabaseConnectionConfig extends Message<DatabaseConnectionConfig> 
   hostname = "";
 
   /**
-   * @generated from field: string port = 5;
+   * @generated from field: int32 port = 5;
    */
-  port = "";
+  port = 0;
 
   /**
    * @generated from field: string database = 6;
@@ -137,7 +137,7 @@ export class DatabaseConnectionConfig extends Message<DatabaseConnectionConfig> 
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "database_type", kind: "enum", T: proto3.getEnumType(DatabaseType) },
     { no: 4, name: "hostname", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "port", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "port", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "database", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "password", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -162,7 +162,7 @@ export class DatabaseConnectionConfig extends Message<DatabaseConnectionConfig> 
 }
 
 /**
- * Connection status (includes config for UI to use when creating JDBC sinks)
+ * Connection status (excludes credentials - credentials stay server-side)
  *
  * @generated from message io.typestream.grpc.ConnectionStatus
  */
@@ -193,11 +193,11 @@ export class ConnectionStatus extends Message<ConnectionStatus> {
   lastChecked?: Timestamp;
 
   /**
-   * Full config for JDBC sink creation
+   * Public config (no password)
    *
-   * @generated from field: io.typestream.grpc.DatabaseConnectionConfig config = 6;
+   * @generated from field: io.typestream.grpc.DatabaseConnectionConfigPublic config = 6;
    */
-  config?: DatabaseConnectionConfig;
+  config?: DatabaseConnectionConfigPublic;
 
   constructor(data?: PartialMessage<ConnectionStatus>) {
     super();
@@ -212,7 +212,7 @@ export class ConnectionStatus extends Message<ConnectionStatus> {
     { no: 3, name: "state", kind: "enum", T: proto3.getEnumType(ConnectionState) },
     { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "last_checked", kind: "message", T: Timestamp },
-    { no: 6, name: "config", kind: "message", T: DatabaseConnectionConfig },
+    { no: 6, name: "config", kind: "message", T: DatabaseConnectionConfigPublic },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConnectionStatus {
@@ -557,6 +557,221 @@ export class TestConnectionResponse extends Message<TestConnectionResponse> {
 
   static equals(a: TestConnectionResponse | PlainMessage<TestConnectionResponse> | undefined, b: TestConnectionResponse | PlainMessage<TestConnectionResponse> | undefined): boolean {
     return proto3.util.equals(TestConnectionResponse, a, b);
+  }
+}
+
+/**
+ * Create JDBC sink connector (server-side credential resolution)
+ *
+ * @generated from message io.typestream.grpc.CreateJdbcSinkConnectorRequest
+ */
+export class CreateJdbcSinkConnectorRequest extends Message<CreateJdbcSinkConnectorRequest> {
+  /**
+   * ID of registered connection (server looks up credentials)
+   *
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * Name for the Kafka Connect connector
+   *
+   * @generated from field: string connector_name = 2;
+   */
+  connectorName = "";
+
+  /**
+   * Topic(s) to consume from
+   *
+   * @generated from field: string topics = 3;
+   */
+  topics = "";
+
+  /**
+   * Target database table
+   *
+   * @generated from field: string table_name = 4;
+   */
+  tableName = "";
+
+  /**
+   * insert, upsert, or update
+   *
+   * @generated from field: string insert_mode = 5;
+   */
+  insertMode = "";
+
+  /**
+   * Comma-separated list of primary key fields (for upsert/update)
+   *
+   * @generated from field: string primary_key_fields = 6;
+   */
+  primaryKeyFields = "";
+
+  constructor(data?: PartialMessage<CreateJdbcSinkConnectorRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateJdbcSinkConnectorRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "topics", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "table_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "insert_mode", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "primary_key_fields", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJdbcSinkConnectorRequest {
+    return new CreateJdbcSinkConnectorRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateJdbcSinkConnectorRequest {
+    return new CreateJdbcSinkConnectorRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateJdbcSinkConnectorRequest {
+    return new CreateJdbcSinkConnectorRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateJdbcSinkConnectorRequest | PlainMessage<CreateJdbcSinkConnectorRequest> | undefined, b: CreateJdbcSinkConnectorRequest | PlainMessage<CreateJdbcSinkConnectorRequest> | undefined): boolean {
+    return proto3.util.equals(CreateJdbcSinkConnectorRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.CreateJdbcSinkConnectorResponse
+ */
+export class CreateJdbcSinkConnectorResponse extends Message<CreateJdbcSinkConnectorResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * Name of created connector
+   *
+   * @generated from field: string connector_name = 3;
+   */
+  connectorName = "";
+
+  constructor(data?: PartialMessage<CreateJdbcSinkConnectorResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateJdbcSinkConnectorResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJdbcSinkConnectorResponse {
+    return new CreateJdbcSinkConnectorResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateJdbcSinkConnectorResponse {
+    return new CreateJdbcSinkConnectorResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateJdbcSinkConnectorResponse {
+    return new CreateJdbcSinkConnectorResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateJdbcSinkConnectorResponse | PlainMessage<CreateJdbcSinkConnectorResponse> | undefined, b: CreateJdbcSinkConnectorResponse | PlainMessage<CreateJdbcSinkConnectorResponse> | undefined): boolean {
+    return proto3.util.equals(CreateJdbcSinkConnectorResponse, a, b);
+  }
+}
+
+/**
+ * Public connection config (excludes sensitive fields like password)
+ *
+ * @generated from message io.typestream.grpc.DatabaseConnectionConfigPublic
+ */
+export class DatabaseConnectionConfigPublic extends Message<DatabaseConnectionConfigPublic> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.DatabaseType database_type = 3;
+   */
+  databaseType = DatabaseType.DATABASE_TYPE_UNSPECIFIED;
+
+  /**
+   * @generated from field: string hostname = 4;
+   */
+  hostname = "";
+
+  /**
+   * @generated from field: int32 port = 5;
+   */
+  port = 0;
+
+  /**
+   * @generated from field: string database = 6;
+   */
+  database = "";
+
+  /**
+   * @generated from field: string username = 7;
+   */
+  username = "";
+
+  /**
+   * password intentionally excluded
+   *
+   * @generated from field: string connector_hostname = 8;
+   */
+  connectorHostname = "";
+
+  constructor(data?: PartialMessage<DatabaseConnectionConfigPublic>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.DatabaseConnectionConfigPublic";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "database_type", kind: "enum", T: proto3.getEnumType(DatabaseType) },
+    { no: 4, name: "hostname", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "port", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 6, name: "database", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "connector_hostname", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DatabaseConnectionConfigPublic {
+    return new DatabaseConnectionConfigPublic().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DatabaseConnectionConfigPublic {
+    return new DatabaseConnectionConfigPublic().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DatabaseConnectionConfigPublic {
+    return new DatabaseConnectionConfigPublic().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DatabaseConnectionConfigPublic | PlainMessage<DatabaseConnectionConfigPublic> | undefined, b: DatabaseConnectionConfigPublic | PlainMessage<DatabaseConnectionConfigPublic> | undefined): boolean {
+    return proto3.util.equals(DatabaseConnectionConfigPublic, a, b);
   }
 }
 

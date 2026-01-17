@@ -4,7 +4,7 @@ import { KafkaSinkNode } from './KafkaSinkNode';
 import { GeoIpNode } from './GeoIpNode';
 import { InspectorNode } from './InspectorNode';
 import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
-
+import { DbSinkNode } from './DbSinkNode';
 import { TextExtractorNode } from './TextExtractorNode';
 import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode } from './OpenAiTransformerNode';
@@ -73,12 +73,12 @@ export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
 export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
-
+export type DbSinkNodeType = Node<DbSinkNodeData, 'dbSink'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
 export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -86,6 +86,7 @@ export const nodeTypes: NodeTypes = {
   geoIp: GeoIpNode,
   inspector: InspectorNode,
   materializedView: MaterializedViewNode,
+  dbSink: DbSinkNode,
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,

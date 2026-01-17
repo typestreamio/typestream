@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetConnectionStatusesRequest, GetConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
+import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -54,6 +54,18 @@ export const ConnectionService = {
       name: "TestConnection",
       I: TestConnectionRequest,
       O: TestConnectionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Create a JDBC sink connector using a registered connection
+     * Server resolves credentials from connection ID - credentials never sent to UI
+     *
+     * @generated from rpc io.typestream.grpc.ConnectionService.CreateJdbcSinkConnector
+     */
+    createJdbcSinkConnector: {
+      name: "CreateJdbcSinkConnector",
+      I: CreateJdbcSinkConnectorRequest,
+      O: CreateJdbcSinkConnectorResponse,
       kind: MethodKind.Unary,
     },
   }
