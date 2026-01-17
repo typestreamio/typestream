@@ -200,7 +200,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             val monitored = connections.remove(connectionId)
             if (monitored != null) {
                 try {
-                    monitored.jdbcConnection?.close()
+                    monitored.stateSnapshot.jdbcConnection?.close()
                 } catch (e: Exception) {
                     logger.warn(e) { "Error closing connection $connectionId" }
                 }
