@@ -129,14 +129,26 @@ export function GraphBuilder() {
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const type = event.dataTransfer.getData('application/reactflow');
-      if (!type || !reactFlowWrapper.current) return;
+      const rawData = event.dataTransfer.getData('application/reactflow');
+      if (!rawData || !reactFlowWrapper.current) return;
 
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = {
         x: event.clientX - bounds.left - 100,
         y: event.clientY - bounds.top - 50,
       };
+
+      // Try to parse as JSON (for nodes with extra data like dbSink)
+      let type: string;
+      let dragData: Record<string, unknown> = {};
+      try {
+        const parsed = JSON.parse(rawData);
+        type = parsed.type;
+        dragData = parsed;
+      } catch {
+        // Not JSON, treat as simple type string
+        type = rawData;
+      }
 
       let data: Record<string, unknown>;
       if (type === 'kafkaSink') {
@@ -155,6 +167,22 @@ export function GraphBuilder() {
           database: '',
           username: '',
           password: '',
+          tableName: '',
+          insertMode: 'upsert',
+          primaryKeyFields: '',
+        };
+      } else if (type === 'dbSink') {
+        // DbSink node - includes full connection config from drag payload
+        data = {
+          connectionId: dragData.connectionId || '',
+          connectionName: dragData.connectionName || '',
+          databaseType: dragData.databaseType || 'postgres',
+          hostname: dragData.hostname || '',
+          connectorHostname: dragData.connectorHostname || dragData.hostname || '',
+          port: dragData.port || '',
+          database: dragData.database || '',
+          username: dragData.username || '',
+          password: dragData.password || '',
           tableName: '',
           insertMode: 'upsert',
           primaryKeyFields: '',

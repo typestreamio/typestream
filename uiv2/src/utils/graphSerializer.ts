@@ -15,7 +15,7 @@ import {
   CountNode,
   ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, JDBCSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, JDBCSinkNodeData, DbSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
 /**
  * Configuration for JDBC sink connectors that need to be created
@@ -25,7 +25,7 @@ export interface JDBCSinkConnectorConfig {
   nodeId: string;
   intermediateTopic: string;
   databaseType: 'postgres' | 'mysql';
-  hostname: string;
+  hostname: string;  // Docker network hostname for Kafka Connect
   port: string;
   database: string;
   username: string;
@@ -121,6 +121,42 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
         database: data.database || '',
         username: data.username || '',
         password: data.password || '',
+        tableName: data.tableName || '',
+        insertMode: data.insertMode || 'upsert',
+        primaryKeyFields: data.primaryKeyFields || '',
+      });
+      return;
+    }
+
+    if (node.type === 'dbSink') {
+      const data = node.data as DbSinkNodeData;
+
+      // Generate an intermediate topic for the TypeStream job to write to
+      const intermediateTopic = generateIntermediateTopicName(node.id);
+      const fullPath = `/dev/kafka/local/topics/${intermediateTopic}`;
+
+      // Create a regular SinkNode that writes to the intermediate topic
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'sink',
+          value: new SinkNode({
+            output: new DataStreamProto({ path: fullPath }),
+          }),
+        },
+      }));
+
+      // Record the JDBC sink configuration using connection details from node data
+      // Use connectorHostname for Docker network connectivity
+      jdbcSinkConnectors.push({
+        nodeId: node.id,
+        intermediateTopic,
+        databaseType: data.databaseType,
+        hostname: data.connectorHostname || data.hostname,  // Prefer Docker hostname
+        port: data.port,
+        database: data.database,
+        username: data.username,
+        password: data.password,
         tableName: data.tableName || '',
         insertMode: data.insertMode || 'upsert',
         primaryKeyFields: data.primaryKeyFields || '',

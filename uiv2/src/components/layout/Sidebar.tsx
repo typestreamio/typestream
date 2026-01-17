@@ -5,7 +5,10 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Toolbar from '@mui/material/Toolbar';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 import WorkIcon from '@mui/icons-material/Work';
+import StorageIcon from '@mui/icons-material/Storage';
 import CableIcon from '@mui/icons-material/Cable';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DRAWER_WIDTH } from './constants';
@@ -43,13 +46,30 @@ export function Sidebar() {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton
+            selected={isActive('/connections')}
+            onClick={() => navigate('/connections')}
+          >
+            <ListItemIcon>
+              <StorageIcon />
+            </ListItemIcon>
+            <ListItemText primary="Connections" />
+          </ListItemButton>
+        </ListItem>
+      </List>
+      <Divider sx={{ my: 1 }} />
+      <Typography variant="caption" color="text.secondary" sx={{ px: 2, py: 1 }}>
+        Advanced
+      </Typography>
+      <List dense>
+        <ListItem disablePadding>
+          <ListItemButton
             selected={isActive('/connectors')}
             onClick={() => navigate('/connectors')}
           >
             <ListItemIcon>
               <CableIcon />
             </ListItemIcon>
-            <ListItemText primary="Connectors" />
+            <ListItemText primary="Kafka Connectors" secondary="Debug" />
           </ListItemButton>
         </ListItem>
       </List>
