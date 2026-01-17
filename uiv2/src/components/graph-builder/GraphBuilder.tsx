@@ -204,14 +204,47 @@ export function GraphBuilder() {
     [setNodes]
   );
 
+  /**
+   * Create JDBC sink connectors via server-side RPC (credentials resolved server-side)
+   */
+  const createDbSinkConnectors = async (
+    jobId: string,
+    dbSinkConfigs: DbSinkConfig[]
+  ): Promise<void> => {
+    for (const config of dbSinkConfigs) {
+      const connectorName = `${jobId}-jdbc-sink-${config.nodeId}`;
+      const response = await createJdbcSinkConnector.mutateAsync({
+        connectionId: config.connectionId,
+        connectorName,
+        topics: config.intermediateTopic,
+        tableName: config.tableName,
+        insertMode: config.insertMode,
+        primaryKeyFields: config.primaryKeyFields || '',
+      });
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to create connector');
+      }
+    }
+  };
+
   const handleCreateJob = async () => {
     setCreateError(null);
-    const graph = serializeGraph(nodes, edges);
+    const { graph, dbSinkConfigs } = serializeGraphWithDbSinks(nodes, edges);
     const request = new CreateJobFromGraphRequest({ userId: 'local', graph });
 
     createJob.mutate(request, {
       onSuccess: (response) => {
         if (response.success && response.jobId) {
+          // Create DB sink connectors via server RPC (credentials resolved server-side)
+          if (dbSinkConfigs.length > 0) {
+            try {
+              await createDbSinkConnectors(response.jobId, dbSinkConfigs);
+            } catch (err) {
+              console.error('Failed to create JDBC sink connector:', err);
+              setCreateError(`Job created but JDBC sink connector failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+              // Still navigate to the job page even if connector creation failed
+            }
+          }
           navigate(`/jobs/${response.jobId}`);
         } else if (response.error) {
           setCreateError(response.error);
