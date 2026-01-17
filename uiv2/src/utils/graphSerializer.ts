@@ -188,7 +188,6 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
       nodes: pipelineNodes,
       edges: pipelineEdges,
     }),
-    jdbcSinkConnectors,
   };
 }
 
