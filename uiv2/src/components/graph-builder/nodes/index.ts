@@ -38,17 +38,7 @@ export interface MaterializedViewNodeData extends Record<string, unknown>, NodeV
   groupByField: string;
 }
 
-export interface JDBCSinkNodeData extends Record<string, unknown>, NodeValidationState {
-  databaseType: 'postgres' | 'mysql';
-  hostname: string;
-  port: string;
-  database: string;
-  username: string;
-  password: string;
-  tableName: string;
-  insertMode: 'insert' | 'upsert' | 'update';
-  primaryKeyFields: string;
-}
+
 
 // DbSinkNode - uses a pre-configured connection (full config stored in node)
 export interface DbSinkNodeData extends Record<string, unknown>, NodeValidationState {
