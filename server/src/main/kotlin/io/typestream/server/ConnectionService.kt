@@ -70,6 +70,9 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     // How often to check connection health
     private val healthCheckInterval = 10.seconds
 
+    // Whether to register the default dev-postgres connection (can be disabled via env var)
+    private val registerDevConnection = System.getenv("TYPESTREAM_REGISTER_DEV_POSTGRES")?.toBoolean() ?: true
+
     init {
         // Start background health monitoring
         monitorJob = monitorScope.launch {
