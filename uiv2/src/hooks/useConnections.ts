@@ -71,7 +71,7 @@ export function useConnections() {
         databaseType: status.config ? databaseTypeToString(status.config.databaseType) : 'postgres',
         hostname: status.config?.hostname || '',
         connectorHostname: status.config?.connectorHostname || status.config?.hostname || '',
-        port: status.config?.port || '',
+        port: status.config?.port || 5432,
         database: status.config?.database || '',
         username: status.config?.username || '',
         password: status.config?.password || '',
