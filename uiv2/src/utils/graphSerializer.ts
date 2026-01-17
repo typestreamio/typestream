@@ -38,11 +38,22 @@ export interface SerializedGraphWithDbSinks {
 }
 
 /**
- * Serialize a graph to a PipelineGraph proto
+ * Generate a unique topic name for intermediate JDBC sink output
  */
-export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): SerializedGraph {
+function generateIntermediateTopicName(nodeId: string): string {
+  const timestamp = Date.now();
+  const sanitizedNodeId = nodeId.replace(/[^a-zA-Z0-9]/g, '-');
+  return `jdbc-sink-${sanitizedNodeId}-${timestamp}`;
+}
+
+/**
+ * Serialize a graph to a PipelineGraph proto and extract DB sink configurations
+ * (credentials resolved server-side for security)
+ */
+export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): SerializedGraphWithDbSinks {
   const pipelineNodes: PipelineNode[] = [];
   const pipelineEdges: PipelineEdge[] = [];
+  const dbSinkConfigs: DbSinkConfig[] = [];
 
   // Process each node
   nodes.forEach((node) => {
