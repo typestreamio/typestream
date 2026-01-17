@@ -22,7 +22,7 @@ export interface Connection {
   databaseType: 'postgres' | 'mysql';
   hostname: string;
   connectorHostname: string;  // Hostname for Kafka Connect (Docker network)
-  port: string;
+  port: number;
   database: string;
   username: string;
   password: string;
