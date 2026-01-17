@@ -101,7 +101,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             .setDatabaseType(DatabaseType.POSTGRES)
             .setHostname("localhost")              // For server health checks
             .setConnectorHostname("postgres")     // For Kafka Connect (Docker network)
-            .setPort("5432")
+            .setPort(5432)
             .setDatabase("demo")
             .setUsername("typestream")
             .setPassword("typestream")
