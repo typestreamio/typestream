@@ -161,9 +161,12 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                 val jdbcConnection = createJdbcConnection(config)
                 val monitored = MonitoredConnection(
                     config = config,
-                    jdbcConnection = jdbcConnection,
-                    state = ConnectionState.CONNECTED,
-                    lastChecked = Instant.now()
+                    stateSnapshot = ConnectionStateSnapshot(
+                        jdbcConnection = jdbcConnection,
+                        state = ConnectionState.CONNECTED,
+                        error = null,
+                        lastChecked = Instant.now()
+                    )
                 )
                 connections[config.id] = monitored
 
@@ -175,9 +178,12 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                 // Still register but mark as disconnected
                 val monitored = MonitoredConnection(
                     config = config,
-                    state = ConnectionState.ERROR,
-                    error = e.message,
-                    lastChecked = Instant.now()
+                    stateSnapshot = ConnectionStateSnapshot(
+                        jdbcConnection = null,
+                        state = ConnectionState.ERROR,
+                        error = e.message,
+                        lastChecked = Instant.now()
+                    )
                 )
                 connections[config.id] = monitored
 
