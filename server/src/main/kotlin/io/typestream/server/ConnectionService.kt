@@ -347,15 +347,16 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      * Convert MonitoredConnection to proto
      */
     private fun MonitoredConnection.toProto(): Connection.ConnectionStatus = connectionStatus {
+        val snapshot = this@toProto.stateSnapshot
         id = this@toProto.config.id
         name = this@toProto.config.name
-        state = this@toProto.state
-        if (this@toProto.error != null) {
-            error = this@toProto.error!!
+        state = snapshot.state
+        if (snapshot.error != null) {
+            error = snapshot.error
         }
         lastChecked = Timestamp.newBuilder()
-            .setSeconds(this@toProto.lastChecked.epochSecond)
-            .setNanos(this@toProto.lastChecked.nano)
+            .setSeconds(snapshot.lastChecked.epochSecond)
+            .setNanos(snapshot.lastChecked.nano)
             .build()
         config = this@toProto.config  // Include full config for JDBC sink creation
     }
