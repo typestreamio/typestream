@@ -88,6 +88,36 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
       return;
     }
 
+    if (node.type === 'dbSink') {
+      const data = node.data as DbSinkNodeData;
+
+      // Generate an intermediate topic for the TypeStream job to write to
+      const intermediateTopic = generateIntermediateTopicName(node.id);
+      const fullPath = `/dev/kafka/local/topics/${intermediateTopic}`;
+
+      // Create a regular SinkNode that writes to the intermediate topic
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'sink',
+          value: new SinkNode({
+            output: new DataStreamProto({ path: fullPath }),
+          }),
+        },
+      }));
+
+      // Record the DB sink configuration (credentials resolved server-side)
+      dbSinkConfigs.push({
+        nodeId: node.id,
+        connectionId: data.connectionId,
+        intermediateTopic,
+        tableName: data.tableName || '',
+        insertMode: data.insertMode || 'upsert',
+        primaryKeyFields: data.primaryKeyFields || '',
+      });
+      return;
+    }
+
     if (node.type === 'geoIp') {
       const data = node.data as GeoIpNodeData;
       pipelineNodes.push(new PipelineNode({
