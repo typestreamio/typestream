@@ -143,7 +143,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         // Close all JDBC connections
         connections.values.forEach { monitored ->
             try {
-                monitored.jdbcConnection?.close()
+                monitored.stateSnapshot.jdbcConnection?.close()
             } catch (e: Exception) {
                 logger.warn(e) { "Error closing connection ${monitored.config.id}" }
             }
