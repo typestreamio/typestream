@@ -75,7 +75,7 @@ export function useConnections() {
         port: status.config?.port || 5432,
         database: status.config?.database || '',
         username: status.config?.username || '',
-        password: status.config?.password || '',
+        // password excluded - credentials resolved server-side
         state: mapConnectionState(status.state),
         error: status.error || undefined,
         lastChecked: status.lastChecked ? new Date(Number(status.lastChecked.seconds) * 1000) : undefined,
