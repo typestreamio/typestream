@@ -27,21 +27,11 @@ export interface SerializedGraph {
 }
 
 /**
- * Generate a unique topic name for intermediate JDBC sink output
- */
-function generateIntermediateTopicName(nodeId: string): string {
-  const timestamp = Date.now();
-  const sanitizedNodeId = nodeId.replace(/[^a-zA-Z0-9]/g, '-');
-  return `jdbc-sink-${sanitizedNodeId}-${timestamp}`;
-}
-
-/**
- * Serialize a graph to a PipelineGraph proto and extract JDBC sink configurations
+ * Serialize a graph to a PipelineGraph proto
  */
 export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): SerializedGraph {
   const pipelineNodes: PipelineNode[] = [];
   const pipelineEdges: PipelineEdge[] = [];
-  const jdbcSinkConnectors: JDBCSinkConnectorConfig[] = [];
 
   // Process each node
   nodes.forEach((node) => {
