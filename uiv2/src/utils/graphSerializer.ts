@@ -15,15 +15,26 @@ import {
   CountNode,
   ReduceLatestNode,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
-
-
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
 /**
- * Result of serializing a graph
+ * Configuration for DB sink connectors (credentials resolved server-side)
  */
-export interface SerializedGraph {
+export interface DbSinkConfig {
+  nodeId: string;
+  connectionId: string;      // Server resolves credentials from this
+  intermediateTopic: string;
+  tableName: string;
+  insertMode: string;
+  primaryKeyFields: string;
+}
+
+/**
+ * Result of serializing a graph with DB sinks
+ */
+export interface SerializedGraphWithDbSinks {
   graph: PipelineGraph;
+  dbSinkConfigs: DbSinkConfig[];
 }
 
 /**
