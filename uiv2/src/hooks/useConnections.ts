@@ -203,3 +203,34 @@ export function useSinkConnections() {
     data: connections?.filter((c) => c.state === 'connected'),
   };
 }
+
+/**
+ * Create a JDBC sink connector using a registered connection.
+ * Credentials are resolved server-side for security.
+ */
+export function useCreateJdbcSinkConnector() {
+  const transport = useTransport();
+
+  return useMutation({
+    mutationFn: async (config: {
+      connectionId: string;
+      connectorName: string;
+      topics: string;
+      tableName: string;
+      insertMode: string;
+      primaryKeyFields?: string;
+    }) => {
+      const client = createClient(ConnectionService, transport);
+      const { CreateJdbcSinkConnectorRequest } = await import('../generated/connection_pb');
+      const request = new CreateJdbcSinkConnectorRequest({
+        connectionId: config.connectionId,
+        connectorName: config.connectorName,
+        topics: config.topics,
+        tableName: config.tableName,
+        insertMode: config.insertMode,
+        primaryKeyFields: config.primaryKeyFields || '',
+      });
+      return client.createJdbcSinkConnector(request);
+    },
+  });
+}
