@@ -83,8 +83,12 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         }
         logger.info { "ConnectionService started with ${healthCheckInterval.inWholeSeconds}s health check interval" }
 
-        // Register default dev postgres connection for testing
-        registerDevPostgresConnection()
+        // Register default dev postgres connection for testing (can be disabled via TYPESTREAM_REGISTER_DEV_POSTGRES=false)
+        if (registerDevConnection) {
+            registerDevPostgresConnection()
+        } else {
+            logger.info { "Skipping dev-postgres registration (TYPESTREAM_REGISTER_DEV_POSTGRES=false)" }
+        }
     }
 
     /**
