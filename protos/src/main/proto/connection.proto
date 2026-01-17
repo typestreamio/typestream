@@ -20,6 +20,10 @@ service ConnectionService {
 
     // Test a connection immediately (one-shot, doesn't register)
     rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {}
+
+    // Create a JDBC sink connector using a registered connection
+    // Server resolves credentials from connection ID - credentials never sent to UI
+    rpc CreateJdbcSinkConnector(CreateJdbcSinkConnectorRequest) returns (CreateJdbcSinkConnectorResponse) {}
 }
 
 // Database connection configuration
