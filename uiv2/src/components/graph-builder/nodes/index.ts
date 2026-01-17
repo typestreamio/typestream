@@ -4,8 +4,7 @@ import { KafkaSinkNode } from './KafkaSinkNode';
 import { GeoIpNode } from './GeoIpNode';
 import { InspectorNode } from './InspectorNode';
 import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
-import { JDBCSinkNode } from './JDBCSinkNode';
-import { DbSinkNode } from './DbSinkNode';
+
 import { TextExtractorNode } from './TextExtractorNode';
 import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode } from './OpenAiTransformerNode';
