@@ -159,34 +159,6 @@ export function GraphBuilder() {
         data = { label: '' };
       } else if (type === 'materializedView') {
         data = { aggregationType: 'count', groupByField: '' };
-      } else if (type === 'jdbcSink') {
-        data = {
-          databaseType: 'postgres',
-          hostname: '',
-          port: '5432',
-          database: '',
-          username: '',
-          password: '',
-          tableName: '',
-          insertMode: 'upsert',
-          primaryKeyFields: '',
-        };
-      } else if (type === 'dbSink') {
-        // DbSink node - includes full connection config from drag payload
-        data = {
-          connectionId: dragData.connectionId || '',
-          connectionName: dragData.connectionName || '',
-          databaseType: dragData.databaseType || 'postgres',
-          hostname: dragData.hostname || '',
-          connectorHostname: dragData.connectorHostname || dragData.hostname || '',
-          port: dragData.port || '',
-          database: dragData.database || '',
-          username: dragData.username || '',
-          password: dragData.password || '',
-          tableName: '',
-          insertMode: 'upsert',
-          primaryKeyFields: '',
-        };
       } else if (type === 'textExtractor') {
         data = { filePathField: '', outputField: 'text' };
       } else if (type === 'embeddingGenerator') {
