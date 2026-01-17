@@ -45,14 +45,14 @@ enum DatabaseType {
     MYSQL = 2;
 }
 
-// Connection status (includes config for UI to use when creating JDBC sinks)
+// Connection status (excludes credentials - credentials stay server-side)
 message ConnectionStatus {
     string id = 1;
     string name = 2;
     ConnectionState state = 3;
     string error = 4;
     google.protobuf.Timestamp last_checked = 5;
-    DatabaseConnectionConfig config = 6;  // Full config for JDBC sink creation
+    DatabaseConnectionConfigPublic config = 6;  // Public config (no password)
 }
 
 enum ConnectionState {
