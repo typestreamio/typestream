@@ -101,3 +101,32 @@ message TestConnectionResponse {
     string error = 2;
     int64 latency_ms = 3;
 }
+
+// Create JDBC sink connector (server-side credential resolution)
+message CreateJdbcSinkConnectorRequest {
+    string connection_id = 1;      // ID of registered connection (server looks up credentials)
+    string connector_name = 2;     // Name for the Kafka Connect connector
+    string topics = 3;             // Topic(s) to consume from
+    string table_name = 4;         // Target database table
+    string insert_mode = 5;        // insert, upsert, or update
+    string primary_key_fields = 6; // Comma-separated list of primary key fields (for upsert/update)
+}
+
+message CreateJdbcSinkConnectorResponse {
+    bool success = 1;
+    string error = 2;
+    string connector_name = 3;     // Name of created connector
+}
+
+// Public connection config (excludes sensitive fields like password)
+message DatabaseConnectionConfigPublic {
+    string id = 1;
+    string name = 2;
+    DatabaseType database_type = 3;
+    string hostname = 4;
+    string port = 5;
+    string database = 6;
+    string username = 7;
+    // password intentionally excluded
+    string connector_hostname = 8;
+}
