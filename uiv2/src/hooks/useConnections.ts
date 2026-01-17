@@ -110,7 +110,7 @@ export function useRegisterConnection() {
       name: string;
       databaseType: 'postgres' | 'mysql';
       hostname: string;
-      port: string;
+      port: number;
       database: string;
       username: string;
       password: string;
