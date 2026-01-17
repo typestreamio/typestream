@@ -260,23 +260,33 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     }
 
     /**
-     * Check health of a single connection
+     * Check health of a single connection.
+     * Updates are done atomically via stateSnapshot replacement.
      */
     private fun checkConnection(monitored: MonitoredConnection) {
-        val conn = monitored.jdbcConnection
+        val currentSnapshot = monitored.stateSnapshot
+        val conn = currentSnapshot.jdbcConnection
 
         try {
             if (conn == null || conn.isClosed) {
                 // Try to reconnect
                 logger.info { "Reconnecting ${monitored.config.name}" }
-                monitored.jdbcConnection = createJdbcConnection(monitored.config)
-                monitored.state = ConnectionState.CONNECTED
-                monitored.error = null
+                val newConn = createJdbcConnection(monitored.config)
+                monitored.stateSnapshot = ConnectionStateSnapshot(
+                    jdbcConnection = newConn,
+                    state = ConnectionState.CONNECTED,
+                    error = null,
+                    lastChecked = Instant.now()
+                )
             } else {
                 // Check if connection is still valid (with 5 second timeout)
                 if (conn.isValid(5)) {
-                    monitored.state = ConnectionState.CONNECTED
-                    monitored.error = null
+                    monitored.stateSnapshot = ConnectionStateSnapshot(
+                        jdbcConnection = conn,
+                        state = ConnectionState.CONNECTED,
+                        error = null,
+                        lastChecked = Instant.now()
+                    )
                 } else {
                     // Connection is invalid, try to reconnect
                     logger.info { "Connection invalid, reconnecting ${monitored.config.name}" }
@@ -284,19 +294,24 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                         conn.close()
                     } catch (_: Exception) {
                     }
-                    monitored.jdbcConnection = createJdbcConnection(monitored.config)
-                    monitored.state = ConnectionState.CONNECTED
-                    monitored.error = null
+                    val newConn = createJdbcConnection(monitored.config)
+                    monitored.stateSnapshot = ConnectionStateSnapshot(
+                        jdbcConnection = newConn,
+                        state = ConnectionState.CONNECTED,
+                        error = null,
+                        lastChecked = Instant.now()
+                    )
                 }
             }
         } catch (e: Exception) {
             logger.warn { "Connection ${monitored.config.name} is down: ${e.message}" }
-            monitored.state = ConnectionState.DISCONNECTED
-            monitored.error = e.message
-            monitored.jdbcConnection = null
+            monitored.stateSnapshot = ConnectionStateSnapshot(
+                jdbcConnection = null,
+                state = ConnectionState.DISCONNECTED,
+                error = e.message,
+                lastChecked = Instant.now()
+            )
         }
-
-        monitored.lastChecked = Instant.now()
     }
 
     /**
