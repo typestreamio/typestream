@@ -113,18 +113,24 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             val jdbcConnection = createJdbcConnection(devConfig)
             connections["dev-postgres"] = MonitoredConnection(
                 config = devConfig,
-                jdbcConnection = jdbcConnection,
-                state = ConnectionState.CONNECTED,
-                lastChecked = Instant.now()
+                stateSnapshot = ConnectionStateSnapshot(
+                    jdbcConnection = jdbcConnection,
+                    state = ConnectionState.CONNECTED,
+                    error = null,
+                    lastChecked = Instant.now()
+                )
             )
             logger.info { "dev-postgres connection established successfully" }
         } catch (e: Exception) {
             logger.warn { "dev-postgres connection failed (this is normal if postgres is not running): ${e.message}" }
             connections["dev-postgres"] = MonitoredConnection(
                 config = devConfig,
-                state = ConnectionState.DISCONNECTED,
-                error = e.message,
-                lastChecked = Instant.now()
+                stateSnapshot = ConnectionStateSnapshot(
+                    jdbcConnection = null,
+                    state = ConnectionState.DISCONNECTED,
+                    error = e.message,
+                    lastChecked = Instant.now()
+                )
             )
         }
     }
