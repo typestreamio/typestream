@@ -14,7 +14,8 @@ import {
 const CONNECTIONS_KEY = ['connections'];
 
 /**
- * Connection data structure used throughout the UI
+ * Connection data structure used throughout the UI.
+ * Note: Password is intentionally excluded for security - credentials stay server-side.
  */
 export interface Connection {
   id: string;
@@ -25,7 +26,7 @@ export interface Connection {
   port: number;
   database: string;
   username: string;
-  password: string;
+  // password intentionally excluded - credentials resolved server-side
   state: 'connected' | 'disconnected' | 'error' | 'connecting' | 'unknown';
   error?: string;
   lastChecked?: Date;
