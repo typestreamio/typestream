@@ -67,7 +67,13 @@ export function ConnectionCreatePage() {
     // Use the name as the ID for simplicity
     registerConnection.mutate({
       id: form.name,
-      ...form,
+      name: form.name,
+      databaseType: form.databaseType,
+      hostname: form.hostname,
+      port: parseInt(form.port, 10),
+      database: form.database,
+      username: form.username,
+      password: form.password,
     }, {
       onSuccess: (response) => {
         if (response.success) {
