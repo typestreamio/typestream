@@ -16,12 +16,11 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
-import { serializeGraph, serializeGraphWithSinks, type JDBCSinkConnectorConfig } from '../../utils/graphSerializer';
+import { serializeGraph } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
 import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
-import { connectApi } from '../../services/connectApi';
 
 let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
