@@ -344,7 +344,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     }
 
     /**
-     * Convert MonitoredConnection to proto
+     * Convert MonitoredConnection to proto (excludes password for security)
      */
     private fun MonitoredConnection.toProto(): Connection.ConnectionStatus = connectionStatus {
         val snapshot = this@toProto.stateSnapshot
@@ -358,6 +358,157 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             .setSeconds(snapshot.lastChecked.epochSecond)
             .setNanos(snapshot.lastChecked.nano)
             .build()
-        config = this@toProto.config  // Include full config for JDBC sink creation
+        // Use public config (excludes password)
+        config = Connection.DatabaseConnectionConfigPublic.newBuilder()
+            .setId(this@toProto.config.id)
+            .setName(this@toProto.config.name)
+            .setDatabaseType(this@toProto.config.databaseType)
+            .setHostname(this@toProto.config.hostname)
+            .setPort(this@toProto.config.port)
+            .setDatabase(this@toProto.config.database)
+            .setUsername(this@toProto.config.username)
+            .setConnectorHostname(this@toProto.config.connectorHostname)
+            // password intentionally excluded
+            .build()
+    }
+
+    /**
+     * Create a JDBC sink connector using a registered connection.
+     * Credentials are resolved server-side from the connection ID.
+     */
+    override suspend fun createJdbcSinkConnector(request: Connection.CreateJdbcSinkConnectorRequest): Connection.CreateJdbcSinkConnectorResponse {
+        val connectionId = request.connectionId
+        val monitored = connections[connectionId]
+
+        if (monitored == null) {
+            return Connection.CreateJdbcSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Connection not found: $connectionId")
+                .build()
+        }
+
+        val config = monitored.config
+        logger.info { "Creating JDBC sink connector: ${request.connectorName} for connection ${config.name}" }
+
+        try {
+            // Build JDBC sink connector configuration
+            val connectorConfig = buildJdbcSinkConnectorConfig(
+                name = request.connectorName,
+                config = config,
+                topics = request.topics,
+                tableName = request.tableName,
+                insertMode = request.insertMode,
+                primaryKeyFields = request.primaryKeyFields
+            )
+
+            // Create connector via Kafka Connect REST API
+            createKafkaConnectConnector(connectorConfig)
+
+            return Connection.CreateJdbcSinkConnectorResponse.newBuilder()
+                .setSuccess(true)
+                .setConnectorName(request.connectorName)
+                .build()
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to create JDBC sink connector: ${request.connectorName}" }
+            return Connection.CreateJdbcSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError(e.message ?: "Unknown error")
+                .build()
+        }
+    }
+
+    /**
+     * Build the Kafka Connect JDBC sink connector configuration
+     */
+    private fun buildJdbcSinkConnectorConfig(
+        name: String,
+        config: Connection.DatabaseConnectionConfig,
+        topics: String,
+        tableName: String,
+        insertMode: String,
+        primaryKeyFields: String
+    ): Map<String, Any> {
+        val hostname = config.connectorHostname.ifEmpty { config.hostname }
+        val jdbcUrl = when (config.databaseType) {
+            DatabaseType.POSTGRES -> "jdbc:postgresql://$hostname:${config.port}/${config.database}"
+            DatabaseType.MYSQL -> "jdbc:mysql://$hostname:${config.port}/${config.database}"
+            else -> throw IllegalArgumentException("Unsupported database type: ${config.databaseType}")
+        }
+
+        val connectorConfig = mutableMapOf<String, Any>(
+            "name" to name,
+            "connector.class" to "io.debezium.connector.jdbc.JdbcSinkConnector",
+            "tasks.max" to "1",
+            "topics" to topics,
+            "connection.url" to jdbcUrl,
+            "connection.username" to config.username,
+            "connection.password" to config.password,
+            "table.name.format" to tableName,
+            "insert.mode" to insertMode,
+            "delete.enabled" to "false",
+            "schema.evolution" to "basic",
+            // Keys are written as UTF-8 strings by TypeStream
+            "key.converter" to "org.apache.kafka.connect.storage.StringConverter",
+            "value.converter" to "io.confluent.connect.avro.AvroConverter",
+            "value.converter.schema.registry.url" to "http://schema-registry:8081"
+        )
+
+        if (primaryKeyFields.isNotEmpty() && (insertMode == "upsert" || insertMode == "update")) {
+            connectorConfig["primary.key.mode"] = "record_key"
+            connectorConfig["primary.key.fields"] = primaryKeyFields
+        }
+
+        return mapOf("name" to name, "config" to connectorConfig)
+    }
+
+    /**
+     * Create a connector via Kafka Connect REST API
+     */
+    private fun createKafkaConnectConnector(connectorConfig: Map<String, Any>) {
+        val connectUrl = System.getenv("KAFKA_CONNECT_URL") ?: "http://localhost:8083"
+        val url = java.net.URL("$connectUrl/connectors")
+        val connection = url.openConnection() as java.net.HttpURLConnection
+
+        try {
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+
+            // Simple JSON serialization
+            val json = buildJsonString(connectorConfig)
+            connection.outputStream.use { os ->
+                os.write(json.toByteArray())
+            }
+
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299) {
+                val errorBody = connection.errorStream?.bufferedReader()?.readText() ?: ""
+                throw RuntimeException("Kafka Connect returned $responseCode: $errorBody")
+            }
+
+            logger.info { "Successfully created connector: ${connectorConfig["name"]}" }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    /**
+     * Simple JSON builder for connector config
+     */
+    private fun buildJsonString(map: Map<String, Any>): String {
+        val sb = StringBuilder("{")
+        var first = true
+        for ((key, value) in map) {
+            if (!first) sb.append(",")
+            first = false
+            sb.append("\"$key\":")
+            when (value) {
+                is String -> sb.append("\"${value.replace("\"", "\\\"")}\"")
+                is Map<*, *> -> sb.append(buildJsonString(value as Map<String, Any>))
+                else -> sb.append(value)
+            }
+        }
+        sb.append("}")
+        return sb.toString()
     }
 }
