@@ -37,6 +37,10 @@ dependencies {
     implementation("com.github.os72:protobuf-dynamic:1.0.1")
     implementation("com.maxmind.geoip2:geoip2:4.2.0")
 
+    // JDBC drivers for connection monitoring
+    implementation("org.postgresql:postgresql:42.7.2")
+    implementation("com.mysql:mysql-connector-j:8.3.0")
+
     testImplementation(project(":libs:testing"))
 
     testImplementation(libs.bundles.testcontainers)

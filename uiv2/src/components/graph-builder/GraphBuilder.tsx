@@ -16,12 +16,12 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
-import { serializeGraph, serializeGraphWithSinks, type JDBCSinkConnectorConfig } from '../../utils/graphSerializer';
+import { serializeGraph, serializeGraphWithDbSinks, type DbSinkConfig } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
+import { useCreateJdbcSinkConnector } from '../../hooks/useConnections';
 import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
-import { connectApi } from '../../services/connectApi';
 
 let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
@@ -34,6 +34,7 @@ export function GraphBuilder() {
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
   const inferSchemas = useInferGraphSchemas();
+  const createJdbcSinkConnector = useCreateJdbcSinkConnector();
 
   // Create a stable dependency key that tracks meaningful graph changes
   // (excludes validation state fields that we set)
@@ -129,14 +130,26 @@ export function GraphBuilder() {
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const type = event.dataTransfer.getData('application/reactflow');
-      if (!type || !reactFlowWrapper.current) return;
+      const rawData = event.dataTransfer.getData('application/reactflow');
+      if (!rawData || !reactFlowWrapper.current) return;
 
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = {
         x: event.clientX - bounds.left - 100,
         y: event.clientY - bounds.top - 50,
       };
+
+      // Try to parse as JSON (for nodes with extra data like dbSink)
+      let type: string;
+      let dragData: Record<string, unknown> = {};
+      try {
+        const parsed = JSON.parse(rawData);
+        type = parsed.type;
+        dragData = parsed;
+      } catch {
+        // Not JSON, treat as simple type string
+        type = rawData;
+      }
 
       let data: Record<string, unknown>;
       if (type === 'kafkaSink') {
@@ -155,6 +168,16 @@ export function GraphBuilder() {
           database: '',
           username: '',
           password: '',
+          tableName: '',
+          insertMode: 'upsert',
+          primaryKeyFields: '',
+        };
+      } else if (type === 'dbSink') {
+        // DbSink node - only non-sensitive fields (credentials resolved server-side)
+        data = {
+          connectionId: dragData.connectionId || '',
+          connectionName: dragData.connectionName || '',
+          databaseType: dragData.databaseType || 'postgres',
           tableName: '',
           insertMode: 'upsert',
           primaryKeyFields: '',
@@ -182,43 +205,40 @@ export function GraphBuilder() {
   );
 
   /**
-   * Create JDBC sink connectors for the job
+   * Create JDBC sink connectors via server-side RPC (credentials resolved server-side)
    */
-  const createJdbcSinkConnectors = async (
+  const createDbSinkConnectors = async (
     jobId: string,
-    jdbcSinkConnectors: JDBCSinkConnectorConfig[]
+    dbSinkConfigs: DbSinkConfig[]
   ): Promise<void> => {
-    for (const sinkConfig of jdbcSinkConnectors) {
-      const connectorName = `${jobId}-jdbc-sink-${sinkConfig.nodeId}`;
-      const connectorRequest = connectApi.buildJdbcSinkConfig({
-        name: connectorName,
-        databaseType: sinkConfig.databaseType,
-        hostname: sinkConfig.hostname,
-        port: sinkConfig.port,
-        database: sinkConfig.database,
-        username: sinkConfig.username,
-        password: sinkConfig.password,
-        topics: sinkConfig.intermediateTopic,
-        tableName: sinkConfig.tableName,
-        insertMode: sinkConfig.insertMode,
-        primaryKeyFields: sinkConfig.primaryKeyFields || undefined,
+    for (const config of dbSinkConfigs) {
+      const connectorName = `${jobId}-jdbc-sink-${config.nodeId}`;
+      const response = await createJdbcSinkConnector.mutateAsync({
+        connectionId: config.connectionId,
+        connectorName,
+        topics: config.intermediateTopic,
+        tableName: config.tableName,
+        insertMode: config.insertMode,
+        primaryKeyFields: config.primaryKeyFields || '',
       });
-      await connectApi.createConnector(connectorRequest);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to create connector');
+      }
     }
   };
 
   const handleCreateJob = async () => {
     setCreateError(null);
-    const { graph, jdbcSinkConnectors } = serializeGraphWithSinks(nodes, edges);
+    const { graph, dbSinkConfigs } = serializeGraphWithDbSinks(nodes, edges);
     const request = new CreateJobFromGraphRequest({ userId: 'local', graph });
 
     createJob.mutate(request, {
-      onSuccess: async (response) => {
+      onSuccess: (response) => {
         if (response.success && response.jobId) {
-          // Create JDBC sink connectors if any
-          if (jdbcSinkConnectors.length > 0) {
+          // Create DB sink connectors via server RPC (credentials resolved server-side)
+          if (dbSinkConfigs.length > 0) {
             try {
-              await createJdbcSinkConnectors(response.jobId, jdbcSinkConnectors);
+              await createDbSinkConnectors(response.jobId, dbSinkConfigs);
             } catch (err) {
               console.error('Failed to create JDBC sink connector:', err);
               setCreateError(`Job created but JDBC sink connector failed: ${err instanceof Error ? err.message : 'Unknown error'}`);

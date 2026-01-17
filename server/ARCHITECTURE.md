@@ -139,6 +139,7 @@ Manages job lifecycle with Kotlin coroutines:
 | FileSystemService | Mount, Unmount, Ls | Virtual filesystem operations |
 | InteractiveSessionService | StartSession, RunProgram, GetProgramOutput | Interactive REPL |
 | JobService | CreateJob, CreateJobFromGraph, ListJobs | Job management |
+| ConnectionService | RegisterConnection, GetConnectionStatuses, TestConnection | Database connection monitoring |
 
 ## Virtual Filesystem
 
@@ -207,4 +208,5 @@ TypeStream can consume Avro topics from any producer:
 | `KafkaStreamsJob.kt` | Topology builder, job execution |
 | `Scheduler.kt` | Job queue and lifecycle |
 | `Vm.kt` | Execution routing (KAFKA vs SHELL) |
+| `ConnectionService.kt` | JDBC connection monitoring with health checks |
 | `DataStreamSerde.kt` | Kafka serialization |

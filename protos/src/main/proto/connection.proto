@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package io.typestream.grpc;
+
+option java_package = "io.typestream.grpc.connection_service";
+
+option go_package = "github.com/typestreamio/typestream/cli/pkg/connection_service";
+
+import "google/protobuf/timestamp.proto";
+
+service ConnectionService {
+    // Register a database connection for monitoring
+    rpc RegisterConnection(RegisterConnectionRequest) returns (RegisterConnectionResponse) {}
+
+    // Unregister a connection (stop monitoring)
+    rpc UnregisterConnection(UnregisterConnectionRequest) returns (UnregisterConnectionResponse) {}
+
+    // Get current status of all monitored connections
+    rpc GetConnectionStatuses(GetConnectionStatusesRequest) returns (GetConnectionStatusesResponse) {}
+
+    // Test a connection immediately (one-shot, doesn't register)
+    rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {}
+
+    // Create a JDBC sink connector using a registered connection
+    // Server resolves credentials from connection ID - credentials never sent to UI
+    rpc CreateJdbcSinkConnector(CreateJdbcSinkConnectorRequest) returns (CreateJdbcSinkConnectorResponse) {}
+}
+
+// Database connection configuration
+message DatabaseConnectionConfig {
+    string id = 1;
+    string name = 2;
+    DatabaseType database_type = 3;
+    string hostname = 4;              // Hostname for server health checks (e.g., "localhost")
+    int32 port = 5;
+    string database = 6;
+    string username = 7;
+    string password = 8;
+    string connector_hostname = 9;    // Hostname for Kafka Connect connectors (e.g., "postgres" in Docker)
+}
+
+enum DatabaseType {
+    DATABASE_TYPE_UNSPECIFIED = 0;
+    POSTGRES = 1;
+    MYSQL = 2;
+}
+
+// Connection status (excludes credentials - credentials stay server-side)
+message ConnectionStatus {
+    string id = 1;
+    string name = 2;
+    ConnectionState state = 3;
+    string error = 4;
+    google.protobuf.Timestamp last_checked = 5;
+    DatabaseConnectionConfigPublic config = 6;  // Public config (no password)
+}
+
+enum ConnectionState {
+    CONNECTION_STATE_UNSPECIFIED = 0;
+    CONNECTED = 1;
+    DISCONNECTED = 2;
+    ERROR = 3;
+    CONNECTING = 4;
+}
+
+// Register connection for monitoring
+message RegisterConnectionRequest {
+    DatabaseConnectionConfig connection = 1;
+}
+
+message RegisterConnectionResponse {
+    bool success = 1;
+    string error = 2;
+    ConnectionStatus status = 3;
+}
+
+// Unregister connection
+message UnregisterConnectionRequest {
+    string connection_id = 1;
+}
+
+message UnregisterConnectionResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+// Get all connection statuses
+message GetConnectionStatusesRequest {}
+
+message GetConnectionStatusesResponse {
+    repeated ConnectionStatus statuses = 1;
+}
+
+// Test a connection one-shot
+message TestConnectionRequest {
+    DatabaseConnectionConfig connection = 1;
+}
+
+message TestConnectionResponse {
+    bool success = 1;
+    string error = 2;
+    int64 latency_ms = 3;
+}
+
+// Create JDBC sink connector (server-side credential resolution)
+message CreateJdbcSinkConnectorRequest {
+    string connection_id = 1;      // ID of registered connection (server looks up credentials)
+    string connector_name = 2;     // Name for the Kafka Connect connector
+    string topics = 3;             // Topic(s) to consume from
+    string table_name = 4;         // Target database table
+    string insert_mode = 5;        // insert, upsert, or update
+    string primary_key_fields = 6; // Comma-separated list of primary key fields (for upsert/update)
+}
+
+message CreateJdbcSinkConnectorResponse {
+    bool success = 1;
+    string error = 2;
+    string connector_name = 3;     // Name of created connector
+}
+
+// Public connection config (excludes sensitive fields like password)
+message DatabaseConnectionConfigPublic {
+    string id = 1;
+    string name = 2;
+    DatabaseType database_type = 3;
+    string hostname = 4;
+    int32 port = 5;
+    string database = 6;
+    string username = 7;
+    // password intentionally excluded
+    string connector_hostname = 8;
+}

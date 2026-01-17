@@ -9,6 +9,7 @@ import io.typestream.config.Config
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.server.ExceptionInterceptor
+import io.typestream.server.ConnectionService
 import io.typestream.server.FileSystemService
 import io.typestream.server.InteractiveSessionService
 import io.typestream.server.JobService
@@ -54,6 +55,9 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
         serverBuilder.addService(StateQueryService(vm))
+        val connectionService = ConnectionService()
+        subSystems.add(connectionService)
+        serverBuilder.addService(connectionService)
 
         serverBuilder.addService(ProtoReflectionService.newInstance())
         //TODO add health check. See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
