@@ -13,6 +13,7 @@ import { useListStores } from '../hooks/useListStores';
 import { JobStatusChip } from '../components/JobStatusChip';
 import { JobState } from '../generated/job_pb';
 import { formatThroughput, formatBytes, formatNumber } from '../utils/formatters';
+import { PipelineGraphViewer } from '../components/graph-builder/PipelineGraphViewer';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -143,28 +144,11 @@ export function JobDetailPage() {
                 <Typography variant="h6" gutterBottom>
                   Pipeline Graph
                 </Typography>
-
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Nodes ({job.graph.nodes.length})
-                  </Typography>
-                  {job.graph.nodes.map((node, idx) => (
-                    <Typography key={idx} variant="body2" sx={{ fontFamily: 'monospace', ml: 2 }}>
-                      {node.id}: {node.nodeType.case ?? 'unknown'}
-                    </Typography>
-                  ))}
-                </Box>
-
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Edges ({job.graph.edges.length})
-                  </Typography>
-                  {job.graph.edges.map((edge, idx) => (
-                    <Typography key={idx} variant="body2" sx={{ fontFamily: 'monospace', ml: 2 }}>
-                      {edge.fromId} → {edge.toId}
-                    </Typography>
-                  ))}
-                </Box>
+                <PipelineGraphViewer
+                  graph={job.graph}
+                  isRunning={job.state === JobState.RUNNING}
+                  height={350}
+                />
               </>
             )}
 
