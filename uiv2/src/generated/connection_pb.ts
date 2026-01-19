@@ -774,3 +774,4 @@ export class DatabaseConnectionConfigPublic extends Message<DatabaseConnectionCo
     return proto3.util.equals(DatabaseConnectionConfigPublic, a, b);
   }
 }
+

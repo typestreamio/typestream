@@ -58,9 +58,6 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
         serverBuilder.addService(StateQueryService(vm))
-        val connectionService = ConnectionService()
-        subSystems.add(connectionService)
-        serverBuilder.addService(connectionService)
 
         serverBuilder.addService(ProtoReflectionService.newInstance())
         //TODO add health check. See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
