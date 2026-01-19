@@ -25,7 +25,8 @@ export function ThroughputHistoryProvider({ children }: ThroughputHistoryProvide
   const historyRef = useRef<Map<string, number[]>>(new Map());
 
   const getHistory = useCallback((jobId: string): number[] => {
-    return historyRef.current.get(jobId) ?? [];
+    // Return a copy so React detects the change
+    return [...(historyRef.current.get(jobId) ?? [])];
   }, []);
 
   const recordValues = useCallback((jobs: JobInfo[]) => {
