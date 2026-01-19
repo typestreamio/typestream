@@ -234,7 +234,8 @@ sealed interface Node {
 
             val newField = Schema.Field(outputField, Schema.String.zeroValue)
             val newFields = inputSchema.value + newField
-            val outputStream = stream.copy(schema = Schema.Struct(newFields))
+            // Clear originalAvroSchema since we're modifying the schema
+            val outputStream = stream.copy(schema = Schema.Struct(newFields), originalAvroSchema = null)
             return InferenceResult(outputStream, inputEncoding ?: Encoding.AVRO)
         }
     }
@@ -267,7 +268,8 @@ sealed interface Node {
             val embeddingType = Schema.List(emptyList(), Schema.Float(0.0f))
             val newField = Schema.Field(outputField, embeddingType)
             val newFields = inputSchema.value + newField
-            val outputStream = stream.copy(schema = Schema.Struct(newFields))
+            // Clear originalAvroSchema since we're modifying the schema
+            val outputStream = stream.copy(schema = Schema.Struct(newFields), originalAvroSchema = null)
             return InferenceResult(outputStream, inputEncoding ?: Encoding.AVRO)
         }
     }
@@ -293,7 +295,8 @@ sealed interface Node {
 
             val newField = Schema.Field(outputField, Schema.String.zeroValue)
             val newFields = inputSchema.value + newField
-            val outputStream = stream.copy(schema = Schema.Struct(newFields))
+            // Clear originalAvroSchema since we're modifying the schema
+            val outputStream = stream.copy(schema = Schema.Struct(newFields), originalAvroSchema = null)
             return InferenceResult(outputStream, inputEncoding ?: Encoding.AVRO)
         }
     }

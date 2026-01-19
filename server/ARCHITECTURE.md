@@ -84,9 +84,9 @@ The graph is composed of sealed interface `Node` types:
 
 ### Type System
 
-`TypeRules.kt` is the single source of truth for type transformations:
-- Centralizes type inference rules
-- Ensures consistency across compilation paths
+Each `Node` type encapsulates its own schema transformation via `inferOutputSchema()`:
+- Schema inference is co-located with node definitions in `Node.kt`
+- Adding a new node type only requires implementing `inferOutputSchema()` in one place
 - Validates schema compatibility at compile time
 
 ## Jobs
@@ -375,7 +375,7 @@ private fun rollbackJobAndConnectors(jobId: String, connectorNames: List<String>
 | `Compiler.kt` | Text → Graph compilation |
 | `GraphCompiler.kt` | Proto → Graph compilation |
 | `Interpreter.kt` | AST traversal, type binding |
-| `TypeRules.kt` | Centralized type inference |
+| `Node.kt` | Node types with schema inference |
 | `KafkaStreamsJob.kt` | Topology builder, job execution |
 | `Scheduler.kt` | Job queue and lifecycle |
 | `Vm.kt` | Execution routing (KAFKA vs SHELL) |
