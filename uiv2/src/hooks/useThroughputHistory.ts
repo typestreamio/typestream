@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useThroughputHistoryContext } from '../providers/ThroughputHistoryProvider';
 
 /**
@@ -9,17 +9,10 @@ import { useThroughputHistoryContext } from '../providers/ThroughputHistoryProvi
  * @returns Array of throughput values (max 120 points = 2 minutes)
  */
 export function useThroughputHistory(jobId: string): number[] {
-  const { getHistory } = useThroughputHistoryContext();
-  const [history, setHistory] = useState<number[]>(() => getHistory(jobId));
+  const { getHistory, version } = useThroughputHistoryContext();
 
-  // Poll for updates since the context uses refs (no re-renders on update)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHistory(getHistory(jobId));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [jobId, getHistory]);
-
-  return history;
+  // Re-compute when version changes (data was recorded)
+  return useMemo(() => {
+    return getHistory(jobId);
+  }, [jobId, getHistory, version]);
 }

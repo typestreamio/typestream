@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useRef, useCallback, useState, type ReactNode } from 'react';
 import type { JobInfo } from '../generated/job_pb';
 
 const MAX_HISTORY_POINTS = 120; // 2 minutes at 1-second intervals
@@ -8,6 +8,8 @@ interface ThroughputHistoryContextValue {
   getHistory: (jobId: string) => number[];
   /** Record throughput values from a batch of jobs (called on each poll) */
   recordValues: (jobs: JobInfo[]) => void;
+  /** Version counter that increments on each update (for reactivity) */
+  version: number;
 }
 
 const ThroughputHistoryContext = createContext<ThroughputHistoryContextValue | null>(null);
@@ -21,8 +23,10 @@ interface ThroughputHistoryProviderProps {
  * Maintains a rolling 2-minute window (120 points) of messagesPerSecond values per job.
  */
 export function ThroughputHistoryProvider({ children }: ThroughputHistoryProviderProps) {
-  // Use ref to avoid re-renders when updating history
+  // Use ref for the actual data to avoid copying on every read
   const historyRef = useRef<Map<string, number[]>>(new Map());
+  // Version counter triggers re-renders when data changes
+  const [version, setVersion] = useState(0);
 
   const getHistory = useCallback((jobId: string): number[] => {
     // Return a copy so React detects the change
@@ -54,10 +58,13 @@ export function ThroughputHistoryProvider({ children }: ThroughputHistoryProvide
         historyRef.current.delete(jobId);
       }
     }
+
+    // Increment version to trigger re-renders in consumers
+    setVersion((v) => v + 1);
   }, []);
 
   return (
-    <ThroughputHistoryContext.Provider value={{ getHistory, recordValues }}>
+    <ThroughputHistoryContext.Provider value={{ getHistory, recordValues, version }}>
       {children}
     </ThroughputHistoryContext.Provider>
   );
