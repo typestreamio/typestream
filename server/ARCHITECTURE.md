@@ -139,6 +139,7 @@ Manages job lifecycle with Kotlin coroutines:
 | FileSystemService | Mount, Unmount, Ls | Virtual filesystem operations |
 | InteractiveSessionService | StartSession, RunProgram, GetProgramOutput | Interactive REPL |
 | JobService | CreateJob, CreateJobFromGraph, ListJobs | Job management |
+| ConnectionService | RegisterConnection, GetConnectionStatuses, TestConnection | Database connection monitoring |
 
 ## Virtual Filesystem
 
@@ -196,6 +197,177 @@ TypeStream can consume Avro topics from any producer:
 | `SchemaRegistryClient.kt` | HTTP client for Schema Registry API |
 | `GenericDataWithLogicalTypes.kt` | Avro logical type support |
 
+## Debezium Source (CDC)
+
+TypeStream supports consuming Change Data Capture (CDC) events from Debezium. The `unwrapCdc` flag on `StreamSource` nodes extracts the "after" payload from CDC envelope structures.
+
+### CDC Envelope Structure
+
+Debezium emits CDC events with this schema:
+```
+{
+  "before": { ... },    // Previous state (null for inserts)
+  "after": { ... },     // New state (null for deletes)
+  "source": { ... },    // Debezium metadata
+  "op": "c|u|d|r",      // Operation type
+  "ts_ms": 1234567890
+}
+```
+
+### CDC Unwrapping Flow
+
+```
+Debezium Topic (CDC envelope)
+        ↓
+StreamSource(unwrapCdc=true)
+        ↓
+[GraphCompiler.unwrapCdcDataStream()]
+  ├── Detects CDC envelope (before/after/source/op fields)
+  ├── Extracts schema from "after" field
+  └── Returns DataStream with unwrapped schema
+        ↓
+Downstream nodes receive flattened records
+```
+
+### Key Files
+
+| File | Function |
+|------|----------|
+| `GraphCompiler.kt:unwrapCdcDataStream()` | Schema extraction from CDC envelope |
+| `Node.kt:StreamSource.unwrapCdc` | Boolean flag to enable unwrapping |
+| `AvroExt.kt` | Preserves null values for before/after fields |
+
+### Proto Definition
+
+```protobuf
+message StreamSourceNode {
+  DataStreamProto data_stream = 1;
+  Encoding encoding = 2;
+  bool unwrap_cdc = 3;  // Extract 'after' payload from CDC envelope
+}
+```
+
+## Kafka Connect Sink (JDBC)
+
+TypeStream creates JDBC sink connectors via Kafka Connect to write processed data to databases. The architecture uses a secure server-side credential resolution pattern.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          UI (Client)                            │
+│  DbSinkNode configured with:                                    │
+│   - connectionId (reference, no credentials)                    │
+│   - tableName, insertMode, primaryKeyFields                     │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ CreateJobFromGraphRequest
+                            │ (includes DbSinkConfig list)
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     JobService.createJobFromGraph()             │
+│  1. Compiles pipeline graph to Program                          │
+│  2. Starts Kafka Streams job                                    │
+│  3. For each DbSinkConfig:                                      │
+│     - Generates intermediate topic name                         │
+│     - Calls ConnectionService.createJdbcSinkConnector()         │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│               ConnectionService.createJdbcSinkConnector()       │
+│  1. Looks up connection by ID (has credentials)                 │
+│  2. Builds JDBC connector config:                               │
+│     - connector.class: io.debezium.connector.jdbc.JdbcSinkConnector
+│     - connection.url: jdbc:postgresql://...                     │
+│     - value.converter: AvroConverter                            │
+│     - transforms.unwrap: ExtractNewRecordState                  │
+│  3. POSTs config to Kafka Connect REST API                      │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ POST /connectors
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Kafka Connect                              │
+│  JdbcSinkConnector consumes from intermediate topic             │
+│  and writes to target database table                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Security Model
+
+Credentials never leave the server:
+
+```
+Client → Server: connectionId (e.g., "dev-postgres")
+Server: Looks up full DatabaseConnectionConfig from connections map
+Server → Kafka Connect: Full JDBC URL with credentials
+```
+
+### Data Flow
+
+```
+Kafka Streams Job                    Kafka Connect
+        ↓                                  ↓
+[StreamSource] → [Transform] → [Sink]     [JdbcSinkConnector]
+                                ↓              ↓
+                        intermediate_topic ───────────→ Database Table
+```
+
+### Proto Definitions
+
+```protobuf
+// In job.proto - Sent from client (no credentials)
+message DbSinkConfig {
+  string node_id = 1;
+  string connection_id = 2;        // Server resolves credentials
+  string table_name = 3;
+  string insert_mode = 4;          // insert, upsert, update
+  string primary_key_fields = 5;
+  string intermediate_topic = 6;   // Optional - auto-generated if empty
+}
+
+// In connection.proto - Internal server request
+message CreateJdbcSinkConnectorRequest {
+  string connection_id = 1;
+  string connector_name = 2;
+  string topics = 3;
+  string table_name = 4;
+  string insert_mode = 5;
+  string primary_key_fields = 6;
+}
+```
+
+### Connector Configuration
+
+The JDBC sink connector is configured with:
+
+| Config | Value |
+|--------|-------|
+| `connector.class` | `io.debezium.connector.jdbc.JdbcSinkConnector` |
+| `value.converter` | `io.confluent.connect.avro.AvroConverter` |
+| `transforms.unwrap.type` | `io.debezium.transforms.ExtractNewRecordState` |
+| `schema.evolution` | `basic` |
+| `insert.mode` | `insert`, `upsert`, or `update` |
+
+### Rollback Handling
+
+If connector creation fails, JobService performs rollback:
+
+```kotlin
+private fun rollbackJobAndConnectors(jobId: String, connectorNames: List<String>) {
+    vm.scheduler.kill(jobId)
+    connectorNames.forEach { deleteKafkaConnectConnector(it) }
+}
+```
+
+### Key Files
+
+| File | Function |
+|------|----------|
+| `JobService.kt:createJobFromGraph()` | Orchestrates job + connector creation |
+| `ConnectionService.kt:createJdbcSinkConnector()` | Builds and deploys connector |
+| `ConnectionService.kt:buildJdbcSinkConnectorConfig()` | Constructs connector JSON |
+| `ConnectionService.kt:createKafkaConnectConnector()` | HTTP POST to Connect API |
+
 ## Key Files
 
 | File | Purpose |
@@ -207,4 +379,5 @@ TypeStream can consume Avro topics from any producer:
 | `KafkaStreamsJob.kt` | Topology builder, job execution |
 | `Scheduler.kt` | Job queue and lifecycle |
 | `Vm.kt` | Execution routing (KAFKA vs SHELL) |
+| `ConnectionService.kt` | JDBC connection monitoring and sink connector management |
 | `DataStreamSerde.kt` | Kafka serialization |

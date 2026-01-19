@@ -9,6 +9,7 @@ import io.typestream.config.Config
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.server.ExceptionInterceptor
+import io.typestream.server.ConnectionService
 import io.typestream.server.FileSystemService
 import io.typestream.server.InteractiveSessionService
 import io.typestream.server.JobService
@@ -50,7 +51,10 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
 
         serverBuilder.addService(FileSystemService(vm))
         serverBuilder.addService(InteractiveSessionService(config, vm))
-        val jobService = JobService(config, vm)
+        val connectionService = ConnectionService()
+        subSystems.add(connectionService)
+        serverBuilder.addService(connectionService)
+        val jobService = JobService(config, vm, connectionService)
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
         serverBuilder.addService(StateQueryService(vm))

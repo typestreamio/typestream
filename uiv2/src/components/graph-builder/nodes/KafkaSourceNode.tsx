@@ -1,10 +1,13 @@
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
 import InputIcon from '@mui/icons-material/Input';
 import { BaseNode } from './BaseNode';
 import { useKafkaTopics } from '../../../hooks/useKafkaTopics';
@@ -30,6 +33,9 @@ export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
     (t) => `/dev/kafka/local/topics/${t.name}` === data.topicPath
   );
 
+  // Check if topic name suggests it's a CDC topic (Debezium convention)
+  const isCdcTopic = selectedTopic?.name.includes('.') || selectedTopic?.name.includes('debezium');
+
   return (
     <>
       <BaseNode
@@ -53,7 +59,24 @@ export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
           </Select>
         </FormControl>
         {selectedTopic && (
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {isCdcTopic && (
+              <Tooltip title="Extract 'after' payload from Debezium CDC envelope for easier field access">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={data.unwrapCdc ?? false}
+                      onChange={(e) => updateNodeData(id, { unwrapCdc: e.target.checked })}
+                    />
+                  }
+                  label="Unwrap CDC"
+                  componentsProps={{ typography: { variant: 'caption' } }}
+                  className="nodrag"
+                  sx={{ ml: 0, mr: 1 }}
+                />
+              </Tooltip>
+            )}
             <Chip
               label={getEncodingLabel(selectedTopic.encoding)}
               size="small"

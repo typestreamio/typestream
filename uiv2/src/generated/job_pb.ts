@@ -156,6 +156,13 @@ export class CreateJobResponse extends Message<CreateJobResponse> {
    */
   error = "";
 
+  /**
+   * Connector names created for DB sinks
+   *
+   * @generated from field: repeated string created_connectors = 4;
+   */
+  createdConnectors: string[] = [];
+
   constructor(data?: PartialMessage<CreateJobResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -167,6 +174,7 @@ export class CreateJobResponse extends Message<CreateJobResponse> {
     { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "job_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "created_connectors", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJobResponse {
@@ -576,6 +584,13 @@ export class StreamSourceNode extends Message<StreamSourceNode> {
    */
   encoding = Encoding.STRING;
 
+  /**
+   * Extract 'after' payload from CDC envelope
+   *
+   * @generated from field: bool unwrap_cdc = 3;
+   */
+  unwrapCdc = false;
+
   constructor(data?: PartialMessage<StreamSourceNode>) {
     super();
     proto3.util.initPartial(data, this);
@@ -586,6 +601,7 @@ export class StreamSourceNode extends Message<StreamSourceNode> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "data_stream", kind: "message", T: DataStreamProto },
     { no: 2, name: "encoding", kind: "enum", T: proto3.getEnumType(Encoding) },
+    { no: 3, name: "unwrap_cdc", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamSourceNode {
@@ -1200,6 +1216,79 @@ export class PipelineGraph extends Message<PipelineGraph> {
 }
 
 /**
+ * Configuration for DB sink connectors (credentials resolved server-side)
+ *
+ * @generated from message io.typestream.grpc.DbSinkConfig
+ */
+export class DbSinkConfig extends Message<DbSinkConfig> {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId = "";
+
+  /**
+   * Server resolves credentials from this
+   *
+   * @generated from field: string connection_id = 2;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string table_name = 3;
+   */
+  tableName = "";
+
+  /**
+   * @generated from field: string insert_mode = 4;
+   */
+  insertMode = "";
+
+  /**
+   * @generated from field: string primary_key_fields = 5;
+   */
+  primaryKeyFields = "";
+
+  /**
+   * Optional - server auto-generates if empty
+   *
+   * @generated from field: string intermediate_topic = 6;
+   */
+  intermediateTopic = "";
+
+  constructor(data?: PartialMessage<DbSinkConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.DbSinkConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "table_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "insert_mode", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "primary_key_fields", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "intermediate_topic", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DbSinkConfig {
+    return new DbSinkConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DbSinkConfig {
+    return new DbSinkConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DbSinkConfig {
+    return new DbSinkConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DbSinkConfig | PlainMessage<DbSinkConfig> | undefined, b: DbSinkConfig | PlainMessage<DbSinkConfig> | undefined): boolean {
+    return proto3.util.equals(DbSinkConfig, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.CreateJobFromGraphRequest
  */
 export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest> {
@@ -1213,6 +1302,13 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
    */
   graph?: PipelineGraph;
 
+  /**
+   * DB sink configurations
+   *
+   * @generated from field: repeated io.typestream.grpc.DbSinkConfig db_sink_configs = 3;
+   */
+  dbSinkConfigs: DbSinkConfig[] = [];
+
   constructor(data?: PartialMessage<CreateJobFromGraphRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1223,6 +1319,7 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 3, name: "db_sink_configs", kind: "message", T: DbSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJobFromGraphRequest {

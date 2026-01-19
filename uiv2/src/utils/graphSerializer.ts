@@ -14,35 +14,20 @@ import {
   GroupNode,
   CountNode,
   ReduceLatestNode,
+  DbSinkConfig,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, JDBCSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
 /**
- * Configuration for JDBC sink connectors that need to be created
- * after the job is successfully created
+ * Result of serializing a graph with DB sinks
  */
-export interface JDBCSinkConnectorConfig {
-  nodeId: string;
-  intermediateTopic: string;
-  databaseType: 'postgres' | 'mysql';
-  hostname: string;
-  port: string;
-  database: string;
-  username: string;
-  password: string;
-  tableName: string;
-  insertMode: 'insert' | 'upsert' | 'update';
-  primaryKeyFields: string;
-}
-
-/**
- * Result of serializing a graph, including both the proto and
- * any JDBC sink connectors that need to be created
- */
-export interface SerializedGraph {
+export interface SerializedGraphWithDbSinks {
   graph: PipelineGraph;
-  jdbcSinkConnectors: JDBCSinkConnectorConfig[];
+  dbSinkConfigs: DbSinkConfig[];  // Proto objects ready for request
 }
+
+// Re-export for consumers that need the type
+export { DbSinkConfig };
 
 /**
  * Generate a unique topic name for intermediate JDBC sink output
@@ -54,12 +39,13 @@ function generateIntermediateTopicName(nodeId: string): string {
 }
 
 /**
- * Serialize a graph to a PipelineGraph proto and extract JDBC sink configurations
+ * Serialize a graph to a PipelineGraph proto and extract DB sink configurations
+ * (credentials resolved server-side for security)
  */
-export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): SerializedGraph {
+export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): SerializedGraphWithDbSinks {
   const pipelineNodes: PipelineNode[] = [];
   const pipelineEdges: PipelineEdge[] = [];
-  const jdbcSinkConnectors: JDBCSinkConnectorConfig[] = [];
+  const dbSinkConfigs: DbSinkConfig[] = [];
 
   // Process each node
   nodes.forEach((node) => {
@@ -72,6 +58,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
           value: new StreamSourceNode({
             dataStream: new DataStreamProto({ path: data.topicPath }),
             // Encoding is auto-detected from Schema Registry by the backend
+            unwrapCdc: data.unwrapCdc ?? false,
           }),
         },
       }));
@@ -94,8 +81,9 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
       return;
     }
 
-    if (node.type === 'jdbcSink') {
-      const data = node.data as JDBCSinkNodeData;
+    if (node.type === 'dbSink') {
+      const data = node.data as DbSinkNodeData;
+
       // Generate an intermediate topic for the TypeStream job to write to
       const intermediateTopic = generateIntermediateTopicName(node.id);
       const fullPath = `/dev/kafka/local/topics/${intermediateTopic}`;
@@ -111,20 +99,15 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
         },
       }));
 
-      // Record the JDBC sink configuration for later connector creation
-      jdbcSinkConnectors.push({
+      // Record the DB sink configuration as proto (credentials resolved server-side)
+      dbSinkConfigs.push(new DbSinkConfig({
         nodeId: node.id,
+        connectionId: data.connectionId,
         intermediateTopic,
-        databaseType: data.databaseType || 'postgres',
-        hostname: data.hostname || '',
-        port: data.port || '5432',
-        database: data.database || '',
-        username: data.username || '',
-        password: data.password || '',
         tableName: data.tableName || '',
         insertMode: data.insertMode || 'upsert',
         primaryKeyFields: data.primaryKeyFields || '',
-      });
+      }));
       return;
     }
 
@@ -250,7 +233,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
       nodes: pipelineNodes,
       edges: pipelineEdges,
     }),
-    jdbcSinkConnectors,
+    dbSinkConfigs,
   };
 }
 
@@ -258,5 +241,5 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
  * Serialize a graph to a PipelineGraph proto (backward compatible)
  */
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
-  return serializeGraphWithSinks(nodes, edges).graph;
+  return serializeGraphWithDbSinks(nodes, edges).graph;
 }

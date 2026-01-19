@@ -322,13 +322,137 @@ internal class GraphCompilerTest {
         assertThat(results["filter-1"]?.encoding).isEqualTo(Encoding.AVRO)
     }
 
-    private fun streamSourceNode(id: String, path: String, encoding: Job.Encoding): Job.PipelineNode =
+    // ===== CDC Unwrap Tests =====
+
+    @Test
+    fun `inferNodeSchemasForUI unwraps CDC envelope when unwrapCdc is true`() {
+        // Register a CDC-style schema manually in the schema registry
+        val cdcSchemaJson = """
+            {
+                "type": "record",
+                "name": "Envelope",
+                "namespace": "dbserver.public.users",
+                "fields": [
+                    {"name": "before", "type": ["null", {
+                        "type": "record",
+                        "name": "Value",
+                        "fields": [
+                            {"name": "id", "type": "int"},
+                            {"name": "email", "type": "string"},
+                            {"name": "name", "type": "string"}
+                        ]
+                    }], "default": null},
+                    {"name": "after", "type": ["null", "Value"], "default": null},
+                    {"name": "source", "type": {"type": "record", "name": "Source", "fields": [{"name": "version", "type": "string"}]}},
+                    {"name": "op", "type": "string"},
+                    {"name": "ts_ms", "type": "long"}
+                ]
+            }
+        """.trimIndent()
+
+        testKafka.registerSchema("cdc_users-value", cdcSchemaJson)
+        testKafka.createTopic("cdc_users")
+        fileSystem.refresh()
+
+        // Test without unwrapCdc - should return full CDC envelope fields
+        val graphWithoutUnwrap = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/cdc_users", Job.Encoding.AVRO, unwrapCdc = false)
+            ),
+            edges = emptyList()
+        )
+
+        val resultsWithoutUnwrap = compiler.inferNodeSchemasForUI(graphWithoutUnwrap)
+        val schemaWithoutUnwrap = resultsWithoutUnwrap["src-1"]?.schema?.schema
+        assertThat(schemaWithoutUnwrap).isInstanceOf(io.typestream.compiler.types.schema.Schema.Struct::class.java)
+        val fieldsWithoutUnwrap = (schemaWithoutUnwrap as io.typestream.compiler.types.schema.Schema.Struct).value.map { it.name }
+        assertThat(fieldsWithoutUnwrap).contains("before", "after", "source", "op", "ts_ms")
+
+        // Test with unwrapCdc - should return flat fields from 'after'
+        val graphWithUnwrap = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-2", "/dev/kafka/local/topics/cdc_users", Job.Encoding.AVRO, unwrapCdc = true)
+            ),
+            edges = emptyList()
+        )
+
+        val resultsWithUnwrap = compiler.inferNodeSchemasForUI(graphWithUnwrap)
+        val schemaWithUnwrap = resultsWithUnwrap["src-2"]?.schema?.schema
+        assertThat(schemaWithUnwrap).isInstanceOf(io.typestream.compiler.types.schema.Schema.Struct::class.java)
+        val fieldsWithUnwrap = (schemaWithUnwrap as io.typestream.compiler.types.schema.Schema.Struct).value.map { it.name }
+        // Should have flat fields from the 'after' struct, not CDC envelope fields
+        assertThat(fieldsWithUnwrap).containsExactlyInAnyOrder("id", "email", "name")
+        assertThat(fieldsWithUnwrap).doesNotContain("before", "after", "source", "op", "ts_ms")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI propagates unwrapped CDC schema to downstream nodes`() {
+        // Register a CDC-style schema
+        val cdcSchemaJson = """
+            {
+                "type": "record",
+                "name": "Envelope",
+                "namespace": "dbserver.public.products",
+                "fields": [
+                    {"name": "before", "type": ["null", {
+                        "type": "record",
+                        "name": "Value",
+                        "fields": [
+                            {"name": "product_id", "type": "int"},
+                            {"name": "product_name", "type": "string"},
+                            {"name": "price", "type": "double"}
+                        ]
+                    }], "default": null},
+                    {"name": "after", "type": ["null", "Value"], "default": null},
+                    {"name": "source", "type": {"type": "record", "name": "Source", "fields": [{"name": "db", "type": "string"}]}},
+                    {"name": "op", "type": "string"}
+                ]
+            }
+        """.trimIndent()
+
+        testKafka.registerSchema("cdc_products-value", cdcSchemaJson)
+        testKafka.createTopic("cdc_products")
+        fileSystem.refresh()
+
+        // Create a graph with CDC source → filter → sink
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/cdc_products", Job.Encoding.AVRO, unwrapCdc = true),
+                filterNode("filter-1", "Widget"),
+                sinkNode("sink-1", "/dev/kafka/local/topics/filtered_products")
+            ),
+            edges = listOf(
+                edge("src-1", "filter-1"),
+                edge("filter-1", "sink-1")
+            )
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // Verify source has unwrapped schema
+        val sourceSchema = results["src-1"]?.schema?.schema as io.typestream.compiler.types.schema.Schema.Struct
+        val sourceFields = sourceSchema.value.map { it.name }
+        assertThat(sourceFields).containsExactlyInAnyOrder("product_id", "product_name", "price")
+
+        // Verify filter inherits the unwrapped schema
+        val filterSchema = results["filter-1"]?.schema?.schema as io.typestream.compiler.types.schema.Schema.Struct
+        val filterFields = filterSchema.value.map { it.name }
+        assertThat(filterFields).containsExactlyInAnyOrder("product_id", "product_name", "price")
+
+        // Verify sink also has the unwrapped schema
+        val sinkSchema = results["sink-1"]?.schema?.schema as io.typestream.compiler.types.schema.Schema.Struct
+        val sinkFields = sinkSchema.value.map { it.name }
+        assertThat(sinkFields).containsExactlyInAnyOrder("product_id", "product_name", "price")
+    }
+
+    private fun streamSourceNode(id: String, path: String, encoding: Job.Encoding, unwrapCdc: Boolean = false): Job.PipelineNode =
         Job.PipelineNode.newBuilder()
             .setId(id)
             .setStreamSource(
                 Job.StreamSourceNode.newBuilder()
                     .setDataStream(Job.DataStreamProto.newBuilder().setPath(path))
                     .setEncoding(encoding)
+                    .setUnwrapCdc(unwrapCdc)
             )
             .build()
 

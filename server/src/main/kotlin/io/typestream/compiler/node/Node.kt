@@ -31,7 +31,12 @@ sealed interface Node {
     data class ShellSource(override val id: String, val data: List<DataStream>) : Node
 
     @Serializable
-    data class StreamSource(override val id: String, val dataStream: DataStream, val encoding: Encoding) : Node
+    data class StreamSource(
+        override val id: String,
+        val dataStream: DataStream,
+        val encoding: Encoding,
+        val unwrapCdc: Boolean = false
+    ) : Node
 
     @Serializable
     data class Each(override val id: String, val fn: (KeyValue) -> Unit) : Node
