@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useThroughputHistoryContext } from '../providers/ThroughputHistoryProvider';
+import { useThroughputHistoryContext } from '../providers/ThroughputHistoryContext';
 
 /**
  * Hook to get throughput history for a specific job.

@@ -1,18 +1,9 @@
-import { createContext, useContext, useRef, useCallback, useState, type ReactNode } from 'react';
+import { useRef, useCallback, useState, type ReactNode } from 'react';
 import type { JobInfo } from '../generated/job_pb';
-
-const MAX_HISTORY_POINTS = 120; // 2 minutes at 1-second intervals
-
-interface ThroughputHistoryContextValue {
-  /** Get the throughput history for a specific job */
-  getHistory: (jobId: string) => number[];
-  /** Record throughput values from a batch of jobs (called on each poll) */
-  recordValues: (jobs: JobInfo[]) => void;
-  /** Version counter that increments on each update (for reactivity) */
-  version: number;
-}
-
-const ThroughputHistoryContext = createContext<ThroughputHistoryContextValue | null>(null);
+import {
+  ThroughputHistoryContext,
+  MAX_HISTORY_POINTS,
+} from './ThroughputHistoryContext';
 
 interface ThroughputHistoryProviderProps {
   children: ReactNode;
@@ -84,16 +75,4 @@ export function ThroughputHistoryProvider({ children }: ThroughputHistoryProvide
       {children}
     </ThroughputHistoryContext.Provider>
   );
-}
-
-/**
- * Hook to access throughput history context.
- * Must be used within a ThroughputHistoryProvider.
- */
-export function useThroughputHistoryContext() {
-  const context = useContext(ThroughputHistoryContext);
-  if (!context) {
-    throw new Error('useThroughputHistoryContext must be used within a ThroughputHistoryProvider');
-  }
-  return context;
 }

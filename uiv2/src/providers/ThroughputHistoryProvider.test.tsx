@@ -1,10 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { createElement } from 'react';
-import {
-  ThroughputHistoryProvider,
-  useThroughputHistoryContext,
-} from './ThroughputHistoryProvider';
+import { ThroughputHistoryProvider } from './ThroughputHistoryProvider';
+import { useThroughputHistoryContext } from './ThroughputHistoryContext';
 import { useThroughputHistory } from '../hooks/useThroughputHistory';
 import type { JobInfo } from '../generated/job_pb';
 
@@ -234,45 +232,39 @@ describe('useThroughputHistory', () => {
 
   it('should return history for specific job', () => {
     // Use a combined hook to ensure shared provider state
-    let recordValuesFn: ((jobs: JobInfo[]) => void) | null = null;
-
-    const CombinedHook = () => {
+    const useCombinedHook = () => {
       const context = useThroughputHistoryContext();
       const history = useThroughputHistory('job-1');
-      recordValuesFn = context.recordValues;
-      return history;
+      return { history, recordValues: context.recordValues };
     };
 
-    const { result, rerender } = renderHook(() => CombinedHook(), { wrapper });
-
-    expect(result.current).toEqual([]);
-
-    act(() => {
-      recordValuesFn!([createMockJob('job-1', 100)]);
-    });
-
-    rerender();
-
-    expect(result.current).toEqual([100]);
-  });
-
-  it('should update when version changes', () => {
-    // Using a combined wrapper and hook approach
-    let recordValuesFn: ((jobs: JobInfo[]) => void) | null = null;
-
-    const CombinedHook = () => {
-      const context = useThroughputHistoryContext();
-      const history = useThroughputHistory('job-1');
-      recordValuesFn = context.recordValues;
-      return { history, version: context.version };
-    };
-
-    const { result, rerender } = renderHook(() => CombinedHook(), { wrapper });
+    const { result, rerender } = renderHook(() => useCombinedHook(), { wrapper });
 
     expect(result.current.history).toEqual([]);
 
     act(() => {
-      recordValuesFn!([createMockJob('job-1', 100)]);
+      result.current.recordValues([createMockJob('job-1', 100)]);
+    });
+
+    rerender();
+
+    expect(result.current.history).toEqual([100]);
+  });
+
+  it('should update when version changes', () => {
+    // Using a combined wrapper and hook approach
+    const useCombinedHook = () => {
+      const context = useThroughputHistoryContext();
+      const history = useThroughputHistory('job-1');
+      return { history, version: context.version, recordValues: context.recordValues };
+    };
+
+    const { result, rerender } = renderHook(() => useCombinedHook(), { wrapper });
+
+    expect(result.current.history).toEqual([]);
+
+    act(() => {
+      result.current.recordValues([createMockJob('job-1', 100)]);
     });
 
     rerender();
@@ -280,7 +272,7 @@ describe('useThroughputHistory', () => {
     expect(result.current.history).toEqual([100]);
 
     act(() => {
-      recordValuesFn!([createMockJob('job-1', 200)]);
+      result.current.recordValues([createMockJob('job-1', 200)]);
     });
 
     rerender();
