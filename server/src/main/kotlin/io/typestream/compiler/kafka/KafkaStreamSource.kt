@@ -4,6 +4,7 @@ import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.types.datastream.fromAvroGenericRecord
 import io.typestream.compiler.types.datastream.fromBytes
 import io.typestream.compiler.types.datastream.fromProtoMessage
@@ -45,10 +46,61 @@ data class KafkaStreamSource(
     private val embeddingGeneratorService: EmbeddingGeneratorService,
     private val openAiService: OpenAiService
 ) {
-    private var stream: KStream<DataStream, DataStream> = stream(node.dataStream)
+    private var stream: KStream<DataStream, DataStream> = initStream()
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
     private var countStoreName: String? = null
     private var reduceStoreNames = mutableListOf<String>()
+
+    private fun initStream(): KStream<DataStream, DataStream> {
+        var s = stream(node.dataStream)
+        if (node.unwrapCdc) {
+            s = applyCdcUnwrap(s)
+        }
+        return s
+    }
+
+    /**
+     * Unwrap CDC envelope at runtime by:
+     * 1. Filtering out DELETE records (where 'after' is null)
+     * 2. Extracting fields from 'after' to top level
+     */
+    private fun applyCdcUnwrap(s: KStream<DataStream, DataStream>): KStream<DataStream, DataStream> {
+        return s
+            // Filter out DELETE records where 'after' is null
+            .filter { _, v ->
+                val afterValue = getAfterFieldValue(v.schema)
+                afterValue != null
+            }
+            // Extract 'after' fields to top level
+            .mapValues { v ->
+                unwrapCdcRecord(v)
+            }
+    }
+
+    /**
+     * Get the value of the 'after' field from a CDC envelope schema.
+     * Returns null if the record is a DELETE (after is null).
+     */
+    private fun getAfterFieldValue(schema: Schema): Schema? {
+        if (schema !is Schema.Struct) return null
+
+        val afterField = schema.value.find { it.name == "after" } ?: return null
+        val afterValue = afterField.value
+
+        return when (afterValue) {
+            is Schema.Struct -> afterValue
+            is Schema.Optional -> afterValue.value as? Schema.Struct
+            else -> null
+        }
+    }
+
+    /**
+     * Unwrap a CDC record by extracting 'after' fields to top level.
+     */
+    private fun unwrapCdcRecord(ds: DataStream): DataStream {
+        val afterStruct = getAfterFieldValue(ds.schema) as? Schema.Struct ?: return ds
+        return DataStream(ds.path, afterStruct)
+    }
 
     fun getCountStoreName(): String? = countStoreName
     fun getReduceStoreNames(): List<String> = reduceStoreNames.toList()

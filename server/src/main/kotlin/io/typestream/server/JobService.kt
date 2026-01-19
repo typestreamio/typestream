@@ -56,8 +56,11 @@ data class PreviewJobInfo(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-class JobService(private val config: Config, private val vm: Vm) :
-    JobServiceGrpcKt.JobServiceCoroutineImplBase(), Closeable {
+class JobService(
+    private val config: Config,
+    private val vm: Vm,
+    private val connectionService: ConnectionService
+) : JobServiceGrpcKt.JobServiceCoroutineImplBase(), Closeable {
 
     private val logger = KotlinLogging.logger {}
     private val graphCompiler = GraphCompiler(vm.fileSystem)
@@ -159,23 +162,121 @@ class JobService(private val config: Config, private val vm: Vm) :
         try {
             val program = graphCompiler.compile(request)
 
-            this.success = true
-            this.jobId = program.id
-            this.error = ""
-
             // Pass program to scheduler (same path as text compiler)
             if (config.k8sMode) {
                 // TODO: Phase 4 - Serialize program to JSON for K8s worker
                 // For now, K8s mode is not supported for graph-based jobs
                 this.success = false
                 this.error = "K8s mode not yet supported for graph-based jobs (Phase 4)"
-            } else {
-                vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
+                return@createJobResponse
             }
+
+            vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
+
+            // Create JDBC sink connectors if any dbSinkConfigs are provided
+            val createdConnectorNames = mutableListOf<String>()
+            val dbSinkConfigs = request.dbSinkConfigsList
+
+            if (dbSinkConfigs.isNotEmpty()) {
+                logger.info { "Creating ${dbSinkConfigs.size} JDBC sink connector(s) for job ${program.id}" }
+
+                for (config in dbSinkConfigs) {
+                    val connectorName = "${program.id}-jdbc-sink-${config.nodeId}"
+                    val intermediateTopic = config.intermediateTopic.ifEmpty {
+                        generateIntermediateTopicName(config.nodeId)
+                    }
+
+                    try {
+                        val connectorRequest = io.typestream.grpc.connection_service.Connection.CreateJdbcSinkConnectorRequest.newBuilder()
+                            .setConnectionId(config.connectionId)
+                            .setConnectorName(connectorName)
+                            .setTopics(intermediateTopic)
+                            .setTableName(config.tableName)
+                            .setInsertMode(config.insertMode)
+                            .setPrimaryKeyFields(config.primaryKeyFields)
+                            .build()
+
+                        val response = connectionService.createJdbcSinkConnector(connectorRequest)
+
+                        if (!response.success) {
+                            throw RuntimeException("Failed to create connector $connectorName: ${response.error}")
+                        }
+
+                        createdConnectorNames.add(connectorName)
+                        logger.info { "Created JDBC sink connector: $connectorName" }
+                    } catch (e: Exception) {
+                        // Rollback: Kill the job and delete any created connectors
+                        logger.error(e) { "Connector creation failed, rolling back job ${program.id}" }
+                        rollbackJobAndConnectors(program.id, createdConnectorNames)
+
+                        this.success = false
+                        this.jobId = ""
+                        this.error = "Connector creation failed: ${e.message}"
+                        return@createJobResponse
+                    }
+                }
+            }
+
+            this.success = true
+            this.jobId = program.id
+            this.error = ""
+            this.createdConnectors.addAll(createdConnectorNames)
         } catch (e: Exception) {
             this.success = false
             this.jobId = ""
             this.error = e.message ?: "Unknown error during graph compilation"
+        }
+    }
+
+    /**
+     * Generate a unique topic name for intermediate JDBC sink output
+     */
+    private fun generateIntermediateTopicName(nodeId: String): String {
+        val timestamp = System.currentTimeMillis()
+        val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
+        return "jdbc-sink-$sanitizedNodeId-$timestamp"
+    }
+
+    /**
+     * Rollback a failed job creation by killing the job and deleting connectors
+     */
+    private fun rollbackJobAndConnectors(jobId: String, connectorNames: List<String>) {
+        // Kill the job
+        try {
+            vm.scheduler.kill(jobId)
+            logger.info { "Killed job $jobId during rollback" }
+        } catch (e: Exception) {
+            logger.warn(e) { "Failed to kill job $jobId during rollback" }
+        }
+
+        // Delete any created connectors
+        connectorNames.forEach { connectorName ->
+            try {
+                deleteKafkaConnectConnector(connectorName)
+                logger.info { "Deleted connector $connectorName during rollback" }
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to delete connector $connectorName during rollback" }
+            }
+        }
+    }
+
+    /**
+     * Delete a connector via Kafka Connect REST API
+     */
+    private fun deleteKafkaConnectConnector(connectorName: String) {
+        val connectUrl = System.getenv("KAFKA_CONNECT_URL") ?: "http://localhost:8083"
+        val url = java.net.URL("$connectUrl/connectors/$connectorName")
+        val connection = url.openConnection() as java.net.HttpURLConnection
+
+        try {
+            connection.requestMethod = "DELETE"
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299 && responseCode != 404) {
+                val errorBody = connection.errorStream?.bufferedReader()?.readText() ?: ""
+                throw RuntimeException("Kafka Connect returned $responseCode: $errorBody")
+            }
+        } finally {
+            connection.disconnect()
         }
     }
 
@@ -296,7 +397,10 @@ class JobService(private val config: Config, private val vm: Vm) :
             val result = results[node.id]
             schemas[node.id] = nodeSchemaResult {
                 if (result?.schema?.schema is Schema.Struct) {
-                    fields += (result.schema.schema as Schema.Struct).value.map { it.name }
+                    val struct = result.schema.schema as Schema.Struct
+                    // For CDC envelope schemas, extract fields from 'after' payload
+                    val unwrappedFields = unwrapCdcEnvelope(struct)
+                    fields += unwrappedFields
                 }
                 encoding = result?.encoding?.name ?: "AVRO"
                 if (result?.error != null) {
@@ -304,6 +408,35 @@ class JobService(private val config: Config, private val vm: Vm) :
                 }
             }
         }
+    }
+
+    /**
+     * Detects CDC envelope schemas and extracts the 'after' struct fields.
+     * CDC envelopes have: before, after, source, op, ts_ms (and optionally ts_us, ts_ns, transaction)
+     */
+    private fun unwrapCdcEnvelope(struct: Schema.Struct): List<String> {
+        val fieldNames = struct.value.map { it.name }.toSet()
+        val isCdcEnvelope = fieldNames.containsAll(setOf("before", "after", "source", "op"))
+
+        if (isCdcEnvelope) {
+            // Find the 'after' field and extract its struct fields
+            val afterField = struct.value.find { it.name == "after" }
+            val afterValue = afterField?.value
+
+            // Handle both direct Struct and Optional<Struct> (nullable in Avro)
+            val afterStruct = when (afterValue) {
+                is Schema.Struct -> afterValue
+                is Schema.Optional -> afterValue.value as? Schema.Struct
+                else -> null
+            }
+
+            if (afterStruct != null) {
+                return afterStruct.value.map { it.name }
+            }
+        }
+
+        // Not a CDC envelope, return top-level fields
+        return struct.value.map { it.name }
     }
 
     override suspend fun listOpenAIModels(request: ProtoJob.ListOpenAIModelsRequest): ProtoJob.ListOpenAIModelsResponse = listOpenAIModelsResponse {

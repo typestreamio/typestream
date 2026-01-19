@@ -16,11 +16,10 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, type AppNode } from './nodes';
-import { serializeGraph, serializeGraphWithDbSinks, type DbSinkConfig } from '../../utils/graphSerializer';
+import { serializeGraph, serializeGraphWithDbSinks } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
-import { useCreateJdbcSinkConnector } from '../../hooks/useConnections';
 import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
 
 let nodeId = 0;
@@ -34,7 +33,6 @@ export function GraphBuilder() {
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
   const inferSchemas = useInferGraphSchemas();
-  const createJdbcSinkConnector = useCreateJdbcSinkConnector();
 
   // Create a stable dependency key that tracks meaningful graph changes
   // (excludes validation state fields that we set)
@@ -204,46 +202,23 @@ export function GraphBuilder() {
     [setNodes]
   );
 
-  /**
-   * Create JDBC sink connectors via server-side RPC (credentials resolved server-side)
-   */
-  const createDbSinkConnectors = async (
-    jobId: string,
-    dbSinkConfigs: DbSinkConfig[]
-  ): Promise<void> => {
-    for (const config of dbSinkConfigs) {
-      const connectorName = `${jobId}-jdbc-sink-${config.nodeId}`;
-      const response = await createJdbcSinkConnector.mutateAsync({
-        connectionId: config.connectionId,
-        connectorName,
-        topics: config.intermediateTopic,
-        tableName: config.tableName,
-        insertMode: config.insertMode,
-        primaryKeyFields: config.primaryKeyFields || '',
-      });
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to create connector');
-      }
-    }
-  };
-
   const handleCreateJob = async () => {
     setCreateError(null);
     const { graph, dbSinkConfigs } = serializeGraphWithDbSinks(nodes, edges);
-    const request = new CreateJobFromGraphRequest({ userId: 'local', graph });
+
+    // Single consolidated request - server handles both job + connectors atomically
+    const request = new CreateJobFromGraphRequest({
+      userId: 'local',
+      graph,
+      dbSinkConfigs,  // Server creates connectors and rolls back on failure
+    });
 
     createJob.mutate(request, {
       onSuccess: (response) => {
         if (response.success && response.jobId) {
-          // Create DB sink connectors via server RPC (credentials resolved server-side)
-          if (dbSinkConfigs.length > 0) {
-            try {
-              await createDbSinkConnectors(response.jobId, dbSinkConfigs);
-            } catch (err) {
-              console.error('Failed to create JDBC sink connector:', err);
-              setCreateError(`Job created but JDBC sink connector failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-              // Still navigate to the job page even if connector creation failed
-            }
+          // Log created connectors for visibility
+          if (response.createdConnectors.length > 0) {
+            console.log('Created connectors:', response.createdConnectors);
           }
           navigate(`/jobs/${response.jobId}`);
         } else if (response.error) {

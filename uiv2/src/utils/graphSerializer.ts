@@ -14,28 +14,20 @@ import {
   GroupNode,
   CountNode,
   ReduceLatestNode,
+  DbSinkConfig,
 } from '../generated/job_pb';
 import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
-
-/**
- * Configuration for DB sink connectors (credentials resolved server-side)
- */
-export interface DbSinkConfig {
-  nodeId: string;
-  connectionId: string;      // Server resolves credentials from this
-  intermediateTopic: string;
-  tableName: string;
-  insertMode: string;
-  primaryKeyFields: string;
-}
 
 /**
  * Result of serializing a graph with DB sinks
  */
 export interface SerializedGraphWithDbSinks {
   graph: PipelineGraph;
-  dbSinkConfigs: DbSinkConfig[];
+  dbSinkConfigs: DbSinkConfig[];  // Proto objects ready for request
 }
+
+// Re-export for consumers that need the type
+export { DbSinkConfig };
 
 /**
  * Generate a unique topic name for intermediate JDBC sink output
@@ -66,6 +58,7 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
           value: new StreamSourceNode({
             dataStream: new DataStreamProto({ path: data.topicPath }),
             // Encoding is auto-detected from Schema Registry by the backend
+            unwrapCdc: data.unwrapCdc ?? false,
           }),
         },
       }));
@@ -106,15 +99,15 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
         },
       }));
 
-      // Record the DB sink configuration (credentials resolved server-side)
-      dbSinkConfigs.push({
+      // Record the DB sink configuration as proto (credentials resolved server-side)
+      dbSinkConfigs.push(new DbSinkConfig({
         nodeId: node.id,
         connectionId: data.connectionId,
         intermediateTopic,
         tableName: data.tableName || '',
         insertMode: data.insertMode || 'upsert',
         primaryKeyFields: data.primaryKeyFields || '',
-      });
+      }));
       return;
     }
 

@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
+import Autocomplete from '@mui/material/Autocomplete';
 import Typography from '@mui/material/Typography';
 import StorageIcon from '@mui/icons-material/Storage';
 import { BaseNode } from './BaseNode';
@@ -73,21 +71,22 @@ export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
           <MenuItem value="update">Update</MenuItem>
         </TextField>
         {(data.insertMode === 'upsert' || data.insertMode === 'update') && (
-          <FormControl fullWidth size="small" className="nodrag nowheel">
-            <InputLabel>Primary Key</InputLabel>
-            <Select
-              value={data.primaryKeyFields}
-              label="Primary Key"
-              onChange={(e) => updateNodeData(id, { primaryKeyFields: e.target.value })}
-              disabled={data.isInferring || fields.length === 0}
-            >
-              {fields.map((field) => (
-                <MenuItem key={field} value={field}>
-                  {field}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            freeSolo
+            size="small"
+            options={fields}
+            value={data.primaryKeyFields || ''}
+            onChange={(_, newValue) => updateNodeData(id, { primaryKeyFields: newValue || '' })}
+            onInputChange={(_, newValue) => updateNodeData(id, { primaryKeyFields: newValue })}
+            disabled={data.isInferring}
+            className="nodrag nowheel"
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Primary Key"
+              />
+            )}
+          />
         )}
       </BaseNode>
     </>

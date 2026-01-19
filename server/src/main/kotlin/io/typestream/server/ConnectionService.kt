@@ -450,11 +450,16 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             // Keys are written as UTF-8 strings by TypeStream
             "key.converter" to "org.apache.kafka.connect.storage.StringConverter",
             "value.converter" to "io.confluent.connect.avro.AvroConverter",
-            "value.converter.schema.registry.url" to "http://schema-registry:8081"
+            "value.converter.schema.registry.url" to (System.getenv("SCHEMA_REGISTRY_URL") ?: "http://redpanda:8081"),
+            // Unwrap Debezium CDC envelope to get flat record (extracts 'after' payload)
+            "transforms" to "unwrap",
+            "transforms.unwrap.type" to "io.debezium.transforms.ExtractNewRecordState",
+            "transforms.unwrap.drop.tombstones" to "true"
         )
 
         if (primaryKeyFields.isNotEmpty() && (insertMode == "upsert" || insertMode == "update")) {
-            connectorConfig["primary.key.mode"] = "record_key"
+            // Use record_value since TypeStream writes keys as strings, not structs
+            connectorConfig["primary.key.mode"] = "record_value"
             connectorConfig["primary.key.fields"] = primaryKeyFields
         }
 

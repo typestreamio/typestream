@@ -26,6 +26,7 @@ message CreateJobResponse {
     bool success = 1;
     string job_id = 2;
     string error = 3;
+    repeated string created_connectors = 4;  // Connector names created for DB sinks
 }
 
 enum Encoding {
@@ -78,6 +79,7 @@ message ShellSourceNode {
 message StreamSourceNode {
   DataStreamProto data_stream = 1;
   Encoding encoding = 2;
+  bool unwrap_cdc = 3;  // Extract 'after' payload from CDC envelope
 }
 
 message EachNode {
@@ -149,9 +151,20 @@ message PipelineGraph {
   repeated PipelineEdge edges = 2;
 }
 
+// Configuration for DB sink connectors (credentials resolved server-side)
+message DbSinkConfig {
+  string node_id = 1;
+  string connection_id = 2;        // Server resolves credentials from this
+  string table_name = 3;
+  string insert_mode = 4;
+  string primary_key_fields = 5;
+  string intermediate_topic = 6;   // Optional - server auto-generates if empty
+}
+
 message CreateJobFromGraphRequest {
   string user_id = 1;
   PipelineGraph graph = 2;
+  repeated DbSinkConfig db_sink_configs = 3;  // DB sink configurations
 }
 
 message ListJobsRequest {

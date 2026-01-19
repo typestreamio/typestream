@@ -18,6 +18,7 @@ export interface NodeValidationState {
 
 export interface KafkaSourceNodeData extends Record<string, unknown>, NodeValidationState {
   topicPath: string;
+  unwrapCdc?: boolean;  // Extract 'after' payload from CDC envelope
 }
 
 export interface KafkaSinkNodeData extends Record<string, unknown>, NodeValidationState {
