@@ -14,6 +14,9 @@ The server is the core of TypeStream - a Kotlin-based streaming data platform th
 | Streaming | Apache Kafka Streams |
 | Schemas | Avro, Protobuf (via Schema Registry) |
 | Async | Kotlin Coroutines |
+| AI/ML | OpenAI API (embeddings, chat completion) |
+| GeoIP | MaxMind GeoIP2 / DB-IP |
+| Text Extraction | Apache Tika |
 
 ## Directory Structure
 
@@ -24,20 +27,38 @@ server/src/main/kotlin/io/typestream/
 │   ├── Compiler.kt                  # Text → Graph
 │   ├── GraphCompiler.kt             # Proto → Graph
 │   ├── Interpreter.kt               # AST type binding
-│   ├── Infer.kt                     # Type validation
 │   ├── ast/                         # AST node definitions
 │   ├── lexer/                       # Tokenization
 │   ├── parser/                      # Parsing
 │   ├── node/                        # Execution graph nodes
-│   ├── types/                       # Type system (DataStream, Schema)
+│   ├── types/                       # Type system (DataStream, Schema, TypeRules)
+│   │   ├── DataStream.kt            # Core data abstraction
+│   │   ├── TypeRules.kt             # Centralized type inference rules
+│   │   ├── schema/                  # Schema types (Struct, String, etc.)
+│   │   └── datastream/              # Avro/Proto extensions
 │   └── vm/                          # Virtual machine
 ├── scheduler/                       # Job lifecycle
 │   ├── Scheduler.kt                 # Job orchestration
 │   ├── KafkaStreamsJob.kt           # Embedded execution
 │   └── K8sJob.kt                    # Kubernetes execution
 ├── filesystem/                      # Virtual filesystem
+│   ├── FileSystem.kt                # Root filesystem abstraction
+│   ├── catalog/                     # Schema Registry metadata cache
+│   └── kafka/                       # Kafka cluster directories
 ├── server/                          # gRPC service implementations
-└── kafka/                           # Kafka utilities & serdes
+│   ├── ConnectionService.kt         # Database connection monitoring
+│   ├── FileSystemService.kt         # Virtual FS operations
+│   ├── InteractiveSessionService.kt # REPL sessions
+│   ├── JobService.kt                # Job management
+│   └── StateQueryService.kt         # Kafka Streams state store queries
+├── kafka/                           # Kafka utilities & serdes
+│   ├── avro/                        # Avro serialization
+│   ├── protobuf/                    # Protobuf serialization
+│   └── schemaregistry/              # Schema Registry client
+├── embedding/                       # OpenAI embedding generation
+├── geoip/                           # GeoIP lookup services
+├── openai/                          # OpenAI chat completion
+└── textextractor/                   # Apache Tika text extraction
 ```
 
 ## Node Graph Builder
@@ -81,13 +102,19 @@ The graph is composed of sealed interface `Node` types:
 | `Count` | Counts records |
 | `Sink` | Writes to Kafka topic |
 | `Each` | Side effects |
+| `EmbeddingGenerator` | Generates OpenAI embeddings for text fields |
+| `GeoIp` | Adds country code from IP address lookup |
+| `OpenAiTransformer` | Transforms records using OpenAI chat completion |
+| `TextExtractor` | Extracts text from files using Apache Tika |
+| `DbSink` | Writes to database via JDBC |
 
 ### Type System
 
-`TypeRules.kt` is the single source of truth for type transformations:
-- Centralizes type inference rules
-- Ensures consistency across compilation paths
+`TypeRules.kt` (`compiler/types/TypeRules.kt`) is the single source of truth for type transformations:
+- Centralizes type inference rules for all node types
+- Ensures consistency across text-based and proto-based compilation paths
 - Validates schema compatibility at compile time
+- Used by both `Compiler.kt` and `GraphCompiler.kt`
 
 ## Jobs
 
@@ -136,9 +163,11 @@ Manages job lifecycle with Kotlin coroutines:
 
 | Service | Methods | Purpose |
 |---------|---------|---------|
-| FileSystemService | Mount, Unmount, Ls | Virtual filesystem operations |
-| InteractiveSessionService | StartSession, RunProgram, GetProgramOutput | Interactive REPL |
-| JobService | CreateJob, CreateJobFromGraph, ListJobs | Job management |
+| FileSystemService | Mount, Unmount, Ls, GetSchema | Virtual filesystem operations |
+| InteractiveSessionService | StartSession, RunProgram, GetProgramOutput, CompleteProgram | Interactive REPL |
+| JobService | CreateJob, CreateJobFromGraph, ListJobs, GetJobOutput | Job management |
+| ConnectionService | RegisterConnection, GetConnectionStatuses, TestConnection | Database connection monitoring |
+| StateQueryService | ListStores, GetValue, GetAllValues | Query Kafka Streams state stores |
 
 ## Virtual Filesystem
 
@@ -196,6 +225,39 @@ TypeStream can consume Avro topics from any producer:
 | `SchemaRegistryClient.kt` | HTTP client for Schema Registry API |
 | `GenericDataWithLogicalTypes.kt` | Avro logical type support |
 
+## AI/ML Enrichment Services
+
+TypeStream supports several AI/ML enrichment nodes that can be added to pipelines:
+
+### Embedding Generator (`embedding/`)
+
+Generates vector embeddings using OpenAI's embedding API:
+- `EmbeddingGeneratorService.kt`: HTTP client for OpenAI embeddings API
+- `EmbeddingGeneratorNodeHandler.kt`: Converts proto to `Node.EmbeddingGenerator`
+- `EmbeddingGeneratorExecution.kt`: Applies embeddings to shell/Kafka streams
+
+### GeoIP Lookup (`geoip/`)
+
+Adds country codes from IP address lookups using MaxMind GeoIP2:
+- `GeoIpService.kt`: Database reader for DB-IP/MaxMind databases
+- `GeoIpDatabaseManager.kt`: Auto-downloads DB-IP lite database
+- `GeoIpNodeHandler.kt`: Converts proto to `Node.GeoIp`
+- `GeoIpExecution.kt`: Applies GeoIP lookups to streams
+
+### OpenAI Transformer (`openai/`)
+
+Transforms records using OpenAI chat completion:
+- `OpenAiService.kt`: HTTP client for OpenAI chat/models API
+- `OpenAiTransformerNodeHandler.kt`: Converts proto to `Node.OpenAiTransformer`
+- `OpenAiTransformerExecution.kt`: Applies chat completion to streams
+
+### Text Extractor (`textextractor/`)
+
+Extracts text from files using Apache Tika:
+- `TextExtractorService.kt`: HTTP client for Tika server
+- `TextExtractorNodeHandler.kt`: Converts proto to `Node.TextExtractor`
+- `TextExtractorExecution.kt`: Applies text extraction to streams
+
 ## Key Files
 
 | File | Purpose |
@@ -203,8 +265,12 @@ TypeStream can consume Avro topics from any producer:
 | `Compiler.kt` | Text → Graph compilation |
 | `GraphCompiler.kt` | Proto → Graph compilation |
 | `Interpreter.kt` | AST traversal, type binding |
-| `TypeRules.kt` | Centralized type inference |
+| `TypeRules.kt` | Centralized type inference for all node types |
 | `KafkaStreamsJob.kt` | Topology builder, job execution |
 | `Scheduler.kt` | Job queue and lifecycle |
 | `Vm.kt` | Execution routing (KAFKA vs SHELL) |
+| `ConnectionService.kt` | JDBC connection monitoring with health checks |
+| `StateQueryService.kt` | Kafka Streams state store queries |
 | `DataStreamSerde.kt` | Kafka serialization |
+| `AvroSerde.kt` | Avro serialization with Schema Registry |
+| `FileSystem.kt` | Virtual filesystem with catalog integration |
