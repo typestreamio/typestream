@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import Box from '@mui/material/Box';
 
 interface SparklineProps {
@@ -6,45 +6,21 @@ interface SparklineProps {
   width?: number;
   height?: number;
   color?: string;
-  fillOpacity?: number;
+  showTooltip?: boolean;
 }
 
 /**
- * A lightweight SVG sparkline component for visualizing time-series data.
- * Renders a polyline with optional gradient fill below the line.
+ * A sparkline component for visualizing time-series data.
+ * Uses MUI X Charts SparkLineChart with tooltip support.
  */
 export function Sparkline({
   data,
   width = 80,
   height = 24,
   color = '#646cff',
-  fillOpacity = 0.2,
+  showTooltip = true,
 }: SparklineProps) {
-  const { linePoints, fillPath } = useMemo(() => {
-    if (data.length === 0) {
-      return { linePoints: '', fillPath: '' };
-    }
-
-    // Find max value for scaling (minimum of 1 to avoid division by zero)
-    const max = Math.max(...data, 1);
-
-    // Calculate points
-    const points = data.map((value, index) => {
-      const x = (index / Math.max(data.length - 1, 1)) * width;
-      const y = height - (value / max) * height * 0.9; // 90% height to leave margin
-      return { x, y };
-    });
-
-    // Create polyline points string
-    const linePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
-
-    // Create closed path for fill (line + bottom edge)
-    const fillPath = `M 0,${height} L ${linePoints} L ${width},${height} Z`;
-
-    return { linePoints, fillPath };
-  }, [data, width, height]);
-
-  // Show placeholder line when no data
+  // Show placeholder when no data
   if (data.length === 0) {
     return (
       <Box
@@ -68,27 +44,16 @@ export function Sparkline({
   }
 
   return (
-    <Box
-      component="svg"
+    <SparkLineChart
+      data={data}
       width={width}
       height={height}
-      sx={{ display: 'block' }}
-    >
-      {/* Gradient fill under the line */}
-      <path
-        d={fillPath}
-        fill={color}
-        fillOpacity={fillOpacity}
-      />
-      {/* The sparkline */}
-      <polyline
-        points={linePoints}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Box>
+      color={color}
+      curve="natural"
+      area
+      showTooltip={showTooltip}
+      showHighlight
+      valueFormatter={(value) => `${value?.toFixed(1) ?? 0} msg/s`}
+    />
   );
 }
