@@ -33,34 +33,50 @@ export function ThroughputHistoryProvider({ children }: ThroughputHistoryProvide
     return [...(historyRef.current.get(jobId) ?? [])];
   }, []);
 
+  // Track last recorded values to avoid unnecessary re-renders
+  const lastValuesRef = useRef<Map<string, number>>(new Map());
+
   const recordValues = useCallback((jobs: JobInfo[]) => {
     const currentJobIds = new Set(jobs.map((j) => j.jobId));
+    let hasChanges = false;
 
     // Record values for each job
     for (const job of jobs) {
       const value = job.throughput?.messagesPerSecond ?? 0;
-      const history = historyRef.current.get(job.jobId) ?? [];
+      const lastValue = lastValuesRef.current.get(job.jobId);
 
-      // Add new value
-      history.push(value);
+      // Only record if value changed or this is a new job
+      if (lastValue === undefined || lastValue !== value) {
+        hasChanges = true;
+        lastValuesRef.current.set(job.jobId, value);
 
-      // Keep only the last MAX_HISTORY_POINTS
-      if (history.length > MAX_HISTORY_POINTS) {
-        history.shift();
+        const history = historyRef.current.get(job.jobId) ?? [];
+
+        // Add new value
+        history.push(value);
+
+        // Keep only the last MAX_HISTORY_POINTS
+        if (history.length > MAX_HISTORY_POINTS) {
+          history.shift();
+        }
+
+        historyRef.current.set(job.jobId, history);
       }
-
-      historyRef.current.set(job.jobId, history);
     }
 
     // Clean up jobs that no longer exist
     for (const jobId of historyRef.current.keys()) {
       if (!currentJobIds.has(jobId)) {
         historyRef.current.delete(jobId);
+        lastValuesRef.current.delete(jobId);
+        hasChanges = true;
       }
     }
 
-    // Increment version to trigger re-renders in consumers
-    setVersion((v) => v + 1);
+    // Only increment version if data actually changed
+    if (hasChanges) {
+      setVersion((v) => v + 1);
+    }
   }, []);
 
   return (
