@@ -14,12 +14,15 @@ import { JobStatusChip } from '../components/JobStatusChip';
 import { JobState } from '../generated/job_pb';
 import { formatThroughput, formatBytes, formatNumber } from '../utils/formatters';
 import { PipelineGraphViewer } from '../components/graph-builder/PipelineGraphViewer';
+import { Sparkline } from '../components/Sparkline';
+import { useThroughputHistory } from '../hooks/useThroughputHistory';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const { data, isLoading, error } = useListJobs('local');
   const { data: storesData } = useListStores();
+  const throughputHistory = useThroughputHistory(jobId ?? '');
 
   const job = data?.jobs.find((j) => j.jobId === jobId);
   const jobStores = storesData?.stores.filter((s) => s.jobId === jobId) ?? [];
@@ -133,6 +136,18 @@ export function JobDetailPage() {
                     <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
                       {formatBytes(Number(job.throughput.totalBytes))}
                     </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Activity (last 2 minutes)
+                  </Typography>
+                  <Box sx={{ bgcolor: 'grey.900', borderRadius: 1, p: 1.5 }}>
+                    <Sparkline
+                      data={throughputHistory}
+                      width={300}
+                      height={60}
+                    />
                   </Box>
                 </Box>
               </>

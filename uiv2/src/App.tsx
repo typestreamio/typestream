@@ -7,9 +7,11 @@ import { ConnectionsPage } from './pages/ConnectionsPage';
 import { ConnectionCreatePage } from './pages/ConnectionCreatePage';
 import { ConnectorsPage } from './pages/ConnectorsPage';
 import { ConnectorCreatePage } from './pages/ConnectorCreatePage';
+import { ThroughputHistoryProvider } from './providers/ThroughputHistoryProvider';
 
 function App() {
   return (
+    <ThroughputHistoryProvider>
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/jobs" replace />} />
@@ -23,6 +25,7 @@ function App() {
         <Route path="/connectors/new" element={<ConnectorCreatePage />} />
       </Route>
     </Routes>
+    </ThroughputHistoryProvider>
   );
 }
 
