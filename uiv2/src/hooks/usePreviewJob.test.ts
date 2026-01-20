@@ -89,13 +89,14 @@ describe('usePreviewJob', () => {
     expect(result.current.jobId).toBe('job-123');
     expect(result.current.messages).toHaveLength(2);
     expect(result.current.messages[0]).toEqual({
+      id: 'msg-1',
       key: 'k1',
       value: 'v1',
       timestamp: 1000,
     });
   });
 
-  it('should limit messages to last 100', async () => {
+  it('should limit messages to 100', async () => {
     mockCreatePreviewJob.mockResolvedValueOnce({
       success: true,
       error: '',
@@ -123,9 +124,9 @@ describe('usePreviewJob', () => {
     });
 
     expect(result.current.messages).toHaveLength(100);
-    // Should have the last 100 messages (50-149)
-    expect(result.current.messages[0].key).toBe('k50');
-    expect(result.current.messages[99].key).toBe('k149');
+    // Should have the first 100 messages (0-99) since we stop after reaching the limit
+    expect(result.current.messages[0].key).toBe('k0');
+    expect(result.current.messages[99].key).toBe('k99');
   });
 
   it('should call stopPreviewJob when stopPreview is called', async () => {

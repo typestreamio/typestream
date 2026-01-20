@@ -11,7 +11,7 @@ import { StreamInspectorPanel } from './StreamInspectorPanel';
 const mockStartPreview = vi.fn();
 const mockStopPreview = vi.fn();
 let mockIsStreaming = false;
-let mockMessages: Array<{ key: string; value: string; timestamp: number }> = [];
+let mockMessages: Array<{ id: string; key: string; value: string; timestamp: number }> = [];
 let mockError: string | null = null;
 
 // Mock the usePreviewJob hook
@@ -120,7 +120,7 @@ describe('StreamInspectorPanel', () => {
     // Simulate what happens when the preview job is created and state updates
     // This would cause stopPreview function reference to change
     mockIsStreaming = true;
-    mockMessages = [{ key: 'k1', value: 'v1', timestamp: 1000 }];
+    mockMessages = [{ id: 'msg-1', key: 'k1', value: 'v1', timestamp: 1000 }];
 
     // Force a rerender (simulates hook state changing)
     rerender(
@@ -167,8 +167,8 @@ describe('StreamInspectorPanel', () => {
 
   it('should display messages in the table', () => {
     mockMessages = [
-      { key: 'key1', value: '{"data": "test1"}', timestamp: 1704067200000 },
-      { key: 'key2', value: '{"data": "test2"}', timestamp: 1704067201000 },
+      { id: 'msg-1', key: 'key1', value: '{"data": "test1"}', timestamp: 1704067200000 },
+      { id: 'msg-2', key: 'key2', value: '{"data": "test2"}', timestamp: 1704067201000 },
     ];
     renderPanel(true);
 
@@ -181,8 +181,8 @@ describe('StreamInspectorPanel', () => {
 
   it('should display message count', () => {
     mockMessages = [
-      { key: 'k1', value: 'v1', timestamp: 1000 },
-      { key: 'k2', value: 'v2', timestamp: 2000 },
+      { id: 'msg-1', key: 'k1', value: 'v1', timestamp: 1000 },
+      { id: 'msg-2', key: 'k2', value: 'v2', timestamp: 2000 },
     ];
     renderPanel(true);
 
@@ -206,7 +206,7 @@ describe('StreamInspectorPanel', () => {
   });
 
   it('should handle dash key display for empty keys', () => {
-    mockMessages = [{ key: '', value: 'value-only', timestamp: 1000 }];
+    mockMessages = [{ id: 'msg-1', key: '', value: 'value-only', timestamp: 1000 }];
     renderPanel(true);
 
     expect(screen.getByText('-')).toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('StreamInspectorPanel', () => {
   it('should expand message row when clicked', async () => {
     const user = userEvent.setup();
     mockMessages = [
-      { key: 'key1', value: '{"name": "test", "count": 42}', timestamp: 1704067200000 },
+      { id: 'msg-1', key: 'key1', value: '{"name": "test", "count": 42}', timestamp: 1704067200000 },
     ];
     renderPanel(true);
 
@@ -225,7 +225,7 @@ describe('StreamInspectorPanel', () => {
     expect(screen.getByText('"test"')).toBeInTheDocument();
 
     // Click to expand
-    const row = screen.getByTestId('message-row-0');
+    const row = screen.getByTestId('message-row-msg-1');
     await user.click(row);
 
     // After expanding, the formatted JSON should be visible with proper indentation
@@ -236,12 +236,12 @@ describe('StreamInspectorPanel', () => {
   it('should collapse expanded message row when clicked again', async () => {
     const user = userEvent.setup();
     mockMessages = [
-      { key: 'key1', value: '{"name": "test"}', timestamp: 1704067200000 },
+      { id: 'msg-1', key: 'key1', value: '{"name": "test"}', timestamp: 1704067200000 },
     ];
     renderPanel(true);
 
     // Click to expand
-    const row = screen.getByTestId('message-row-0');
+    const row = screen.getByTestId('message-row-msg-1');
     await user.click(row);
 
     // Click again to collapse
@@ -255,7 +255,7 @@ describe('StreamInspectorPanel', () => {
   it('should show expand icon for collapsed rows and collapse icon for expanded rows', async () => {
     const user = userEvent.setup();
     mockMessages = [
-      { key: 'key1', value: '{"data": "test"}', timestamp: 1704067200000 },
+      { id: 'msg-1', key: 'key1', value: '{"data": "test"}', timestamp: 1704067200000 },
     ];
     renderPanel(true);
 
@@ -263,7 +263,7 @@ describe('StreamInspectorPanel', () => {
     expect(screen.getByRole('button', { name: /expand/i })).toBeInTheDocument();
 
     // Click to expand
-    const row = screen.getByTestId('message-row-0');
+    const row = screen.getByTestId('message-row-msg-1');
     await user.click(row);
 
     // Should now show collapse button
@@ -273,12 +273,12 @@ describe('StreamInspectorPanel', () => {
   it('should handle non-JSON values when expanded', async () => {
     const user = userEvent.setup();
     mockMessages = [
-      { key: 'key1', value: 'plain text message', timestamp: 1704067200000 },
+      { id: 'msg-1', key: 'key1', value: 'plain text message', timestamp: 1704067200000 },
     ];
     renderPanel(true);
 
     // Click to expand
-    const row = screen.getByTestId('message-row-0');
+    const row = screen.getByTestId('message-row-msg-1');
     await user.click(row);
 
     // Should still display the plain text
