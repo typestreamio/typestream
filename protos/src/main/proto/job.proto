@@ -241,10 +241,16 @@ message InferGraphSchemasResponse {
   map<string, NodeSchemaResult> schemas = 1;
 }
 
+message SchemaField {
+  string name = 1;
+  string type = 2;
+}
+
 message NodeSchemaResult {
   repeated string fields = 1;
-  string encoding = 2;
-  string error = 3;
+  repeated SchemaField typed_fields = 2;
+  string encoding = 3;
+  string error = 4;
 }
 
 // OpenAI models listing

@@ -1890,6 +1890,49 @@ export class InferGraphSchemasResponse extends Message<InferGraphSchemasResponse
 }
 
 /**
+ * @generated from message io.typestream.grpc.SchemaField
+ */
+export class SchemaField extends Message<SchemaField> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string type = 2;
+   */
+  type = "";
+
+  constructor(data?: PartialMessage<SchemaField>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.SchemaField";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SchemaField {
+    return new SchemaField().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SchemaField {
+    return new SchemaField().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SchemaField {
+    return new SchemaField().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SchemaField | PlainMessage<SchemaField> | undefined, b: SchemaField | PlainMessage<SchemaField> | undefined): boolean {
+    return proto3.util.equals(SchemaField, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.NodeSchemaResult
  */
 export class NodeSchemaResult extends Message<NodeSchemaResult> {
@@ -1899,12 +1942,17 @@ export class NodeSchemaResult extends Message<NodeSchemaResult> {
   fields: string[] = [];
 
   /**
-   * @generated from field: string encoding = 2;
+   * @generated from field: repeated io.typestream.grpc.SchemaField typed_fields = 2;
+   */
+  typedFields: SchemaField[] = [];
+
+  /**
+   * @generated from field: string encoding = 3;
    */
   encoding = "";
 
   /**
-   * @generated from field: string error = 3;
+   * @generated from field: string error = 4;
    */
   error = "";
 
@@ -1917,8 +1965,9 @@ export class NodeSchemaResult extends Message<NodeSchemaResult> {
   static readonly typeName = "io.typestream.grpc.NodeSchemaResult";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "fields", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 2, name: "encoding", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "typed_fields", kind: "message", T: SchemaField, repeated: true },
+    { no: 3, name: "encoding", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): NodeSchemaResult {

@@ -9,11 +9,41 @@ import { TextExtractorNode, textExtractorRole } from './TextExtractorNode';
 import { EmbeddingGeneratorNode, embeddingGeneratorRole } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode, openAiTransformerRole } from './OpenAiTransformerNode';
 
+// Schema field with type information
+export interface SchemaField {
+  name: string;
+  type: string;  // e.g., "String", "Long", "Optional<DateTime>"
+}
+
 // Common validation state for all nodes - populated by schema inference
 export interface NodeValidationState {
-  outputSchema?: string[];  // Computed output fields for this node
-  schemaError?: string;     // Validation error message
-  isInferring?: boolean;    // Loading indicator during inference
+  outputSchema?: SchemaField[];  // Computed output fields with types for this node
+  schemaError?: string;          // Validation error message
+  isInferring?: boolean;         // Loading indicator during inference
+}
+
+// Field type categories for dropdown compatibility
+export type FieldTypeCategory = 'string' | 'numeric' | 'any';
+
+// Node field requirements - specifies what type category each field input expects
+export const nodeFieldRequirements: Record<string, Record<string, FieldTypeCategory>> = {
+  geoIp: { ipField: 'string' },
+  textExtractor: { filePathField: 'string' },
+  embeddingGenerator: { textField: 'string' },
+  materializedView: { groupByField: 'any' },
+  dbSink: { primaryKeyFields: 'any' },
+};
+
+// Check if a field type is compatible with a required type category
+export function isTypeCompatible(fieldType: string, required: FieldTypeCategory): boolean {
+  if (required === 'any') return true;
+  if (required === 'string') {
+    return fieldType === 'String' || fieldType.startsWith('Optional<String');
+  }
+  if (required === 'numeric') {
+    return ['Int', 'Long', 'Float', 'Double', 'Decimal'].some(t => fieldType.includes(t));
+  }
+  return false;
 }
 
 export interface KafkaSourceNodeData extends Record<string, unknown>, NodeValidationState {

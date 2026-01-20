@@ -1,12 +1,14 @@
+import { useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import MemoryIcon from '@mui/icons-material/Memory';
 import { BaseNode } from './BaseNode';
-import type { EmbeddingGeneratorNodeType, NodeValidationState } from './index';
+import { isTypeCompatible, type EmbeddingGeneratorNodeType, type NodeValidationState } from './index';
 
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const embeddingGeneratorRole = 'transform' as const;
@@ -26,6 +28,16 @@ export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGenerato
   const upstreamData = upstreamNode?.data as NodeValidationState | undefined;
   const fields = upstreamData?.outputSchema ?? [];
 
+  // Get compatible fields for auto-selection (text field should be string type)
+  const compatibleFields = fields.filter(f => isTypeCompatible(f.type, 'string'));
+
+  // Auto-select first compatible field when schema loads and no field is selected
+  useEffect(() => {
+    if (!data.textField && compatibleFields.length > 0) {
+      updateNodeData(id, { textField: compatibleFields[0].name });
+    }
+  }, [data.textField, compatibleFields, id, updateNodeData]);
+
   return (
     <>
       <Handle type="target" position={Position.Left} />
@@ -34,6 +46,7 @@ export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGenerato
         icon={<MemoryIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>Text Field</InputLabel>
@@ -43,11 +56,22 @@ export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGenerato
             onChange={(e) => updateNodeData(id, { textField: e.target.value })}
             disabled={data.isInferring || fields.length === 0}
           >
-            {fields.map((field) => (
-              <MenuItem key={field} value={field}>
-                {field}
-              </MenuItem>
-            ))}
+            {fields.map((field) => {
+              const compatible = isTypeCompatible(field.type, 'string');
+              return (
+                <MenuItem
+                  key={field.name}
+                  value={field.name}
+                  disabled={!compatible}
+                  sx={{ opacity: compatible ? 1 : 0.5 }}
+                >
+                  {field.name}
+                  <Typography component="span" color="text.secondary" sx={{ ml: 1, fontSize: '0.75rem' }}>
+                    ({field.type})
+                  </Typography>
+                </MenuItem>
+              );
+            })}
           </Select>
         </FormControl>
         <TextField

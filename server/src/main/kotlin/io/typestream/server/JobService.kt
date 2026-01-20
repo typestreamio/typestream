@@ -24,6 +24,7 @@ import io.typestream.grpc.job_service.jobInfo
 import io.typestream.grpc.job_service.jobThroughput
 import io.typestream.grpc.job_service.inferGraphSchemasResponse
 import io.typestream.grpc.job_service.nodeSchemaResult
+import io.typestream.grpc.job_service.schemaField
 import io.typestream.grpc.job_service.listOpenAIModelsResponse
 import io.typestream.grpc.job_service.openAIModel
 import io.typestream.openai.OpenAiService
@@ -396,11 +397,18 @@ class JobService(
         request.graph.nodesList.forEach { node ->
             val result = results[node.id]
             schemas[node.id] = nodeSchemaResult {
-                if (result?.schema?.schema is Schema.Struct) {
-                    val struct = result.schema.schema as Schema.Struct
+                val schema = result?.schema?.schema
+                if (schema is Schema.Struct) {
                     // For CDC envelope schemas, extract fields from 'after' payload
-                    val unwrappedFields = unwrapCdcEnvelope(struct)
-                    fields += unwrappedFields
+                    val unwrappedStruct = unwrapCdcEnvelopeStruct(schema)
+                    // Populate both fields (backward compat) and typed_fields (new)
+                    unwrappedStruct.value.forEach { field ->
+                        fields += field.name
+                        typedFields += schemaField {
+                            name = field.name
+                            type = field.value.printTypes()
+                        }
+                    }
                 }
                 encoding = result?.encoding?.name ?: "AVRO"
                 if (result?.error != null) {
@@ -411,15 +419,16 @@ class JobService(
     }
 
     /**
-     * Detects CDC envelope schemas and extracts the 'after' struct fields.
+     * Detects CDC envelope schemas and extracts the 'after' struct.
      * CDC envelopes have: before, after, source, op, ts_ms (and optionally ts_us, ts_ns, transaction)
+     * Returns the inner struct so we can access both field names and types.
      */
-    private fun unwrapCdcEnvelope(struct: Schema.Struct): List<String> {
+    private fun unwrapCdcEnvelopeStruct(struct: Schema.Struct): Schema.Struct {
         val fieldNames = struct.value.map { it.name }.toSet()
         val isCdcEnvelope = fieldNames.containsAll(setOf("before", "after", "source", "op"))
 
         if (isCdcEnvelope) {
-            // Find the 'after' field and extract its struct fields
+            // Find the 'after' field and extract its struct
             val afterField = struct.value.find { it.name == "after" }
             val afterValue = afterField?.value
 
@@ -431,12 +440,12 @@ class JobService(
             }
 
             if (afterStruct != null) {
-                return afterStruct.value.map { it.name }
+                return afterStruct
             }
         }
 
-        // Not a CDC envelope, return top-level fields
-        return struct.value.map { it.name }
+        // Not a CDC envelope, return original struct
+        return struct
     }
 
     override suspend fun listOpenAIModels(request: ProtoJob.ListOpenAIModelsRequest): ProtoJob.ListOpenAIModelsResponse = listOpenAIModelsResponse {
