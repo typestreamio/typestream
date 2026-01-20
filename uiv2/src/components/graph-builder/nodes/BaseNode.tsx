@@ -61,20 +61,6 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
           {title}
         </Typography>
         {isInferring && <CircularProgress size={14} />}
-        <Tooltip title="Delete node">
-          <IconButton
-            size="small"
-            onClick={handleDelete}
-            className="nodrag"
-            sx={{
-              p: 0.25,
-              opacity: 0.5,
-              '&:hover': { opacity: 1, color: 'error.main' },
-            }}
-          >
-            <DeleteOutlineIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
         {outputSchema && outputSchema.length > 0 && (
           <Tooltip
             title={
@@ -108,6 +94,20 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
             <ErrorOutlineIcon color="error" fontSize="small" />
           </Tooltip>
         )}
+        <Tooltip title="Delete node">
+          <IconButton
+            size="small"
+            onClick={handleDelete}
+            className="nodrag"
+            sx={{
+              p: 0.25,
+              opacity: 0.5,
+              '&:hover': { opacity: 1, color: 'error.main' },
+            }}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
       <Box sx={{ p: 1.5 }}>{children}</Box>
     </Paper>
