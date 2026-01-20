@@ -237,8 +237,13 @@ data class KafkaStreamSource(
         stream = OpenAiTransformerExecution.applyToKafka(openAiTransformer, stream, openAiService)
     }
 
+    /**
+     * Creates a branch in the Kafka Streams topology for preview/inspection.
+     * Writes records to a side-channel topic without interrupting downstream flow.
+     * The topic is consumed by [KafkaStreamsJob.output] via a real KafkaConsumer,
+     * and streamed to the UI via [JobService.streamPreview].
+     */
     fun toInspector(inspector: Node.Inspector, programId: String) {
-        // Write to an inspector topic for preview consumption
         val inspectTopic = "$programId-inspect-${inspector.id}"
         stream.to(inspectTopic)
     }

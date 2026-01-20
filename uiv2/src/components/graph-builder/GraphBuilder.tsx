@@ -234,9 +234,9 @@ export function GraphBuilder() {
       // Fixed Y position (vertically centered in canvas)
       const fixedY = bounds.height / 2 - 50;
 
-      // Calculate X position: 15px to the right of the rightmost node
+      // Calculate X position: 30px to the right of the rightmost node
       const DEFAULT_NODE_WIDTH = 220; // minWidth from BaseNode
-      const NODE_GAP = 15;
+      const NODE_GAP = 30;
 
       let newX: number;
       let rightmostNode: AppNode | null = null;
@@ -347,7 +347,6 @@ export function GraphBuilder() {
             onDrop={onDrop}
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
-            fitView
             colorMode="light"
           >
             <Background color={theme.palette.primary.main} gap={16} />

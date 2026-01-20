@@ -19,10 +19,11 @@ interface BaseNodeProps {
   error?: string;
   isInferring?: boolean;
   outputSchema?: SchemaField[];
+  onPreviewClick?: () => void;
   children: ReactNode;
 }
 
-export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, children }: BaseNodeProps) {
+export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, onPreviewClick, children }: BaseNodeProps) {
   const { deleteElements } = useReactFlow();
 
   const handleDelete = useCallback(() => {
@@ -86,7 +87,18 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
             }
             arrow
           >
-            <InfoOutlinedIcon fontSize="small" sx={{ cursor: 'help', opacity: 0.6 }} />
+            <IconButton
+              size="small"
+              onClick={onPreviewClick}
+              className="nodrag"
+              sx={{
+                p: 0.25,
+                opacity: 0.6,
+                '&:hover': { opacity: 1 },
+              }}
+            >
+              <InfoOutlinedIcon fontSize="small" />
+            </IconButton>
           </Tooltip>
         )}
         {error && (

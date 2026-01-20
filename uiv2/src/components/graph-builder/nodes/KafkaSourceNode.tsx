@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import InputIcon from '@mui/icons-material/Input';
 import { BaseNode } from './BaseNode';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 import { useKafkaTopics } from '../../../hooks/useKafkaTopics';
 import { Encoding } from '../../../generated/job_pb';
 import type { KafkaSourceNodeType } from './index';
@@ -32,6 +33,7 @@ export const kafkaSourceRole = 'source' as const;
 export const KafkaSourceNode = memo(function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
   const { topics } = useKafkaTopics();
   const { updateNodeData } = useReactFlow();
+  const [previewPanelOpen, setPreviewPanelOpen] = useState(false);
 
   const selectedTopic = topics.find(
     (t) => `/dev/kafka/local/topics/${t.name}` === data.topicPath
@@ -49,6 +51,7 @@ export const KafkaSourceNode = memo(function KafkaSourceNode({ id, data }: NodeP
         error={data.schemaError}
         isInferring={data.isInferring}
         outputSchema={data.outputSchema}
+        onPreviewClick={() => setPreviewPanelOpen(true)}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel">
           <InputLabel>Topic</InputLabel>
@@ -93,6 +96,13 @@ export const KafkaSourceNode = memo(function KafkaSourceNode({ id, data }: NodeP
         )}
       </BaseNode>
       <Handle type="source" position={Position.Right} />
+
+      <NodeSnapshotPanel
+        open={previewPanelOpen}
+        onClose={() => setPreviewPanelOpen(false)}
+        nodeId={id}
+        nodeTitle="Kafka Source"
+      />
     </>
   );
 });

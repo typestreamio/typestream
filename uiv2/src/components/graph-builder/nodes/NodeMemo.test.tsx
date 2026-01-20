@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import { ReactFlowProvider, ReactFlow, useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
+import { ReactFlowProvider, ReactFlow, useNodesState, type Node } from '@xyflow/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { MemoryRouter } from 'react-router-dom';
-import { memo, useMemo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { nodeTypes, type KafkaSourceNodeData, type KafkaSinkNodeData } from './index';
 
 // Mock the hooks that make network calls
@@ -78,13 +78,15 @@ describe('Node memo behavior', () => {
       // Define stable nodeTypes outside the component
       const testNodeTypes = { test: MemoizedTestNode };
 
-      const setNodesRef = { current: null as ((updater: (nodes: Node[]) => Node[]) => void) | null };
+      const setNodesRef = { current: null as ReturnType<typeof useNodesState>[1] | null };
+
+      const initialNodes: Node[] = [
+        { id: 'node-1', type: 'test', position: { x: 0, y: 0 }, data: {} },
+        { id: 'node-2', type: 'test', position: { x: 200, y: 0 }, data: {} },
+      ];
 
       function TestGraph() {
-        const [nodes, setNodes, onNodesChange] = useNodesState([
-          { id: 'node-1', type: 'test', position: { x: 0, y: 0 }, data: {} },
-          { id: 'node-2', type: 'test', position: { x: 200, y: 0 }, data: {} },
-        ]);
+        const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
         setNodesRef.current = setNodes;
 
         return (
@@ -153,12 +155,14 @@ describe('Node memo behavior', () => {
       };
 
       const testNodeTypes = { test: NonMemoizedTestNode };
-      const setNodesRef = { current: null as ((updater: (nodes: Node[]) => Node[]) => void) | null };
+      const setNodesRef = { current: null as ReturnType<typeof useNodesState>[1] | null };
+
+      const initialNodes: Node[] = [
+        { id: 'node-1', type: 'test', position: { x: 0, y: 0 }, data: {} },
+      ];
 
       function TestGraph() {
-        const [nodes, setNodes, onNodesChange] = useNodesState([
-          { id: 'node-1', type: 'test', position: { x: 0, y: 0 }, data: {} },
-        ]);
+        const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
         setNodesRef.current = setNodes;
 
         return (
@@ -267,7 +271,7 @@ describe('Node memo behavior', () => {
         },
       ];
 
-      const setNodesRef = { current: null as ((updater: (nodes: Node[]) => Node[]) => void) | null };
+      const setNodesRef = { current: null as ReturnType<typeof useNodesState<Node<KafkaSourceNodeData>>>[1] | null };
 
       function TestGraph() {
         const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -293,7 +297,7 @@ describe('Node memo behavior', () => {
       // Simulate rapid position updates (like fast dragging)
       for (let i = 0; i < 20; i++) {
         await act(async () => {
-          setNodesRef.current?.((nodes) =>
+          setNodesRef.current?.((nodes: Node<KafkaSourceNodeData>[]) =>
             nodes.map((n) => ({
               ...n,
               position: { x: i * 10, y: i * 10 },

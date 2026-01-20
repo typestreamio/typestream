@@ -24,6 +24,11 @@ import java.util.Properties
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+/**
+ * A key-value record from a Kafka topic, used for preview streaming.
+ */
+data class PreviewRecord(val key: String, val value: String)
+
 
 /**
  * A Kafka Streams-based job that executes a compiled TypeStream program.
@@ -119,8 +124,12 @@ class KafkaStreamsJob(
 
     override fun output() = output("${program.id}-stdout")
 
+    /**
+     * Creates a real KafkaConsumer to poll records from the given topic.
+     * Used by [JobService.streamPreview] to stream inspector output to the UI.
+     * The consumer reads from earliest offset and emits JSON-serialized records.
+     */
     fun output(topic: String) = flow {
-        // Retry until job is running (may be starting up)
         retry {
             require(isRunning()) { "cannot get output of a non-running job" }
         }
@@ -139,6 +148,31 @@ class KafkaStreamsJob(
         if (kafkaStreams?.state()?.equals(KafkaStreams.State.ERROR) == true) {
             emit("${program.id} exited with error")
         }
+        consumer.close()
+    }
+
+    /**
+     * Creates a real KafkaConsumer to poll records from the given topic, returning both key and value.
+     * Used by [JobService.streamPreview] to stream inspector output with keys to the UI.
+     * The consumer reads from earliest offset and emits key-value pairs.
+     */
+    fun outputWithKey(topic: String) = flow {
+        retry {
+            require(isRunning()) { "cannot get output of a non-running job" }
+        }
+
+        val consumer = KafkaConsumer<DataStream, DataStream>(consumerProps(topic))
+        consumer.subscribe(listOf(topic))
+
+        while (isRunning()) {
+            val records = consumer.poll(1.seconds.toJavaDuration())
+            records.forEach {
+                val keyElement = it.key()?.schema?.toJsonElement()?.toString() ?: ""
+                val valueElement = it.value().schema.toJsonElement().toString()
+                emit(PreviewRecord(keyElement, valueElement))
+            }
+        }
+
         consumer.close()
     }
 

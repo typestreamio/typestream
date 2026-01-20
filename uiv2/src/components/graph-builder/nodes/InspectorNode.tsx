@@ -5,6 +5,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { BaseNode } from './BaseNode';
 import { StreamInspectorPanel } from '../../StreamInspectorPanel';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 import type { InspectorNodeType } from './index';
 
 /** Node role determines handle configuration: sources have no input, sinks have no output */
@@ -12,6 +13,7 @@ export const inspectorRole = 'sink' as const;
 
 export const InspectorNode = memo(function InspectorNode({ id, data }: NodeProps<InspectorNodeType>) {
   const [panelOpen, setPanelOpen] = useState(false);
+  const [snapshotPanelOpen, setSnapshotPanelOpen] = useState(false);
 
   return (
     <>
@@ -23,6 +25,7 @@ export const InspectorNode = memo(function InspectorNode({ id, data }: NodeProps
         error={data.schemaError}
         isInferring={data.isInferring}
         outputSchema={data.outputSchema}
+        onPreviewClick={() => setSnapshotPanelOpen(true)}
       >
         <Button
           fullWidth
@@ -39,6 +42,13 @@ export const InspectorNode = memo(function InspectorNode({ id, data }: NodeProps
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         nodeId={id}
+      />
+
+      <NodeSnapshotPanel
+        open={snapshotPanelOpen}
+        onClose={() => setSnapshotPanelOpen(false)}
+        nodeId={id}
+        nodeTitle="Inspector"
       />
     </>
   );

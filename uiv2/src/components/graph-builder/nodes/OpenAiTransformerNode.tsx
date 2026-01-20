@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { BaseNode } from './BaseNode';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 import { useListOpenAIModels } from '../../../hooks/useListOpenAIModels';
 import type { OpenAiTransformerNodeType } from './index';
 
@@ -17,6 +18,7 @@ export const OpenAiTransformerNode = memo(function OpenAiTransformerNode({ id, d
   const { updateNodeData } = useReactFlow();
   const { data: modelsResponse } = useListOpenAIModels();
   const models = modelsResponse?.models ?? [];
+  const [previewPanelOpen, setPreviewPanelOpen] = useState(false);
 
   return (
     <>
@@ -28,6 +30,7 @@ export const OpenAiTransformerNode = memo(function OpenAiTransformerNode({ id, d
         error={data.schemaError}
         isInferring={data.isInferring}
         outputSchema={data.outputSchema}
+        onPreviewClick={() => setPreviewPanelOpen(true)}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>Model</InputLabel>
@@ -74,6 +77,13 @@ export const OpenAiTransformerNode = memo(function OpenAiTransformerNode({ id, d
         />
       </BaseNode>
       <Handle type="source" position={Position.Right} />
+
+      <NodeSnapshotPanel
+        open={previewPanelOpen}
+        onClose={() => setPreviewPanelOpen(false)}
+        nodeId={id}
+        nodeTitle="OpenAI Transformer"
+      />
     </>
   );
 });

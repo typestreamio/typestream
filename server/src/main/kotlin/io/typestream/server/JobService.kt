@@ -320,6 +320,12 @@ class JobService(
         }
     }
 
+    /**
+     * Creates a preview job: compiles the graph into a real Kafka Streams job,
+     * starts it, and returns the inspect topic name. Inspector nodes in the graph
+     * branch data to side-channel topics (see [KafkaStreamSource.toInspector]).
+     * Use [streamPreview] to consume messages from the inspect topic.
+     */
     override suspend fun createPreviewJob(request: CreatePreviewJobRequest): ProtoJob.CreatePreviewJobResponse = createPreviewJobResponse {
         try {
             val program = graphCompiler.compile(
@@ -365,19 +371,24 @@ class JobService(
         }
     }
 
+    /**
+     * Streams preview messages from the inspect topic to the client via gRPC server streaming.
+     * Delegates to [KafkaStreamsJob.outputWithKey] which sets up a real KafkaConsumer.
+     * Auto-cleans up the preview job when the stream ends (disconnect, error, or completion).
+     */
     override fun streamPreview(request: StreamPreviewRequest): Flow<ProtoJob.StreamPreviewResponse> = flow {
         val jobId = request.jobId
         val info = previewJobs[jobId] ?: error("Preview job not found: $jobId")
         val inspectTopic = "$jobId-inspect-${info.inspectorNodeId}"
 
         try {
-            // Consume from the inspector topic
             // Use cancellable() to ensure the flow responds to cancellation signals
-            vm.scheduler.jobOutput(jobId, inspectTopic).cancellable().collect { output ->
+            vm.scheduler.jobOutputWithKey(jobId, inspectTopic).cancellable().collect { record ->
                 // Check for cancellation before each emit (ensures we respond to client disconnect)
                 currentCoroutineContext().ensureActive()
                 emit(streamPreviewResponse {
-                    this.value = output
+                    this.key = record.key
+                    this.value = record.value
                     this.timestamp = System.currentTimeMillis()
                 })
             }

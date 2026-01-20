@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { BaseNode } from './BaseNode';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 import type { MaterializedViewNodeType, NodeValidationState } from './index';
 
 export type AggregationType = 'count' | 'latest';
@@ -18,6 +19,7 @@ export const MaterializedViewNode = memo(function MaterializedViewNode({ id, dat
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
+  const [previewPanelOpen, setPreviewPanelOpen] = useState(false);
 
   // Find the upstream node to get its output schema
   const incomingEdge = edges.find((e) => e.target === id);
@@ -46,6 +48,7 @@ export const MaterializedViewNode = memo(function MaterializedViewNode({ id, dat
         error={data.schemaError}
         isInferring={data.isInferring}
         outputSchema={data.outputSchema}
+        onPreviewClick={() => setPreviewPanelOpen(true)}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>Aggregation</InputLabel>
@@ -78,6 +81,13 @@ export const MaterializedViewNode = memo(function MaterializedViewNode({ id, dat
         </FormControl>
       </BaseNode>
       {/* No output handle - this is a terminal node */}
+
+      <NodeSnapshotPanel
+        open={previewPanelOpen}
+        onClose={() => setPreviewPanelOpen(false)}
+        nodeId={id}
+        nodeTitle="Materialized View"
+      />
     </>
   );
 });

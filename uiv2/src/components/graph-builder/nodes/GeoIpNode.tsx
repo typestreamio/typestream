@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -8,6 +8,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import PublicIcon from '@mui/icons-material/Public';
 import { BaseNode } from './BaseNode';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 import { isTypeCompatible, type GeoIpNodeType, type NodeValidationState } from './index';
 
 /** Node role determines handle configuration: sources have no input, sinks have no output */
@@ -17,6 +18,7 @@ export const GeoIpNode = memo(function GeoIpNode({ id, data }: NodeProps<GeoIpNo
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
+  const [previewPanelOpen, setPreviewPanelOpen] = useState(false);
 
   // Find the upstream node to get its output schema
   const incomingEdge = edges.find((e) => e.target === id);
@@ -48,6 +50,7 @@ export const GeoIpNode = memo(function GeoIpNode({ id, data }: NodeProps<GeoIpNo
         error={data.schemaError}
         isInferring={data.isInferring}
         outputSchema={data.outputSchema}
+        onPreviewClick={() => setPreviewPanelOpen(true)}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>IP Field</InputLabel>
@@ -86,6 +89,13 @@ export const GeoIpNode = memo(function GeoIpNode({ id, data }: NodeProps<GeoIpNo
         />
       </BaseNode>
       <Handle type="source" position={Position.Right} />
+
+      <NodeSnapshotPanel
+        open={previewPanelOpen}
+        onClose={() => setPreviewPanelOpen(false)}
+        nodeId={id}
+        nodeTitle="GeoIP Lookup"
+      />
     </>
   );
 });

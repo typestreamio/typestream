@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import StorageIcon from '@mui/icons-material/Storage';
 import { BaseNode } from './BaseNode';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 import type { DbSinkNodeType, NodeValidationState, SchemaField } from './index';
 
 /** Node role determines handle configuration: sources have no input, sinks have no output */
@@ -16,6 +17,7 @@ export const DbSinkNode = memo(function DbSinkNode({ id, data }: NodeProps<DbSin
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
+  const [previewPanelOpen, setPreviewPanelOpen] = useState(false);
 
   // Find the upstream node to get its output schema
   const incomingEdge = edges.find((e) => e.target === id);
@@ -48,6 +50,7 @@ export const DbSinkNode = memo(function DbSinkNode({ id, data }: NodeProps<DbSin
         error={data.schemaError}
         isInferring={data.isInferring}
         outputSchema={data.outputSchema}
+        onPreviewClick={() => setPreviewPanelOpen(true)}
       >
         <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
           {data.databaseType?.toUpperCase()} Sink
@@ -110,6 +113,13 @@ export const DbSinkNode = memo(function DbSinkNode({ id, data }: NodeProps<DbSin
           />
         )}
       </BaseNode>
+
+      <NodeSnapshotPanel
+        open={previewPanelOpen}
+        onClose={() => setPreviewPanelOpen(false)}
+        nodeId={id}
+        nodeTitle={data.connectionName}
+      />
     </>
   );
 });
