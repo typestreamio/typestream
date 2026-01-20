@@ -8,6 +8,9 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { BaseNode } from './BaseNode';
 import type { TextExtractorNodeType, NodeValidationState } from './index';
 
+// Handle configuration for this node type
+export const textExtractorHandles = { hasInput: true, hasOutput: true } as const;
+
 export function TextExtractorNode({ id, data }: NodeProps<TextExtractorNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

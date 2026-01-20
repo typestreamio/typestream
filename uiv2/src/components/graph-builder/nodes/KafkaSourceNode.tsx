@@ -25,6 +25,9 @@ function getEncodingLabel(encoding: Encoding): string {
   }
 }
 
+// Handle configuration for this node type
+export const kafkaSourceHandles = { hasInput: false, hasOutput: true } as const;
+
 export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
   const { topics } = useKafkaTopics();
   const { updateNodeData } = useReactFlow();

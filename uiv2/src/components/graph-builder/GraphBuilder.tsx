@@ -7,6 +7,7 @@ import {
   useNodesState,
   useEdgesState,
   type OnConnect,
+  type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Box from '@mui/material/Box';
@@ -16,7 +17,7 @@ import { useTheme } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
-import { nodeTypes, type AppNode } from './nodes';
+import { nodeTypes, nodeHasInput, nodeHasOutput, type AppNode } from './nodes';
 import { serializeGraph, serializeGraphWithDbSinks } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
@@ -31,7 +32,7 @@ export function GraphBuilder() {
   const navigate = useNavigate();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
   const inferSchemas = useInferGraphSchemas();
@@ -224,6 +225,7 @@ export function GraphBuilder() {
       const NODE_GAP = 15;
 
       let newX: number;
+      let rightmostNode: AppNode | null = null;
       if (existingNodes.length === 0) {
         // First node: start near left side with some padding
         newX = 50;
@@ -236,6 +238,7 @@ export function GraphBuilder() {
           const rightEdge = node.position.x + nodeWidth;
           if (rightEdge > maxRightEdge) {
             maxRightEdge = rightEdge;
+            rightmostNode = node;
           }
         }
         // New node starts 15px after the rightmost edge
@@ -249,16 +252,26 @@ export function GraphBuilder() {
 
       const data = getDefaultNodeData(type, dragData || {});
 
+      const newNodeId = getId();
       const newNode: AppNode = {
-        id: getId(),
+        id: newNodeId,
         type,
         position,
         data,
       } as AppNode;
 
       setNodes((nds) => [...nds, newNode]);
+
+      // Auto-connect: if the rightmost node has an output and the new node has an input
+      if (rightmostNode && nodeHasOutput(rightmostNode.type) && nodeHasInput(type)) {
+        setEdges((eds) => addEdge({
+          id: `edge-${rightmostNode.id}-${newNodeId}`,
+          source: rightmostNode.id,
+          target: newNodeId,
+        }, eds));
+      }
     },
-    [setNodes, getDefaultNodeData]
+    [setNodes, setEdges, getDefaultNodeData]
   );
 
   const handleCreateJob = async () => {

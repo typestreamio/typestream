@@ -8,6 +8,9 @@ import PublicIcon from '@mui/icons-material/Public';
 import { BaseNode } from './BaseNode';
 import type { GeoIpNodeType, NodeValidationState } from './index';
 
+// Handle configuration for this node type
+export const geoIpHandles = { hasInput: true, hasOutput: true } as const;
+
 export function GeoIpNode({ id, data }: NodeProps<GeoIpNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

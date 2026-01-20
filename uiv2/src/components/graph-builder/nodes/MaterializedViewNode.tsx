@@ -9,6 +9,9 @@ import type { MaterializedViewNodeType, NodeValidationState } from './index';
 
 export type AggregationType = 'count' | 'latest';
 
+// Handle configuration for this node type
+export const materializedViewHandles = { hasInput: true, hasOutput: false } as const;
+
 export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

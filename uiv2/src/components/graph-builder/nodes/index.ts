@@ -1,13 +1,13 @@
 import type { Node, NodeTypes } from '@xyflow/react';
-import { KafkaSourceNode } from './KafkaSourceNode';
-import { KafkaSinkNode } from './KafkaSinkNode';
-import { GeoIpNode } from './GeoIpNode';
-import { InspectorNode } from './InspectorNode';
-import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
-import { DbSinkNode } from './DbSinkNode';
-import { TextExtractorNode } from './TextExtractorNode';
-import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
-import { OpenAiTransformerNode } from './OpenAiTransformerNode';
+import { KafkaSourceNode, kafkaSourceHandles } from './KafkaSourceNode';
+import { KafkaSinkNode, kafkaSinkHandles } from './KafkaSinkNode';
+import { GeoIpNode, geoIpHandles } from './GeoIpNode';
+import { InspectorNode, inspectorHandles } from './InspectorNode';
+import { MaterializedViewNode, materializedViewHandles, type AggregationType } from './MaterializedViewNode';
+import { DbSinkNode, dbSinkHandles } from './DbSinkNode';
+import { TextExtractorNode, textExtractorHandles } from './TextExtractorNode';
+import { EmbeddingGeneratorNode, embeddingGeneratorHandles } from './EmbeddingGeneratorNode';
+import { OpenAiTransformerNode, openAiTransformerHandles } from './OpenAiTransformerNode';
 
 // Common validation state for all nodes - populated by schema inference
 export interface NodeValidationState {
@@ -92,3 +92,28 @@ export const nodeTypes: NodeTypes = {
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,
 };
+
+// Node handle configuration - aggregated from each node's exported config
+const nodeHandleConfigs: Record<string, { hasInput: boolean; hasOutput: boolean }> = {
+  kafkaSource: kafkaSourceHandles,
+  kafkaSink: kafkaSinkHandles,
+  geoIp: geoIpHandles,
+  inspector: inspectorHandles,
+  materializedView: materializedViewHandles,
+  dbSink: dbSinkHandles,
+  textExtractor: textExtractorHandles,
+  embeddingGenerator: embeddingGeneratorHandles,
+  openAiTransformer: openAiTransformerHandles,
+};
+
+/** Check if a node type has an output handle (can be a source of connections) */
+export function nodeHasOutput(nodeType: string | undefined): boolean {
+  if (!nodeType) return false;
+  return nodeHandleConfigs[nodeType]?.hasOutput ?? false;
+}
+
+/** Check if a node type has an input handle (can be a target of connections) */
+export function nodeHasInput(nodeType: string | undefined): boolean {
+  if (!nodeType) return false;
+  return nodeHandleConfigs[nodeType]?.hasInput ?? false;
+}

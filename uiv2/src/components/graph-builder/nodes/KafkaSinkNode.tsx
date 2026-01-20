@@ -4,6 +4,9 @@ import OutputIcon from '@mui/icons-material/Output';
 import { BaseNode } from './BaseNode';
 import type { KafkaSinkNodeType } from './index';
 
+// Handle configuration for this node type
+export const kafkaSinkHandles = { hasInput: true, hasOutput: false } as const;
+
 export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
   const { updateNodeData } = useReactFlow();
 
