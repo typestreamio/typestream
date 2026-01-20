@@ -14,6 +14,12 @@ export function AppLayout() {
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
         <Toolbar>
+          <Box
+            component="img"
+            src="/logo.svg"
+            alt="TypeStream"
+            sx={{ height: 32, mr: 1.5 }}
+          />
           <Typography variant="h6" noWrap component="div">
             TypeStream
           </Typography>

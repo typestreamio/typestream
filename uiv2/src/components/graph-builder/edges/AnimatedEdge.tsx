@@ -3,6 +3,7 @@ import {
   type EdgeProps,
   BaseEdge,
 } from '@xyflow/react';
+import { useTheme } from '@mui/material/styles';
 
 /**
  * AnimatedEdge displays a flowing dashed line animation to indicate data flow.
@@ -19,6 +20,7 @@ export function AnimatedEdge({
   style = {},
   markerEnd,
 }: EdgeProps) {
+  const theme = useTheme();
   const [edgePath] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -50,7 +52,7 @@ export function AnimatedEdge({
         style={{
           ...style,
           strokeWidth: 2,
-          stroke: '#4fc3f7', // Light blue color for active flow
+          stroke: theme.palette.primary.main,
           strokeDasharray: '5 5',
           animation: 'dashdraw 0.5s linear infinite',
         }}

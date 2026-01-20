@@ -12,6 +12,7 @@ import '@xyflow/react/dist/style.css';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import { useTheme } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
@@ -26,6 +27,7 @@ let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
 
 export function GraphBuilder() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
@@ -258,10 +260,10 @@ export function GraphBuilder() {
             onDragOver={onDragOver}
             onDrop={onDrop}
             nodeTypes={nodeTypes}
-            colorMode="dark"
+            colorMode="light"
             fitView
           >
-            <Background />
+            <Background color={theme.palette.primary.main} gap={16} />
             <Controls />
           </ReactFlow>
         </Box>

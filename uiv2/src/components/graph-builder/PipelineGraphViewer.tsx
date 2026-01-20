@@ -11,6 +11,7 @@ import '@xyflow/react/dist/style.css';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 import TopicIcon from '@mui/icons-material/Topic';
 import OutputIcon from '@mui/icons-material/Output';
 import PublicIcon from '@mui/icons-material/Public';
@@ -77,6 +78,7 @@ const nodeTitles: Record<string, string> = {
 };
 
 const ViewerNode = memo(({ data, type = 'default' }: ViewerNodeProps) => {
+  const theme = useTheme();
   const isSource = type === 'kafkaSource';
   const isSink = type === 'kafkaSink';
 
@@ -99,7 +101,7 @@ const ViewerNode = memo(({ data, type = 'default' }: ViewerNodeProps) => {
         <Handle
           type="target"
           position={Position.Left}
-          style={{ background: '#555' }}
+          style={{ background: theme.palette.primary.main }}
         />
       )}
 
@@ -150,7 +152,7 @@ const ViewerNode = memo(({ data, type = 'default' }: ViewerNodeProps) => {
         <Handle
           type="source"
           position={Position.Right}
-          style={{ background: '#555' }}
+          style={{ background: theme.palette.primary.main }}
         />
       )}
     </>
@@ -181,6 +183,8 @@ export function PipelineGraphViewer({
   isRunning = false,
   height = 350,
 }: PipelineGraphViewerProps) {
+  const theme = useTheme();
+
   // Deserialize and layout the graph
   const { nodes, edges } = useMemo(() => {
     const result = deserializeGraph(graph);
@@ -214,7 +218,7 @@ export function PipelineGraphViewer({
         edges={edges}
         nodeTypes={viewerNodeTypes}
         edgeTypes={edgeTypes}
-        colorMode="dark"
+        colorMode="light"
         fitView
         fitViewOptions={{ padding: 0.2 }}
         // Disable all interactions for viewer mode
@@ -225,7 +229,7 @@ export function PipelineGraphViewer({
         zoomOnScroll={true}
         preventScrolling={true}
       >
-        <Background />
+        <Background color={theme.palette.primary.main} gap={16} />
         <Controls showInteractive={false} />
       </ReactFlow>
     </Box>
