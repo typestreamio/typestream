@@ -86,7 +86,7 @@ class WikipediaConnector(
             }
 
             val change = event.toAvro()
-            sender.send(event.wiki, change)
+            sender.send(event.id?.toString() ?: "${event.wiki}-${System.currentTimeMillis()}", change)
             logger.debug { "Produced change for ${event.wiki}: ${event.title}" }
         } catch (e: Exception) {
             logger.error(e) { "Failed to process event: ${data.take(500)}" }
