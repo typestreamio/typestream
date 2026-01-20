@@ -125,7 +125,7 @@ export function GraphBuilder() {
     (params) => setEdges((eds) => addEdge({
       ...params,
       type: 'smoothstep',
-      animated: true,
+      animated: false,
     }, eds)),
     [setEdges]
   );
@@ -133,7 +133,7 @@ export function GraphBuilder() {
   // Default edge options for consistent horizontal flow styling
   const defaultEdgeOptions = {
     type: 'smoothstep',
-    animated: true,
+    animated: false,
   };
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -283,7 +283,7 @@ export function GraphBuilder() {
           source: rightmostNode.id,
           target: newNodeId,
           type: 'smoothstep',
-          animated: true,
+          animated: false,
         }, eds));
       }
     },
