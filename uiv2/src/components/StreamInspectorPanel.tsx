@@ -52,16 +52,16 @@ export function StreamInspectorPanel({
   const hasStartedRef = useRef(false);
   // Use ref to avoid cleanup effect re-running when stopPreview changes
   const stopPreviewRef = useRef(stopPreview);
-  // Track which message rows are expanded
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  // Track which message rows are expanded by message ID
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const toggleRow = (index: number) => {
+  const toggleRow = (messageId: string) => {
     setExpandedRows((prev) => {
       const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
+      if (next.has(messageId)) {
+        next.delete(messageId);
       } else {
-        next.add(index);
+        next.add(messageId);
       }
       return next;
     });
@@ -175,19 +175,19 @@ export function StreamInspectorPanel({
                   </TableCell>
                 </TableRow>
               )}
-              {messages.map((msg, idx) => {
-                const isExpanded = expandedRows.has(idx);
+              {messages.map((msg) => {
+                const isExpanded = expandedRows.has(msg.id);
                 const { formatted, isJson } = formatValue(msg.value);
                 return (
                   <TableRow
-                    key={idx}
-                    onClick={() => toggleRow(idx)}
+                    key={msg.id}
+                    onClick={() => toggleRow(msg.id)}
                     sx={{
                       cursor: 'pointer',
                       '&:hover': { backgroundColor: 'action.hover' },
                       verticalAlign: 'top',
                     }}
-                    data-testid={`message-row-${idx}`}
+                    data-testid={`message-row-${msg.id}`}
                   >
                     <TableCell sx={{ padding: '6px' }}>
                       <IconButton size="small" aria-label={isExpanded ? 'Collapse' : 'Expand'}>

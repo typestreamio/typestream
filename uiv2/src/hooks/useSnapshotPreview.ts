@@ -68,13 +68,16 @@ export function useSnapshotPreview(): SnapshotPreviewState & SnapshotPreviewActi
         // Start streaming and capture up to MAX_SNAPSHOT_MESSAGES
         abortControllerRef.current = new AbortController();
         const collectedMessages: PreviewMessage[] = [];
+        let messageCount = 0;
 
         try {
           for await (const response of client.streamPreview(
             new StreamPreviewRequest({ jobId: createResponse.jobId }),
             { signal: abortControllerRef.current.signal }
           )) {
+            messageCount += 1;
             collectedMessages.push({
+              id: `snapshot-msg-${messageCount}`,
               key: response.key,
               value: response.value,
               timestamp: Number(response.timestamp),

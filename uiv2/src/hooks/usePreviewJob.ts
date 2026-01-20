@@ -10,10 +10,13 @@ import {
 } from '../generated/job_pb';
 
 export interface PreviewMessage {
+  id: string;
   key: string;
   value: string;
   timestamp: number;
 }
+
+const MAX_MESSAGES = 100;
 
 export function usePreviewJob() {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -21,12 +24,14 @@ export function usePreviewJob() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const messageCountRef = useRef(0);
   const transport = useTransport();
 
   const startPreview = useCallback(
     async (graph: PipelineGraph, inspectorNodeId: string) => {
       setError(null);
       setMessages([]);
+      messageCountRef.current = 0;
 
       const client = createClient(JobService, transport);
 
@@ -51,22 +56,27 @@ export function usePreviewJob() {
         abortControllerRef.current = new AbortController();
 
         try {
-          const MAX_MESSAGES = 100;
           for await (const response of client.streamPreview(
             new StreamPreviewRequest({ jobId: createResponse.jobId }),
             { signal: abortControllerRef.current.signal }
           )) {
-            setMessages((prev) => {
-              const newMessages = [
-                ...prev,
-                {
-                  key: response.key,
-                  value: response.value,
-                  timestamp: Number(response.timestamp),
-                },
-              ];
-              return newMessages.slice(-MAX_MESSAGES);
-            });
+            messageCountRef.current += 1;
+            const messageId = `msg-${messageCountRef.current}`;
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: messageId,
+                key: response.key,
+                value: response.value,
+                timestamp: Number(response.timestamp),
+              },
+            ]);
+
+            // Stop after reaching the limit
+            if (messageCountRef.current >= MAX_MESSAGES) {
+              abortControllerRef.current?.abort();
+              break;
+            }
           }
         } catch (streamError) {
           // AbortError is expected when stopping
