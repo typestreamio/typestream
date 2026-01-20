@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -14,7 +14,7 @@ export type AggregationType = 'count' | 'latest';
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const materializedViewRole = 'sink' as const;
 
-export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNodeType>) {
+export const MaterializedViewNode = memo(function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
@@ -80,4 +80,4 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
       {/* No output handle - this is a terminal node */}
     </>
   );
-}
+});

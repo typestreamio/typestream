@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -12,7 +12,7 @@ import type { DbSinkNodeType, NodeValidationState, SchemaField } from './index';
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const dbSinkRole = 'sink' as const;
 
-export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
+export const DbSinkNode = memo(function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
@@ -112,4 +112,4 @@ export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
       </BaseNode>
     </>
   );
-}
+});

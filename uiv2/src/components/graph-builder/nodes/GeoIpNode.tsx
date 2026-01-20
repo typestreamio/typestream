@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -13,7 +13,7 @@ import { isTypeCompatible, type GeoIpNodeType, type NodeValidationState } from '
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const geoIpRole = 'transform' as const;
 
-export function GeoIpNode({ id, data }: NodeProps<GeoIpNodeType>) {
+export const GeoIpNode = memo(function GeoIpNode({ id, data }: NodeProps<GeoIpNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
@@ -88,4 +88,4 @@ export function GeoIpNode({ id, data }: NodeProps<GeoIpNodeType>) {
       <Handle type="source" position={Position.Right} />
     </>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -28,7 +29,7 @@ function getEncodingLabel(encoding: Encoding): string {
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const kafkaSourceRole = 'source' as const;
 
-export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
+export const KafkaSourceNode = memo(function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
   const { topics } = useKafkaTopics();
   const { updateNodeData } = useReactFlow();
 
@@ -94,4 +95,4 @@ export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
       <Handle type="source" position={Position.Right} />
     </>
   );
-}
+});

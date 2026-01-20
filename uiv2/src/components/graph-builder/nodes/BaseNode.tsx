@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -21,12 +22,13 @@ interface BaseNodeProps {
   children: ReactNode;
 }
 
-export function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, children }: BaseNodeProps) {
+export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, children }: BaseNodeProps) {
   const { deleteElements } = useReactFlow();
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     deleteElements({ nodes: [{ id: nodeId }] });
-  };
+  }, [deleteElements, nodeId]);
+
   return (
     <Paper
       elevation={3}
@@ -96,4 +98,4 @@ export function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema
       <Box sx={{ p: 1.5 }}>{children}</Box>
     </Paper>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -13,7 +13,7 @@ import { isTypeCompatible, type TextExtractorNodeType, type NodeValidationState 
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const textExtractorRole = 'transform' as const;
 
-export function TextExtractorNode({ id, data }: NodeProps<TextExtractorNodeType>) {
+export const TextExtractorNode = memo(function TextExtractorNode({ id, data }: NodeProps<TextExtractorNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
@@ -88,4 +88,4 @@ export function TextExtractorNode({ id, data }: NodeProps<TextExtractorNodeType>
       <Handle type="source" position={Position.Right} />
     </>
   );
-}
+});

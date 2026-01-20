@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -13,7 +13,7 @@ import { isTypeCompatible, type EmbeddingGeneratorNodeType, type NodeValidationS
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const embeddingGeneratorRole = 'transform' as const;
 
-export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGeneratorNodeType>) {
+export const EmbeddingGeneratorNode = memo(function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGeneratorNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
   const edges = useEdges();
@@ -100,4 +100,4 @@ export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGenerato
       <Handle type="source" position={Position.Right} />
     </>
   );
-}
+});

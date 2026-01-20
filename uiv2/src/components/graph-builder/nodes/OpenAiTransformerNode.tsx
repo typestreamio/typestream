@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -12,7 +13,7 @@ import type { OpenAiTransformerNodeType } from './index';
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const openAiTransformerRole = 'transform' as const;
 
-export function OpenAiTransformerNode({ id, data }: NodeProps<OpenAiTransformerNodeType>) {
+export const OpenAiTransformerNode = memo(function OpenAiTransformerNode({ id, data }: NodeProps<OpenAiTransformerNodeType>) {
   const { updateNodeData } = useReactFlow();
   const { data: modelsResponse } = useListOpenAIModels();
   const models = modelsResponse?.models ?? [];
@@ -75,4 +76,4 @@ export function OpenAiTransformerNode({ id, data }: NodeProps<OpenAiTransformerN
       <Handle type="source" position={Position.Right} />
     </>
   );
-}
+});

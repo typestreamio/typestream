@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import TextField from '@mui/material/TextField';
 import OutputIcon from '@mui/icons-material/Output';
@@ -7,7 +8,7 @@ import type { KafkaSinkNodeType } from './index';
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const kafkaSinkRole = 'sink' as const;
 
-export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
+export const KafkaSinkNode = memo(function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
   const { updateNodeData } = useReactFlow();
 
   return (
@@ -33,4 +34,4 @@ export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
       </BaseNode>
     </>
   );
-}
+});
