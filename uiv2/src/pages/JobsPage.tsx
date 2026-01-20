@@ -18,7 +18,7 @@ import { useListJobs } from '../hooks/useListJobs';
 import { JobStatusChip } from '../components/JobStatusChip';
 import { formatThroughput, formatBytes } from '../utils/formatters';
 import { Sparkline } from '../components/Sparkline';
-import { useThroughputHistoryContext } from '../providers/ThroughputHistoryProvider';
+import { useThroughputHistoryContext } from '../providers/ThroughputHistoryContext';
 import { useThroughputHistory } from '../hooks/useThroughputHistory';
 import type { JobInfo } from '../generated/job_pb';
 
