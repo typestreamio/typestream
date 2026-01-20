@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -11,6 +11,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useReactFlow } from '@xyflow/react';
 import type { ReactNode } from 'react';
 import type { SchemaField } from './index';
+import { NodeSnapshotPanel } from '../../NodeSnapshotPanel';
 
 interface BaseNodeProps {
   nodeId: string;
@@ -19,18 +20,19 @@ interface BaseNodeProps {
   error?: string;
   isInferring?: boolean;
   outputSchema?: SchemaField[];
-  onPreviewClick?: () => void;
   children: ReactNode;
 }
 
-export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, onPreviewClick, children }: BaseNodeProps) {
+export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, children }: BaseNodeProps) {
   const { deleteElements } = useReactFlow();
+  const [previewPanelOpen, setPreviewPanelOpen] = useState(false);
 
   const handleDelete = useCallback(() => {
     deleteElements({ nodes: [{ id: nodeId }] });
   }, [deleteElements, nodeId]);
 
   return (
+    <>
     <Paper
       elevation={3}
       sx={{
@@ -89,7 +91,7 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
           >
             <IconButton
               size="small"
-              onClick={onPreviewClick}
+              onClick={() => setPreviewPanelOpen(true)}
               className="nodrag"
               sx={{
                 p: 0.25,
@@ -109,5 +111,13 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
       </Box>
       <Box sx={{ p: 1.5 }}>{children}</Box>
     </Paper>
+
+    <NodeSnapshotPanel
+      open={previewPanelOpen}
+      onClose={() => setPreviewPanelOpen(false)}
+      nodeId={nodeId}
+      nodeTitle={title}
+    />
+    </>
   );
 });
