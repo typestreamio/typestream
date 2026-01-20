@@ -25,6 +25,7 @@ export function OpenAiTransformerNode({ id, data }: NodeProps<OpenAiTransformerN
         icon={<AutoAwesomeIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>Model</InputLabel>

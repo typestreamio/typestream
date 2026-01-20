@@ -4,9 +4,10 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import StorageIcon from '@mui/icons-material/Storage';
 import { BaseNode } from './BaseNode';
-import type { DbSinkNodeType, NodeValidationState } from './index';
+import type { DbSinkNodeType, NodeValidationState, SchemaField } from './index';
 
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const dbSinkRole = 'sink' as const;
@@ -30,9 +31,9 @@ export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
   useEffect(() => {
     if (fields.length > 0 && !data.primaryKeyFields) {
       // Look for common primary key field names
-      const idField = fields.find((f) => f === 'id' || f === 'ID' || f === 'Id');
+      const idField = fields.find((f) => f.name === 'id' || f.name === 'ID' || f.name === 'Id');
       if (idField) {
-        updateNodeData(id, { primaryKeyFields: idField });
+        updateNodeData(id, { primaryKeyFields: idField.name });
       }
     }
   }, [fields, data.primaryKeyFields, id, updateNodeData]);
@@ -45,6 +46,7 @@ export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
         icon={<StorageIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
           {data.databaseType?.toUpperCase()} Sink
@@ -78,11 +80,26 @@ export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
             freeSolo
             size="small"
             options={fields}
+            getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
             value={data.primaryKeyFields || ''}
-            onChange={(_, newValue) => updateNodeData(id, { primaryKeyFields: newValue || '' })}
+            onChange={(_, newValue) => {
+              const fieldName = typeof newValue === 'string' ? newValue : (newValue as SchemaField)?.name || '';
+              updateNodeData(id, { primaryKeyFields: fieldName });
+            }}
             onInputChange={(_, newValue) => updateNodeData(id, { primaryKeyFields: newValue })}
             disabled={data.isInferring}
             className="nodrag nowheel"
+            renderOption={(props, option) => {
+              const field = option as SchemaField;
+              return (
+                <Box component="li" {...props}>
+                  {field.name}
+                  <Typography component="span" color="text.secondary" sx={{ ml: 1, fontSize: '0.75rem' }}>
+                    ({field.type})
+                  </Typography>
+                </Box>
+              );
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}

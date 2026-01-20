@@ -35,7 +35,7 @@ describe('getGraphDependencyKey', () => {
         position: { x: 0, y: 0 },
         data: {
           topicPath: '/dev/kafka/local/topics/web_visits',
-          outputSchema: ['ip', 'url', 'timestamp'],
+          outputSchema: [{ name: 'ip', type: 'String' }, { name: 'url', type: 'String' }, { name: 'timestamp', type: 'Long' }],
           schemaError: undefined,
           isInferring: false,
         },
@@ -123,7 +123,7 @@ describe('getGraphDependencyKey', () => {
         data: {
           topicPath: '/dev/kafka/local/topics/web_visits',
           isInferring: false, // Done inferring
-          outputSchema: ['ip', 'url'],
+          outputSchema: [{ name: 'ip', type: 'String' }, { name: 'url', type: 'String' }],
         },
       },
     ];

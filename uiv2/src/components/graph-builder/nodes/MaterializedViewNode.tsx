@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { BaseNode } from './BaseNode';
 import type { MaterializedViewNodeType, NodeValidationState } from './index';
@@ -27,6 +29,13 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
   const upstreamData = upstreamNode?.data as NodeValidationState | undefined;
   const fields = upstreamData?.outputSchema ?? [];
 
+  // Auto-select first field when schema loads and no field is selected
+  useEffect(() => {
+    if (!data.groupByField && fields.length > 0) {
+      updateNodeData(id, { groupByField: fields[0].name });
+    }
+  }, [data.groupByField, fields, id, updateNodeData]);
+
   return (
     <>
       <Handle type="target" position={Position.Left} />
@@ -35,6 +44,7 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
         icon={<TableChartIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel" sx={{ mb: 1.5 }}>
           <InputLabel>Aggregation</InputLabel>
@@ -56,8 +66,11 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
             disabled={data.isInferring || fields.length === 0}
           >
             {fields.map((field) => (
-              <MenuItem key={field} value={field}>
-                {field}
+              <MenuItem key={field.name} value={field.name}>
+                {field.name}
+                <Typography component="span" color="text.secondary" sx={{ ml: 1, fontSize: '0.75rem' }}>
+                  ({field.type})
+                </Typography>
               </MenuItem>
             ))}
           </Select>

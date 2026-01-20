@@ -21,6 +21,7 @@ export function InspectorNode({ id, data }: NodeProps<InspectorNodeType>) {
         icon={<VisibilityIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <Button
           fullWidth

@@ -18,6 +18,7 @@ export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
         icon={<OutputIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <TextField
           fullWidth

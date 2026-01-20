@@ -83,11 +83,15 @@ export function GraphBuilder() {
         setNodes((nds) =>
           nds.map((n) => {
             const result = response.schemas[n.id];
+            // Use typed_fields for full type info, with fields as fallback for backward compat
+            const outputSchema = result?.typedFields?.length
+              ? result.typedFields.map(f => ({ name: f.name, type: f.type }))
+              : result?.fields?.map(name => ({ name, type: 'Unknown' })) ?? [];
             return {
               ...n,
               data: {
                 ...n.data,
-                outputSchema: result?.fields ?? [],
+                outputSchema,
                 schemaError: result?.error || undefined,
                 isInferring: false,
               },

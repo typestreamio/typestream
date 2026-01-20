@@ -46,6 +46,7 @@ export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
         icon={<InputIcon fontSize="small" />}
         error={data.schemaError}
         isInferring={data.isInferring}
+        outputSchema={data.outputSchema}
       >
         <FormControl fullWidth size="small" className="nodrag nowheel">
           <InputLabel>Topic</InputLabel>
