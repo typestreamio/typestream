@@ -1,14 +1,18 @@
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useReactFlow } from '@xyflow/react';
 import type { ReactNode } from 'react';
 import type { SchemaField } from './index';
 
 interface BaseNodeProps {
+  nodeId: string;
   title: string;
   icon?: ReactNode;
   error?: string;
@@ -17,7 +21,12 @@ interface BaseNodeProps {
   children: ReactNode;
 }
 
-export function BaseNode({ title, icon, error, isInferring, outputSchema, children }: BaseNodeProps) {
+export function BaseNode({ nodeId, title, icon, error, isInferring, outputSchema, children }: BaseNodeProps) {
+  const { deleteElements } = useReactFlow();
+
+  const handleDelete = () => {
+    deleteElements({ nodes: [{ id: nodeId }] });
+  };
   return (
     <Paper
       elevation={3}
@@ -47,6 +56,20 @@ export function BaseNode({ title, icon, error, isInferring, outputSchema, childr
           {title}
         </Typography>
         {isInferring && <CircularProgress size={14} />}
+        <Tooltip title="Delete node">
+          <IconButton
+            size="small"
+            onClick={handleDelete}
+            className="nodrag"
+            sx={{
+              p: 0.25,
+              opacity: 0.5,
+              '&:hover': { opacity: 1, color: 'error.main' },
+            }}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         {outputSchema && outputSchema.length > 0 && (
           <Tooltip
             title={

@@ -42,6 +42,7 @@ export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
   return (
     <>
       <BaseNode
+        nodeId={id}
         title="Kafka Source"
         icon={<InputIcon fontSize="small" />}
         error={data.schemaError}

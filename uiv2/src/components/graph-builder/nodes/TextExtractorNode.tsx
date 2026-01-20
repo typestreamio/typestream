@@ -42,6 +42,7 @@ export function TextExtractorNode({ id, data }: NodeProps<TextExtractorNodeType>
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="Text Extractor"
         icon={<DescriptionIcon fontSize="small" />}
         error={data.schemaError}

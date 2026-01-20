@@ -42,6 +42,7 @@ export function GeoIpNode({ id, data }: NodeProps<GeoIpNodeType>) {
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="GeoIP Lookup"
         icon={<PublicIcon fontSize="small" />}
         error={data.schemaError}

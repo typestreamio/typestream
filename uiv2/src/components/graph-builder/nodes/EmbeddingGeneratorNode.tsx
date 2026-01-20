@@ -42,6 +42,7 @@ export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGenerato
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="Embedding Generator"
         icon={<MemoryIcon fontSize="small" />}
         error={data.schemaError}

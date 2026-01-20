@@ -122,9 +122,19 @@ export function GraphBuilder() {
   }, [graphKey, inferSchemas.mutateAsync]);
 
   const onConnect: OnConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdges((eds) => addEdge({
+      ...params,
+      type: 'smoothstep',
+      animated: true,
+    }, eds)),
     [setEdges]
   );
+
+  // Default edge options for consistent horizontal flow styling
+  const defaultEdgeOptions = {
+    type: 'smoothstep',
+    animated: true,
+  };
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -272,6 +282,8 @@ export function GraphBuilder() {
           id: `edge-${rightmostNode.id}-${newNodeId}`,
           source: rightmostNode.id,
           target: newNodeId,
+          type: 'smoothstep',
+          animated: true,
         }, eds));
       }
     },
@@ -334,6 +346,8 @@ export function GraphBuilder() {
             onDragOver={onDragOver}
             onDrop={onDrop}
             nodeTypes={nodeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
+            fitView
             colorMode="light"
           >
             <Background color={theme.palette.primary.main} gap={16} />

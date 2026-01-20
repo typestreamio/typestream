@@ -21,6 +21,7 @@ export function OpenAiTransformerNode({ id, data }: NodeProps<OpenAiTransformerN
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="OpenAI Transformer"
         icon={<AutoAwesomeIcon fontSize="small" />}
         error={data.schemaError}

@@ -42,6 +42,7 @@ export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title={data.connectionName}
         icon={<StorageIcon fontSize="small" />}
         error={data.schemaError}

@@ -14,6 +14,7 @@ export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="Kafka Sink"
         icon={<OutputIcon fontSize="small" />}
         error={data.schemaError}

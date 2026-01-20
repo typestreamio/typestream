@@ -40,6 +40,7 @@ export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNod
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="Materialized View"
         icon={<TableChartIcon fontSize="small" />}
         error={data.schemaError}

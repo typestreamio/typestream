@@ -22,7 +22,6 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import type { PipelineGraph } from '../../generated/job_pb';
 import { deserializeGraph } from '../../utils/graphDeserializer';
-import { edgeTypes } from './edges';
 
 interface PipelineGraphViewerProps {
   graph: PipelineGraph;
@@ -189,18 +188,15 @@ export function PipelineGraphViewer({
   const { nodes, edges } = useMemo(() => {
     const result = deserializeGraph(graph);
 
-    // If running, make all edges animated
-    if (isRunning) {
-      return {
-        nodes: result.nodes,
-        edges: result.edges.map((edge) => ({
-          ...edge,
-          type: 'animated',
-        })),
-      };
-    }
-
-    return result;
+    // Use smoothstep edges for horizontal layout, animate when running
+    return {
+      nodes: result.nodes,
+      edges: result.edges.map((edge) => ({
+        ...edge,
+        type: 'smoothstep',
+        animated: isRunning,
+      })),
+    };
   }, [graph, isRunning]);
 
   return (
@@ -217,7 +213,6 @@ export function PipelineGraphViewer({
         nodes={nodes}
         edges={edges}
         nodeTypes={viewerNodeTypes}
-        edgeTypes={edgeTypes}
         colorMode="light"
         fitView
         fitViewOptions={{ padding: 0.2 }}

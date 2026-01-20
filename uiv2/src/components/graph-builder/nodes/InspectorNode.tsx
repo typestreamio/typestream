@@ -17,6 +17,7 @@ export function InspectorNode({ id, data }: NodeProps<InspectorNodeType>) {
     <>
       <Handle type="target" position={Position.Left} />
       <BaseNode
+        nodeId={id}
         title="Inspector"
         icon={<VisibilityIcon fontSize="small" />}
         error={data.schemaError}
