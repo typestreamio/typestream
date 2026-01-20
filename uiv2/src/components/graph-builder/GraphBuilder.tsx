@@ -208,22 +208,43 @@ export function GraphBuilder() {
     [setNodes, getDefaultNodeData]
   );
 
-  // Add node from palette click (places in center of canvas)
+  // Add node from palette click (places to the right of existing nodes)
   const handleAddNode = useCallback(
     (type: string, dragData?: Record<string, unknown>) => {
       if (!reactFlowWrapper.current) return;
 
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      // Calculate position based on existing nodes to avoid overlap
       const existingNodes = nodesRef.current;
-      const baseX = bounds.width / 2 - 100;
-      const baseY = bounds.height / 2 - 50;
 
-      // Offset based on number of existing nodes to avoid stacking
-      const offset = existingNodes.length * 30;
+      // Fixed Y position (vertically centered in canvas)
+      const fixedY = bounds.height / 2 - 50;
+
+      // Calculate X position: 15px to the right of the rightmost node
+      const DEFAULT_NODE_WIDTH = 220; // minWidth from BaseNode
+      const NODE_GAP = 15;
+
+      let newX: number;
+      if (existingNodes.length === 0) {
+        // First node: start near left side with some padding
+        newX = 50;
+      } else {
+        // Find the node whose right edge is furthest right
+        let maxRightEdge = 0;
+        for (const node of existingNodes) {
+          // Use measured width if available, otherwise fall back to default
+          const nodeWidth = node.measured?.width ?? node.width ?? DEFAULT_NODE_WIDTH;
+          const rightEdge = node.position.x + nodeWidth;
+          if (rightEdge > maxRightEdge) {
+            maxRightEdge = rightEdge;
+          }
+        }
+        // New node starts 15px after the rightmost edge
+        newX = maxRightEdge + NODE_GAP;
+      }
+
       const position = {
-        x: baseX + offset,
-        y: baseY + offset,
+        x: newX,
+        y: fixedY,
       };
 
       const data = getDefaultNodeData(type, dragData || {});
@@ -297,7 +318,6 @@ export function GraphBuilder() {
             onDrop={onDrop}
             nodeTypes={nodeTypes}
             colorMode="light"
-            fitView
           >
             <Background color={theme.palette.primary.main} gap={16} />
             <Controls />
