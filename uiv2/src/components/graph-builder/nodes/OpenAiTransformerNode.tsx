@@ -9,8 +9,8 @@ import { BaseNode } from './BaseNode';
 import { useListOpenAIModels } from '../../../hooks/useListOpenAIModels';
 import type { OpenAiTransformerNodeType } from './index';
 
-// Handle configuration for this node type
-export const openAiTransformerHandles = { hasInput: true, hasOutput: true } as const;
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const openAiTransformerRole = 'transform' as const;
 
 export function OpenAiTransformerNode({ id, data }: NodeProps<OpenAiTransformerNodeType>) {
   const { updateNodeData } = useReactFlow();

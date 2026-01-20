@@ -1,13 +1,13 @@
 import type { Node, NodeTypes } from '@xyflow/react';
-import { KafkaSourceNode, kafkaSourceHandles } from './KafkaSourceNode';
-import { KafkaSinkNode, kafkaSinkHandles } from './KafkaSinkNode';
-import { GeoIpNode, geoIpHandles } from './GeoIpNode';
-import { InspectorNode, inspectorHandles } from './InspectorNode';
-import { MaterializedViewNode, materializedViewHandles, type AggregationType } from './MaterializedViewNode';
-import { DbSinkNode, dbSinkHandles } from './DbSinkNode';
-import { TextExtractorNode, textExtractorHandles } from './TextExtractorNode';
-import { EmbeddingGeneratorNode, embeddingGeneratorHandles } from './EmbeddingGeneratorNode';
-import { OpenAiTransformerNode, openAiTransformerHandles } from './OpenAiTransformerNode';
+import { KafkaSourceNode, kafkaSourceRole } from './KafkaSourceNode';
+import { KafkaSinkNode, kafkaSinkRole } from './KafkaSinkNode';
+import { GeoIpNode, geoIpRole } from './GeoIpNode';
+import { InspectorNode, inspectorRole } from './InspectorNode';
+import { MaterializedViewNode, materializedViewRole, type AggregationType } from './MaterializedViewNode';
+import { DbSinkNode, dbSinkRole } from './DbSinkNode';
+import { TextExtractorNode, textExtractorRole } from './TextExtractorNode';
+import { EmbeddingGeneratorNode, embeddingGeneratorRole } from './EmbeddingGeneratorNode';
+import { OpenAiTransformerNode, openAiTransformerRole } from './OpenAiTransformerNode';
 
 // Common validation state for all nodes - populated by schema inference
 export interface NodeValidationState {
@@ -93,27 +93,31 @@ export const nodeTypes: NodeTypes = {
   openAiTransformer: OpenAiTransformerNode,
 };
 
-// Node handle configuration - aggregated from each node's exported config
-const nodeHandleConfigs: Record<string, { hasInput: boolean; hasOutput: boolean }> = {
-  kafkaSource: kafkaSourceHandles,
-  kafkaSink: kafkaSinkHandles,
-  geoIp: geoIpHandles,
-  inspector: inspectorHandles,
-  materializedView: materializedViewHandles,
-  dbSink: dbSinkHandles,
-  textExtractor: textExtractorHandles,
-  embeddingGenerator: embeddingGeneratorHandles,
-  openAiTransformer: openAiTransformerHandles,
+// Node roles: 'source' (no input), 'transform' (both), 'sink' (no output)
+export type NodeRole = 'source' | 'transform' | 'sink';
+
+const nodeRoles: Record<string, NodeRole> = {
+  kafkaSource: kafkaSourceRole,
+  kafkaSink: kafkaSinkRole,
+  geoIp: geoIpRole,
+  inspector: inspectorRole,
+  materializedView: materializedViewRole,
+  dbSink: dbSinkRole,
+  textExtractor: textExtractorRole,
+  embeddingGenerator: embeddingGeneratorRole,
+  openAiTransformer: openAiTransformerRole,
 };
 
-/** Check if a node type has an output handle (can be a source of connections) */
+/** Check if a node type has an output handle (sources and transforms have outputs) */
 export function nodeHasOutput(nodeType: string | undefined): boolean {
   if (!nodeType) return false;
-  return nodeHandleConfigs[nodeType]?.hasOutput ?? false;
+  const role = nodeRoles[nodeType];
+  return role === 'source' || role === 'transform';
 }
 
-/** Check if a node type has an input handle (can be a target of connections) */
+/** Check if a node type has an input handle (transforms and sinks have inputs) */
 export function nodeHasInput(nodeType: string | undefined): boolean {
   if (!nodeType) return false;
-  return nodeHandleConfigs[nodeType]?.hasInput ?? false;
+  const role = nodeRoles[nodeType];
+  return role === 'transform' || role === 'sink';
 }
