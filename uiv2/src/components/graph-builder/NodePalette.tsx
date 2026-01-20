@@ -22,9 +22,10 @@ interface PaletteItemProps {
   label: string;
   icon: React.ReactNode;
   data?: Record<string, unknown>;  // Additional data to pass with drag
+  onAdd?: (type: string, data?: Record<string, unknown>) => void;
 }
 
-function PaletteItem({ type, label, icon, data }: PaletteItemProps) {
+function PaletteItem({ type, label, icon, data, onAdd }: PaletteItemProps) {
   const onDragStart = (event: DragEvent) => {
     // Encode type and any additional data
     const payload = data ? JSON.stringify({ type, ...data }) : type;
@@ -32,14 +33,21 @@ function PaletteItem({ type, label, icon, data }: PaletteItemProps) {
     event.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleClick = () => {
+    if (onAdd) {
+      onAdd(type, data);
+    }
+  };
+
   return (
     <Paper
       elevation={1}
       draggable
       onDragStart={onDragStart}
+      onClick={handleClick}
       sx={{
         p: 1.5,
-        cursor: 'grab',
+        cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: 1,
@@ -52,12 +60,13 @@ function PaletteItem({ type, label, icon, data }: PaletteItemProps) {
       }}
     >
       {icon}
-      <Typography variant="body2" noWrap>{label}</Typography>
+      <Typography variant="body2" noWrap sx={{ flex: 1 }}>{label}</Typography>
+      <AddIcon fontSize="small" sx={{ color: 'text.secondary', opacity: 0.6 }} />
     </Paper>
   );
 }
 
-function ConnectionSinkItem({ connection }: { connection: Connection }) {
+function ConnectionSinkItem({ connection, onAdd }: { connection: Connection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
   return (
     <PaletteItem
       type="dbSink"
@@ -69,11 +78,16 @@ function ConnectionSinkItem({ connection }: { connection: Connection }) {
         connectionName: connection.name,
         databaseType: connection.databaseType,
       }}
+      onAdd={onAdd}
     />
   );
 }
 
-export function NodePalette() {
+interface NodePaletteProps {
+  onAddNode?: (type: string, data?: Record<string, unknown>) => void;
+}
+
+export function NodePalette({ onAddNode }: NodePaletteProps) {
   const navigate = useNavigate();
   const { data: connections } = useSinkConnections();
 
@@ -81,7 +95,7 @@ export function NodePalette() {
     <Paper
       elevation={2}
       sx={{
-        width: 200,
+        width: 240,
         p: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -96,6 +110,7 @@ export function NodePalette() {
         type="kafkaSource"
         label="Kafka Source"
         icon={<InputIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
 
       <Divider sx={{ my: 1 }} />
@@ -107,21 +122,25 @@ export function NodePalette() {
         type="geoIp"
         label="GeoIP Lookup"
         icon={<PublicIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
       <PaletteItem
         type="textExtractor"
         label="Text Extractor"
         icon={<DescriptionIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
       <PaletteItem
         type="embeddingGenerator"
         label="Embedding Generator"
         icon={<MemoryIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
       <PaletteItem
         type="openAiTransformer"
         label="OpenAI Transformer"
         icon={<AutoAwesomeIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
 
       <Divider sx={{ my: 1 }} />
@@ -133,16 +152,19 @@ export function NodePalette() {
         type="kafkaSink"
         label="Kafka Sink"
         icon={<OutputIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
       <PaletteItem
         type="inspector"
         label="Inspector"
         icon={<VisibilityIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
       <PaletteItem
         type="materializedView"
         label="Materialized View"
         icon={<TableChartIcon fontSize="small" />}
+        onAdd={onAddNode}
       />
 
       <Divider sx={{ my: 1 }} />
@@ -152,7 +174,7 @@ export function NodePalette() {
       </Typography>
       {connections && connections.length > 0 ? (
         connections.map((conn) => (
-          <ConnectionSinkItem key={conn.id} connection={conn} />
+          <ConnectionSinkItem key={conn.id} connection={conn} onAdd={onAddNode} />
         ))
       ) : (
         <Box sx={{ py: 1 }}>

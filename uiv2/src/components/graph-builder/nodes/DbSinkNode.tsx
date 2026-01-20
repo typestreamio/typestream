@@ -8,6 +8,9 @@ import StorageIcon from '@mui/icons-material/Storage';
 import { BaseNode } from './BaseNode';
 import type { DbSinkNodeType, NodeValidationState } from './index';
 
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const dbSinkRole = 'sink' as const;
+
 export function DbSinkNode({ id, data }: NodeProps<DbSinkNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

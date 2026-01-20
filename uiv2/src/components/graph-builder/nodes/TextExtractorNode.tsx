@@ -8,6 +8,9 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { BaseNode } from './BaseNode';
 import type { TextExtractorNodeType, NodeValidationState } from './index';
 
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const textExtractorRole = 'transform' as const;
+
 export function TextExtractorNode({ id, data }: NodeProps<TextExtractorNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

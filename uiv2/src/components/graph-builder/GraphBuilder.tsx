@@ -7,6 +7,7 @@ import {
   useNodesState,
   useEdgesState,
   type OnConnect,
+  type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Box from '@mui/material/Box';
@@ -16,7 +17,7 @@ import { useTheme } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
-import { nodeTypes, type AppNode } from './nodes';
+import { nodeTypes, nodeHasInput, nodeHasOutput, type AppNode } from './nodes';
 import { serializeGraph, serializeGraphWithDbSinks } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
@@ -31,7 +32,7 @@ export function GraphBuilder() {
   const navigate = useNavigate();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [createError, setCreateError] = useState<string | null>(null);
   const createJob = useCreateJob();
   const inferSchemas = useInferGraphSchemas();
@@ -126,6 +127,49 @@ export function GraphBuilder() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  // Helper to get default node data based on type
+  const getDefaultNodeData = useCallback((type: string, dragData: Record<string, unknown> = {}): Record<string, unknown> => {
+    if (type === 'kafkaSink') {
+      return { topicName: '' };
+    } else if (type === 'geoIp') {
+      return { ipField: '', outputField: 'country_code' };
+    } else if (type === 'inspector') {
+      return { label: '' };
+    } else if (type === 'materializedView') {
+      return { aggregationType: 'count', groupByField: '' };
+    } else if (type === 'jdbcSink') {
+      return {
+        databaseType: 'postgres',
+        hostname: '',
+        port: '5432',
+        database: '',
+        username: '',
+        password: '',
+        tableName: '',
+        insertMode: 'upsert',
+        primaryKeyFields: '',
+      };
+    } else if (type === 'dbSink') {
+      // DbSink node - only non-sensitive fields (credentials resolved server-side)
+      return {
+        connectionId: dragData.connectionId || '',
+        connectionName: dragData.connectionName || '',
+        databaseType: dragData.databaseType || 'postgres',
+        tableName: '',
+        insertMode: 'upsert',
+        primaryKeyFields: '',
+      };
+    } else if (type === 'textExtractor') {
+      return { filePathField: '', outputField: 'text' };
+    } else if (type === 'embeddingGenerator') {
+      return { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
+    } else if (type === 'openAiTransformer') {
+      return { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
+    } else {
+      return { topicPath: '' };
+    }
+  }, []);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -151,46 +195,7 @@ export function GraphBuilder() {
         type = rawData;
       }
 
-      let data: Record<string, unknown>;
-      if (type === 'kafkaSink') {
-        data = { topicName: '' };
-      } else if (type === 'geoIp') {
-        data = { ipField: '', outputField: 'country_code' };
-      } else if (type === 'inspector') {
-        data = { label: '' };
-      } else if (type === 'materializedView') {
-        data = { aggregationType: 'count', groupByField: '' };
-      } else if (type === 'jdbcSink') {
-        data = {
-          databaseType: 'postgres',
-          hostname: '',
-          port: '5432',
-          database: '',
-          username: '',
-          password: '',
-          tableName: '',
-          insertMode: 'upsert',
-          primaryKeyFields: '',
-        };
-      } else if (type === 'dbSink') {
-        // DbSink node - only non-sensitive fields (credentials resolved server-side)
-        data = {
-          connectionId: dragData.connectionId || '',
-          connectionName: dragData.connectionName || '',
-          databaseType: dragData.databaseType || 'postgres',
-          tableName: '',
-          insertMode: 'upsert',
-          primaryKeyFields: '',
-        };
-      } else if (type === 'textExtractor') {
-        data = { filePathField: '', outputField: 'text' };
-      } else if (type === 'embeddingGenerator') {
-        data = { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
-      } else if (type === 'openAiTransformer') {
-        data = { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
-      } else {
-        data = { topicPath: '' };
-      }
+      const data = getDefaultNodeData(type, dragData);
 
       const newNode: AppNode = {
         id: getId(),
@@ -201,7 +206,72 @@ export function GraphBuilder() {
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [setNodes]
+    [setNodes, getDefaultNodeData]
+  );
+
+  // Add node from palette click (places to the right of existing nodes)
+  const handleAddNode = useCallback(
+    (type: string, dragData?: Record<string, unknown>) => {
+      if (!reactFlowWrapper.current) return;
+
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const existingNodes = nodesRef.current;
+
+      // Fixed Y position (vertically centered in canvas)
+      const fixedY = bounds.height / 2 - 50;
+
+      // Calculate X position: 15px to the right of the rightmost node
+      const DEFAULT_NODE_WIDTH = 220; // minWidth from BaseNode
+      const NODE_GAP = 15;
+
+      let newX: number;
+      let rightmostNode: AppNode | null = null;
+      if (existingNodes.length === 0) {
+        // First node: start near left side with some padding
+        newX = 50;
+      } else {
+        // Find the node whose right edge is furthest right
+        let maxRightEdge = 0;
+        for (const node of existingNodes) {
+          // Use measured width if available, otherwise fall back to default
+          const nodeWidth = node.measured?.width ?? node.width ?? DEFAULT_NODE_WIDTH;
+          const rightEdge = node.position.x + nodeWidth;
+          if (rightEdge > maxRightEdge) {
+            maxRightEdge = rightEdge;
+            rightmostNode = node;
+          }
+        }
+        // New node starts 15px after the rightmost edge
+        newX = maxRightEdge + NODE_GAP;
+      }
+
+      const position = {
+        x: newX,
+        y: fixedY,
+      };
+
+      const data = getDefaultNodeData(type, dragData || {});
+
+      const newNodeId = getId();
+      const newNode: AppNode = {
+        id: newNodeId,
+        type,
+        position,
+        data,
+      } as AppNode;
+
+      setNodes((nds) => [...nds, newNode]);
+
+      // Auto-connect: if the rightmost node has an output and the new node has an input
+      if (rightmostNode && nodeHasOutput(rightmostNode.type) && nodeHasInput(type)) {
+        setEdges((eds) => addEdge({
+          id: `edge-${rightmostNode.id}-${newNodeId}`,
+          source: rightmostNode.id,
+          target: newNodeId,
+        }, eds));
+      }
+    },
+    [setNodes, setEdges, getDefaultNodeData]
   );
 
   const handleCreateJob = async () => {
@@ -234,7 +304,7 @@ export function GraphBuilder() {
 
   return (
     <Box sx={{ display: 'flex', height: '100%', gap: 2 }}>
-      <NodePalette />
+      <NodePalette onAddNode={handleAddNode} />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {(createJob.isError || createError) && (
           <Alert severity="error">
@@ -261,7 +331,6 @@ export function GraphBuilder() {
             onDrop={onDrop}
             nodeTypes={nodeTypes}
             colorMode="light"
-            fitView
           >
             <Background color={theme.palette.primary.main} gap={16} />
             <Controls />

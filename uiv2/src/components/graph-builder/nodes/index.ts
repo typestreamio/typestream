@@ -1,13 +1,13 @@
 import type { Node, NodeTypes } from '@xyflow/react';
-import { KafkaSourceNode } from './KafkaSourceNode';
-import { KafkaSinkNode } from './KafkaSinkNode';
-import { GeoIpNode } from './GeoIpNode';
-import { InspectorNode } from './InspectorNode';
-import { MaterializedViewNode, type AggregationType } from './MaterializedViewNode';
-import { DbSinkNode } from './DbSinkNode';
-import { TextExtractorNode } from './TextExtractorNode';
-import { EmbeddingGeneratorNode } from './EmbeddingGeneratorNode';
-import { OpenAiTransformerNode } from './OpenAiTransformerNode';
+import { KafkaSourceNode, kafkaSourceRole } from './KafkaSourceNode';
+import { KafkaSinkNode, kafkaSinkRole } from './KafkaSinkNode';
+import { GeoIpNode, geoIpRole } from './GeoIpNode';
+import { InspectorNode, inspectorRole } from './InspectorNode';
+import { MaterializedViewNode, materializedViewRole, type AggregationType } from './MaterializedViewNode';
+import { DbSinkNode, dbSinkRole } from './DbSinkNode';
+import { TextExtractorNode, textExtractorRole } from './TextExtractorNode';
+import { EmbeddingGeneratorNode, embeddingGeneratorRole } from './EmbeddingGeneratorNode';
+import { OpenAiTransformerNode, openAiTransformerRole } from './OpenAiTransformerNode';
 
 // Common validation state for all nodes - populated by schema inference
 export interface NodeValidationState {
@@ -92,3 +92,32 @@ export const nodeTypes: NodeTypes = {
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,
 };
+
+// Node roles: 'source' (no input), 'transform' (both), 'sink' (no output)
+export type NodeRole = 'source' | 'transform' | 'sink';
+
+const nodeRoles: Record<string, NodeRole> = {
+  kafkaSource: kafkaSourceRole,
+  kafkaSink: kafkaSinkRole,
+  geoIp: geoIpRole,
+  inspector: inspectorRole,
+  materializedView: materializedViewRole,
+  dbSink: dbSinkRole,
+  textExtractor: textExtractorRole,
+  embeddingGenerator: embeddingGeneratorRole,
+  openAiTransformer: openAiTransformerRole,
+};
+
+/** Check if a node type has an output handle (sources and transforms have outputs) */
+export function nodeHasOutput(nodeType: string | undefined): boolean {
+  if (!nodeType) return false;
+  const role = nodeRoles[nodeType];
+  return role === 'source' || role === 'transform';
+}
+
+/** Check if a node type has an input handle (transforms and sinks have inputs) */
+export function nodeHasInput(nodeType: string | undefined): boolean {
+  if (!nodeType) return false;
+  const role = nodeRoles[nodeType];
+  return role === 'transform' || role === 'sink';
+}

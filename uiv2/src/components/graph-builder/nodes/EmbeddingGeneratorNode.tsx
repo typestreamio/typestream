@@ -8,6 +8,9 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import { BaseNode } from './BaseNode';
 import type { EmbeddingGeneratorNodeType, NodeValidationState } from './index';
 
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const embeddingGeneratorRole = 'transform' as const;
+
 export function EmbeddingGeneratorNode({ id, data }: NodeProps<EmbeddingGeneratorNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

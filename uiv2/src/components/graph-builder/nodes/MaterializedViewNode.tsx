@@ -9,6 +9,9 @@ import type { MaterializedViewNodeType, NodeValidationState } from './index';
 
 export type AggregationType = 'count' | 'latest';
 
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const materializedViewRole = 'sink' as const;
+
 export function MaterializedViewNode({ id, data }: NodeProps<MaterializedViewNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();

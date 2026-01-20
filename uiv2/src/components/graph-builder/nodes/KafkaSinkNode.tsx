@@ -4,6 +4,9 @@ import OutputIcon from '@mui/icons-material/Output';
 import { BaseNode } from './BaseNode';
 import type { KafkaSinkNodeType } from './index';
 
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const kafkaSinkRole = 'sink' as const;
+
 export function KafkaSinkNode({ id, data }: NodeProps<KafkaSinkNodeType>) {
   const { updateNodeData } = useReactFlow();
 

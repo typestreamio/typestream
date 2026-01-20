@@ -25,6 +25,9 @@ function getEncodingLabel(encoding: Encoding): string {
   }
 }
 
+/** Node role determines handle configuration: sources have no input, sinks have no output */
+export const kafkaSourceRole = 'source' as const;
+
 export function KafkaSourceNode({ id, data }: NodeProps<KafkaSourceNodeType>) {
   const { topics } = useKafkaTopics();
   const { updateNodeData } = useReactFlow();
