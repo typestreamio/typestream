@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeStream - Live Crypto Prices</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        .header p {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-top: 10px;
+        }
+        .status.connected {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+        .status.error {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        .chart-card h3 {
+            margin-bottom: 15px;
+            font-size: 1rem;
+            color: #8892b0;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .price-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .price-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .price-card .symbol {
+            font-size: 0.9rem;
+            color: #8892b0;
+            margin-bottom: 5px;
+        }
+        .price-card .price {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .price-card .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+        .price-card .details span {
+            color: #8892b0;
+        }
+        .price-card .details .value {
+            color: #fff;
+            text-align: right;
+        }
+        .btc { border-left: 3px solid #f7931a; }
+        .eth { border-left: 3px solid #627eea; }
+        .other { border-left: 3px solid #00ff88; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TypeStream Live Prices</h1>
+            <p>Real-time crypto prices from Kafka state store (last 2 minutes)</p>
+            <div class="status connected" id="status">● Connected</div>
+        </div>
+
+        <div class="chart-card">
+            <h3>BTC-USD Price</h3>
+            <div class="chart-container">
+                <canvas id="btcChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>ETH-USD Price</h3>
+            <div class="chart-container">
+                <canvas id="ethChart"></canvas>
+            </div>
+        </div>
+
+        <div class="price-cards" id="priceCards"></div>
+    </div>
+
+    <script>
+        const POLL_INTERVAL = 500;
+        const MAX_AGE_MS = 2 * 60 * 1000; // 2 minutes
+
+        const colors = {
+            'BTC-USD': { bg: 'rgba(247, 147, 26, 0.2)', border: '#f7931a' },
+            'ETH-USD': { bg: 'rgba(98, 126, 234, 0.2)', border: '#627eea' },
+        };
+
+        // Historical data storage: { 'BTC-USD': [{x: timestamp, y: price}, ...], ... }
+        const priceHistory = {};
+
+        function createLineChart(canvasId, label, color) {
+            return new Chart(document.getElementById(canvasId), {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: label,
+                        data: [],
+                        borderColor: color.border,
+                        backgroundColor: color.bg,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'second',
+                                displayFormats: { second: 'HH:mm:ss' }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#8892b0', maxTicksLimit: 10 }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: {
+                                color: '#8892b0',
+                                callback: (v) => '$' + v.toLocaleString()
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        const btcChart = createLineChart('btcChart', 'BTC-USD', colors['BTC-USD']);
+        const ethChart = createLineChart('ethChart', 'ETH-USD', colors['ETH-USD']);
+
+        function formatPrice(price) {
+            if (price >= 1000) {
+                return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            return '$' + price.toFixed(2);
+        }
+
+        function formatVolume(volume) {
+            if (volume >= 1000000) {
+                return (volume / 1000000).toFixed(2) + 'M';
+            }
+            if (volume >= 1000) {
+                return (volume / 1000).toFixed(2) + 'K';
+            }
+            return volume.toFixed(2);
+        }
+
+        function pruneOldData(productId) {
+            const cutoff = Date.now() - MAX_AGE_MS;
+            if (priceHistory[productId]) {
+                priceHistory[productId] = priceHistory[productId].filter(p => p.x >= cutoff);
+            }
+        }
+
+        function updateCharts() {
+            pruneOldData('BTC-USD');
+            pruneOldData('ETH-USD');
+
+            btcChart.data.datasets[0].data = priceHistory['BTC-USD'] || [];
+            btcChart.update('none');
+
+            ethChart.data.datasets[0].data = priceHistory['ETH-USD'] || [];
+            ethChart.update('none');
+        }
+
+        function updateCards(prices) {
+            const container = document.getElementById('priceCards');
+            container.innerHTML = prices.map(p => {
+                const colorClass = p.product_id.includes('BTC') ? 'btc' :
+                                   p.product_id.includes('ETH') ? 'eth' : 'other';
+                return `
+                    <div class="price-card ${colorClass}">
+                        <div class="symbol">${p.product_id}</div>
+                        <div class="price">${formatPrice(p.price)}</div>
+                        <div class="details">
+                            <span>24h High</span><div class="value">${formatPrice(p.high_24h)}</div>
+                            <span>24h Low</span><div class="value">${formatPrice(p.low_24h)}</div>
+                            <span>24h Volume</span><div class="value">${formatVolume(p.volume_24h)}</div>
+                            <span>Updated</span><div class="value">${new Date(p.timestamp).toLocaleTimeString()}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function fetchPrices() {
+            try {
+                const response = await fetch('/api/prices');
+                if (!response.ok) throw new Error('Failed to fetch');
+                const prices = await response.json();
+
+                if (prices.length > 0) {
+                    const now = Date.now();
+
+                    for (const p of prices) {
+                        if (!priceHistory[p.product_id]) {
+                            priceHistory[p.product_id] = [];
+                        }
+                        priceHistory[p.product_id].push({ x: now, y: p.price });
+                    }
+
+                    updateCharts();
+                    updateCards(prices);
+                    document.getElementById('status').className = 'status connected';
+                    document.getElementById('status').textContent = '● Connected';
+                }
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = '● Disconnected';
+            }
+        }
+
+        fetchPrices();
+        setInterval(fetchPrices, POLL_INTERVAL);
+    </script>
+</body>
+</html>
