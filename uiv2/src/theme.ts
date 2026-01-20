@@ -37,5 +37,15 @@ export const theme = createTheme({
         },
       },
     },
+    MuiCssBaseline: {
+      styleOverrides: {
+        '.dark-panel': {
+          backgroundColor: '#212121',
+          color: '#e0e0e0',
+          borderRadius: '4px',
+          padding: '12px',
+        },
+      },
+    },
   },
 });

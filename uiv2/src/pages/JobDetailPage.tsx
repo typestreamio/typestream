@@ -142,7 +142,7 @@ export function JobDetailPage() {
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Activity (last 2 minutes)
                   </Typography>
-                  <Box sx={{ bgcolor: 'grey.900', borderRadius: 1, p: 1.5 }}>
+                  <Box className="dark-panel">
                     <Sparkline
                       data={throughputHistory}
                       width={300}
@@ -182,11 +182,9 @@ export function JobDetailPage() {
                     <Typography
                       variant="caption"
                       component="pre"
+                      className="dark-panel"
                       sx={{
                         mt: 1,
-                        p: 1,
-                        bgcolor: 'grey.900',
-                        borderRadius: 1,
                         overflow: 'auto',
                         fontFamily: 'monospace',
                       }}

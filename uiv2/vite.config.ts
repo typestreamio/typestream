@@ -5,9 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true,
     watch: {
-      usePolling: false,
+      usePolling: process.env.CHOKIDAR_USEPOLLING === 'true',
       ignored: ['**/.pnpm-store/**'],
+    },
+    hmr: {
+      host: 'localhost',
     },
     proxy: {
       '/connect/': {

@@ -240,12 +240,9 @@ export function StreamInspectorPanel({
                       ) : isExpanded ? (
                         <Box
                           component="pre"
+                          className="dark-panel"
                           sx={{
                             margin: 0,
-                            padding: '8px',
-                            backgroundColor: 'grey.900',
-                            color: 'grey.100',
-                            borderRadius: '4px',
                             whiteSpace: 'pre-wrap',
                             wordBreak: 'break-word',
                           }}

@@ -217,12 +217,9 @@ export function NodeSnapshotPanel({
                   Key
                 </Typography>
                 <Box
+                  className="dark-panel"
                   sx={{
                     mt: 0.5,
-                    p: 1.5,
-                    bgcolor: 'grey.900',
-                    color: 'grey.100',
-                    borderRadius: 1,
                     fontFamily: 'monospace',
                     fontSize: '0.875rem',
                   }}
@@ -264,12 +261,9 @@ export function NodeSnapshotPanel({
                   ) : (
                     <Box
                       component="pre"
+                      className="dark-panel"
                       sx={{
                         margin: 0,
-                        padding: '12px',
-                        backgroundColor: 'grey.900',
-                        color: 'grey.100',
-                        borderRadius: '4px',
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
                         fontFamily: 'monospace',
