@@ -8,7 +8,7 @@
 
 <div align="center">
     <a href="https://github.com/typestreamio/typestream/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/typestreamio/typestream" />
+        <img src="https://img.shields.io/badge/license-BSL%201.1-blue" />
     </a>
     <a href="https://discord.gg/Ha9sJWXb">
         <img src="https://img.shields.io/badge/Chat-on%20Discord-blue" alt="Discord invite" />
