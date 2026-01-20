@@ -24,6 +24,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
+    "@mui/x-charts": "^8.25.0",
     "@tanstack/react-query": "^5.90.11",
     "@types/dagre": "^0.7.53",
     "@xyflow/react": "^12.10.0",

@@ -11,6 +11,6 @@ export function useListJobs(userId: string = 'local') {
   return useQuery(
     { ...JobService.methods.listJobs, service: JobService },
     { userId },
-    { refetchInterval: 2000 }
+    { refetchInterval: 1000 }
   );
 }

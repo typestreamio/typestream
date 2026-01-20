@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
@@ -16,12 +17,60 @@ import { useNavigate } from 'react-router-dom';
 import { useListJobs } from '../hooks/useListJobs';
 import { JobStatusChip } from '../components/JobStatusChip';
 import { formatThroughput, formatBytes } from '../utils/formatters';
+import { Sparkline } from '../components/Sparkline';
+import { useThroughputHistoryContext } from '../providers/ThroughputHistoryContext';
+import { useThroughputHistory } from '../hooks/useThroughputHistory';
+import type { JobInfo } from '../generated/job_pb';
+
+interface JobRowProps {
+  job: JobInfo;
+  onClick: () => void;
+}
+
+function JobRow({ job, onClick }: JobRowProps) {
+  const history = useThroughputHistory(job.jobId);
+
+  return (
+    <TableRow
+      hover
+      sx={{ cursor: 'pointer' }}
+      onClick={onClick}
+    >
+      <TableCell sx={{ fontFamily: 'monospace' }}>
+        {job.jobId || '(empty)'}
+      </TableCell>
+      <TableCell>
+        <JobStatusChip state={job.state} />
+      </TableCell>
+      <TableCell sx={{ fontFamily: 'monospace' }}>
+        {formatThroughput(job.throughput?.messagesPerSecond ?? 0)}
+      </TableCell>
+      <TableCell>
+        <Sparkline data={history} width={80} height={24} />
+      </TableCell>
+      <TableCell sx={{ fontFamily: 'monospace' }}>
+        {formatBytes(job.throughput?.bytesPerSecond ?? 0)}/s
+      </TableCell>
+      <TableCell>
+        {job.startTime ? new Date(Number(job.startTime)).toLocaleString() : '-'}
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export function JobsPage() {
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useListJobs('local');
+  const { recordValues } = useThroughputHistoryContext();
 
   const jobs = data?.jobs ?? [];
+
+  // Record throughput values on each poll for sparkline history
+  useEffect(() => {
+    if (jobs.length > 0) {
+      recordValues(jobs);
+    }
+  }, [jobs, recordValues]);
 
   return (
     <Box>
@@ -73,34 +122,18 @@ export function JobsPage() {
                 <TableCell>Job ID</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Throughput</TableCell>
+                <TableCell>Activity</TableCell>
                 <TableCell>Bandwidth</TableCell>
                 <TableCell>Started</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {jobs.map((job) => (
-                <TableRow
+                <JobRow
                   key={job.jobId}
-                  hover
-                  sx={{ cursor: 'pointer' }}
+                  job={job}
                   onClick={() => navigate(`/jobs/${job.jobId}`)}
-                >
-                  <TableCell sx={{ fontFamily: 'monospace' }}>
-                    {job.jobId || '(empty)'}
-                  </TableCell>
-                  <TableCell>
-                    <JobStatusChip state={job.state} />
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'monospace' }}>
-                    {formatThroughput(job.throughput?.messagesPerSecond ?? 0)}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'monospace' }}>
-                    {formatBytes(job.throughput?.bytesPerSecond ?? 0)}/s
-                  </TableCell>
-                  <TableCell>
-                    {job.startTime ? new Date(Number(job.startTime)).toLocaleString() : '-'}
-                  </TableCell>
-                </TableRow>
+                />
               ))}
             </TableBody>
           </Table>
