@@ -173,8 +173,10 @@ describe('usePreviewJob', () => {
     expect(result.current.jobId).toBeNull();
     expect(result.current.isStreaming).toBe(false);
 
-    // Cleanup
-    resolveStream!();
+    // Cleanup - wrap in act since resolving the stream triggers state updates
+    await act(async () => {
+      resolveStream!();
+    });
   });
 
   it('should handle stream abort gracefully', async () => {
