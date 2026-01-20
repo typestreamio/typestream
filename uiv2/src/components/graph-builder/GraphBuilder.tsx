@@ -126,6 +126,49 @@ export function GraphBuilder() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  // Helper to get default node data based on type
+  const getDefaultNodeData = useCallback((type: string, dragData: Record<string, unknown> = {}): Record<string, unknown> => {
+    if (type === 'kafkaSink') {
+      return { topicName: '' };
+    } else if (type === 'geoIp') {
+      return { ipField: '', outputField: 'country_code' };
+    } else if (type === 'inspector') {
+      return { label: '' };
+    } else if (type === 'materializedView') {
+      return { aggregationType: 'count', groupByField: '' };
+    } else if (type === 'jdbcSink') {
+      return {
+        databaseType: 'postgres',
+        hostname: '',
+        port: '5432',
+        database: '',
+        username: '',
+        password: '',
+        tableName: '',
+        insertMode: 'upsert',
+        primaryKeyFields: '',
+      };
+    } else if (type === 'dbSink') {
+      // DbSink node - only non-sensitive fields (credentials resolved server-side)
+      return {
+        connectionId: dragData.connectionId || '',
+        connectionName: dragData.connectionName || '',
+        databaseType: dragData.databaseType || 'postgres',
+        tableName: '',
+        insertMode: 'upsert',
+        primaryKeyFields: '',
+      };
+    } else if (type === 'textExtractor') {
+      return { filePathField: '', outputField: 'text' };
+    } else if (type === 'embeddingGenerator') {
+      return { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
+    } else if (type === 'openAiTransformer') {
+      return { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
+    } else {
+      return { topicPath: '' };
+    }
+  }, []);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -151,46 +194,7 @@ export function GraphBuilder() {
         type = rawData;
       }
 
-      let data: Record<string, unknown>;
-      if (type === 'kafkaSink') {
-        data = { topicName: '' };
-      } else if (type === 'geoIp') {
-        data = { ipField: '', outputField: 'country_code' };
-      } else if (type === 'inspector') {
-        data = { label: '' };
-      } else if (type === 'materializedView') {
-        data = { aggregationType: 'count', groupByField: '' };
-      } else if (type === 'jdbcSink') {
-        data = {
-          databaseType: 'postgres',
-          hostname: '',
-          port: '5432',
-          database: '',
-          username: '',
-          password: '',
-          tableName: '',
-          insertMode: 'upsert',
-          primaryKeyFields: '',
-        };
-      } else if (type === 'dbSink') {
-        // DbSink node - only non-sensitive fields (credentials resolved server-side)
-        data = {
-          connectionId: dragData.connectionId || '',
-          connectionName: dragData.connectionName || '',
-          databaseType: dragData.databaseType || 'postgres',
-          tableName: '',
-          insertMode: 'upsert',
-          primaryKeyFields: '',
-        };
-      } else if (type === 'textExtractor') {
-        data = { filePathField: '', outputField: 'text' };
-      } else if (type === 'embeddingGenerator') {
-        data = { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
-      } else if (type === 'openAiTransformer') {
-        data = { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
-      } else {
-        data = { topicPath: '' };
-      }
+      const data = getDefaultNodeData(type, dragData);
 
       const newNode: AppNode = {
         id: getId(),
@@ -201,7 +205,39 @@ export function GraphBuilder() {
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [setNodes]
+    [setNodes, getDefaultNodeData]
+  );
+
+  // Add node from palette click (places in center of canvas)
+  const handleAddNode = useCallback(
+    (type: string, dragData?: Record<string, unknown>) => {
+      if (!reactFlowWrapper.current) return;
+
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      // Calculate position based on existing nodes to avoid overlap
+      const existingNodes = nodesRef.current;
+      const baseX = bounds.width / 2 - 100;
+      const baseY = bounds.height / 2 - 50;
+
+      // Offset based on number of existing nodes to avoid stacking
+      const offset = existingNodes.length * 30;
+      const position = {
+        x: baseX + offset,
+        y: baseY + offset,
+      };
+
+      const data = getDefaultNodeData(type, dragData || {});
+
+      const newNode: AppNode = {
+        id: getId(),
+        type,
+        position,
+        data,
+      } as AppNode;
+
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [setNodes, getDefaultNodeData]
   );
 
   const handleCreateJob = async () => {
@@ -234,7 +270,7 @@ export function GraphBuilder() {
 
   return (
     <Box sx={{ display: 'flex', height: '100%', gap: 2 }}>
-      <NodePalette />
+      <NodePalette onAddNode={handleAddNode} />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {(createJob.isError || createError) && (
           <Alert severity="error">
