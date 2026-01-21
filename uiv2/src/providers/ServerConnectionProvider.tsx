@@ -75,6 +75,7 @@ export function ServerConnectionProvider({
   // Track timing for debounce
   const firstFailureTimeRef = useRef<number | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
   const handleSuccess = useCallback(() => {
     // Any success immediately resets the connection state
@@ -135,6 +136,7 @@ export function ServerConnectionProvider({
           const remainingTime = debounceMs - timeSinceFirstFailure;
           debounceTimerRef.current = setTimeout(() => {
             debounceTimerRef.current = null;
+            if (!mountedRef.current) return;
             setState((current) => {
               if (current.consecutiveFailures >= failureThreshold) {
                 return {
@@ -190,6 +192,7 @@ export function ServerConnectionProvider({
     });
 
     return () => {
+      mountedRef.current = false;
       unsubscribe();
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);

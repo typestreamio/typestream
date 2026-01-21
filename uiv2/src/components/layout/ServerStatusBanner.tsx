@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Collapse from '@mui/material/Collapse';
@@ -12,6 +12,7 @@ export function ServerStatusBanner() {
   const { isConnected, disconnectedSince } = useServerConnection();
   const [showReconnected, setShowReconnected] = useState(false);
   const [wasDisconnected, setWasDisconnected] = useState(false);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track reconnection for showing "Reconnected" message
   useEffect(() => {
@@ -20,12 +21,17 @@ export function ServerStatusBanner() {
     } else if (wasDisconnected && isConnected) {
       // Just reconnected - show success message briefly
       setShowReconnected(true);
-      const timer = setTimeout(() => {
+      reconnectTimerRef.current = setTimeout(() => {
         setShowReconnected(false);
         setWasDisconnected(false);
       }, 3000);
-      return () => clearTimeout(timer);
     }
+
+    return () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
+    };
   }, [isConnected, wasDisconnected]);
 
   const formatDuration = (since: Date | null) => {
