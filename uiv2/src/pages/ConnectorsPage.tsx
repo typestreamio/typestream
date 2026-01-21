@@ -19,6 +19,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { useNavigate } from 'react-router-dom';
 import { useConnectors, useDeleteConnector, useRestartConnector } from '../hooks/useConnectors';
+import { useServerConnection } from '../providers/ServerConnectionContext';
 import type { ConnectorWithStatus } from '../hooks/useConnectors';
 
 function ConnectorStatusChip({ connector }: { connector: ConnectorWithStatus }) {
@@ -57,6 +58,10 @@ export function ConnectorsPage() {
   const { data: connectors, isLoading, error, refetch } = useConnectors();
   const deleteConnector = useDeleteConnector();
   const restartConnector = useRestartConnector();
+  const { isConnected } = useServerConnection();
+
+  // Don't show errors when server is disconnected (banner handles it)
+  const showError = error && isConnected;
 
   const handleDelete = (name: string) => {
     if (confirm(`Delete connector "${name}"?`)) {
@@ -96,9 +101,9 @@ export function ConnectorsPage() {
         </Box>
       )}
 
-      {error && (
+      {showError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Error loading connectors: {error.message}
+          Error loading connectors. Please try again.
         </Alert>
       )}
 

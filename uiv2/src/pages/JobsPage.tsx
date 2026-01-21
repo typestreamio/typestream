@@ -20,6 +20,7 @@ import { formatThroughput, formatBytes } from '../utils/formatters';
 import { Sparkline } from '../components/Sparkline';
 import { useThroughputHistoryContext } from '../providers/ThroughputHistoryContext';
 import { useThroughputHistory } from '../hooks/useThroughputHistory';
+import { useServerConnection } from '../providers/ServerConnectionContext';
 import type { JobInfo } from '../generated/job_pb';
 
 interface JobRowProps {
@@ -62,8 +63,12 @@ export function JobsPage() {
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useListJobs('local');
   const { recordValues } = useThroughputHistoryContext();
+  const { isConnected } = useServerConnection();
 
   const jobs = data?.jobs ?? [];
+
+  // Don't show errors when server is disconnected (banner handles it)
+  const showError = error && isConnected;
 
   // Record throughput values on each poll for sparkline history
   useEffect(() => {
@@ -100,9 +105,9 @@ export function JobsPage() {
         </Box>
       )}
 
-      {error && (
+      {showError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Error loading jobs: {error.message}
+          Error loading jobs. Please try again.
         </Alert>
       )}
 

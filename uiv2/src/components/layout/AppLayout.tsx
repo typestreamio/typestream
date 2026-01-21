@@ -4,6 +4,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { ServerStatusBanner } from './ServerStatusBanner';
 import { DRAWER_WIDTH } from './constants';
 
 export function AppLayout() {
@@ -30,12 +31,16 @@ export function AppLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           width: `calc(100% - ${DRAWER_WIDTH}px)`,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Toolbar />
-        <Outlet />
+        <ServerStatusBanner />
+        <Box sx={{ p: 3, flexGrow: 1 }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );
