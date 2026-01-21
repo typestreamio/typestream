@@ -53,6 +53,27 @@ data class MonitoredConnection(
 )
 
 /**
+ * Immutable snapshot of Weaviate connection state for thread-safe reads
+ */
+data class WeaviateConnectionStateSnapshot(
+    val state: ConnectionState,
+    val error: String?,
+    val lastChecked: Instant
+)
+
+/**
+ * Represents a monitored Weaviate connection with its current state.
+ */
+data class MonitoredWeaviateConnection(
+    val config: Connection.WeaviateConnectionConfig,
+    @Volatile var stateSnapshot: WeaviateConnectionStateSnapshot = WeaviateConnectionStateSnapshot(
+        state = ConnectionState.CONNECTION_STATE_UNSPECIFIED,
+        error = null,
+        lastChecked = Instant.now()
+    )
+)
+
+/**
  * Service that monitors database connections and reports their status.
  * Maintains persistent JDBC connections to detect connectivity issues.
  */
@@ -63,6 +84,9 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     // Map of connection ID to monitored connection
     private val connections = ConcurrentHashMap<String, MonitoredConnection>()
 
+    // Map of Weaviate connection ID to monitored Weaviate connection
+    private val weaviateConnections = ConcurrentHashMap<String, MonitoredWeaviateConnection>()
+
     // Background monitoring coroutine scope
     private val monitorScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var monitorJob: Job? = null
@@ -70,8 +94,9 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     // How often to check connection health
     private val healthCheckInterval = 10.seconds
 
-    // Whether to register the default dev-postgres connection (can be disabled via env var)
+    // Whether to register the default dev connections (can be disabled via env vars)
     private val registerDevConnection = System.getenv("TYPESTREAM_REGISTER_DEV_POSTGRES")?.toBoolean() ?: true
+    private val registerDevWeaviate = System.getenv("TYPESTREAM_REGISTER_DEV_WEAVIATE")?.toBoolean() ?: true
 
     init {
         // Start background health monitoring
@@ -79,6 +104,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             while (isActive) {
                 delay(healthCheckInterval)
                 checkAllConnections()
+                checkAllWeaviateConnections()
             }
         }
         logger.info { "ConnectionService started with ${healthCheckInterval.inWholeSeconds}s health check interval" }
@@ -88,6 +114,13 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             registerDevPostgresConnection()
         } else {
             logger.info { "Skipping dev-postgres registration (TYPESTREAM_REGISTER_DEV_POSTGRES=false)" }
+        }
+
+        // Register default dev weaviate connection for testing (can be disabled via TYPESTREAM_REGISTER_DEV_WEAVIATE=false)
+        if (registerDevWeaviate) {
+            registerDevWeaviateConnection()
+        } else {
+            logger.info { "Skipping dev-weaviate registration (TYPESTREAM_REGISTER_DEV_WEAVIATE=false)" }
         }
     }
 
@@ -135,6 +168,39 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         }
     }
 
+    /**
+     * Register the default dev weaviate connection on startup
+     */
+    private fun registerDevWeaviateConnection() {
+        val devConfig = Connection.WeaviateConnectionConfig.newBuilder()
+            .setId("dev-weaviate")
+            .setName("dev-weaviate")
+            .setRestUrl("http://localhost:8090")
+            .setGrpcUrl("localhost:50051")
+            .setGrpcSecured(false)
+            .setAuthScheme("NONE")
+            .setConnectorRestUrl("http://weaviate:8080")
+            .setConnectorGrpcUrl("weaviate:50051")
+            .build()
+
+        logger.info { "Registering default dev-weaviate connection" }
+
+        val isHealthy = checkWeaviateHealth(devConfig.restUrl)
+        weaviateConnections["dev-weaviate"] = MonitoredWeaviateConnection(
+            config = devConfig,
+            stateSnapshot = WeaviateConnectionStateSnapshot(
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                error = if (isHealthy) null else "Weaviate not reachable",
+                lastChecked = Instant.now()
+            )
+        )
+        if (isHealthy) {
+            logger.info { "dev-weaviate connection established successfully" }
+        } else {
+            logger.warn { "dev-weaviate connection failed (this is normal if weaviate is not running)" }
+        }
+    }
+
     override fun close() {
         logger.info { "Shutting down ConnectionService" }
         monitorJob?.cancel()
@@ -149,6 +215,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             }
         }
         connections.clear()
+        weaviateConnections.clear()
     }
 
     override suspend fun registerConnection(request: Connection.RegisterConnectionRequest): Connection.RegisterConnectionResponse =
@@ -471,7 +538,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      */
     private fun createKafkaConnectConnector(connectorConfig: Map<String, Any>) {
         val connectUrl = System.getenv("KAFKA_CONNECT_URL") ?: "http://localhost:8083"
-        val url = java.net.URL("$connectUrl/connectors")
+        val url = java.net.URI.create("$connectUrl/connectors").toURL()
         val connection = url.openConnection() as java.net.HttpURLConnection
 
         try {
@@ -509,11 +576,253 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             sb.append("\"$key\":")
             when (value) {
                 is String -> sb.append("\"${value.replace("\"", "\\\"")}\"")
-                is Map<*, *> -> sb.append(buildJsonString(value as Map<String, Any>))
+                is Map<*, *> -> @Suppress("UNCHECKED_CAST") sb.append(buildJsonString(value as Map<String, Any>))
                 else -> sb.append(value)
             }
         }
         sb.append("}")
         return sb.toString()
+    }
+
+    // ==================== Weaviate Connection Methods ====================
+
+    /**
+     * Register a Weaviate connection for monitoring
+     */
+    override suspend fun registerWeaviateConnection(request: Connection.RegisterWeaviateConnectionRequest): Connection.RegisterWeaviateConnectionResponse {
+        val config = request.connection
+        logger.info { "Registering Weaviate connection: ${config.name} (${config.id})" }
+
+        val isHealthy = checkWeaviateHealth(config.restUrl)
+        val monitored = MonitoredWeaviateConnection(
+            config = config,
+            stateSnapshot = WeaviateConnectionStateSnapshot(
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.ERROR,
+                error = if (isHealthy) null else "Weaviate not reachable at ${config.restUrl}",
+                lastChecked = Instant.now()
+            )
+        )
+        weaviateConnections[config.id] = monitored
+
+        return Connection.RegisterWeaviateConnectionResponse.newBuilder()
+            .setSuccess(true)
+            .setStatus(monitored.toWeaviateProto())
+            .build()
+    }
+
+    /**
+     * Get status of all Weaviate connections
+     */
+    override suspend fun getWeaviateConnectionStatuses(request: Connection.GetWeaviateConnectionStatusesRequest): Connection.GetWeaviateConnectionStatusesResponse {
+        val builder = Connection.GetWeaviateConnectionStatusesResponse.newBuilder()
+        weaviateConnections.values.forEach { monitored ->
+            builder.addStatuses(monitored.toWeaviateProto())
+        }
+        return builder.build()
+    }
+
+    /**
+     * Create a Weaviate sink connector using a registered connection.
+     * Credentials are resolved server-side from the connection ID.
+     */
+    override suspend fun createWeaviateSinkConnector(request: Connection.CreateWeaviateSinkConnectorRequest): Connection.CreateWeaviateSinkConnectorResponse {
+        val connectionId = request.connectionId
+        val monitored = weaviateConnections[connectionId]
+
+        if (monitored == null) {
+            return Connection.CreateWeaviateSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Weaviate connection not found: $connectionId")
+                .build()
+        }
+
+        val config = monitored.config
+        logger.info { "Creating Weaviate sink connector: ${request.connectorName} for connection ${config.name}" }
+
+        try {
+            // Build Weaviate sink connector configuration
+            val connectorConfig = buildWeaviateSinkConnectorConfig(
+                name = request.connectorName,
+                config = config,
+                topics = request.topics,
+                collectionName = request.collectionName,
+                documentIdStrategy = request.documentIdStrategy,
+                documentIdField = request.documentIdField,
+                vectorStrategy = request.vectorStrategy,
+                vectorField = request.vectorField
+            )
+
+            // Create connector via Kafka Connect REST API
+            createKafkaConnectConnector(connectorConfig)
+
+            return Connection.CreateWeaviateSinkConnectorResponse.newBuilder()
+                .setSuccess(true)
+                .setConnectorName(request.connectorName)
+                .build()
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to create Weaviate sink connector: ${request.connectorName}" }
+            return Connection.CreateWeaviateSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError(e.message ?: "Unknown error")
+                .build()
+        }
+    }
+
+    /**
+     * Build the Kafka Connect Weaviate sink connector configuration
+     */
+    private fun buildWeaviateSinkConnectorConfig(
+        name: String,
+        config: Connection.WeaviateConnectionConfig,
+        topics: String,
+        collectionName: String,
+        documentIdStrategy: String,
+        documentIdField: String,
+        vectorStrategy: String,
+        vectorField: String
+    ): Map<String, Any> {
+        // Use connector URLs for Kafka Connect (Docker network)
+        val weaviateUrl = config.connectorRestUrl.ifEmpty { config.restUrl }
+        val grpcHost = config.connectorGrpcUrl.ifEmpty { config.grpcUrl }
+
+        val connectorConfig = mutableMapOf<String, Any>(
+            "name" to name,
+            "connector.class" to "io.weaviate.connector.WeaviateSinkConnector",
+            "tasks.max" to "1",
+            "topics" to topics,
+            "weaviate.connection.url" to weaviateUrl,
+            "weaviate.grpc.url" to grpcHost,
+            "weaviate.grpc.secured" to config.grpcSecured.toString(),
+            "collection.mapping" to collectionName,
+            // Keys are written as UTF-8 strings by TypeStream
+            "key.converter" to "org.apache.kafka.connect.storage.StringConverter",
+            "value.converter" to "io.confluent.connect.avro.AvroConverter",
+            "value.converter.schema.registry.url" to (System.getenv("SCHEMA_REGISTRY_URL") ?: "http://redpanda:8081"),
+            // Convert any timestamp fields from java.util.Date to unix epoch (long)
+            // This is needed because Avro's timestamp-millis logical type becomes java.util.Date
+            // but the Weaviate connector expects Long for INT64 fields
+            "transforms" to "convertTimestamp",
+            "transforms.convertTimestamp.type" to "org.apache.kafka.connect.transforms.TimestampConverter\$Value",
+            "transforms.convertTimestamp.target.type" to "unix",
+            "transforms.convertTimestamp.field" to "timestamp"
+        )
+
+        // Add auth configuration if API key is set
+        if (config.authScheme == "API_KEY" && config.apiKey.isNotEmpty()) {
+            connectorConfig["weaviate.api.key"] = config.apiKey
+        }
+
+        // Document ID strategy configuration
+        when (documentIdStrategy) {
+            "FieldIdStrategy" -> {
+                connectorConfig["document.id.strategy"] = "io.weaviate.connector.idstrategy.FieldIdStrategy"
+                if (documentIdField.isNotEmpty()) {
+                    connectorConfig["document.id.field.name"] = documentIdField
+                }
+            }
+            "KafkaIdStrategy" -> {
+                connectorConfig["document.id.strategy"] = "io.weaviate.connector.idstrategy.KafkaIdStrategy"
+            }
+            else -> {
+                // NoIdStrategy - let Weaviate auto-generate UUIDs
+                connectorConfig["document.id.strategy"] = "io.weaviate.connector.idstrategy.NoIdStrategy"
+            }
+        }
+
+        // Vector strategy configuration (for pre-computed embeddings)
+        when (vectorStrategy) {
+            "FieldVectorStrategy" -> {
+                connectorConfig["vector.strategy"] = "io.weaviate.connector.vectorstrategy.FieldVectorStrategy"
+                if (vectorField.isNotEmpty()) {
+                    connectorConfig["vector.field.name"] = vectorField
+                }
+            }
+            else -> {
+                // NoVectorStrategy - no pre-computed vectors, Weaviate can vectorize if configured
+                connectorConfig["vector.strategy"] = "io.weaviate.connector.vectorstrategy.NoVectorStrategy"
+            }
+        }
+
+        return mapOf("name" to name, "config" to connectorConfig)
+    }
+
+    /**
+     * Check health of Weaviate by calling its ready endpoint
+     */
+    private fun checkWeaviateHealth(restUrl: String): Boolean {
+        return try {
+            val url = java.net.URI.create("$restUrl/v1/.well-known/ready").toURL()
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            connection.requestMethod = "GET"
+
+            try {
+                val responseCode = connection.responseCode
+                responseCode == 200
+            } finally {
+                connection.disconnect()
+            }
+        } catch (e: Exception) {
+            logger.debug { "Weaviate health check failed for $restUrl: ${e.message}" }
+            false
+        }
+    }
+
+    /**
+     * Check health of all registered Weaviate connections
+     */
+    private fun checkAllWeaviateConnections() {
+        weaviateConnections.values.forEach { monitored ->
+            try {
+                val isHealthy = checkWeaviateHealth(monitored.config.restUrl)
+                monitored.stateSnapshot = WeaviateConnectionStateSnapshot(
+                    state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                    error = if (isHealthy) null else "Weaviate not reachable",
+                    lastChecked = Instant.now()
+                )
+            } catch (e: Exception) {
+                logger.warn(e) { "Error checking Weaviate connection ${monitored.config.id}" }
+            }
+        }
+    }
+
+    /**
+     * Convert MonitoredWeaviateConnection to proto (excludes api_key for security)
+     */
+    private fun MonitoredWeaviateConnection.toWeaviateProto(): Connection.WeaviateConnectionStatus {
+        val snapshot = this.stateSnapshot
+        return Connection.WeaviateConnectionStatus.newBuilder()
+            .setId(this.config.id)
+            .setName(this.config.name)
+            .setState(snapshot.state)
+            .setError(snapshot.error ?: "")
+            .setLastChecked(
+                Timestamp.newBuilder()
+                    .setSeconds(snapshot.lastChecked.epochSecond)
+                    .setNanos(snapshot.lastChecked.nano)
+                    .build()
+            )
+            .setConfig(
+                Connection.WeaviateConnectionConfigPublic.newBuilder()
+                    .setId(this.config.id)
+                    .setName(this.config.name)
+                    .setRestUrl(this.config.restUrl)
+                    .setGrpcUrl(this.config.grpcUrl)
+                    .setGrpcSecured(this.config.grpcSecured)
+                    .setAuthScheme(this.config.authScheme)
+                    // api_key intentionally excluded
+                    .setConnectorRestUrl(this.config.connectorRestUrl)
+                    .setConnectorGrpcUrl(this.config.connectorGrpcUrl)
+                    .build()
+            )
+            .build()
+    }
+
+    /**
+     * Get a Weaviate connection config by ID (used by JobService)
+     */
+    fun getWeaviateConnection(connectionId: String): MonitoredWeaviateConnection? {
+        return weaviateConnections[connectionId]
     }
 }

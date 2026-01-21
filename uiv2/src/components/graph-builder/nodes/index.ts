@@ -5,6 +5,7 @@ import { GeoIpNode, geoIpRole } from './GeoIpNode';
 import { InspectorNode, inspectorRole } from './InspectorNode';
 import { MaterializedViewNode, materializedViewRole, type AggregationType } from './MaterializedViewNode';
 import { DbSinkNode, dbSinkRole } from './DbSinkNode';
+import { WeaviateSinkNode, weaviateSinkRole } from './WeaviateSinkNode';
 import { TextExtractorNode, textExtractorRole } from './TextExtractorNode';
 import { EmbeddingGeneratorNode, embeddingGeneratorRole } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode, openAiTransformerRole } from './OpenAiTransformerNode';
@@ -99,17 +100,29 @@ export interface OpenAiTransformerNodeData extends Record<string, unknown>, Node
   model: string;
 }
 
+// WeaviateSinkNode - uses a pre-configured Weaviate connection
+export interface WeaviateSinkNodeData extends Record<string, unknown>, NodeValidationState {
+  connectionId: string;
+  connectionName: string;
+  collectionName: string;
+  documentIdStrategy: 'NoIdStrategy' | 'KafkaIdStrategy' | 'FieldIdStrategy';
+  documentIdField: string;
+  vectorStrategy: 'NoVectorStrategy' | 'FieldVectorStrategy';
+  vectorField: string;
+}
+
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
 export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
 export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
 export type DbSinkNodeType = Node<DbSinkNodeData, 'dbSink'>;
+export type WeaviateSinkNodeType = Node<WeaviateSinkNodeData, 'weaviateSink'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
 export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -118,6 +131,7 @@ export const nodeTypes: NodeTypes = {
   inspector: InspectorNode,
   materializedView: MaterializedViewNode,
   dbSink: DbSinkNode,
+  weaviateSink: WeaviateSinkNode,
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,
@@ -133,6 +147,7 @@ const nodeRoles: Record<string, NodeRole> = {
   inspector: inspectorRole,
   materializedView: materializedViewRole,
   dbSink: dbSinkRole,
+  weaviateSink: weaviateSinkRole,
   textExtractor: textExtractorRole,
   embeddingGenerator: embeddingGeneratorRole,
   openAiTransformer: openAiTransformerRole,

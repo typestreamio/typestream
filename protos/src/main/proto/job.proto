@@ -161,10 +161,23 @@ message DbSinkConfig {
   string intermediate_topic = 6;   // Optional - server auto-generates if empty
 }
 
+// Configuration for Weaviate sink connectors
+message WeaviateSinkConfig {
+  string node_id = 1;
+  string connection_id = 2;
+  string intermediate_topic = 3;
+  string collection_name = 4;
+  string document_id_strategy = 5;
+  string document_id_field = 6;
+  string vector_strategy = 7;
+  string vector_field = 8;
+}
+
 message CreateJobFromGraphRequest {
   string user_id = 1;
   PipelineGraph graph = 2;
   repeated DbSinkConfig db_sink_configs = 3;  // DB sink configurations
+  repeated WeaviateSinkConfig weaviate_sink_configs = 4;  // Weaviate sink configurations
 }
 
 message ListJobsRequest {
@@ -194,6 +207,7 @@ message JobInfo {
   int64 start_time = 3;  // Unix timestamp in milliseconds
   PipelineGraph graph = 4;  // Optional: the job's pipeline graph
   JobThroughput throughput = 5;  // Throughput metrics
+  repeated WeaviateSinkConfig weaviate_sinks = 6;  // Weaviate sink configs for this job
 }
 
 message ListJobsResponse {

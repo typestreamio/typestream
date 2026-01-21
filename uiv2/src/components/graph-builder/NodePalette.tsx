@@ -12,10 +12,11 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import MemoryIcon from '@mui/icons-material/Memory';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import StorageIcon from '@mui/icons-material/Storage';
+import HubIcon from '@mui/icons-material/Hub';
 import AddIcon from '@mui/icons-material/Add';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSinkConnections, type Connection } from '../../hooks/useConnections';
+import { useSinkConnections, useWeaviateSinkConnections, type Connection, type WeaviateConnection } from '../../hooks/useConnections';
 
 interface PaletteItemProps {
   type: string;
@@ -83,6 +84,27 @@ function ConnectionSinkItem({ connection, onAdd }: { connection: Connection; onA
   );
 }
 
+function WeaviateSinkItem({ connection, onAdd }: { connection: WeaviateConnection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
+  return (
+    <PaletteItem
+      type="weaviateSink"
+      label={connection.name}
+      icon={<HubIcon fontSize="small" color="info" />}
+      data={{
+        // Only pass non-sensitive data - credentials stay server-side
+        connectionId: connection.id,
+        connectionName: connection.name,
+        collectionName: '',
+        documentIdStrategy: 'NoIdStrategy',
+        documentIdField: '',
+        vectorStrategy: 'NoVectorStrategy',
+        vectorField: '',
+      }}
+      onAdd={onAdd}
+    />
+  );
+}
+
 interface NodePaletteProps {
   onAddNode?: (type: string, data?: Record<string, unknown>) => void;
 }
@@ -90,6 +112,7 @@ interface NodePaletteProps {
 export function NodePalette({ onAddNode }: NodePaletteProps) {
   const navigate = useNavigate();
   const { data: connections } = useSinkConnections();
+  const { data: weaviateConnections } = useWeaviateSinkConnections();
 
   return (
     <Paper
@@ -189,6 +212,32 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
             fullWidth
           >
             Add Connection
+          </Button>
+        </Box>
+      )}
+
+      <Divider sx={{ my: 1 }} />
+
+      <Typography variant="subtitle2" color="text.secondary">
+        Vector Database Sinks
+      </Typography>
+      {weaviateConnections && weaviateConnections.length > 0 ? (
+        weaviateConnections.map((conn) => (
+          <WeaviateSinkItem key={conn.id} connection={conn} onAdd={onAddNode} />
+        ))
+      ) : (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            No Weaviate connections
+          </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/connections/weaviate/new')}
+            fullWidth
+          >
+            Add Weaviate
           </Button>
         </Box>
       )}

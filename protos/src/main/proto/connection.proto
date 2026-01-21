@@ -24,6 +24,11 @@ service ConnectionService {
     // Create a JDBC sink connector using a registered connection
     // Server resolves credentials from connection ID - credentials never sent to UI
     rpc CreateJdbcSinkConnector(CreateJdbcSinkConnectorRequest) returns (CreateJdbcSinkConnectorResponse) {}
+
+    // Weaviate connection management
+    rpc RegisterWeaviateConnection(RegisterWeaviateConnectionRequest) returns (RegisterWeaviateConnectionResponse) {}
+    rpc GetWeaviateConnectionStatuses(GetWeaviateConnectionStatusesRequest) returns (GetWeaviateConnectionStatusesResponse) {}
+    rpc CreateWeaviateSinkConnector(CreateWeaviateSinkConnectorRequest) returns (CreateWeaviateSinkConnectorResponse) {}
 }
 
 // Database connection configuration
@@ -129,4 +134,74 @@ message DatabaseConnectionConfigPublic {
     string username = 7;
     // password intentionally excluded
     string connector_hostname = 8;
+}
+
+// Weaviate connection configuration
+message WeaviateConnectionConfig {
+    string id = 1;
+    string name = 2;
+    string rest_url = 3;              // e.g., "http://localhost:8090"
+    string grpc_url = 4;              // e.g., "localhost:50051"
+    bool grpc_secured = 5;
+    string auth_scheme = 6;           // "NONE" or "API_KEY"
+    string api_key = 7;               // For Weaviate Cloud (server-side only)
+    string connector_rest_url = 8;    // For Kafka Connect (e.g., "http://weaviate:8080")
+    string connector_grpc_url = 9;    // For Kafka Connect (e.g., "weaviate:50051")
+}
+
+message WeaviateConnectionConfigPublic {
+    string id = 1;
+    string name = 2;
+    string rest_url = 3;
+    string grpc_url = 4;
+    bool grpc_secured = 5;
+    string auth_scheme = 6;
+    // api_key intentionally excluded
+    string connector_rest_url = 7;
+    string connector_grpc_url = 8;
+}
+
+message WeaviateConnectionStatus {
+    string id = 1;
+    string name = 2;
+    ConnectionState state = 3;
+    string error = 4;
+    google.protobuf.Timestamp last_checked = 5;
+    WeaviateConnectionConfigPublic config = 6;
+}
+
+// Register Weaviate connection for monitoring
+message RegisterWeaviateConnectionRequest {
+    WeaviateConnectionConfig connection = 1;
+}
+
+message RegisterWeaviateConnectionResponse {
+    bool success = 1;
+    string error = 2;
+    WeaviateConnectionStatus status = 3;
+}
+
+// Get all Weaviate connection statuses
+message GetWeaviateConnectionStatusesRequest {}
+
+message GetWeaviateConnectionStatusesResponse {
+    repeated WeaviateConnectionStatus statuses = 1;
+}
+
+// Create Weaviate sink connector
+message CreateWeaviateSinkConnectorRequest {
+    string connection_id = 1;
+    string connector_name = 2;
+    string topics = 3;
+    string collection_name = 4;
+    string document_id_strategy = 5;  // NoIdStrategy, KafkaIdStrategy, FieldIdStrategy
+    string document_id_field = 6;
+    string vector_strategy = 7;       // NoVectorStrategy, FieldVectorStrategy
+    string vector_field = 8;
+}
+
+message CreateWeaviateSinkConnectorResponse {
+    bool success = 1;
+    string error = 2;
+    string connector_name = 3;
 }

@@ -197,6 +197,52 @@ export function JobDetailPage() {
                 ))}
               </>
             )}
+
+            {job.state === JobState.RUNNING && job.weaviateSinks.length > 0 && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" gutterBottom>
+                  Weaviate Vector Sinks
+                </Typography>
+                {job.weaviateSinks.map((sink) => (
+                  <Box key={sink.nodeId} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">
+                      Collection: {sink.collectionName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      ID Strategy: {sink.documentIdStrategy || 'NoIdStrategy'}
+                      {sink.documentIdField && ` (field: ${sink.documentIdField})`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Vector: {sink.vectorStrategy || 'NoVectorStrategy'}
+                      {sink.vectorField && ` (field: ${sink.vectorField})`}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      component="pre"
+                      className="dark-panel"
+                      sx={{
+                        mt: 1,
+                        overflow: 'auto',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+{`# Count objects in collection
+curl -s 'http://localhost:8090/v1/objects?class=${sink.collectionName}&limit=1' | jq '.totalResults'
+
+# List objects (first 5)
+curl -s 'http://localhost:8090/v1/objects?class=${sink.collectionName}&limit=5' | jq '.objects[] | {id, properties}'
+
+# Semantic search
+curl -s 'http://localhost:8090/v1/graphql' -X POST \\
+  -H 'Content-Type: application/json' \\
+  -d '{"query": "{ Get { ${sink.collectionName}(limit: 5, nearText: {concepts: [\\"your search query\\"]}) { _additional { id distance } } } }"}' \\
+  | jq '.data.Get.${sink.collectionName}'`}
+                    </Typography>
+                  </Box>
+                ))}
+              </>
+            )}
           </Box>
         </CardContent>
       </Card>

@@ -47,6 +47,30 @@ RUN cd /kafka/connect/avro-converter && \
     curl -sLO https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_VERSION}/jackson-annotations-${JACKSON_VERSION}.jar && \
     curl -sLO https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-csv/${JACKSON_VERSION}/jackson-dataformat-csv-${JACKSON_VERSION}.jar
 
+# Install Weaviate Kafka Connect Sink connector
+# Note: Distributed as a ZIP file, not JAR
+ENV WEAVIATE_CONNECTOR_VERSION=0.1.2
+
+RUN mkdir -p /kafka/connect/weaviate-sink && \
+    cd /kafka/connect/weaviate-sink && \
+    curl -sLO https://github.com/weaviate/kafka-connect-weaviate/releases/download/${WEAVIATE_CONNECTOR_VERSION}/Weaviate-kafka-connect-weaviate-${WEAVIATE_CONNECTOR_VERSION}.zip && \
+    unzip -q Weaviate-kafka-connect-weaviate-${WEAVIATE_CONNECTOR_VERSION}.zip && \
+    rm Weaviate-kafka-connect-weaviate-${WEAVIATE_CONNECTOR_VERSION}.zip
+
+# Add missing Netty dependencies for Weaviate connector's gRPC client
+# The connector includes grpc-netty but not its transitive netty dependencies
+ENV NETTY_VERSION=4.1.110.Final
+RUN cd /kafka/connect/weaviate-sink/Weaviate-kafka-connect-weaviate-${WEAVIATE_CONNECTOR_VERSION}/lib && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-buffer/${NETTY_VERSION}/netty-buffer-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-codec/${NETTY_VERSION}/netty-codec-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-codec-http/${NETTY_VERSION}/netty-codec-http-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-codec-http2/${NETTY_VERSION}/netty-codec-http2-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-common/${NETTY_VERSION}/netty-common-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-handler/${NETTY_VERSION}/netty-handler-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-resolver/${NETTY_VERSION}/netty-resolver-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-transport/${NETTY_VERSION}/netty-transport-${NETTY_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/${NETTY_VERSION}/netty-transport-native-unix-common-${NETTY_VERSION}.jar
+
 # Copy connector registration script and custom entrypoint
 COPY register-connector.sh /usr/local/bin/register-connector.sh
 COPY custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh

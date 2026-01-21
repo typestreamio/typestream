@@ -1289,6 +1289,87 @@ export class DbSinkConfig extends Message<DbSinkConfig> {
 }
 
 /**
+ * Configuration for Weaviate sink connectors
+ *
+ * @generated from message io.typestream.grpc.WeaviateSinkConfig
+ */
+export class WeaviateSinkConfig extends Message<WeaviateSinkConfig> {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId = "";
+
+  /**
+   * @generated from field: string connection_id = 2;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string intermediate_topic = 3;
+   */
+  intermediateTopic = "";
+
+  /**
+   * @generated from field: string collection_name = 4;
+   */
+  collectionName = "";
+
+  /**
+   * @generated from field: string document_id_strategy = 5;
+   */
+  documentIdStrategy = "";
+
+  /**
+   * @generated from field: string document_id_field = 6;
+   */
+  documentIdField = "";
+
+  /**
+   * @generated from field: string vector_strategy = 7;
+   */
+  vectorStrategy = "";
+
+  /**
+   * @generated from field: string vector_field = 8;
+   */
+  vectorField = "";
+
+  constructor(data?: PartialMessage<WeaviateSinkConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.WeaviateSinkConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "intermediate_topic", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "document_id_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "document_id_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "vector_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "vector_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeaviateSinkConfig {
+    return new WeaviateSinkConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeaviateSinkConfig {
+    return new WeaviateSinkConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeaviateSinkConfig {
+    return new WeaviateSinkConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WeaviateSinkConfig | PlainMessage<WeaviateSinkConfig> | undefined, b: WeaviateSinkConfig | PlainMessage<WeaviateSinkConfig> | undefined): boolean {
+    return proto3.util.equals(WeaviateSinkConfig, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.CreateJobFromGraphRequest
  */
 export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest> {
@@ -1309,6 +1390,13 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
    */
   dbSinkConfigs: DbSinkConfig[] = [];
 
+  /**
+   * Weaviate sink configurations
+   *
+   * @generated from field: repeated io.typestream.grpc.WeaviateSinkConfig weaviate_sink_configs = 4;
+   */
+  weaviateSinkConfigs: WeaviateSinkConfig[] = [];
+
   constructor(data?: PartialMessage<CreateJobFromGraphRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1320,6 +1408,7 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "graph", kind: "message", T: PipelineGraph },
     { no: 3, name: "db_sink_configs", kind: "message", T: DbSinkConfig, repeated: true },
+    { no: 4, name: "weaviate_sink_configs", kind: "message", T: WeaviateSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJobFromGraphRequest {
@@ -1474,6 +1563,13 @@ export class JobInfo extends Message<JobInfo> {
    */
   throughput?: JobThroughput;
 
+  /**
+   * Weaviate sink configs for this job
+   *
+   * @generated from field: repeated io.typestream.grpc.WeaviateSinkConfig weaviate_sinks = 6;
+   */
+  weaviateSinks: WeaviateSinkConfig[] = [];
+
   constructor(data?: PartialMessage<JobInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1487,6 +1583,7 @@ export class JobInfo extends Message<JobInfo> {
     { no: 3, name: "start_time", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 4, name: "graph", kind: "message", T: PipelineGraph },
     { no: 5, name: "throughput", kind: "message", T: JobThroughput },
+    { no: 6, name: "weaviate_sinks", kind: "message", T: WeaviateSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JobInfo {
