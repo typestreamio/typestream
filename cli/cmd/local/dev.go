@@ -9,6 +9,8 @@ import (
 	"github.com/typestreamio/typestream/cli/pkg/compose"
 )
 
+var devBuilding = regexp.MustCompile(`typestream-dev-(.*)\s+Building`)
+var devBuilt = regexp.MustCompile(`typestream-dev-(.*)\s+Built`)
 var devCreating = regexp.MustCompile(`Container typestream-dev-(.*)-1  Creating`)
 var devStarted = regexp.MustCompile(`Container typestream-dev-(.*)-1  Started`)
 var devHealthy = regexp.MustCompile(`Container typestream-dev-(.*)-1  Healthy`)
@@ -34,23 +36,24 @@ var devStopCmd = &cobra.Command{
 
 var devCleanCmd = &cobra.Command{
 	Use:   "clean",
-	Short: "Stop services and remove all data volumes",
-	Long: `Stops all development services and removes Docker volumes.
+	Short: "Stop services, remove volumes, and purge built images",
+	Long: `Stops all development services, removes Docker volumes, and deletes locally-built images.
 This will delete all Kafka topics, schemas, and any other persisted data.
+Built images (demo-data, kafka-connect) will be removed to force a fresh rebuild.
 Use this for a completely fresh start.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info("Stopping services and removing volumes")
+		log.Info("Stopping services, removing volumes, and purging images")
 		runner := compose.NewDevRunner()
 		go func() {
 			for m := range runner.StdOut {
 				log.Info(m)
 			}
 		}()
-		err := runner.RunCommand("down", "--volumes", "--remove-orphans")
+		err := runner.RunCommand("down", "--volumes", "--remove-orphans", "--rmi", "local")
 		if err != nil {
 			log.Fatalf("Failed to clean dev services: %v", err)
 		}
-		log.Info("Development services stopped and volumes removed")
+		log.Info("Development services stopped, volumes removed, and images purged")
 	},
 }
 
@@ -82,6 +85,16 @@ To stop dev services: ./typestream local dev stop`,
 				}
 				if strings.Contains(m, "redpanda Pulled") {
 					log.Info("Redpanda downloaded")
+				}
+
+				if devBuilding.MatchString(m) {
+					capture := devBuilding.FindStringSubmatch(m)
+					log.Info("Building " + capture[1] + " image...")
+				}
+
+				if devBuilt.MatchString(m) {
+					capture := devBuilt.FindStringSubmatch(m)
+					log.Info(capture[1] + " image built")
 				}
 
 				if devCreating.MatchString(m) {

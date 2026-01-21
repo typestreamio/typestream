@@ -1,0 +1,67 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build artifacts
+**/build
+**/target
+**/.gradle
+**/node_modules
+**/dist
+
+# Documentation
+*.md
+docs/
+LICENSE
+
+# Test data and logs
+**/logs
+**/*.log
+**/test-output
+
+# Local configs
+.env
+.env.local
+**/.env.local
+
+# CLI (Go code, not needed for Gradle builds)
+cli/
+
+# Server and tools (built separately with Jib)
+server/
+tools/
+
+# Other modules not needed for demo-data
+libs/
+stub/
+protos/
+config/
+scripts/
+assets/
+
+# UI build artifacts (dev overlay mounts source directly)
+uiv2/
+ui/
+
+# Python
+**/__pycache__
+**/*.pyc
+**/.venv
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Keep what's needed for demo-data Gradle build:
+# - gradle/, gradlew, settings.gradle.kts, gradle.properties
+# - buildSrc/
+# - connectors/demo-data/

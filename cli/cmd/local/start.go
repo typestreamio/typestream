@@ -22,6 +22,8 @@ func isPortInUse(port int) bool {
 	return false
 }
 
+var building = regexp.MustCompile(`typestream-(.*)\s+Building`)
+var built = regexp.MustCompile(`typestream-(.*)\s+Built`)
 var creating = regexp.MustCompile(`Container typestream-(.*)-1  Creating`)
 var started = regexp.MustCompile(`Container typestream-(.*)-1  Started`)
 var healthy = regexp.MustCompile(`Container typestream-(.*)-1  Healthy`)
@@ -53,6 +55,16 @@ var startCmd = &cobra.Command{
 				}
 				if strings.Contains(m, "redpanda Pulled") {
 					log.Info("✅ redpanda downloaded")
+				}
+
+				if building.MatchString(m) {
+					capture := building.FindStringSubmatch(m)
+					log.Info("🔨 building " + capture[1] + " image...")
+				}
+
+				if built.MatchString(m) {
+					capture := built.FindStringSubmatch(m)
+					log.Info("✅ " + capture[1] + " image built")
 				}
 
 				if creating.MatchString(m) {
