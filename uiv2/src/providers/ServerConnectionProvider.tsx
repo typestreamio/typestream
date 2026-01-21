@@ -50,9 +50,17 @@ function isConnectionError(error: unknown): boolean {
     return true;
   }
 
-  // Non-ConnectError = network/fetch failure = connection problem
+  // For non-ConnectError, check for common network error patterns
   if (error instanceof Error) {
-    return true;
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('network') ||
+      message.includes('fetch') ||
+      message.includes('timeout') ||
+      message.includes('aborted') ||
+      message.includes('econnrefused') ||
+      message.includes('enotfound')
+    );
   }
 
   return false;
@@ -85,11 +93,17 @@ export function ServerConnectionProvider({
       debounceTimerRef.current = null;
     }
 
-    setState({
-      isConnected: true,
-      lastError: null,
-      disconnectedSince: null,
-      consecutiveFailures: 0,
+    setState((prev) => {
+      // Already connected with no failures - no-op to avoid re-render
+      if (prev.isConnected && prev.consecutiveFailures === 0) {
+        return prev;
+      }
+      return {
+        isConnected: true,
+        lastError: null,
+        disconnectedSince: null,
+        consecutiveFailures: 0,
+      };
     });
   }, []);
 
@@ -128,12 +142,12 @@ export function ServerConnectionProvider({
         }
 
         // Not yet showing disconnected, but schedule a check
-        if (
-          !shouldShowDisconnected &&
-          newFailures >= failureThreshold &&
-          !debounceTimerRef.current
-        ) {
+        if (!shouldShowDisconnected && newFailures >= failureThreshold) {
           const remainingTime = debounceMs - timeSinceFirstFailure;
+          // Clear any existing timer to avoid race conditions
+          if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+          }
           debounceTimerRef.current = setTimeout(() => {
             debounceTimerRef.current = null;
             if (!mountedRef.current) return;
