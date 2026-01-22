@@ -83,6 +83,38 @@ export const MaterializedViewNode = memo(function MaterializedViewNode({ id, dat
             ))}
           </Select>
         </FormControl>
+
+        {data.aggregationType === 'count' && (
+          <Box sx={{ mt: 1.5 }}>
+            <FormControlLabel
+              className="nodrag"
+              control={
+                <Checkbox
+                  size="small"
+                  checked={data.enableWindowing ?? false}
+                  onChange={(e) => updateNodeData(id, {
+                    enableWindowing: e.target.checked,
+                    windowSizeSeconds: e.target.checked ? (data.windowSizeSeconds ?? 60) : undefined
+                  })}
+                />
+              }
+              label={<Typography variant="body2">Enable Windowing</Typography>}
+            />
+            {data.enableWindowing && (
+              <TextField
+                className="nodrag"
+                fullWidth
+                size="small"
+                type="number"
+                label="Window Size (seconds)"
+                value={data.windowSizeSeconds ?? 60}
+                onChange={(e) => updateNodeData(id, { windowSizeSeconds: parseInt(e.target.value) || 60 })}
+                inputProps={{ min: 1 }}
+                sx={{ mt: 1 }}
+              />
+            )}
+          </Box>
+        )}
       </BaseNode>
       {/* No output handle - this is a terminal node */}
     </>
