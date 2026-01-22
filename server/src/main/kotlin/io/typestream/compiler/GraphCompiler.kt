@@ -255,6 +255,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         Node.Group(nodeId) { kv -> kv.value.select(fields) }
       }
       proto.hasCount() -> Node.Count(nodeId)
+      proto.hasWindowedCount() -> Node.WindowedCount(nodeId, proto.windowedCount.windowSizeSeconds)
       proto.hasEach() -> Node.Each(nodeId) { _ -> }
       proto.hasSink() -> {
         // Sink needs a placeholder output DataStream with the target path
