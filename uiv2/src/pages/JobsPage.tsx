@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
@@ -65,7 +65,7 @@ export function JobsPage() {
   const { recordValues } = useThroughputHistoryContext();
   const { isConnected } = useServerConnection();
 
-  const jobs = data?.jobs ?? [];
+  const jobs = useMemo(() => data?.jobs ?? [], [data?.jobs]);
 
   // Don't show errors when server is disconnected (banner handles it)
   const showError = error && isConnected;

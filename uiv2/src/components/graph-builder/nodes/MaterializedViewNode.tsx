@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -27,7 +27,10 @@ export const MaterializedViewNode = memo(function MaterializedViewNode({ id, dat
 
   // Get fields from upstream node's computed output schema
   const upstreamData = upstreamNode?.data as NodeValidationState | undefined;
-  const fields = upstreamData?.outputSchema ?? [];
+  const fields = useMemo(
+    () => upstreamData?.outputSchema ?? [],
+    [upstreamData?.outputSchema]
+  );
 
   // Auto-select first field when schema loads and no field is selected
   useEffect(() => {

@@ -11,45 +11,49 @@ import { useServerConnection } from '../../providers/ServerConnectionContext';
 export function ServerStatusBanner() {
   const { isConnected, disconnectedSince } = useServerConnection();
   const [showReconnected, setShowReconnected] = useState(false);
-  const [wasDisconnected, setWasDisconnected] = useState(false);
+  const prevConnectedRef = useRef(isConnected);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Track reconnection for showing "Reconnected" message
+  // Track reconnection: was disconnected, now connected
+  // Show a brief "reconnected" notification when connection is restored
   useEffect(() => {
-    if (!isConnected) {
-      setWasDisconnected(true);
-    } else if (wasDisconnected && isConnected) {
-      // Just reconnected - show success message briefly
+    const wasDisconnected = !prevConnectedRef.current;
+    const justReconnected = wasDisconnected && isConnected;
+
+    if (justReconnected) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Legitimate: showing transient notification on reconnection
       setShowReconnected(true);
       reconnectTimerRef.current = setTimeout(() => {
         setShowReconnected(false);
-        setWasDisconnected(false);
       }, 3000);
     }
+
+    // Update previous value for next comparison
+    prevConnectedRef.current = isConnected;
 
     return () => {
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current);
       }
     };
-  }, [isConnected, wasDisconnected]);
+  }, [isConnected]);
+
+  // Update current time every second when disconnected (for duration display)
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isConnected && disconnectedSince) {
+      const interval = setInterval(() => setNow(Date.now()), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, disconnectedSince]);
 
   const formatDuration = (since: Date | null) => {
     if (!since) return '';
-    const seconds = Math.floor((Date.now() - since.getTime()) / 1000);
+    const seconds = Math.floor((now - since.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
     return `${minutes}m ${seconds % 60}s`;
   };
-
-  // Update duration every second when disconnected
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    if (!isConnected && disconnectedSince) {
-      const interval = setInterval(() => setTick((t) => t + 1), 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isConnected, disconnectedSince]);
 
   return (
     <>
@@ -92,10 +96,7 @@ export function ServerStatusBanner() {
         <Alert
           severity="success"
           sx={{ borderRadius: 0 }}
-          onClose={() => {
-            setShowReconnected(false);
-            setWasDisconnected(false);
-          }}
+          onClose={() => setShowReconnected(false)}
         >
           Connection restored
         </Alert>
