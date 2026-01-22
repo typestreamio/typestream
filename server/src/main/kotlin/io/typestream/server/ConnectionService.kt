@@ -591,13 +591,22 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      */
     override suspend fun registerWeaviateConnection(request: Connection.RegisterWeaviateConnectionRequest): Connection.RegisterWeaviateConnectionResponse {
         val config = request.connection
+
+        // Validate required fields
+        if (config.id.isBlank() || config.name.isBlank() || config.restUrl.isBlank()) {
+            return Connection.RegisterWeaviateConnectionResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Connection id, name, and restUrl are required")
+                .build()
+        }
+
         logger.info { "Registering Weaviate connection: ${config.name} (${config.id})" }
 
         val isHealthy = checkWeaviateHealth(config.restUrl)
         val monitored = MonitoredWeaviateConnection(
             config = config,
             stateSnapshot = WeaviateConnectionStateSnapshot(
-                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.ERROR,
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
                 error = if (isHealthy) null else "Weaviate not reachable at ${config.restUrl}",
                 lastChecked = Instant.now()
             )
@@ -649,7 +658,8 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                 documentIdStrategy = request.documentIdStrategy,
                 documentIdField = request.documentIdField,
                 vectorStrategy = request.vectorStrategy,
-                vectorField = request.vectorField
+                vectorField = request.vectorField,
+                timestampField = request.timestampField
             )
 
             // Create connector via Kafka Connect REST API
@@ -679,8 +689,18 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         documentIdStrategy: String,
         documentIdField: String,
         vectorStrategy: String,
-        vectorField: String
+        vectorField: String,
+        timestampField: String
     ): Map<String, Any> {
+        // Validate required fields
+        require(collectionName.isNotBlank()) { "Collection name cannot be empty" }
+        if (documentIdStrategy == "FieldIdStrategy") {
+            require(documentIdField.isNotBlank()) { "Document ID field required for FieldIdStrategy" }
+        }
+        if (vectorStrategy == "FieldVectorStrategy") {
+            require(vectorField.isNotBlank()) { "Vector field required for FieldVectorStrategy" }
+        }
+
         // Use connector URLs for Kafka Connect (Docker network)
         val weaviateUrl = config.connectorRestUrl.ifEmpty { config.restUrl }
         val grpcHost = config.connectorGrpcUrl.ifEmpty { config.grpcUrl }
@@ -697,15 +717,17 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             // Keys are written as UTF-8 strings by TypeStream
             "key.converter" to "org.apache.kafka.connect.storage.StringConverter",
             "value.converter" to "io.confluent.connect.avro.AvroConverter",
-            "value.converter.schema.registry.url" to (System.getenv("SCHEMA_REGISTRY_URL") ?: "http://redpanda:8081"),
-            // Convert any timestamp fields from java.util.Date to unix epoch (long)
-            // This is needed because Avro's timestamp-millis logical type becomes java.util.Date
-            // but the Weaviate connector expects Long for INT64 fields
-            "transforms" to "convertTimestamp",
-            "transforms.convertTimestamp.type" to "org.apache.kafka.connect.transforms.TimestampConverter\$Value",
-            "transforms.convertTimestamp.target.type" to "unix",
-            "transforms.convertTimestamp.field" to "timestamp"
+            "value.converter.schema.registry.url" to (System.getenv("SCHEMA_REGISTRY_URL") ?: "http://redpanda:8081")
         )
+
+        // Only add timestamp transform if a timestamp field is specified (schema-aware)
+        // This converts Avro's timestamp-millis logical type (java.util.Date) to unix epoch (long)
+        if (timestampField.isNotBlank()) {
+            connectorConfig["transforms"] = "convertTimestamp"
+            connectorConfig["transforms.convertTimestamp.type"] = "org.apache.kafka.connect.transforms.TimestampConverter\$Value"
+            connectorConfig["transforms.convertTimestamp.target.type"] = "unix"
+            connectorConfig["transforms.convertTimestamp.field"] = timestampField
+        }
 
         // Add auth configuration if API key is set
         if (config.authScheme == "API_KEY" && config.apiKey.isNotEmpty()) {
@@ -716,9 +738,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         when (documentIdStrategy) {
             "FieldIdStrategy" -> {
                 connectorConfig["document.id.strategy"] = "io.weaviate.connector.idstrategy.FieldIdStrategy"
-                if (documentIdField.isNotEmpty()) {
-                    connectorConfig["document.id.field.name"] = documentIdField
-                }
+                connectorConfig["document.id.field.name"] = documentIdField
             }
             "KafkaIdStrategy" -> {
                 connectorConfig["document.id.strategy"] = "io.weaviate.connector.idstrategy.KafkaIdStrategy"
@@ -733,9 +753,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         when (vectorStrategy) {
             "FieldVectorStrategy" -> {
                 connectorConfig["vector.strategy"] = "io.weaviate.connector.vectorstrategy.FieldVectorStrategy"
-                if (vectorField.isNotEmpty()) {
-                    connectorConfig["vector.field.name"] = vectorField
-                }
+                connectorConfig["vector.field.name"] = vectorField
             }
             else -> {
                 // NoVectorStrategy - no pre-computed vectors, Weaviate can vectorize if configured
@@ -783,6 +801,11 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                 )
             } catch (e: Exception) {
                 logger.warn(e) { "Error checking Weaviate connection ${monitored.config.id}" }
+                monitored.stateSnapshot = WeaviateConnectionStateSnapshot(
+                    state = ConnectionState.ERROR,
+                    error = e.message ?: "Unknown error during health check",
+                    lastChecked = Instant.now()
+                )
             }
         }
     }

@@ -198,6 +198,7 @@ message CreateWeaviateSinkConnectorRequest {
     string document_id_field = 6;
     string vector_strategy = 7;       // NoVectorStrategy, FieldVectorStrategy
     string vector_field = 8;
+    string timestamp_field = 9;       // Optional: field name for timestamp conversion (empty = no transform)
 }
 
 message CreateWeaviateSinkConnectorResponse {

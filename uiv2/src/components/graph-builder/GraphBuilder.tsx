@@ -183,6 +183,7 @@ export function GraphBuilder() {
         documentIdField: dragData.documentIdField || '',
         vectorStrategy: dragData.vectorStrategy || 'NoVectorStrategy',
         vectorField: dragData.vectorField || '',
+        timestampField: dragData.timestampField || '',
       };
     } else if (type === 'textExtractor') {
       return { filePathField: '', outputField: 'text' };

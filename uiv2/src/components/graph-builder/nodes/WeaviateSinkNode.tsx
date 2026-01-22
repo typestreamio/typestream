@@ -12,6 +12,9 @@ import type { WeaviateSinkNodeType, NodeValidationState, SchemaField } from './i
 /** Node role determines handle configuration: sources have no input, sinks have no output */
 export const weaviateSinkRole = 'sink' as const;
 
+// Common timestamp type indicators in Avro/schemas
+const TIMESTAMP_TYPES = ['timestamp', 'datetime', 'date', 'time', 'Long', 'long', 'INT64'];
+
 export const WeaviateSinkNode = memo(function WeaviateSinkNode({ id, data }: NodeProps<WeaviateSinkNodeType>) {
   const { updateNodeData } = useReactFlow();
   const nodes = useNodes();
@@ -30,6 +33,14 @@ export const WeaviateSinkNode = memo(function WeaviateSinkNode({ id, data }: Nod
   // Filter to array fields for vector field selection
   const arrayFields = fields.filter((f) => f.type.includes('Array') || f.type.includes('[]'));
 
+  // Filter to timestamp-like fields for timestamp field selection
+  const timestampFields = fields.filter((f) =>
+    TIMESTAMP_TYPES.some((t) => f.type.toLowerCase().includes(t.toLowerCase())) ||
+    f.name.toLowerCase().includes('timestamp') ||
+    f.name.toLowerCase().includes('time') ||
+    f.name.toLowerCase().includes('date')
+  );
+
   // Auto-select embedding field when schema loads and no vector field is set
   useEffect(() => {
     if (arrayFields.length > 0 && !data.vectorField && data.vectorStrategy === 'FieldVectorStrategy') {
@@ -42,6 +53,19 @@ export const WeaviateSinkNode = memo(function WeaviateSinkNode({ id, data }: Nod
       }
     }
   }, [arrayFields, data.vectorField, data.vectorStrategy, id, updateNodeData]);
+
+  // Auto-select timestamp field when schema loads and no timestamp field is set
+  useEffect(() => {
+    if (timestampFields.length > 0 && !data.timestampField) {
+      // Look for common timestamp field names
+      const timestampField = timestampFields.find((f) =>
+        f.name === 'timestamp' || f.name === 'created_at' || f.name === 'updated_at'
+      );
+      if (timestampField) {
+        updateNodeData(id, { timestampField: timestampField.name });
+      }
+    }
+  }, [timestampFields, data.timestampField, id, updateNodeData]);
 
   return (
     <>
@@ -142,6 +166,7 @@ export const WeaviateSinkNode = memo(function WeaviateSinkNode({ id, data }: Nod
             onInputChange={(_, newValue) => updateNodeData(id, { vectorField: newValue })}
             disabled={data.isInferring}
             className="nodrag nowheel"
+            sx={{ mb: 1 }}
             renderOption={(props, option) => {
               const field = option as SchemaField;
               return (
@@ -162,6 +187,38 @@ export const WeaviateSinkNode = memo(function WeaviateSinkNode({ id, data }: Nod
             )}
           />
         )}
+        <Autocomplete
+          freeSolo
+          size="small"
+          options={timestampFields.length > 0 ? timestampFields : fields}
+          getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+          value={data.timestampField || ''}
+          onChange={(_, newValue) => {
+            const fieldName = typeof newValue === 'string' ? newValue : (newValue as SchemaField)?.name || '';
+            updateNodeData(id, { timestampField: fieldName });
+          }}
+          onInputChange={(_, newValue) => updateNodeData(id, { timestampField: newValue })}
+          disabled={data.isInferring}
+          className="nodrag nowheel"
+          renderOption={(props, option) => {
+            const field = option as SchemaField;
+            return (
+              <Box component="li" {...props}>
+                {field.name}
+                <Typography component="span" color="text.secondary" sx={{ ml: 1, fontSize: '0.75rem' }}>
+                  ({field.type})
+                </Typography>
+              </Box>
+            );
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Timestamp Field (optional)"
+              helperText="Convert timestamp to unix epoch for Weaviate"
+            />
+          )}
+        />
       </BaseNode>
     </>
   );

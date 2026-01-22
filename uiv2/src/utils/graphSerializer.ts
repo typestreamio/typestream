@@ -157,6 +157,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
         documentIdField: data.documentIdField || '',
         vectorStrategy: data.vectorStrategy || 'NoVectorStrategy',
         vectorField: data.vectorField || '',
+        timestampField: data.timestampField || '',
       }));
       return;
     }

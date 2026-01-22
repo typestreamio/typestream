@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
@@ -9,6 +9,23 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router-dom';
 import { useRegisterWeaviateConnection } from '../hooks/useConnections';
+
+// Simple URL validation helper
+function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Validate gRPC URL format (host:port without protocol)
+function isValidGrpcUrl(url: string): boolean {
+  // gRPC URL should be host:port format
+  const grpcPattern = /^[a-zA-Z0-9.-]+:\d+$/;
+  return grpcPattern.test(url);
+}
 
 export function WeaviateConnectionCreatePage() {
   const navigate = useNavigate();
@@ -23,8 +40,50 @@ export function WeaviateConnectionCreatePage() {
   const [connectorRestUrl, setConnectorRestUrl] = useState('http://weaviate:8080');
   const [connectorGrpcUrl, setConnectorGrpcUrl] = useState('weaviate:50051');
 
+  // Form validation
+  const validation = useMemo(() => {
+    const errors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      errors.name = 'Connection name is required';
+    }
+
+    if (!restUrl.trim()) {
+      errors.restUrl = 'REST URL is required';
+    } else if (!isValidUrl(restUrl)) {
+      errors.restUrl = 'Invalid URL format (must include protocol, e.g., http://)';
+    }
+
+    if (!grpcUrl.trim()) {
+      errors.grpcUrl = 'gRPC URL is required';
+    } else if (!isValidGrpcUrl(grpcUrl)) {
+      errors.grpcUrl = 'Invalid gRPC URL format (use host:port, e.g., localhost:50051)';
+    }
+
+    if (authScheme === 'API_KEY' && !apiKey.trim()) {
+      errors.apiKey = 'API key is required when using API Key authentication';
+    }
+
+    if (connectorRestUrl && !isValidUrl(connectorRestUrl)) {
+      errors.connectorRestUrl = 'Invalid URL format';
+    }
+
+    if (connectorGrpcUrl && !isValidGrpcUrl(connectorGrpcUrl)) {
+      errors.connectorGrpcUrl = 'Invalid gRPC URL format';
+    }
+
+    return {
+      errors,
+      isValid: Object.keys(errors).length === 0,
+    };
+  }, [name, restUrl, grpcUrl, authScheme, apiKey, connectorRestUrl, connectorGrpcUrl]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validation.isValid) {
+      return;
+    }
 
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
@@ -66,7 +125,8 @@ export function WeaviateConnectionCreatePage() {
             required
             sx={{ mb: 2 }}
             placeholder="my-weaviate"
-            helperText="A friendly name for this connection"
+            helperText={validation.errors.name || "A friendly name for this connection"}
+            error={!!validation.errors.name}
           />
 
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, mt: 2 }}>
@@ -81,7 +141,8 @@ export function WeaviateConnectionCreatePage() {
             required
             sx={{ mb: 2 }}
             placeholder="http://localhost:8090"
-            helperText="Weaviate REST API URL for server health checks"
+            helperText={validation.errors.restUrl || "Weaviate REST API URL for server health checks"}
+            error={!!validation.errors.restUrl}
           />
 
           <TextField
@@ -92,7 +153,8 @@ export function WeaviateConnectionCreatePage() {
             required
             sx={{ mb: 2 }}
             placeholder="localhost:50051"
-            helperText="Weaviate gRPC URL (without protocol)"
+            helperText={validation.errors.grpcUrl || "Weaviate gRPC URL (without protocol)"}
+            error={!!validation.errors.grpcUrl}
           />
 
           <TextField
@@ -118,7 +180,8 @@ export function WeaviateConnectionCreatePage() {
             onChange={(e) => setConnectorRestUrl(e.target.value)}
             sx={{ mb: 2 }}
             placeholder="http://weaviate:8080"
-            helperText="REST URL used by Kafka Connect (Docker hostname)"
+            helperText={validation.errors.connectorRestUrl || "REST URL used by Kafka Connect (Docker hostname)"}
+            error={!!validation.errors.connectorRestUrl}
           />
 
           <TextField
@@ -128,7 +191,8 @@ export function WeaviateConnectionCreatePage() {
             onChange={(e) => setConnectorGrpcUrl(e.target.value)}
             sx={{ mb: 2 }}
             placeholder="weaviate:50051"
-            helperText="gRPC URL used by Kafka Connect (Docker hostname)"
+            helperText={validation.errors.connectorGrpcUrl || "gRPC URL used by Kafka Connect (Docker hostname)"}
+            error={!!validation.errors.connectorGrpcUrl}
           />
 
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, mt: 2 }}>
@@ -156,7 +220,8 @@ export function WeaviateConnectionCreatePage() {
               type="password"
               required
               sx={{ mb: 2 }}
-              helperText="Weaviate Cloud API key (stored securely server-side)"
+              helperText={validation.errors.apiKey || "Weaviate Cloud API key (stored securely server-side)"}
+              error={!!validation.errors.apiKey}
             />
           )}
 
@@ -170,7 +235,7 @@ export function WeaviateConnectionCreatePage() {
             <Button
               type="submit"
               variant="contained"
-              disabled={registerConnection.isPending || !name}
+              disabled={registerConnection.isPending || !validation.isValid}
             >
               {registerConnection.isPending ? (
                 <CircularProgress size={24} />

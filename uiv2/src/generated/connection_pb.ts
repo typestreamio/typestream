@@ -1230,6 +1230,13 @@ export class CreateWeaviateSinkConnectorRequest extends Message<CreateWeaviateSi
    */
   vectorField = "";
 
+  /**
+   * Optional: field name for timestamp conversion (empty = no transform)
+   *
+   * @generated from field: string timestamp_field = 9;
+   */
+  timestampField = "";
+
   constructor(data?: PartialMessage<CreateWeaviateSinkConnectorRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1246,6 +1253,7 @@ export class CreateWeaviateSinkConnectorRequest extends Message<CreateWeaviateSi
     { no: 6, name: "document_id_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "vector_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "vector_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "timestamp_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWeaviateSinkConnectorRequest {

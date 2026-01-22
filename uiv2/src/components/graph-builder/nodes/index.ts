@@ -109,6 +109,7 @@ export interface WeaviateSinkNodeData extends Record<string, unknown>, NodeValid
   documentIdField: string;
   vectorStrategy: 'NoVectorStrategy' | 'FieldVectorStrategy';
   vectorField: string;
+  timestampField: string;  // Optional: field name for timestamp conversion (empty = no transform)
 }
 
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;

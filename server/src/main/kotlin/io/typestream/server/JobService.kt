@@ -243,6 +243,7 @@ class JobService(
                             .setDocumentIdField(config.documentIdField)
                             .setVectorStrategy(config.vectorStrategy)
                             .setVectorField(config.vectorField)
+                            .setTimestampField(config.timestampField)
                             .build()
 
                         val response = connectionService.createWeaviateSinkConnector(connectorRequest)
