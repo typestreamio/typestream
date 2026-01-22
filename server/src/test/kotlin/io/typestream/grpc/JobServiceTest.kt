@@ -232,6 +232,87 @@ internal class JobServiceTest {
     }
 
     @Test
+    fun `creates job with windowed count aggregation`(): Unit = runBlocking {
+        app.use {
+            // Produce multiple records to aggregate
+            testKafka.produceRecords(
+                "books",
+                "avro",
+                Book(title = "Dune", wordCount = 300, authorId = UUID.randomUUID().toString()),
+                Book(title = "Dune", wordCount = 250, authorId = UUID.randomUUID().toString()),
+                Book(title = "Foundation", wordCount = 200, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = JobServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            // Build graph: StreamSource -> Group -> WindowedCount
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val groupNode = Job.PipelineNode.newBuilder()
+                .setId("group")
+                .setGroup(
+                    Job.GroupNode.newBuilder()
+                        .addFields("title")
+                )
+                .build()
+
+            val windowedCountNode = Job.PipelineNode.newBuilder()
+                .setId("windowed-count")
+                .setWindowedCount(
+                    Job.WindowedCountNode.newBuilder()
+                        .setWindowSizeSeconds(60)  // 1-minute windows
+                )
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(groupNode)
+                .addNodes(windowedCountNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("group"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("group").setToId("windowed-count"))
+                .build()
+
+            val request = Job.CreateJobFromGraphRequest.newBuilder()
+                .setUserId("test-user")
+                .setGraph(graph)
+                .build()
+
+            val response = stub.createJobFromGraph(request)
+
+            assertThat(response.success).isTrue()
+            assertThat(response.error).isEmpty()
+            assertThat(response.jobId).isNotEmpty()
+
+            // Wait for Kafka Streams to start processing
+            Thread.sleep(3000)
+
+            // Verify job is running
+            val listResponse = stub.listJobs(Job.ListJobsRequest.newBuilder().build())
+            val job = listResponse.jobsList.find { it.jobId == response.jobId }
+            assertThat(job).isNotNull()
+            assertThat(job?.state).isEqualTo(Job.JobState.RUNNING)
+        }
+    }
+
+    @Test
     fun `returns error for cyclic graph`(): Unit = runBlocking {
         val topic = TestKafka.uniqueTopic("books")
 
