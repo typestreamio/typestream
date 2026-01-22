@@ -142,6 +142,7 @@ message PipelineNode {
     TextExtractorNode text_extractor = 15;
     EmbeddingGeneratorNode embedding_generator = 16;
     OpenAiTransformerNode open_ai_transformer = 17;
+    WindowedCountNode windowed_count = 18;
   }
 }
 
