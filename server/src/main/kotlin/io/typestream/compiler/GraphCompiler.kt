@@ -69,6 +69,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     inferredEncodings: Map<String, Encoding>
   ): Node = when {
     proto.hasCount() -> Node.Count(proto.id)
+    proto.hasWindowedCount() -> Node.WindowedCount(proto.id, proto.windowedCount.windowSizeSeconds)
     proto.hasFilter() -> {
       val f = proto.filter
       Node.Filter(proto.id, f.byKey, PredicateParser.parse(f.predicate.expr))
