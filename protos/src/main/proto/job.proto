@@ -52,6 +52,10 @@ message PredicateProto {
 
 message CountNode {}
 
+message WindowedCountNode {
+  int64 window_size_seconds = 1;  // e.g., 60 for 1-minute windows
+}
+
 message FilterNode {
   bool by_key = 1;
   PredicateProto predicate = 2;
