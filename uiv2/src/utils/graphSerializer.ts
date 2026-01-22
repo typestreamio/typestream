@@ -15,6 +15,7 @@ import {
   PredicateProto,
   GroupNode,
   CountNode,
+  WindowedCountNode,
   ReduceLatestNode,
   DbSinkConfig,
   WeaviateSinkConfig,
