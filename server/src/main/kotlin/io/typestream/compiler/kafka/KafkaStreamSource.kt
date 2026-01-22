@@ -212,6 +212,22 @@ data class KafkaStreamSource(
         stream = groupedStream!!.count(materialized).mapValues { v -> DataStream.fromLong("", v) }.toStream()
     }
 
+    fun windowedCount(storeName: String, windowSize: Duration) {
+        requireNotNull(groupedStream) { "cannot count a non-grouped stream" }
+
+        countStoreName = storeName
+        val timeWindows = TimeWindows.ofSizeWithNoGrace(windowSize)
+
+        val materialized = Materialized.`as`<DataStream, Long, WindowStore<Bytes, ByteArray>>(storeName)
+        stream = groupedStream!!
+            .windowedBy(timeWindows)
+            .count(materialized)
+            .toStream()
+            .map { windowedKey, count ->
+                org.apache.kafka.streams.KeyValue(windowedKey.key(), DataStream.fromLong("", count))
+            }
+    }
+
     fun reduceLatest(storeName: String) {
         requireNotNull(groupedStream) { "cannot reduce a non-grouped stream" }
 
