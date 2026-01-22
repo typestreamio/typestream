@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { createElement } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -20,14 +20,11 @@ function createWrapper(options?: { failureThreshold?: number; debounceMs?: numbe
       createElement(
         QueryClientProvider,
         { client: queryClient },
-        createElement(
-          ServerConnectionProvider,
-          {
-            failureThreshold: options?.failureThreshold ?? 2,
-            debounceMs: options?.debounceMs ?? 100, // Short debounce for tests
-          },
-          children
-        )
+        createElement(ServerConnectionProvider, {
+          failureThreshold: options?.failureThreshold ?? 2,
+          debounceMs: options?.debounceMs ?? 100, // Short debounce for tests
+          children,
+        })
       ),
   };
 }
@@ -255,8 +252,6 @@ describe('ServerConnectionProvider', () => {
     it('should not trigger re-render when already connected', () => {
       const { queryClient, wrapper } = createWrapper();
       const { result } = renderHook(() => useServerConnection(), { wrapper });
-
-      const initialState = result.current;
 
       // Multiple successes shouldn't change state reference
       act(() => {
