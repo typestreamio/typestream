@@ -95,6 +95,13 @@ class KafkaStreamsJob(
                         kafkaStreamSource.count(storeName)
                         kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
                     }
+                    is Node.WindowedCount -> {
+                        val storeName = "${program.id}-windowed-count-store-$countStoreIndex"
+                        countStoreIndex++
+                        val windowSize = java.time.Duration.ofSeconds(currentNode.ref.windowSizeSeconds)
+                        kafkaStreamSource.windowedCount(storeName, windowSize)
+                        kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
+                    }
                     is Node.ReduceLatest -> {
                         val storeName = "${program.id}-reduce-store-$reduceStoreIndex"
                         reduceStoreIndex++
