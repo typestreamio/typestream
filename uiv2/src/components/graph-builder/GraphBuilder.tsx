@@ -191,6 +191,8 @@ export function GraphBuilder() {
       return { textField: '', outputField: 'embedding', model: 'text-embedding-3-small' };
     } else if (type === 'openAiTransformer') {
       return { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
+    } else if (type === 'filter') {
+      return { expression: '' };
     } else {
       return { topicPath: '' };
     }
