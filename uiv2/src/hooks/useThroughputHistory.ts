@@ -12,7 +12,10 @@ export function useThroughputHistory(jobId: string): number[] {
   const { getHistory, version } = useThroughputHistoryContext();
 
   // Re-compute when version changes (data was recorded)
-  return useMemo(() => {
-    return getHistory(jobId);
-  }, [jobId, getHistory, version]);
+  // Note: version is needed to trigger recomputation when new data is recorded
+  return useMemo(
+    () => getHistory(jobId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [jobId, getHistory, version]
+  );
 }

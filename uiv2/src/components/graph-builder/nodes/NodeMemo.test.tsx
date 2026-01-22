@@ -87,7 +87,9 @@ describe('Node memo behavior', () => {
 
       function TestGraph() {
         const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-        setNodesRef.current = setNodes;
+        useEffect(() => {
+          setNodesRef.current = setNodes;
+        }, [setNodes]);
 
         return (
           <ReactFlow
@@ -163,7 +165,9 @@ describe('Node memo behavior', () => {
 
       function TestGraph() {
         const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-        setNodesRef.current = setNodes;
+        useEffect(() => {
+          setNodesRef.current = setNodes;
+        }, [setNodes]);
 
         return (
           <ReactFlow
@@ -275,7 +279,9 @@ describe('Node memo behavior', () => {
 
       function TestGraph() {
         const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-        setNodesRef.current = setNodes;
+        useEffect(() => {
+          setNodesRef.current = setNodes;
+        }, [setNodes]);
         return (
           <ReactFlow
             nodes={nodes}

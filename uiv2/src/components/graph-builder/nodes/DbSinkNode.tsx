@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { Handle, Position, useReactFlow, useNodes, useEdges, type NodeProps } from '@xyflow/react';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -25,7 +25,10 @@ export const DbSinkNode = memo(function DbSinkNode({ id, data }: NodeProps<DbSin
 
   // Get fields from upstream node's computed output schema
   const upstreamData = upstreamNode?.data as NodeValidationState | undefined;
-  const fields = upstreamData?.outputSchema ?? [];
+  const fields = useMemo(
+    () => upstreamData?.outputSchema ?? [],
+    [upstreamData?.outputSchema]
+  );
 
   // Auto-select "id" as primary key when schema loads and no key is set
   useEffect(() => {

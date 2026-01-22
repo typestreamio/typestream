@@ -16,6 +16,7 @@ import { formatThroughput, formatBytes, formatNumber } from '../utils/formatters
 import { PipelineGraphViewer } from '../components/graph-builder/PipelineGraphViewer';
 import { Sparkline } from '../components/Sparkline';
 import { useThroughputHistory } from '../hooks/useThroughputHistory';
+import { useServerConnection } from '../providers/ServerConnectionContext';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -23,6 +24,7 @@ export function JobDetailPage() {
   const { data, isLoading, error } = useListJobs('local');
   const { data: storesData } = useListStores();
   const throughputHistory = useThroughputHistory(jobId ?? '');
+  const { isConnected } = useServerConnection();
 
   const job = data?.jobs.find((j) => j.jobId === jobId);
   const jobStores = storesData?.stores.filter((s) => s.jobId === jobId) ?? [];
@@ -35,10 +37,11 @@ export function JobDetailPage() {
     );
   }
 
-  if (error) {
+  // Don't show errors when server is disconnected (banner handles it)
+  if (error && isConnected) {
     return (
       <Alert severity="error">
-        Error loading job: {error.message}
+        Error loading job. Please try again.
       </Alert>
     );
   }
