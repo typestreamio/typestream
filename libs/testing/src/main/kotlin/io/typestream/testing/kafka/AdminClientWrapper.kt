@@ -10,7 +10,7 @@ class AdminClientWrapper(private val bootstrapServers: String) {
     private val adminClient = AdminClient.create(adminConfig())
 
     fun createTopics(vararg topics: String) {
-        val newTopics = topics.map { e: String -> NewTopic(e, 3, 1.toShort()) }
+        val newTopics = topics.map { e: String -> NewTopic(e, 1, 1.toShort()) }
         adminClient.createTopics(newTopics).all().get(30, TimeUnit.SECONDS)
     }
 
