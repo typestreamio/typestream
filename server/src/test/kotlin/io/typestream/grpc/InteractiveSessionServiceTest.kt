@@ -263,8 +263,11 @@ internal class InteractiveSessionServiceTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `runs a redirection`(encoding: String): Unit = runBlocking {
-        val usersTopic = TestKafka.uniqueTopic("users")
-        val userNamesTopic = TestKafka.uniqueTopic("user_names")
+        // Note: Using encoding-specific topic names to avoid conflicts when running both avro and proto tests
+        // Cannot use fully unique topics because the redirection creates an output topic dynamically
+        // and proto schema registration with unique output topic names has timing issues
+        val usersTopic = "users_redir_$encoding"
+        val userNamesTopic = "user_names_redir_$encoding"
         val users = testKafka.produceRecords(
             usersTopic, encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
         )

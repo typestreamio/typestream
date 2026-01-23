@@ -58,15 +58,16 @@ internal class AvroSerdeTest {
         // This test simulates Debezium-style schemas where the namespace differs
         // from what TypeStream would generate
 
-        val topic = TestKafka.uniqueTopic("dbserver.public.test_table")
+        val topic = TestKafka.uniqueTopic("dbserver_public_test_table")
         val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
         // Create a schema with a different namespace (like Debezium would)
+        // Note: Avro namespaces cannot contain hyphens, so we use a static namespace
         val debeziumStyleSchema = Schema.Parser().parse("""
             {
                 "type": "record",
                 "name": "Envelope",
-                "namespace": "$topic",
+                "namespace": "dbserver.public.test_table",
                 "fields": [
                     {"name": "before", "type": ["null", "string"], "default": null},
                     {"name": "after", "type": ["null", "string"], "default": null},
