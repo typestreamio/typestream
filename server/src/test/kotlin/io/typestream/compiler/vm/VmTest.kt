@@ -4,6 +4,7 @@ import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.SmokeType
 import io.typestream.testing.until
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +17,14 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 class VmTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        private val testKafka = TestKafkaContainer.instance
+    }
+
     private val testDispatcher = Dispatchers.IO
     private lateinit var fileSystem: FileSystem
     private lateinit var session: Session
@@ -40,16 +42,18 @@ class VmTest {
 
     @Test
     fun `avro smokeType`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("smoke-type")
+
         scheduler.use {
             val smokeType = SmokeType()
             launch(testDispatcher) {
                 scheduler.start()
             }
-            testKafka.produceRecords("smoke-type", "avro", smokeType)
+            testKafka.produceRecords(topic, "avro", smokeType)
 
             fileSystem.refresh()
 
-            val vmResult = vm.run("cat /dev/kafka/local/topics/smoke-type", session)
+            val vmResult = vm.run("cat /dev/kafka/local/topics/$topic", session)
 
             until { scheduler.ps().any { it.id == vmResult.program.id } }
 

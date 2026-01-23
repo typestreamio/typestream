@@ -24,33 +24,34 @@ interface TestRecord {
             records.map { ProducerRecord(topic, it.id, it.toProto()) }
 
         fun fromAvro(topic: String, key: String, value: SpecificRecordBase): TestRecord {
-            return when (topic) {
-                "authors" -> {
+            // Use startsWith to support unique topic names (e.g., "books-abc123" matches "books")
+            return when {
+                topic.startsWith("authors") -> {
                     require(value is io.typestream.testing.avro.Author)
                     Author(value.id.toString(), value.name.toString())
                 }
 
-                "books" -> {
+                topic.startsWith("books") -> {
                     require(value is io.typestream.testing.avro.Book)
                     Book(value.id.toString(), value.title.toString(), value.authorId.toString(), value.wordCount)
                 }
 
-                "page_views" -> {
+                topic.startsWith("page_views") || topic.startsWith("page-views") -> {
                     require(value is io.typestream.testing.avro.PageView)
                     PageView(key, value.bookId.toString(), value.ipAddress)
                 }
 
-                "ratings" -> {
+                topic.startsWith("ratings") -> {
                     require(value is io.typestream.testing.avro.Rating)
                     Rating(key, value.bookId.toString(), value.userId.toString(), value.rating)
                 }
 
-                "smoke-type" -> {
+                topic.startsWith("smoke-type") -> {
                     require(value is io.typestream.testing.avro.SmokeType)
                     SmokeType()
                 }
 
-                "users" -> {
+                topic.startsWith("users") -> {
                     require(value is io.typestream.testing.avro.User)
                     User(value.id.toString(), value.name.toString())
                 }
@@ -66,30 +67,31 @@ interface TestRecord {
                 value.getField(fieldsByName[name])
             }
 
-            return when (topic) {
-                "authors" -> Author(getValue("id").toString(), getValue("name").toString())
+            // Use startsWith to support unique topic names (e.g., "books-abc123" matches "books")
+            return when {
+                topic.startsWith("authors") -> Author(getValue("id").toString(), getValue("name").toString())
 
-                "books" -> Book(
+                topic.startsWith("books") -> Book(
                     getValue("id").toString(),
                     getValue("title").toString(),
                     getValue("author_id").toString(),
                     getValue("word_count") as Int
                 )
 
-                "page_views" -> PageView(
+                topic.startsWith("page_views") || topic.startsWith("page-views") -> PageView(
                     key,
                     getValue("book_id").toString(),
                     getValue("ip_address").toString()
                 )
 
-                "ratings" -> Rating(
+                topic.startsWith("ratings") -> Rating(
                     key,
                     getValue("book_id").toString(),
                     getValue("user_id").toString(),
                     getValue("rating") as Int
                 )
 
-                "users" -> User(getValue("id").toString(), getValue("name").toString())
+                topic.startsWith("users") -> User(getValue("id").toString(), getValue("name").toString())
 
                 else -> error("unsupported topic: $topic")
             }

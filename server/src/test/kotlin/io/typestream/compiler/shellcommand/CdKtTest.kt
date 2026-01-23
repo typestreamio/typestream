@@ -9,6 +9,7 @@ import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Author
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -16,14 +17,14 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 
 @Testcontainers
 internal class CdKtTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        private val testKafka = TestKafkaContainer.instance
+    }
 
     private lateinit var fileSystem: FileSystem
     private lateinit var session: Session
@@ -77,16 +78,18 @@ internal class CdKtTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `changes directory only to dirs`(encoding: String) {
+        val topic = TestKafka.uniqueTopic("authors")
+
         fileSystem.use {
-            testKafka.produceRecords("authors", encoding, Author(name = "Ann Leckie"))
+            testKafka.produceRecords(topic, encoding, Author(name = "Ann Leckie"))
             fileSystem.refresh()
 
             val cd = ShellCommand.mustFind("cd")
 
-            val programResult = cd(session, listOf("dev/kafka/local/topics/authors"))
+            val programResult = cd(session, listOf("dev/kafka/local/topics/$topic"))
 
             assertThat(programResult).isEqualTo(
-                ShellCommandOutput.withError("cd: cannot cd into dev/kafka/local/topics/authors: not a directory")
+                ShellCommandOutput.withError("cd: cannot cd into dev/kafka/local/topics/$topic: not a directory")
             )
 
             assertThat(session.env.pwd).isEqualTo("/")

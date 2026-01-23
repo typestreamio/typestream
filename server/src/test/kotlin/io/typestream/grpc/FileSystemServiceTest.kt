@@ -9,6 +9,7 @@ import io.typestream.grpc.filesystem_service.FileSystemServiceGrpc
 import io.typestream.grpc.filesystem_service.lsRequest
 import io.typestream.grpc.job_service.Job
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Author
 import io.typestream.testing.until
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
@@ -30,8 +30,9 @@ internal class FileSystemServiceTest {
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        private val testKafka = TestKafkaContainer.instance
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -88,8 +89,9 @@ internal class FileSystemServiceTest {
 
     @Test
     fun `returns correct encoding for topics`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("authors")
         val author = Author(name = "Octavia E. Butler")
-        testKafka.produceRecords("authors", "avro", author)
+        testKafka.produceRecords(topic, "avro", author)
 
         app.use {
             val serverName = InProcessServerBuilder.generateName()
@@ -106,10 +108,10 @@ internal class FileSystemServiceTest {
             )
 
             val response = stub.ls(lsRequest { path = "/dev/kafka/local/topics" })
-            val authorsFile = response.filesList.find { it.name == "authors" }
+            val topicFile = response.filesList.find { it.name == topic }
 
-            assertThat(authorsFile).isNotNull
-            assertThat(authorsFile!!.encoding).isEqualTo(Job.Encoding.AVRO)
+            assertThat(topicFile).isNotNull
+            assertThat(topicFile!!.encoding).isEqualTo(Job.Encoding.AVRO)
         }
     }
 

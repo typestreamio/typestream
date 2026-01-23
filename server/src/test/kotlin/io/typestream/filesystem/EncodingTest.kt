@@ -10,13 +10,13 @@ import io.typestream.config.testing.testConfig
 import io.typestream.helpers.author
 import io.typestream.helpers.book
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Author
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 
@@ -24,19 +24,23 @@ import org.testcontainers.junit.jupiter.Testcontainers
 class EncodingTest {
     companion object {
         private lateinit var fileSystem: FileSystem
+        private lateinit var authorsTopic: String
+        private lateinit var booksTopic: String
 
-        @Container
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
 
         @JvmStatic
         @BeforeAll
         fun beforeAll() {
             fileSystem = FileSystem(testConfig(testKafka), Dispatchers.IO)
 
+            authorsTopic = TestKafka.uniqueTopic("authors")
+            booksTopic = TestKafka.uniqueTopic("books")
+
             val author = Author(name = "Octavia E. Butler")
-            testKafka.produceRecords("authors", "avro", author)
+            testKafka.produceRecords(authorsTopic, "avro", author)
             testKafka.produceRecords(
-                "books",
+                booksTopic,
                 "proto",
                 Book(title = "Parable of the Sower", authorId = author.id, wordCount = 100)
             )
@@ -47,27 +51,27 @@ class EncodingTest {
 
     @Test
     fun `infers avro encoding`() {
-        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
-        dataCommand.dataStreams.add(author())
+        dataCommand.dataStreams.add(author(topic = authorsTopic))
 
         Assertions.assertThat(fileSystem.inferEncoding(dataCommand)).isEqualTo(Encoding.AVRO)
     }
 
     @Test
     fun `infers proto encoding`() {
-        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/books")))
+        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$booksTopic")))
 
-        dataCommand.dataStreams.add(book(title = "Parable of the Sower"))
+        dataCommand.dataStreams.add(book(title = "Parable of the Sower", topic = booksTopic))
 
         Assertions.assertThat(fileSystem.inferEncoding(dataCommand)).isEqualTo(Encoding.PROTOBUF)
     }
 
     @Test
     fun `infers pipeline encoding`() {
-        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
-        cat.dataStreams.add(author())
+        cat.dataStreams.add(author(topic = authorsTopic))
 
         val grep = Grep(listOf(Expr.BareWord("Butler")))
 
@@ -79,17 +83,16 @@ class EncodingTest {
 
     @Test
     fun `infers mixed pipeline encoding`() {
-        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
-        cat.dataStreams.add(author())
+        cat.dataStreams.add(author(topic = authorsTopic))
 
-        val join = Join(listOf(Expr.BareWord("/dev/kafka/local/topics/books")))
+        val join = Join(listOf(Expr.BareWord("/dev/kafka/local/topics/$booksTopic")))
 
-        join.dataStreams.add(book(title = "Parable of the Sower"))
+        join.dataStreams.add(book(title = "Parable of the Sower", topic = booksTopic))
 
         val pipeline = Pipeline(listOf(cat, join))
 
         Assertions.assertThat(fileSystem.inferEncoding(pipeline)).isEqualTo(Encoding.JSON)
     }
 }
-

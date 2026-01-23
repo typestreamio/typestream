@@ -12,6 +12,7 @@ import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -19,15 +20,15 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 import io.typestream.testing.avro.Book as AvroBook
 
 @Testcontainers
 internal class CompilerTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        private val testKafka = TestKafkaContainer.instance
+    }
 
     private lateinit var fileSystem: FileSystem
 
@@ -86,10 +87,18 @@ internal class CompilerTest {
 
         @Test
         fun `completes simple program with pipe`() {
-            val source = "cat /dev/kafka/local/topics/books | "
+            val topic = TestKafka.uniqueTopic("books")
+            testKafka.produceRecords(
+                topic,
+                "avro",
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+            fileSystem.refresh()
+
+            val source = "cat /dev/kafka/local/topics/$topic | "
 
             val compiler = Compiler(session)
-            val suggestions = compiler.complete(source, CursorPosition(0, 31))
+            val suggestions = compiler.complete(source, CursorPosition(0, source.length))
 
             assertThat(suggestions).containsExactly("cat", "cut", "each", "echo", "enrich", "grep", "join", "let", "wc")
         }
@@ -97,10 +106,13 @@ internal class CompilerTest {
 
     @Nested
     inner class Grep {
+        private lateinit var topic: String
+
         @BeforeEach
         fun beforeEach() {
+            topic = TestKafka.uniqueTopic("books")
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
@@ -110,7 +122,7 @@ internal class CompilerTest {
 
         @Test
         fun `compiles simple grep`() {
-            val source = "grep 'Station Eleven' /dev/kafka/local/topics/books"
+            val source = "grep 'Station Eleven' /dev/kafka/local/topics/$topic"
 
             val compiler = Compiler(session)
             val compilerResult = compiler.compile(source)
@@ -124,7 +136,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -136,7 +148,7 @@ internal class CompilerTest {
 
         @Test
         fun `compiles inverted grep`() {
-            val source = "grep -v 'Station Eleven' /dev/kafka/local/topics/books"
+            val source = "grep -v 'Station Eleven' /dev/kafka/local/topics/$topic"
 
             val compiler = Compiler(session)
             val compilerResult = compiler.compile(source)
@@ -150,7 +162,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -162,7 +174,7 @@ internal class CompilerTest {
 
         @Test
         fun `compiles grep by key`() {
-            val source = "grep -k 'Station Eleven' /dev/kafka/local/topics/books"
+            val source = "grep -k 'Station Eleven' /dev/kafka/local/topics/$topic"
 
             val compiler = Compiler(session)
             val compilerResult = compiler.compile(source)
@@ -176,7 +188,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)
@@ -189,7 +201,7 @@ internal class CompilerTest {
 
         @Test
         fun `compiles grep with predicate`() {
-            val source = "grep [.title ~= 'the'] /dev/kafka/local/topics/books"
+            val source = "grep [.title ~= 'the'] /dev/kafka/local/topics/$topic"
 
             val compiler = Compiler(session)
             val compilerResult = compiler.compile(source)
@@ -203,7 +215,7 @@ internal class CompilerTest {
             require(streamSourceNode is Node.StreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
-                DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
+                DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
             )
 
             assertThat(program.graph.children.first().children).hasSize(1)

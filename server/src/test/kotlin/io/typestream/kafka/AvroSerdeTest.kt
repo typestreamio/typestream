@@ -5,6 +5,7 @@ import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.schemaregistry.SchemaType
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.avro.User
 import io.typestream.testing.model.User as ModelUser
 import org.apache.avro.Schema
@@ -12,19 +13,20 @@ import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericRecord
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 internal class AvroSerdeTest {
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        private val testKafka = TestKafkaContainer.instance
+    }
 
     @Test
     fun `deserializes records using schema from registry`() {
+        val topic = TestKafka.uniqueTopic("users")
         // Produce a record to register the schema
-        testKafka.produceRecords("users", "avro", ModelUser(name = "Ada Lovelace"))
+        testKafka.produceRecords(topic, "avro", ModelUser(name = "Ada Lovelace"))
 
         val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
@@ -44,8 +46,8 @@ internal class AvroSerdeTest {
         }
 
         // Serialize and deserialize
-        val serialized = serde.serialize("users", originalRecord)
-        val deserialized = serde.deserialize("users", serialized)
+        val serialized = serde.serialize(topic, originalRecord)
+        val deserialized = serde.deserialize(topic, serialized)
 
         assertThat(deserialized).isNotNull
         assertThat(deserialized?.get("name")?.toString()).isEqualTo("Grace Hopper")
@@ -56,9 +58,11 @@ internal class AvroSerdeTest {
         // This test simulates Debezium-style schemas where the namespace differs
         // from what TypeStream would generate
 
+        val topic = TestKafka.uniqueTopic("dbserver_public_test_table")
         val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
         // Create a schema with a different namespace (like Debezium would)
+        // Note: Avro namespaces cannot contain hyphens, so we use a static namespace
         val debeziumStyleSchema = Schema.Parser().parse("""
             {
                 "type": "record",
@@ -74,7 +78,7 @@ internal class AvroSerdeTest {
 
         // Register this schema in the registry
         val schemaId = schemaRegistryClient.register(
-            "dbserver.public.test_table",
+            topic,
             SchemaType.AVRO,
             debeziumStyleSchema.toString()
         )
@@ -96,8 +100,8 @@ internal class AvroSerdeTest {
         }
 
         // Serialize and deserialize
-        val serialized = serde.serialize("dbserver.public.test_table", originalRecord)
-        val deserialized = serde.deserialize("dbserver.public.test_table", serialized)
+        val serialized = serde.serialize(topic, originalRecord)
+        val deserialized = serde.deserialize(topic, serialized)
 
         assertThat(deserialized).isNotNull
         assertThat(deserialized?.get("op")?.toString()).isEqualTo("c")
@@ -111,6 +115,7 @@ internal class AvroSerdeTest {
         // used a different schema than what TypeStream reconstructs internally
         // This is the exact scenario that broke with Debezium
 
+        val topic = TestKafka.uniqueTopic("external-topic")
         val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
         // Schema that external producer (like Debezium) would use
@@ -128,7 +133,7 @@ internal class AvroSerdeTest {
 
         // Register this schema
         schemaRegistryClient.register(
-            "external-topic",
+            topic,
             SchemaType.AVRO,
             externalSchema.toString()
         )
@@ -149,10 +154,10 @@ internal class AvroSerdeTest {
             put("message", "Hello from external producer")
         }
 
-        val serialized = serde.serialize("external-topic", originalRecord)
+        val serialized = serde.serialize(topic, originalRecord)
 
         // Now deserialize - this should work because we fetch the writer schema from registry
-        val deserialized = serde.deserialize("external-topic", serialized)
+        val deserialized = serde.deserialize(topic, serialized)
 
         assertThat(deserialized).isNotNull
         assertThat(deserialized?.get("id")).isEqualTo(42)
@@ -161,6 +166,7 @@ internal class AvroSerdeTest {
 
     @Test
     fun `caches schemas to avoid repeated registry lookups`() {
+        val topic = TestKafka.uniqueTopic("cache-test")
         val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
         val schema = Schema.Parser().parse("""
@@ -174,7 +180,7 @@ internal class AvroSerdeTest {
             }
         """.trimIndent())
 
-        schemaRegistryClient.register("cache-test", SchemaType.AVRO, schema.toString())
+        schemaRegistryClient.register(topic, SchemaType.AVRO, schema.toString())
 
         val serde = AvroSerde(schema)
         serde.configure(
@@ -188,11 +194,11 @@ internal class AvroSerdeTest {
             put("value", "test")
         }
 
-        val serialized = serde.serialize("cache-test", record)
+        val serialized = serde.serialize(topic, record)
 
         // Deserialize multiple times - should use cached schema
         repeat(100) {
-            val deserialized = serde.deserialize("cache-test", serialized)
+            val deserialized = serde.deserialize(topic, serialized)
             assertThat(deserialized?.get("value")?.toString()).isEqualTo("test")
         }
     }

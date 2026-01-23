@@ -4,27 +4,29 @@ import io.typestream.compiler.types.schema.Schema
 import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Rating
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 
 @Testcontainers
 internal class CatalogTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        private val testKafka = TestKafkaContainer.instance
+    }
 
     //TODO add proto as soon as we support official imports
     @ParameterizedTest
     @ValueSource(strings = ["avro"])
     fun `fetches schema`(encoding: String) {
+        val topic = TestKafka.uniqueTopic("ratings")
         testKafka.produceRecords(
-            "ratings",
+            topic,
             encoding,
             Rating(
                 id = UUID.randomUUID().toString(),
@@ -37,7 +39,7 @@ internal class CatalogTest {
 
         catalog.refresh()
 
-        val ratingsPath = "${FileSystem.KAFKA_CLUSTERS_PREFIX}/local/topics/ratings"
+        val ratingsPath = "${FileSystem.KAFKA_CLUSTERS_PREFIX}/local/topics/$topic"
         val ratings = catalog[ratingsPath]
         requireNotNull(ratings)
         assertThat(ratings).extracting("dataStream.path").isEqualTo(ratingsPath)
