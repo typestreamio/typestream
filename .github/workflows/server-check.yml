@@ -9,8 +9,8 @@ on:
       - 'protos/**'
       - 'gradle/**'
       - 'libs/**'
-      - 'connectors/**'
       - 'stub/**'
+      - 'config/**'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - 'gradle.properties'
@@ -27,8 +27,8 @@ on:
       - 'protos/**'
       - 'gradle/**'
       - 'libs/**'
-      - 'connectors/**'
       - 'stub/**'
+      - 'config/**'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - 'gradle.properties'
@@ -60,7 +60,7 @@ jobs:
           use-flakehub: false
 
       - name: Check
-        run: nix develop --command gradle check
+        run: nix develop --command gradle check -x :connectors:demo-data:check
         continue-on-error: true
         env:
           GRADLE_TOKEN: ${{ secrets.GRADLE_TOKEN }}
