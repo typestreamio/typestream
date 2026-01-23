@@ -18,7 +18,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, nodeHasInput, nodeHasOutput, type AppNode } from './nodes';
-import { serializeGraph, serializeGraphWithDbSinks } from '../../utils/graphSerializer';
+import { serializeGraph, serializeGraphWithSinks } from '../../utils/graphSerializer';
 import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
@@ -173,6 +173,18 @@ export function GraphBuilder() {
         insertMode: 'upsert',
         primaryKeyFields: '',
       };
+    } else if (type === 'weaviateSink') {
+      // WeaviateSink node - only non-sensitive fields (credentials resolved server-side)
+      return {
+        connectionId: dragData.connectionId || '',
+        connectionName: dragData.connectionName || '',
+        collectionName: dragData.collectionName || '',
+        documentIdStrategy: dragData.documentIdStrategy || 'NoIdStrategy',
+        documentIdField: dragData.documentIdField || '',
+        vectorStrategy: dragData.vectorStrategy || 'NoVectorStrategy',
+        vectorField: dragData.vectorField || '',
+        timestampField: dragData.timestampField || '',
+      };
     } else if (type === 'textExtractor') {
       return { filePathField: '', outputField: 'text' };
     } else if (type === 'embeddingGenerator') {
@@ -292,13 +304,14 @@ export function GraphBuilder() {
 
   const handleCreateJob = async () => {
     setCreateError(null);
-    const { graph, dbSinkConfigs } = serializeGraphWithDbSinks(nodes, edges);
+    const { graph, dbSinkConfigs, weaviateSinkConfigs } = serializeGraphWithSinks(nodes, edges);
 
     // Single consolidated request - server handles both job + connectors atomically
     const request = new CreateJobFromGraphRequest({
       userId: 'local',
       graph,
       dbSinkConfigs,  // Server creates connectors and rolls back on failure
+      weaviateSinkConfigs,  // Server creates Weaviate connectors and rolls back on failure
     });
 
     createJob.mutate(request, {

@@ -9,9 +9,13 @@ import {
   TestConnectionRequest,
   DatabaseConnectionConfig,
   DatabaseType,
+  GetWeaviateConnectionStatusesRequest,
+  RegisterWeaviateConnectionRequest,
+  WeaviateConnectionConfig,
 } from '../generated/connection_pb';
 
 const CONNECTIONS_KEY = ['connections'];
+const WEAVIATE_CONNECTIONS_KEY = ['weaviateConnections'];
 
 /**
  * Connection data structure used throughout the UI.
@@ -233,4 +237,124 @@ export function useCreateJdbcSinkConnector() {
       return client.createJdbcSinkConnector(request);
     },
   });
+}
+
+// ==================== Weaviate Connection Hooks ====================
+
+/**
+ * Weaviate connection data structure used throughout the UI.
+ * Note: API key is intentionally excluded for security - credentials stay server-side.
+ */
+export interface WeaviateConnection {
+  id: string;
+  name: string;
+  restUrl: string;
+  grpcUrl: string;
+  grpcSecured: boolean;
+  authScheme: string;
+  connectorRestUrl: string;
+  connectorGrpcUrl: string;
+  // api_key intentionally excluded - credentials resolved server-side
+  state: 'connected' | 'disconnected' | 'error' | 'connecting' | 'unknown';
+  error?: string;
+  lastChecked?: Date;
+}
+
+/**
+ * Fetch all Weaviate connections from the backend
+ * Polls every 5 seconds for live status updates
+ */
+export function useWeaviateConnections() {
+  const transport = useTransport();
+
+  return useQuery({
+    queryKey: WEAVIATE_CONNECTIONS_KEY,
+    queryFn: async (): Promise<WeaviateConnection[]> => {
+      const client = createClient(ConnectionService, transport);
+      const response = await client.getWeaviateConnectionStatuses(new GetWeaviateConnectionStatusesRequest());
+
+      return response.statuses.map((status) => ({
+        id: status.id,
+        name: status.name,
+        restUrl: status.config?.restUrl || '',
+        grpcUrl: status.config?.grpcUrl || '',
+        grpcSecured: status.config?.grpcSecured || false,
+        authScheme: status.config?.authScheme || 'NONE',
+        connectorRestUrl: status.config?.connectorRestUrl || '',
+        connectorGrpcUrl: status.config?.connectorGrpcUrl || '',
+        // api_key excluded - credentials resolved server-side
+        state: mapConnectionState(status.state),
+        error: status.error || undefined,
+        lastChecked: status.lastChecked ? new Date(Number(status.lastChecked.seconds) * 1000) : undefined,
+      }));
+    },
+    refetchInterval: 5000,
+  });
+}
+
+/**
+ * Register a new Weaviate connection with the backend
+ */
+export function useRegisterWeaviateConnection() {
+  const transport = useTransport();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (config: {
+      id: string;
+      name: string;
+      restUrl: string;
+      grpcUrl: string;
+      grpcSecured?: boolean;
+      authScheme?: string;
+      apiKey?: string;
+      connectorRestUrl?: string;
+      connectorGrpcUrl?: string;
+    }) => {
+      const client = createClient(ConnectionService, transport);
+      const request = new RegisterWeaviateConnectionRequest({
+        connection: new WeaviateConnectionConfig({
+          id: config.id,
+          name: config.name,
+          restUrl: config.restUrl,
+          grpcUrl: config.grpcUrl,
+          grpcSecured: config.grpcSecured || false,
+          authScheme: config.authScheme || 'NONE',
+          apiKey: config.apiKey || '',
+          connectorRestUrl: config.connectorRestUrl || '',
+          connectorGrpcUrl: config.connectorGrpcUrl || '',
+        }),
+      });
+      return client.registerWeaviateConnection(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WEAVIATE_CONNECTIONS_KEY });
+    },
+  });
+}
+
+/**
+ * Get Weaviate connections that can be used as sinks (for NodePalette)
+ * Only returns connected connections
+ */
+export function useWeaviateSinkConnections() {
+  const { data: connections, ...rest } = useWeaviateConnections();
+
+  return {
+    ...rest,
+    data: connections?.filter((c) => c.state === 'connected'),
+  };
+}
+
+/**
+ * Get all sink connections (both DB and Weaviate) for NodePalette
+ */
+export function useAllSinkConnections() {
+  const { data: dbConnections } = useSinkConnections();
+  const { data: weaviateConnections } = useWeaviateSinkConnections();
+
+  return {
+    dbConnections: dbConnections ?? [],
+    weaviateConnections: weaviateConnections ?? [],
+  };
 }

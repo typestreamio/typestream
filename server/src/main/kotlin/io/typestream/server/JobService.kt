@@ -70,6 +70,9 @@ class JobService(
     // Track preview jobs for cleanup: jobId -> PreviewJobInfo
     private val previewJobs = ConcurrentHashMap<String, PreviewJobInfo>()
 
+    // Track weaviate sink configs per job: jobId -> List<WeaviateSinkConfig>
+    private val jobWeaviateSinks = ConcurrentHashMap<String, List<ProtoJob.WeaviateSinkConfig>>()
+
     // TTL for preview jobs (cleanup if no client connected for this long)
     private val previewJobTtl = 10.minutes
 
@@ -174,10 +177,12 @@ class JobService(
 
             vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
 
-            // Create JDBC sink connectors if any dbSinkConfigs are provided
+            // Create sink connectors if any configs are provided
             val createdConnectorNames = mutableListOf<String>()
             val dbSinkConfigs = request.dbSinkConfigsList
+            val weaviateSinkConfigs = request.weaviateSinkConfigsList
 
+            // Create JDBC sink connectors
             if (dbSinkConfigs.isNotEmpty()) {
                 logger.info { "Creating ${dbSinkConfigs.size} JDBC sink connector(s) for job ${program.id}" }
 
@@ -218,6 +223,55 @@ class JobService(
                 }
             }
 
+            // Create Weaviate sink connectors
+            if (weaviateSinkConfigs.isNotEmpty()) {
+                logger.info { "Creating ${weaviateSinkConfigs.size} Weaviate sink connector(s) for job ${program.id}" }
+
+                for (config in weaviateSinkConfigs) {
+                    val connectorName = "${program.id}-weaviate-sink-${config.nodeId}"
+                    val intermediateTopic = config.intermediateTopic.ifEmpty {
+                        generateWeaviateIntermediateTopicName(config.nodeId)
+                    }
+
+                    try {
+                        val connectorRequest = io.typestream.grpc.connection_service.Connection.CreateWeaviateSinkConnectorRequest.newBuilder()
+                            .setConnectionId(config.connectionId)
+                            .setConnectorName(connectorName)
+                            .setTopics(intermediateTopic)
+                            .setCollectionName(config.collectionName)
+                            .setDocumentIdStrategy(config.documentIdStrategy)
+                            .setDocumentIdField(config.documentIdField)
+                            .setVectorStrategy(config.vectorStrategy)
+                            .setVectorField(config.vectorField)
+                            .setTimestampField(config.timestampField)
+                            .build()
+
+                        val response = connectionService.createWeaviateSinkConnector(connectorRequest)
+
+                        if (!response.success) {
+                            throw RuntimeException("Failed to create Weaviate connector $connectorName: ${response.error}")
+                        }
+
+                        createdConnectorNames.add(connectorName)
+                        logger.info { "Created Weaviate sink connector: $connectorName" }
+                    } catch (e: Exception) {
+                        // Rollback: Kill the job and delete any created connectors
+                        logger.error(e) { "Weaviate connector creation failed, rolling back job ${program.id}" }
+                        rollbackJobAndConnectors(program.id, createdConnectorNames)
+
+                        this.success = false
+                        this.jobId = ""
+                        this.error = "Weaviate connector creation failed: ${e.message}"
+                        return@createJobResponse
+                    }
+                }
+            }
+
+            // Store weaviate sink configs for this job (for job details display)
+            if (weaviateSinkConfigs.isNotEmpty()) {
+                jobWeaviateSinks[program.id] = weaviateSinkConfigs
+            }
+
             this.success = true
             this.jobId = program.id
             this.error = ""
@@ -236,6 +290,15 @@ class JobService(
         val timestamp = System.currentTimeMillis()
         val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
         return "jdbc-sink-$sanitizedNodeId-$timestamp"
+    }
+
+    /**
+     * Generate a unique topic name for intermediate Weaviate sink output
+     */
+    private fun generateWeaviateIntermediateTopicName(nodeId: String): String {
+        val timestamp = System.currentTimeMillis()
+        val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
+        return "weaviate-sink-$sanitizedNodeId-$timestamp"
     }
 
     /**
@@ -266,7 +329,7 @@ class JobService(
      */
     private fun deleteKafkaConnectConnector(connectorName: String) {
         val connectUrl = System.getenv("KAFKA_CONNECT_URL") ?: "http://localhost:8083"
-        val url = java.net.URL("$connectUrl/connectors/$connectorName")
+        val url = java.net.URI.create("$connectUrl/connectors/$connectorName").toURL()
         val connection = url.openConnection() as java.net.HttpURLConnection
 
         try {
@@ -311,6 +374,10 @@ class JobService(
                         totalMessages = jobThroughputMetrics.totalMessages
                         bytesPerSecond = jobThroughputMetrics.bytesPerSecond
                         totalBytes = jobThroughputMetrics.totalBytes
+                    }
+                    // Include weaviate sink configs if available
+                    jobWeaviateSinks[schedulerJob.id]?.let { configs ->
+                        weaviateSinks.addAll(configs)
                     }
                 })
             }

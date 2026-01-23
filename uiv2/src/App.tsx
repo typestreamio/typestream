@@ -5,6 +5,8 @@ import { JobDetailPage } from './pages/JobDetailPage';
 import { GraphBuilderPage } from './pages/GraphBuilderPage';
 import { ConnectionsPage } from './pages/ConnectionsPage';
 import { ConnectionCreatePage } from './pages/ConnectionCreatePage';
+import { WeaviateConnectionsPage } from './pages/WeaviateConnectionsPage';
+import { WeaviateConnectionCreatePage } from './pages/WeaviateConnectionCreatePage';
 import { ConnectorsPage } from './pages/ConnectorsPage';
 import { ConnectorCreatePage } from './pages/ConnectorCreatePage';
 import { ThroughputHistoryProvider } from './providers/ThroughputHistoryProvider';
@@ -20,6 +22,8 @@ function App() {
         <Route path="/jobs/:jobId" element={<JobDetailPage />} />
         <Route path="/connections" element={<ConnectionsPage />} />
         <Route path="/connections/new" element={<ConnectionCreatePage />} />
+        <Route path="/connections/weaviate" element={<WeaviateConnectionsPage />} />
+        <Route path="/connections/weaviate/new" element={<WeaviateConnectionCreatePage />} />
         {/* Kafka Connect connectors - for debugging */}
         <Route path="/connectors" element={<ConnectorsPage />} />
         <Route path="/connectors/new" element={<ConnectorCreatePage />} />

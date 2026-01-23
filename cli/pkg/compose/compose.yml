@@ -3,6 +3,7 @@ networks:
     driver: bridge
 volumes:
   redpanda: null
+  weaviate_data: null
 services:
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v24.2.9
@@ -195,3 +196,17 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.28.4
+    ports:
+      - "8090:8080"   # REST (avoid conflict with envoy on 8080)
+      - "50051:50051" # gRPC
+    environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'  # Always use pre-computed embeddings
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - typestream_network

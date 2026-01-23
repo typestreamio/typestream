@@ -775,3 +775,550 @@ export class DatabaseConnectionConfigPublic extends Message<DatabaseConnectionCo
   }
 }
 
+/**
+ * Weaviate connection configuration
+ *
+ * @generated from message io.typestream.grpc.WeaviateConnectionConfig
+ */
+export class WeaviateConnectionConfig extends Message<WeaviateConnectionConfig> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * e.g., "http://localhost:8090"
+   *
+   * @generated from field: string rest_url = 3;
+   */
+  restUrl = "";
+
+  /**
+   * e.g., "localhost:50051"
+   *
+   * @generated from field: string grpc_url = 4;
+   */
+  grpcUrl = "";
+
+  /**
+   * @generated from field: bool grpc_secured = 5;
+   */
+  grpcSecured = false;
+
+  /**
+   * "NONE" or "API_KEY"
+   *
+   * @generated from field: string auth_scheme = 6;
+   */
+  authScheme = "";
+
+  /**
+   * For Weaviate Cloud (server-side only)
+   *
+   * @generated from field: string api_key = 7;
+   */
+  apiKey = "";
+
+  /**
+   * For Kafka Connect (e.g., "http://weaviate:8080")
+   *
+   * @generated from field: string connector_rest_url = 8;
+   */
+  connectorRestUrl = "";
+
+  /**
+   * For Kafka Connect (e.g., "weaviate:50051")
+   *
+   * @generated from field: string connector_grpc_url = 9;
+   */
+  connectorGrpcUrl = "";
+
+  constructor(data?: PartialMessage<WeaviateConnectionConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.WeaviateConnectionConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "rest_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "grpc_secured", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "auth_scheme", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "api_key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "connector_rest_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "connector_grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeaviateConnectionConfig {
+    return new WeaviateConnectionConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeaviateConnectionConfig {
+    return new WeaviateConnectionConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeaviateConnectionConfig {
+    return new WeaviateConnectionConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WeaviateConnectionConfig | PlainMessage<WeaviateConnectionConfig> | undefined, b: WeaviateConnectionConfig | PlainMessage<WeaviateConnectionConfig> | undefined): boolean {
+    return proto3.util.equals(WeaviateConnectionConfig, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.WeaviateConnectionConfigPublic
+ */
+export class WeaviateConnectionConfigPublic extends Message<WeaviateConnectionConfigPublic> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string rest_url = 3;
+   */
+  restUrl = "";
+
+  /**
+   * @generated from field: string grpc_url = 4;
+   */
+  grpcUrl = "";
+
+  /**
+   * @generated from field: bool grpc_secured = 5;
+   */
+  grpcSecured = false;
+
+  /**
+   * @generated from field: string auth_scheme = 6;
+   */
+  authScheme = "";
+
+  /**
+   * api_key intentionally excluded
+   *
+   * @generated from field: string connector_rest_url = 7;
+   */
+  connectorRestUrl = "";
+
+  /**
+   * @generated from field: string connector_grpc_url = 8;
+   */
+  connectorGrpcUrl = "";
+
+  constructor(data?: PartialMessage<WeaviateConnectionConfigPublic>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.WeaviateConnectionConfigPublic";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "rest_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "grpc_secured", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "auth_scheme", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "connector_rest_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "connector_grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeaviateConnectionConfigPublic {
+    return new WeaviateConnectionConfigPublic().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeaviateConnectionConfigPublic {
+    return new WeaviateConnectionConfigPublic().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeaviateConnectionConfigPublic {
+    return new WeaviateConnectionConfigPublic().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WeaviateConnectionConfigPublic | PlainMessage<WeaviateConnectionConfigPublic> | undefined, b: WeaviateConnectionConfigPublic | PlainMessage<WeaviateConnectionConfigPublic> | undefined): boolean {
+    return proto3.util.equals(WeaviateConnectionConfigPublic, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.WeaviateConnectionStatus
+ */
+export class WeaviateConnectionStatus extends Message<WeaviateConnectionStatus> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.ConnectionState state = 3;
+   */
+  state = ConnectionState.CONNECTION_STATE_UNSPECIFIED;
+
+  /**
+   * @generated from field: string error = 4;
+   */
+  error = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_checked = 5;
+   */
+  lastChecked?: Timestamp;
+
+  /**
+   * @generated from field: io.typestream.grpc.WeaviateConnectionConfigPublic config = 6;
+   */
+  config?: WeaviateConnectionConfigPublic;
+
+  constructor(data?: PartialMessage<WeaviateConnectionStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.WeaviateConnectionStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "state", kind: "enum", T: proto3.getEnumType(ConnectionState) },
+    { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "last_checked", kind: "message", T: Timestamp },
+    { no: 6, name: "config", kind: "message", T: WeaviateConnectionConfigPublic },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeaviateConnectionStatus {
+    return new WeaviateConnectionStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeaviateConnectionStatus {
+    return new WeaviateConnectionStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeaviateConnectionStatus {
+    return new WeaviateConnectionStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WeaviateConnectionStatus | PlainMessage<WeaviateConnectionStatus> | undefined, b: WeaviateConnectionStatus | PlainMessage<WeaviateConnectionStatus> | undefined): boolean {
+    return proto3.util.equals(WeaviateConnectionStatus, a, b);
+  }
+}
+
+/**
+ * Register Weaviate connection for monitoring
+ *
+ * @generated from message io.typestream.grpc.RegisterWeaviateConnectionRequest
+ */
+export class RegisterWeaviateConnectionRequest extends Message<RegisterWeaviateConnectionRequest> {
+  /**
+   * @generated from field: io.typestream.grpc.WeaviateConnectionConfig connection = 1;
+   */
+  connection?: WeaviateConnectionConfig;
+
+  constructor(data?: PartialMessage<RegisterWeaviateConnectionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.RegisterWeaviateConnectionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection", kind: "message", T: WeaviateConnectionConfig },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterWeaviateConnectionRequest {
+    return new RegisterWeaviateConnectionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterWeaviateConnectionRequest {
+    return new RegisterWeaviateConnectionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterWeaviateConnectionRequest {
+    return new RegisterWeaviateConnectionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterWeaviateConnectionRequest | PlainMessage<RegisterWeaviateConnectionRequest> | undefined, b: RegisterWeaviateConnectionRequest | PlainMessage<RegisterWeaviateConnectionRequest> | undefined): boolean {
+    return proto3.util.equals(RegisterWeaviateConnectionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.RegisterWeaviateConnectionResponse
+ */
+export class RegisterWeaviateConnectionResponse extends Message<RegisterWeaviateConnectionResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.WeaviateConnectionStatus status = 3;
+   */
+  status?: WeaviateConnectionStatus;
+
+  constructor(data?: PartialMessage<RegisterWeaviateConnectionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.RegisterWeaviateConnectionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "status", kind: "message", T: WeaviateConnectionStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterWeaviateConnectionResponse {
+    return new RegisterWeaviateConnectionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterWeaviateConnectionResponse {
+    return new RegisterWeaviateConnectionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterWeaviateConnectionResponse {
+    return new RegisterWeaviateConnectionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterWeaviateConnectionResponse | PlainMessage<RegisterWeaviateConnectionResponse> | undefined, b: RegisterWeaviateConnectionResponse | PlainMessage<RegisterWeaviateConnectionResponse> | undefined): boolean {
+    return proto3.util.equals(RegisterWeaviateConnectionResponse, a, b);
+  }
+}
+
+/**
+ * Get all Weaviate connection statuses
+ *
+ * @generated from message io.typestream.grpc.GetWeaviateConnectionStatusesRequest
+ */
+export class GetWeaviateConnectionStatusesRequest extends Message<GetWeaviateConnectionStatusesRequest> {
+  constructor(data?: PartialMessage<GetWeaviateConnectionStatusesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GetWeaviateConnectionStatusesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWeaviateConnectionStatusesRequest {
+    return new GetWeaviateConnectionStatusesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWeaviateConnectionStatusesRequest {
+    return new GetWeaviateConnectionStatusesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWeaviateConnectionStatusesRequest {
+    return new GetWeaviateConnectionStatusesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWeaviateConnectionStatusesRequest | PlainMessage<GetWeaviateConnectionStatusesRequest> | undefined, b: GetWeaviateConnectionStatusesRequest | PlainMessage<GetWeaviateConnectionStatusesRequest> | undefined): boolean {
+    return proto3.util.equals(GetWeaviateConnectionStatusesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.GetWeaviateConnectionStatusesResponse
+ */
+export class GetWeaviateConnectionStatusesResponse extends Message<GetWeaviateConnectionStatusesResponse> {
+  /**
+   * @generated from field: repeated io.typestream.grpc.WeaviateConnectionStatus statuses = 1;
+   */
+  statuses: WeaviateConnectionStatus[] = [];
+
+  constructor(data?: PartialMessage<GetWeaviateConnectionStatusesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GetWeaviateConnectionStatusesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "statuses", kind: "message", T: WeaviateConnectionStatus, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWeaviateConnectionStatusesResponse {
+    return new GetWeaviateConnectionStatusesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWeaviateConnectionStatusesResponse {
+    return new GetWeaviateConnectionStatusesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWeaviateConnectionStatusesResponse {
+    return new GetWeaviateConnectionStatusesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWeaviateConnectionStatusesResponse | PlainMessage<GetWeaviateConnectionStatusesResponse> | undefined, b: GetWeaviateConnectionStatusesResponse | PlainMessage<GetWeaviateConnectionStatusesResponse> | undefined): boolean {
+    return proto3.util.equals(GetWeaviateConnectionStatusesResponse, a, b);
+  }
+}
+
+/**
+ * Create Weaviate sink connector
+ *
+ * @generated from message io.typestream.grpc.CreateWeaviateSinkConnectorRequest
+ */
+export class CreateWeaviateSinkConnectorRequest extends Message<CreateWeaviateSinkConnectorRequest> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string connector_name = 2;
+   */
+  connectorName = "";
+
+  /**
+   * @generated from field: string topics = 3;
+   */
+  topics = "";
+
+  /**
+   * @generated from field: string collection_name = 4;
+   */
+  collectionName = "";
+
+  /**
+   * NoIdStrategy, KafkaIdStrategy, FieldIdStrategy
+   *
+   * @generated from field: string document_id_strategy = 5;
+   */
+  documentIdStrategy = "";
+
+  /**
+   * @generated from field: string document_id_field = 6;
+   */
+  documentIdField = "";
+
+  /**
+   * NoVectorStrategy, FieldVectorStrategy
+   *
+   * @generated from field: string vector_strategy = 7;
+   */
+  vectorStrategy = "";
+
+  /**
+   * @generated from field: string vector_field = 8;
+   */
+  vectorField = "";
+
+  /**
+   * Optional: field name for timestamp conversion (empty = no transform)
+   *
+   * @generated from field: string timestamp_field = 9;
+   */
+  timestampField = "";
+
+  constructor(data?: PartialMessage<CreateWeaviateSinkConnectorRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateWeaviateSinkConnectorRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "topics", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "document_id_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "document_id_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "vector_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "vector_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "timestamp_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWeaviateSinkConnectorRequest {
+    return new CreateWeaviateSinkConnectorRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateWeaviateSinkConnectorRequest {
+    return new CreateWeaviateSinkConnectorRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateWeaviateSinkConnectorRequest {
+    return new CreateWeaviateSinkConnectorRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateWeaviateSinkConnectorRequest | PlainMessage<CreateWeaviateSinkConnectorRequest> | undefined, b: CreateWeaviateSinkConnectorRequest | PlainMessage<CreateWeaviateSinkConnectorRequest> | undefined): boolean {
+    return proto3.util.equals(CreateWeaviateSinkConnectorRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.CreateWeaviateSinkConnectorResponse
+ */
+export class CreateWeaviateSinkConnectorResponse extends Message<CreateWeaviateSinkConnectorResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * @generated from field: string connector_name = 3;
+   */
+  connectorName = "";
+
+  constructor(data?: PartialMessage<CreateWeaviateSinkConnectorResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateWeaviateSinkConnectorResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWeaviateSinkConnectorResponse {
+    return new CreateWeaviateSinkConnectorResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateWeaviateSinkConnectorResponse {
+    return new CreateWeaviateSinkConnectorResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateWeaviateSinkConnectorResponse {
+    return new CreateWeaviateSinkConnectorResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateWeaviateSinkConnectorResponse | PlainMessage<CreateWeaviateSinkConnectorResponse> | undefined, b: CreateWeaviateSinkConnectorResponse | PlainMessage<CreateWeaviateSinkConnectorResponse> | undefined): boolean {
+    return proto3.util.equals(CreateWeaviateSinkConnectorResponse, a, b);
+  }
+}
+

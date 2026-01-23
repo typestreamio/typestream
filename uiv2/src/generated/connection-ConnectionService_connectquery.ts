@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
+import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
 
 /**
  * Register a database connection for monitoring
@@ -82,6 +82,50 @@ export const createJdbcSinkConnector = {
   kind: MethodKind.Unary,
   I: CreateJdbcSinkConnectorRequest,
   O: CreateJdbcSinkConnectorResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * Weaviate connection management
+ *
+ * @generated from rpc io.typestream.grpc.ConnectionService.RegisterWeaviateConnection
+ */
+export const registerWeaviateConnection = {
+  localName: "registerWeaviateConnection",
+  name: "RegisterWeaviateConnection",
+  kind: MethodKind.Unary,
+  I: RegisterWeaviateConnectionRequest,
+  O: RegisterWeaviateConnectionResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.ConnectionService.GetWeaviateConnectionStatuses
+ */
+export const getWeaviateConnectionStatuses = {
+  localName: "getWeaviateConnectionStatuses",
+  name: "GetWeaviateConnectionStatuses",
+  kind: MethodKind.Unary,
+  I: GetWeaviateConnectionStatusesRequest,
+  O: GetWeaviateConnectionStatusesResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.ConnectionService.CreateWeaviateSinkConnector
+ */
+export const createWeaviateSinkConnector = {
+  localName: "createWeaviateSinkConnector",
+  name: "CreateWeaviateSinkConnector",
+  kind: MethodKind.Unary,
+  I: CreateWeaviateSinkConnectorRequest,
+  O: CreateWeaviateSinkConnectorResponse,
   service: {
     typeName: "io.typestream.grpc.ConnectionService"
   }

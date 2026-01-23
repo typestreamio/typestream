@@ -15,19 +15,27 @@ import {
   CountNode,
   ReduceLatestNode,
   DbSinkConfig,
+  WeaviateSinkConfig,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
 
 /**
- * Result of serializing a graph with DB sinks
+ * Result of serializing a graph with sink connectors
  */
-export interface SerializedGraphWithDbSinks {
+export interface SerializedGraphWithSinks {
   graph: PipelineGraph;
   dbSinkConfigs: DbSinkConfig[];  // Proto objects ready for request
+  weaviateSinkConfigs: WeaviateSinkConfig[];  // Proto objects ready for request
+}
+
+// Re-export for backward compatibility
+export interface SerializedGraphWithDbSinks {
+  graph: PipelineGraph;
+  dbSinkConfigs: DbSinkConfig[];
 }
 
 // Re-export for consumers that need the type
-export { DbSinkConfig };
+export { DbSinkConfig, WeaviateSinkConfig };
 
 /**
  * Generate a unique topic name for intermediate JDBC sink output
@@ -39,13 +47,23 @@ function generateIntermediateTopicName(nodeId: string): string {
 }
 
 /**
- * Serialize a graph to a PipelineGraph proto and extract DB sink configurations
+ * Generate a unique topic name for intermediate Weaviate sink output
+ */
+function generateWeaviateIntermediateTopicName(nodeId: string): string {
+  const timestamp = Date.now();
+  const sanitizedNodeId = nodeId.replace(/[^a-zA-Z0-9]/g, '-');
+  return `weaviate-sink-${sanitizedNodeId}-${timestamp}`;
+}
+
+/**
+ * Serialize a graph to a PipelineGraph proto and extract all sink configurations
  * (credentials resolved server-side for security)
  */
-export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): SerializedGraphWithDbSinks {
+export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): SerializedGraphWithSinks {
   const pipelineNodes: PipelineNode[] = [];
   const pipelineEdges: PipelineEdge[] = [];
   const dbSinkConfigs: DbSinkConfig[] = [];
+  const weaviateSinkConfigs: WeaviateSinkConfig[] = [];
 
   // Process each node
   nodes.forEach((node) => {
@@ -107,6 +125,39 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
         tableName: data.tableName || '',
         insertMode: data.insertMode || 'upsert',
         primaryKeyFields: data.primaryKeyFields || '',
+      }));
+      return;
+    }
+
+    if (node.type === 'weaviateSink') {
+      const data = node.data as WeaviateSinkNodeData;
+
+      // Generate an intermediate topic for the TypeStream job to write to
+      const intermediateTopic = generateWeaviateIntermediateTopicName(node.id);
+      const fullPath = `/dev/kafka/local/topics/${intermediateTopic}`;
+
+      // Create a regular SinkNode that writes to the intermediate topic
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'sink',
+          value: new SinkNode({
+            output: new DataStreamProto({ path: fullPath }),
+          }),
+        },
+      }));
+
+      // Record the Weaviate sink configuration as proto (credentials resolved server-side)
+      weaviateSinkConfigs.push(new WeaviateSinkConfig({
+        nodeId: node.id,
+        connectionId: data.connectionId,
+        intermediateTopic,
+        collectionName: data.collectionName || '',
+        documentIdStrategy: data.documentIdStrategy || 'NoIdStrategy',
+        documentIdField: data.documentIdField || '',
+        vectorStrategy: data.vectorStrategy || 'NoVectorStrategy',
+        vectorField: data.vectorField || '',
+        timestampField: data.timestampField || '',
       }));
       return;
     }
@@ -234,6 +285,18 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
       edges: pipelineEdges,
     }),
     dbSinkConfigs,
+    weaviateSinkConfigs,
+  };
+}
+
+/**
+ * Serialize a graph with DB sinks only (backward compatible)
+ */
+export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): SerializedGraphWithDbSinks {
+  const result = serializeGraphWithSinks(nodes, edges);
+  return {
+    graph: result.graph,
+    dbSinkConfigs: result.dbSinkConfigs,
   };
 }
 
@@ -241,5 +304,5 @@ export function serializeGraphWithDbSinks(nodes: Node[], edges: Edge[]): Seriali
  * Serialize a graph to a PipelineGraph proto (backward compatible)
  */
 export function serializeGraph(nodes: Node[], edges: Edge[]): PipelineGraph {
-  return serializeGraphWithDbSinks(nodes, edges).graph;
+  return serializeGraphWithSinks(nodes, edges).graph;
 }

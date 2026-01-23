@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
+import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -66,6 +66,35 @@ export const ConnectionService = {
       name: "CreateJdbcSinkConnector",
       I: CreateJdbcSinkConnectorRequest,
       O: CreateJdbcSinkConnectorResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Weaviate connection management
+     *
+     * @generated from rpc io.typestream.grpc.ConnectionService.RegisterWeaviateConnection
+     */
+    registerWeaviateConnection: {
+      name: "RegisterWeaviateConnection",
+      I: RegisterWeaviateConnectionRequest,
+      O: RegisterWeaviateConnectionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.ConnectionService.GetWeaviateConnectionStatuses
+     */
+    getWeaviateConnectionStatuses: {
+      name: "GetWeaviateConnectionStatuses",
+      I: GetWeaviateConnectionStatusesRequest,
+      O: GetWeaviateConnectionStatusesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.ConnectionService.CreateWeaviateSinkConnector
+     */
+    createWeaviateSinkConnector: {
+      name: "CreateWeaviateSinkConnector",
+      I: CreateWeaviateSinkConnectorRequest,
+      O: CreateWeaviateSinkConnectorResponse,
       kind: MethodKind.Unary,
     },
   }
