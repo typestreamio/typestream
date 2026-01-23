@@ -38,6 +38,10 @@ on:
       - 'flake.lock'
       - '.github/workflows/server-check.yml'
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,5 +61,14 @@ jobs:
 
       - name: Check
         run: nix develop --command gradle check
+        continue-on-error: true
         env:
           GRADLE_TOKEN: ${{ secrets.GRADLE_TOKEN }}
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Server Tests
+          path: '**/build/test-results/test/*.xml'
+          reporter: java-junit
