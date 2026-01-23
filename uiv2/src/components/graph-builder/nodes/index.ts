@@ -9,6 +9,7 @@ import { WeaviateSinkNode, weaviateSinkRole } from './WeaviateSinkNode';
 import { TextExtractorNode, textExtractorRole } from './TextExtractorNode';
 import { EmbeddingGeneratorNode, embeddingGeneratorRole } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode, openAiTransformerRole } from './OpenAiTransformerNode';
+import { FilterNode, filterRole } from './FilterNode';
 
 // Schema field with type information
 export interface SchemaField {
@@ -112,6 +113,10 @@ export interface WeaviateSinkNodeData extends Record<string, unknown>, NodeValid
   timestampField: string;  // Optional: field name for timestamp conversion (empty = no transform)
 }
 
+export interface FilterNodeData extends Record<string, unknown>, NodeValidationState {
+  expression: string;
+}
+
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
 export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
@@ -122,8 +127,9 @@ export type WeaviateSinkNodeType = Node<WeaviateSinkNodeData, 'weaviateSink'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
 export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
+export type FilterNodeType = Node<FilterNodeData, 'filter'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType;
+export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType | FilterNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -136,6 +142,7 @@ export const nodeTypes: NodeTypes = {
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,
+  filter: FilterNode,
 };
 
 // Node roles: 'source' (no input), 'transform' (both), 'sink' (no output)
@@ -152,6 +159,7 @@ const nodeRoles: Record<string, NodeRole> = {
   textExtractor: textExtractorRole,
   embeddingGenerator: embeddingGeneratorRole,
   openAiTransformer: openAiTransformerRole,
+  filter: filterRole,
 };
 
 /** Check if a node type has an output handle (sources and transforms have outputs) */

@@ -11,13 +11,15 @@ import {
   TextExtractorNode as TextExtractorNodeProto,
   EmbeddingGeneratorNode as EmbeddingGeneratorNodeProto,
   OpenAiTransformerNode as OpenAiTransformerNodeProto,
+  FilterNode as FilterNodeProto,
+  PredicateProto,
   GroupNode,
   CountNode,
   ReduceLatestNode,
   DbSinkConfig,
   WeaviateSinkConfig,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
 
 /**
  * Result of serializing a graph with sink connectors
@@ -171,6 +173,21 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
           value: new GeoIpNodeProto({
             ipField: data.ipField,
             outputField: data.outputField || 'country_code',
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'filter') {
+      const data = node.data as FilterNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'filter',
+          value: new FilterNodeProto({
+            byKey: false,
+            predicate: new PredicateProto({ expr: data.expression || '' }),
           }),
         },
       }));

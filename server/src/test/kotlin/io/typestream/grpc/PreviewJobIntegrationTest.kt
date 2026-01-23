@@ -407,6 +407,148 @@ internal class PreviewJobIntegrationTest {
     }
 
     @Test
+    fun `filter node filters messages based on expression`(): Unit = runBlocking {
+        app.use {
+            // Produce test data with varying word counts
+            val testBooks = listOf(
+                Book(title = "Short Book", wordCount = 100, authorId = UUID.randomUUID().toString()),
+                Book(title = "Medium Book", wordCount = 250, authorId = UUID.randomUUID().toString()),
+                Book(title = "Long Book", wordCount = 400, authorId = UUID.randomUUID().toString()),
+                Book(title = "Very Long Book", wordCount = 500, authorId = UUID.randomUUID().toString()),
+                Book(title = "Another Short", wordCount = 150, authorId = UUID.randomUUID().toString())
+            )
+            testKafka.produceRecords("books", "avro", *testBooks.toTypedArray())
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> Filter -> Inspector
+            // Filter: .word_count > 200 (should only pass Medium, Long, Very Long)
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val filterNode = Job.PipelineNode.newBuilder()
+                .setId("filter")
+                .setFilter(
+                    Job.FilterNode.newBuilder()
+                        .setByKey(false)
+                        .setPredicate(Job.PredicateProto.newBuilder().setExpr(".word_count > 200"))
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("filtered-output"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(filterNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("filter"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("filter").setToId("inspector-node-1"))
+                .build()
+
+            // Step 1: Create preview job
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            println("CreatePreviewJob response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
+
+            assertThat(createResponse.success).isTrue()
+            assertThat(createResponse.jobId).isNotEmpty()
+
+            val jobId = createResponse.jobId
+
+            // Wait for Kafka Streams to start processing
+            delay(2000)
+
+            // Step 2: Stream preview data
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            println("Starting streamPreview for filtered jobId=$jobId")
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received filtered message: value=${response.value}")
+                    receivedMessages.add(response)
+                    // Expect exactly 3 messages (Medium, Long, Very Long)
+                    if (receivedMessages.size >= 3) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    println("Stream completed with ${receivedMessages.size} messages")
+                    latch.countDown()
+                }
+            })
+
+            // Wait for messages or timeout
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            println("Latch result: received=$received, messageCount=${receivedMessages.size}, error=$streamError")
+
+            // Step 3: Stop preview job
+            val stopRequest = Job.StopPreviewJobRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+            blockingStub.stopPreviewJob(stopRequest)
+
+            // Assertions
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+
+            // Should have exactly 3 messages (word_count > 200: 250, 400, 500)
+            assertThat(receivedMessages.size).isEqualTo(3)
+
+            // Verify the filtered messages contain the expected books
+            val allValues = receivedMessages.map { it.value }
+            assertThat(allValues.any { it.contains("Medium Book") }).isTrue()
+            assertThat(allValues.any { it.contains("Long Book") }).isTrue()
+            assertThat(allValues.any { it.contains("Very Long Book") }).isTrue()
+
+            // Verify the filtered OUT messages are NOT present
+            assertThat(allValues.none { it.contains("Short Book") }).isTrue()
+            assertThat(allValues.none { it.contains("Another Short") }).isTrue()
+        }
+    }
+
+    @Test
     fun `preview job not in list jobs response`(): Unit = runBlocking {
         app.use {
             testKafka.produceRecords(

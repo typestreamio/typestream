@@ -13,6 +13,7 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import StorageIcon from '@mui/icons-material/Storage';
 import HubIcon from '@mui/icons-material/Hub';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -141,6 +142,12 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
       <Typography variant="subtitle2" color="text.secondary">
         Transforms
       </Typography>
+      <PaletteItem
+        type="filter"
+        label="Filter"
+        icon={<FilterListIcon fontSize="small" />}
+        onAdd={onAddNode}
+      />
       <PaletteItem
         type="geoIp"
         label="GeoIP Lookup"

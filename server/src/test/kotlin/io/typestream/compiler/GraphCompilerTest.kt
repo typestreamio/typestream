@@ -1,10 +1,12 @@
 package io.typestream.compiler
 
 import io.typestream.compiler.ast.Predicate
+import io.typestream.compiler.ast.PredicateParser
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.datastream.fromAvroSchema
+import io.typestream.compiler.types.schema.Schema
 import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.grpc.job_service.Job
@@ -63,6 +65,94 @@ internal class GraphCompilerTest {
         val filter = streamGraph.children.single().ref as Node.Filter
         assertThat(filter.byKey).isFalse()
         assertThat(filter.predicate).isEqualTo(Predicate.matches("Station Eleven"))
+    }
+
+    @Test
+    fun `compiles filter with field equality expression`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                filterNode("filter", ".title == \"Station Eleven\"")
+            ),
+            edges = listOf(edge("source", "filter"))
+        )
+
+        val program = compiler.compile(request)
+
+        val streamGraph = program.graph.children.single()
+        val filter = streamGraph.children.single().ref as Node.Filter
+        assertThat(filter.byKey).isFalse()
+        // Verify the predicate is a parsed Equals predicate, not a regex Matches
+        assertThat(filter.predicate).isEqualTo(Predicate.equals("title", Schema.String("Station Eleven")))
+    }
+
+    @Test
+    fun `compiles filter with numeric comparison expression`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Long Book", wordCount = 500, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                filterNode("filter", ".word_count > 250")
+            ),
+            edges = listOf(edge("source", "filter"))
+        )
+
+        val program = compiler.compile(request)
+
+        val streamGraph = program.graph.children.single()
+        val filter = streamGraph.children.single().ref as Node.Filter
+        // Verify the predicate is a parsed GreaterThan predicate
+        assertThat(filter.predicate).isEqualTo(Predicate.greaterThan("word_count", Schema.Long(250)))
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI propagates schema through filter`() {
+        testKafka.produceRecords(
+            "books",
+            "avro",
+            Book(title = "Schema Propagation Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                filterNode("filter-1", ".word_count > 50"),
+                sinkNode("sink-1", "/dev/kafka/local/topics/filtered_books")
+            ),
+            edges = listOf(
+                edge("src-1", "filter-1"),
+                edge("filter-1", "sink-1")
+            )
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // All nodes should succeed without errors
+        assertThat(results["src-1"]?.error).isNull()
+        assertThat(results["filter-1"]?.error).isNull()
+        assertThat(results["sink-1"]?.error).isNull()
+
+        // Verify filter passes through the same schema (filter doesn't modify schema)
+        val sourceSchema = results["src-1"]?.schema?.schema as Schema.Struct
+        val filterSchema = results["filter-1"]?.schema?.schema as Schema.Struct
+
+        assertThat(filterSchema.value.map { it.name }).containsExactlyInAnyOrderElementsOf(
+            sourceSchema.value.map { it.name }
+        )
     }
 
     @Test
