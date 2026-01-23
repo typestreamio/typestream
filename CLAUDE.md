@@ -28,6 +28,17 @@ You can bootstrap topics and test data with ./scripts/dev/seed.sh
 
 You can use `fd` instead of `find` if you want. `ripgrep` using `rg` is avaiable too.
 
+# Adding New Nodes
+
+When adding new node types to the server:
+
+1. Implement the node in `server/src/main/kotlin/io/typestream/compiler/node/Node.kt`
+2. Add `inferOutputSchema()` for schema propagation
+3. **Add integration tests** - see [server/ARCHITECTURE.md](server/ARCHITECTURE.md#integration-tests) for patterns:
+   - Schema propagation test in `GraphCompilerTest.kt`
+   - Graph compilation test with `StreamSource → YourNode → Sink`
+   - Message flow test in `PreviewJobIntegrationTest.kt` if the node transforms data
+
 # Vision
 
 See [VISION.md](./VISION.md) for the demo vision plan. This document describes:

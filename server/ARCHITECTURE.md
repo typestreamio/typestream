@@ -368,6 +368,58 @@ private fun rollbackJobAndConnectors(jobId: String, connectorNames: List<String>
 | `ConnectionService.kt:buildJdbcSinkConnectorConfig()` | Constructs connector JSON |
 | `ConnectionService.kt:createKafkaConnectConnector()` | HTTP POST to Connect API |
 
+## Integration Tests
+
+Integration tests use **Testcontainers with real Kafka** to verify pipelines end-to-end.
+
+### Test Infrastructure
+
+- Tests spin up real Kafka containers via `TestKafka()` helper
+- Pipelines are built programmatically using `Job.PipelineNode` and `Job.PipelineEdge`
+- gRPC services are tested via in-process servers (`InProcessServerBuilder`)
+
+### Key Test Files
+
+| File | Purpose |
+|------|---------|
+| `GraphCompilerTest.kt` | Graph compilation, schema propagation through node chains |
+| `PreviewJobIntegrationTest.kt` | End-to-end message flow via gRPC streaming |
+| `JobServiceTest.kt` | Graph-to-job creation via gRPC |
+| `StateQueryServiceTest.kt` | State stores and interactive queries on running pipelines |
+
+### Adding Tests for New Nodes
+
+When adding a new node type, add integration tests that verify:
+
+1. **Schema propagation**: Test that `inferNodeSchemasForUI()` correctly propagates schemas through your node
+   - See `GraphCompilerTest.inferNodeSchemasForUI propagates schemas through chain`
+2. **Graph compilation**: Test that `GraphCompiler.compile()` handles your node in a pipeline
+   - Build a graph with `StreamSource → YourNode → Sink` and verify it compiles
+3. **Message flow** (if the node transforms data): Test in `PreviewJobIntegrationTest` that messages flow through correctly
+   - Produce test data, run a preview job, verify output via gRPC streaming
+
+### Example Test Pattern
+
+```kotlin
+@Test
+fun `compiles stream source with your node`() {
+    val graph = pipelineGraph {
+        nodes {
+            streamSource("source", dataStream, Encoding.AVRO)
+            yourNode("node", /* config */)
+            sink("sink", sinkDataStream)
+        }
+        edges {
+            edge("source", "node")
+            edge("node", "sink")
+        }
+    }
+
+    val program = GraphCompiler(fileSystem).compile(graph)
+    assertThat(program.isRight()).isTrue()
+}
+```
+
 ## Key Files
 
 | File | Purpose |

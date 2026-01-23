@@ -48,6 +48,10 @@ sealed interface Predicate {
         override fun matches(dataStream: DataStream) = dataStream[key].matches(value)
     }
 
+    private object AlwaysTrue : Predicate {
+        override fun matches(dataStream: DataStream) = true
+    }
+
     fun and(other: Predicate): Predicate = And(this, other)
     fun or(other: Predicate): Predicate = Or(this, other)
     fun not(): Predicate = Not(this)
@@ -64,6 +68,7 @@ sealed interface Predicate {
             is Equals -> opTypeCheck(dataStream, key, value)
             is AlmostEquals -> opTypeCheck(dataStream, key, value)
             is Matches -> listOf()
+            is AlwaysTrue -> listOf()
         }
     }
 
@@ -82,6 +87,7 @@ sealed interface Predicate {
         fun equals(key: String, value: Schema): Predicate = Equals(key, value)
         fun almostEquals(key: String, value: Schema): Predicate = AlmostEquals(key, value)
         fun matches(pattern: String): Predicate = Matches(pattern)
+        fun alwaysTrue(): Predicate = AlwaysTrue
         fun greaterThan(key: String, value: Schema): Predicate = GreaterThan(key, value)
         fun greaterOrEqualThan(key: String, value: Schema): Predicate = GreaterOrEqualThan(key, value)
         fun lessThan(key: String, value: Schema): Predicate = LessThan(key, value)

@@ -1,6 +1,7 @@
 package io.typestream.compiler
 
 import io.typestream.compiler.ast.Predicate
+import io.typestream.compiler.ast.PredicateParser
 import io.typestream.compiler.node.*
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
@@ -70,7 +71,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     proto.hasCount() -> Node.Count(proto.id)
     proto.hasFilter() -> {
       val f = proto.filter
-      Node.Filter(proto.id, f.byKey, Predicate.matches(f.predicate.expr))
+      Node.Filter(proto.id, f.byKey, PredicateParser.parse(f.predicate.expr))
     }
     proto.hasGroup() -> {
       val fieldPath = proto.group.keyMapperExpr  // e.g., ".user" or ".product_id"
@@ -244,7 +245,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       }
       proto.hasFilter() -> {
         val f = proto.filter
-        Node.Filter(nodeId, f.byKey, Predicate.matches(f.predicate.expr))
+        Node.Filter(nodeId, f.byKey, PredicateParser.parse(f.predicate.expr))
       }
       proto.hasMap() -> Node.Map(nodeId) { kv -> kv }
       proto.hasJoin() -> {
