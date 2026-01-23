@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   golangci:
@@ -39,3 +40,25 @@ jobs:
       - name: golangci-lint
         working-directory: cli
         run: nix develop --command golangci-lint run
+
+      - name: Test
+        working-directory: cli
+        run: nix develop --command go test -v -json ./... > test-results.json || true
+
+      - name: Convert test results to JUnit
+        working-directory: cli
+        run: |
+          nix develop --command bash -c '
+            go install github.com/jstemmer/go-junit-report/v2@latest
+            cat test-results.json | go-junit-report -parser gojson > test-results.xml
+          '
+        continue-on-error: true
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: CLI Tests
+          path: cli/test-results.xml
+          reporter: java-junit
+          fail-on-empty: 'false'
