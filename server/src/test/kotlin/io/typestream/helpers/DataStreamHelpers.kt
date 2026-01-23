@@ -7,8 +7,9 @@ import java.util.UUID
 fun author(
     id: Schema.UUID = Schema.UUID(UUID.randomUUID()),
     name: Schema.String = Schema.String.zeroValue,
+    topic: String = "authors",
 ) = DataStream(
-    "/dev/kafka/local/topics/authors",
+    "/dev/kafka/local/topics/$topic",
     Schema.Struct(listOf(Schema.Field("id", id), Schema.Field("name", name)))
 )
 
@@ -16,8 +17,9 @@ fun book(
     id: Schema.UUID = Schema.UUID(UUID.randomUUID()),
     title: String,
     wordCount: Int = 42,
+    topic: String = "books",
 ) = DataStream(
-    "/dev/kafka/local/topics/books",
+    "/dev/kafka/local/topics/$topic",
     Schema.Struct(
         listOf(
             Schema.Field("id", id),

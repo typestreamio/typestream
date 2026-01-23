@@ -53,7 +53,7 @@ class EncodingTest {
     fun `infers avro encoding`() {
         val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
-        dataCommand.dataStreams.add(author())
+        dataCommand.dataStreams.add(author(topic = authorsTopic))
 
         Assertions.assertThat(fileSystem.inferEncoding(dataCommand)).isEqualTo(Encoding.AVRO)
     }
@@ -62,7 +62,7 @@ class EncodingTest {
     fun `infers proto encoding`() {
         val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$booksTopic")))
 
-        dataCommand.dataStreams.add(book(title = "Parable of the Sower"))
+        dataCommand.dataStreams.add(book(title = "Parable of the Sower", topic = booksTopic))
 
         Assertions.assertThat(fileSystem.inferEncoding(dataCommand)).isEqualTo(Encoding.PROTOBUF)
     }
@@ -71,7 +71,7 @@ class EncodingTest {
     fun `infers pipeline encoding`() {
         val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
-        cat.dataStreams.add(author())
+        cat.dataStreams.add(author(topic = authorsTopic))
 
         val grep = Grep(listOf(Expr.BareWord("Butler")))
 
@@ -85,11 +85,11 @@ class EncodingTest {
     fun `infers mixed pipeline encoding`() {
         val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
-        cat.dataStreams.add(author())
+        cat.dataStreams.add(author(topic = authorsTopic))
 
         val join = Join(listOf(Expr.BareWord("/dev/kafka/local/topics/$booksTopic")))
 
-        join.dataStreams.add(book(title = "Parable of the Sower"))
+        join.dataStreams.add(book(title = "Parable of the Sower", topic = booksTopic))
 
         val pipeline = Pipeline(listOf(cat, join))
 
