@@ -1,0 +1,64 @@
+name: connectors check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'connectors/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'libs/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/connectors-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'connectors/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'libs/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/connectors-check.yml'
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  demo-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+        with:
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
+      - name: Check
+        run: nix develop --command gradle :connectors:demo-data:check
+        continue-on-error: true
+        env:
+          GRADLE_TOKEN: ${{ secrets.GRADLE_TOKEN }}
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Connector Tests
+          path: 'connectors/demo-data/build/test-results/test/*.xml'
+          reporter: java-junit
+          fail-on-empty: false
