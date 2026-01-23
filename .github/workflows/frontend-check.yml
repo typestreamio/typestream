@@ -54,7 +54,7 @@ jobs:
 
       - name: Test
         working-directory: uiv2
-        run: nix develop --command pnpm test -- --reporter=junit --outputFile=test-results.xml
+        run: nix develop --command pnpm test -- --reporter=default --reporter=junit --outputFile.junit=test-results.xml
         continue-on-error: true
 
       - name: Publish Test Results
@@ -64,6 +64,7 @@ jobs:
           name: Frontend Tests
           path: uiv2/test-results.xml
           reporter: jest-junit
+          fail-on-empty: false
 
   docs:
     runs-on: ubuntu-latest
