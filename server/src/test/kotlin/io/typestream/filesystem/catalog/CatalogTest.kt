@@ -4,22 +4,20 @@ import io.typestream.compiler.types.schema.Schema
 import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Rating
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 
 @Testcontainers
 internal class CatalogTest {
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
     }
 
     //TODO add proto as soon as we support official imports

@@ -7,13 +7,13 @@ import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 
@@ -22,9 +22,7 @@ import java.util.UUID
 internal class InterpreterTest {
 
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
     }
 
     private lateinit var fileSystem: FileSystem

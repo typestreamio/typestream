@@ -12,6 +12,7 @@ import io.typestream.config.testing.testConfig
 import io.typestream.filesystem.FileSystem
 import io.typestream.scheduler.Scheduler
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 import io.typestream.testing.avro.Book as AvroBook
@@ -27,9 +27,7 @@ import io.typestream.testing.avro.Book as AvroBook
 @Testcontainers
 internal class CompilerTest {
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
     }
 
     private lateinit var fileSystem: FileSystem

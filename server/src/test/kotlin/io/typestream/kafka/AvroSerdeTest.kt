@@ -5,6 +5,7 @@ import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.schemaregistry.SchemaType
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.avro.User
 import io.typestream.testing.model.User as ModelUser
 import org.apache.avro.Schema
@@ -12,16 +13,13 @@ import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericRecord
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 internal class AvroSerdeTest {
 
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
     }
 
     @Test

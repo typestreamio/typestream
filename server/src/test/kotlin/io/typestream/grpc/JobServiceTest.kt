@@ -8,6 +8,7 @@ import io.typestream.config.testing.testConfig
 import io.typestream.grpc.job_service.Job
 import io.typestream.grpc.job_service.JobServiceGrpc
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Book
 import io.typestream.testing.until
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 
@@ -31,9 +31,7 @@ internal class JobServiceTest {
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
     }
 
     @BeforeEach

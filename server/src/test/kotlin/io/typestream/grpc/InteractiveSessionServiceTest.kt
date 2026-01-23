@@ -12,6 +12,7 @@ import io.typestream.grpc.interactive_session_service.InteractiveSession.StartSe
 import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc
 import io.typestream.grpc.interactive_session_service.InteractiveSessionServiceGrpc.InteractiveSessionServiceBlockingStub
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Book
 import io.typestream.testing.model.User
 import io.typestream.testing.until
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.UUID
 import kotlin.test.assertTrue
@@ -39,9 +39,7 @@ internal class InteractiveSessionServiceTest {
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
     }
 
     @BeforeEach

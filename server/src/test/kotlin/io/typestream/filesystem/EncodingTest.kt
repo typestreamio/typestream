@@ -10,13 +10,13 @@ import io.typestream.config.testing.testConfig
 import io.typestream.helpers.author
 import io.typestream.helpers.book
 import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import io.typestream.testing.model.Author
 import io.typestream.testing.model.Book
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 
@@ -27,9 +27,7 @@ class EncodingTest {
         private lateinit var authorsTopic: String
         private lateinit var booksTopic: String
 
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
 
         @JvmStatic
         @BeforeAll

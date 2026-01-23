@@ -1,7 +1,7 @@
 package io.typestream.filesystem
 
 import io.typestream.config.testing.testConfig
-import io.typestream.testing.TestKafka
+import io.typestream.testing.TestKafkaContainer
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.stream.Stream
 import kotlin.io.path.createTempDirectory
@@ -20,9 +19,7 @@ internal class FileSystemTest {
     private lateinit var fileSystem: FileSystem
 
     companion object {
-        @Container
-        @JvmStatic
-        private val testKafka = TestKafka()
+        private val testKafka = TestKafkaContainer.instance
 
         @JvmStatic
         fun completePathCases(): Stream<Arguments> = Stream.of(
