@@ -1,0 +1,44 @@
+name: docs check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+        with:
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
+      - name: Install dependencies
+        working-directory: docs
+        run: nix develop --command npm ci
+
+      - name: Type check
+        working-directory: docs
+        run: nix develop --command npm run typecheck
+
+      - name: Build
+        working-directory: docs
+        run: nix develop --command npm run build
