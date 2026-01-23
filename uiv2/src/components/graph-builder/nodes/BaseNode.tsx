@@ -6,7 +6,7 @@ import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useReactFlow } from '@xyflow/react';
 import type { ReactNode } from 'react';
@@ -62,19 +62,7 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
         </Typography>
         {isInferring && <CircularProgress size={14} />}
         {outputSchema && outputSchema.length > 0 && (
-          <Tooltip
-            title={
-              <Box>
-                <Typography variant="caption" fontWeight="bold">Output Schema</Typography>
-                {outputSchema.map(f => (
-                  <Typography key={f.name} variant="caption" display="block" sx={{ fontFamily: 'monospace' }}>
-                    {f.name}: {f.type}
-                  </Typography>
-                ))}
-              </Box>
-            }
-            arrow
-          >
+          <Tooltip title="Preview messages" arrow>
             <IconButton
               size="small"
               onClick={() => setPreviewPanelOpen(true)}
@@ -85,7 +73,7 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
                 '&:hover': { opacity: 1 },
               }}
             >
-              <InfoOutlinedIcon fontSize="small" />
+              <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -117,6 +105,7 @@ export const BaseNode = memo(function BaseNode({ nodeId, title, icon, error, isI
       onClose={() => setPreviewPanelOpen(false)}
       nodeId={nodeId}
       nodeTitle={title}
+      outputSchema={outputSchema}
     />
     </>
   );

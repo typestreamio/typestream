@@ -6,15 +6,20 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 import CloseIcon from '@mui/icons-material/Close';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useReactFlow } from '@xyflow/react';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
 import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { useSnapshotPreview } from '../hooks/useSnapshotPreview';
 import { augmentGraphForPreview } from '../utils/graphPreviewHelper';
+import type { SchemaField } from './graph-builder/nodes';
 
 SyntaxHighlighter.registerLanguage('json', json);
 
@@ -23,6 +28,7 @@ interface NodeSnapshotPanelProps {
   onClose: () => void;
   nodeId: string;
   nodeTitle: string;
+  outputSchema?: SchemaField[];
 }
 
 // Attempt to parse and pretty-print JSON, return original if not valid JSON
@@ -40,6 +46,7 @@ export function NodeSnapshotPanel({
   onClose,
   nodeId,
   nodeTitle,
+  outputSchema,
 }: NodeSnapshotPanelProps) {
   const { getNodes, getEdges } = useReactFlow();
   const {
@@ -275,6 +282,83 @@ export function NodeSnapshotPanel({
                   )}
                 </Box>
               </Box>
+
+              {/* Schema accordion */}
+              {outputSchema && outputSchema.length > 0 && (
+                <Accordion
+                  disableGutters
+                  elevation={0}
+                  sx={{
+                    bgcolor: 'transparent',
+                    '&:before': { display: 'none' },
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    sx={{
+                      minHeight: 'unset',
+                      '& .MuiAccordionSummary-content': {
+                        my: 1,
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight="bold"
+                      sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+                    >
+                      Output Schema ({outputSchema.length} field{outputSchema.length !== 1 ? 's' : ''})
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 0 }}>
+                    <Box
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.875rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
+                      {outputSchema.map((field) => (
+                        <Box
+                          key={field.name}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: 1,
+                          }}
+                        >
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.875rem',
+                              color: 'primary.main',
+                            }}
+                          >
+                            {field.name}
+                          </Typography>
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.875rem',
+                              color: 'text.secondary',
+                            }}
+                          >
+                            {field.type}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              )}
             </Box>
           )}
         </Box>
