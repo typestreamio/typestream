@@ -30,8 +30,11 @@ internal class FileSystemServiceTest {
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -88,8 +91,9 @@ internal class FileSystemServiceTest {
 
     @Test
     fun `returns correct encoding for topics`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("authors")
         val author = Author(name = "Octavia E. Butler")
-        testKafka.produceRecords("authors", "avro", author)
+        testKafka.produceRecords(topic, "avro", author)
 
         app.use {
             val serverName = InProcessServerBuilder.generateName()
@@ -106,10 +110,10 @@ internal class FileSystemServiceTest {
             )
 
             val response = stub.ls(lsRequest { path = "/dev/kafka/local/topics" })
-            val authorsFile = response.filesList.find { it.name == "authors" }
+            val topicFile = response.filesList.find { it.name == topic }
 
-            assertThat(authorsFile).isNotNull
-            assertThat(authorsFile!!.encoding).isEqualTo(Job.Encoding.AVRO)
+            assertThat(topicFile).isNotNull
+            assertThat(topicFile!!.encoding).isEqualTo(Job.Encoding.AVRO)
         }
     }
 

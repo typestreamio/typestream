@@ -24,8 +24,11 @@ import io.typestream.testing.avro.Book as AvroBook
 
 @Testcontainers
 internal class GraphCompilerTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     private lateinit var fileSystem: FileSystem
     private lateinit var compiler: GraphCompiler
@@ -38,8 +41,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `compiles stream source with filter`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
         )
@@ -47,7 +51,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 filterNode("filter", "Station Eleven")
             ),
             edges = listOf(edge("source", "filter"))
@@ -59,7 +63,7 @@ internal class GraphCompilerTest {
         val stream = streamGraph.ref as Node.StreamSource
         assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
         assertThat(stream.dataStream).isEqualTo(
-            DataStream.fromAvroSchema("/dev/kafka/local/topics/books", AvroBook.getClassSchema())
+            DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
         )
 
         val filter = streamGraph.children.single().ref as Node.Filter
@@ -157,8 +161,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `fails on cyclic graph`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Cycle", wordCount = 1, authorId = UUID.randomUUID().toString())
         )
@@ -166,7 +171,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 filterNode("filter", "anything")
             ),
             edges = listOf(edge("source", "filter"), edge("filter", "source"))
@@ -191,8 +196,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `fails when sink writes to same topic as source`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Self Loop", wordCount = 100, authorId = UUID.randomUUID().toString())
         )
@@ -200,21 +206,22 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
-                sinkNode("sink", "/dev/kafka/local/topics/books")
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                sinkNode("sink", "/dev/kafka/local/topics/$topic")
             ),
             edges = listOf(edge("source", "sink"))
         )
 
         assertThatThrownBy { compiler.compile(request) }
             .hasMessageContaining("Cannot write to the same topic being read")
-            .hasMessageContaining("/dev/kafka/local/topics/books")
+            .hasMessageContaining("/dev/kafka/local/topics/$topic")
     }
 
     @Test
     fun `compiles stream source with text extractor`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Test Book", wordCount = 100, authorId = UUID.randomUUID().toString())
         )
@@ -222,7 +229,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 textExtractorNode("extractor", "title", "extracted_text")
             ),
             edges = listOf(edge("source", "extractor"))
@@ -241,8 +248,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `text extractor adds output field to schema`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Schema Test", wordCount = 50, authorId = UUID.randomUUID().toString())
         )
@@ -250,7 +258,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 textExtractorNode("extractor", "title", "content")
             ),
             edges = listOf(edge("source", "extractor"))
@@ -264,8 +272,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `text extractor fails when file path field does not exist`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Field Test", wordCount = 25, authorId = UUID.randomUUID().toString())
         )
@@ -273,7 +282,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 textExtractorNode("extractor", "nonexistent_field", "text")
             ),
             edges = listOf(edge("source", "extractor"))
@@ -306,8 +315,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `inferNodeSchemasForUI propagates schemas through chain`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Chain Test", wordCount = 100, authorId = UUID.randomUUID().toString())
         )
@@ -315,7 +325,7 @@ internal class GraphCompilerTest {
 
         val graph = createGraph(
             nodes = listOf(
-                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 textExtractorNode("text-1", "title", "text"),
                 embeddingGeneratorNode("embed-1", "text", "embedding")
             ),
@@ -347,8 +357,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `inferNodeSchemasForUI passes input schema to downstream on error`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Error Recovery", wordCount = 50, authorId = UUID.randomUUID().toString())
         )
@@ -357,7 +368,7 @@ internal class GraphCompilerTest {
         // text-1 has invalid field, but embed-1 should still get text-1's INPUT schema
         val graph = createGraph(
             nodes = listOf(
-                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 textExtractorNode("text-1", "nonexistent_field", "text"),
                 embeddingGeneratorNode("embed-1", "title", "embedding")
             ),
@@ -390,8 +401,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `inferNodeSchemasForUI returns encoding for all nodes`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Encoding Test", wordCount = 75, authorId = UUID.randomUUID().toString())
         )
@@ -399,7 +411,7 @@ internal class GraphCompilerTest {
 
         val graph = createGraph(
             nodes = listOf(
-                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 filterNode("filter-1", "Test")
             ),
             edges = listOf(edge("src-1", "filter-1"))
@@ -416,6 +428,8 @@ internal class GraphCompilerTest {
 
     @Test
     fun `inferNodeSchemasForUI unwraps CDC envelope when unwrapCdc is true`() {
+        val cdcTopic = TestKafka.uniqueTopic("cdc_users")
+
         // Register a CDC-style schema manually in the schema registry
         val cdcSchemaJson = """
             {
@@ -440,14 +454,14 @@ internal class GraphCompilerTest {
             }
         """.trimIndent()
 
-        testKafka.registerSchema("cdc_users-value", cdcSchemaJson)
-        testKafka.createTopic("cdc_users")
+        testKafka.registerSchema("$cdcTopic-value", cdcSchemaJson)
+        testKafka.createTopic(cdcTopic)
         fileSystem.refresh()
 
         // Test without unwrapCdc - should return full CDC envelope fields
         val graphWithoutUnwrap = createGraph(
             nodes = listOf(
-                streamSourceNode("src-1", "/dev/kafka/local/topics/cdc_users", Job.Encoding.AVRO, unwrapCdc = false)
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$cdcTopic", Job.Encoding.AVRO, unwrapCdc = false)
             ),
             edges = emptyList()
         )
@@ -461,7 +475,7 @@ internal class GraphCompilerTest {
         // Test with unwrapCdc - should return flat fields from 'after'
         val graphWithUnwrap = createGraph(
             nodes = listOf(
-                streamSourceNode("src-2", "/dev/kafka/local/topics/cdc_users", Job.Encoding.AVRO, unwrapCdc = true)
+                streamSourceNode("src-2", "/dev/kafka/local/topics/$cdcTopic", Job.Encoding.AVRO, unwrapCdc = true)
             ),
             edges = emptyList()
         )
@@ -477,6 +491,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `inferNodeSchemasForUI propagates unwrapped CDC schema to downstream nodes`() {
+        val cdcTopic = TestKafka.uniqueTopic("cdc_products")
+        val filteredTopic = TestKafka.uniqueTopic("filtered_products")
+
         // Register a CDC-style schema
         val cdcSchemaJson = """
             {
@@ -500,16 +517,16 @@ internal class GraphCompilerTest {
             }
         """.trimIndent()
 
-        testKafka.registerSchema("cdc_products-value", cdcSchemaJson)
-        testKafka.createTopic("cdc_products")
+        testKafka.registerSchema("$cdcTopic-value", cdcSchemaJson)
+        testKafka.createTopic(cdcTopic)
         fileSystem.refresh()
 
         // Create a graph with CDC source → filter → sink
         val graph = createGraph(
             nodes = listOf(
-                streamSourceNode("src-1", "/dev/kafka/local/topics/cdc_products", Job.Encoding.AVRO, unwrapCdc = true),
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$cdcTopic", Job.Encoding.AVRO, unwrapCdc = true),
                 filterNode("filter-1", "Widget"),
-                sinkNode("sink-1", "/dev/kafka/local/topics/filtered_products")
+                sinkNode("sink-1", "/dev/kafka/local/topics/$filteredTopic")
             ),
             edges = listOf(
                 edge("src-1", "filter-1"),

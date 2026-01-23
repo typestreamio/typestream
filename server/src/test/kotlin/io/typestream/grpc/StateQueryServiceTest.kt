@@ -40,8 +40,11 @@ internal class StateQueryServiceTest {
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -73,10 +76,12 @@ internal class StateQueryServiceTest {
 
     @Test
     fun `listStores returns stores from running jobs with count operation`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             // Produce multiple records with different titles
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString()),
                 Book(title = "Kindred", wordCount = 250, authorId = UUID.randomUUID().toString()),
@@ -99,7 +104,7 @@ internal class StateQueryServiceTest {
             // Create a job with cut + wc (count) to create a state store
             val request = Job.CreateJobRequest.newBuilder()
                 .setUserId("test-user")
-                .setSource("cat /dev/kafka/local/topics/books | cut .title | wc")
+                .setSource("cat /dev/kafka/local/topics/$topic | cut .title | wc")
                 .build()
 
             val jobResponse = jobStub.createJob(request)
@@ -185,12 +190,14 @@ internal class StateQueryServiceTest {
 
     @Test
     fun `getAllValues respects limit parameter`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             // Produce many records to test limiting
             val books = (1..10).map { i ->
                 Book(title = "Book $i", wordCount = i * 100, authorId = UUID.randomUUID().toString())
             }
-            testKafka.produceRecords("books", "avro", *books.toTypedArray())
+            testKafka.produceRecords(topic, "avro", *books.toTypedArray())
 
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
@@ -207,7 +214,7 @@ internal class StateQueryServiceTest {
 
             val request = Job.CreateJobRequest.newBuilder()
                 .setUserId("test-user")
-                .setSource("cat /dev/kafka/local/topics/books | cut .title | wc")
+                .setSource("cat /dev/kafka/local/topics/$topic | cut .title | wc")
                 .build()
 
             val jobResponse = jobStub.createJob(request)
@@ -243,10 +250,12 @@ internal class StateQueryServiceTest {
 
     @Test
     fun `getAllValues with running job returns key-value pairs`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             // Produce records with duplicate titles to get counts > 1
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Dune", wordCount = 300, authorId = UUID.randomUUID().toString()),
                 Book(title = "Dune", wordCount = 250, authorId = UUID.randomUUID().toString()),
@@ -268,7 +277,7 @@ internal class StateQueryServiceTest {
 
             val request = Job.CreateJobRequest.newBuilder()
                 .setUserId("test-user")
-                .setSource("cat /dev/kafka/local/topics/books | cut .title | wc")
+                .setSource("cat /dev/kafka/local/topics/$topic | cut .title | wc")
                 .build()
 
             val jobResponse = jobStub.createJob(request)

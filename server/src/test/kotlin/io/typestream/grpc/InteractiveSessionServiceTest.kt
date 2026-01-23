@@ -38,8 +38,11 @@ internal class InteractiveSessionServiceTest {
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -134,7 +137,8 @@ internal class InteractiveSessionServiceTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `runs a one command pipeline`(encoding: String): Unit = runBlocking {
-        val users = testKafka.produceRecords("users", encoding, User(name = "Grace Hopper"))
+        val topic = TestKafka.uniqueTopic("users")
+        val users = testKafka.produceRecords(topic, encoding, User(name = "Grace Hopper"))
 
         app.use {
             val serverName = InProcessServerBuilder.generateName()
@@ -153,7 +157,7 @@ internal class InteractiveSessionServiceTest {
             val sessionId =
                 stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
 
-            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/users")
+            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/$topic")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
@@ -174,8 +178,9 @@ internal class InteractiveSessionServiceTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `runs a filter pipeline`(encoding: String): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("users")
         val users = testKafka.produceRecords(
-            "users", encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
+            topic, encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
         )
 
         app.use {
@@ -194,7 +199,7 @@ internal class InteractiveSessionServiceTest {
 
             val sessionId = stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
 
-            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/users | grep \"Margaret\"")
+            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/$topic | grep \"Margaret\"")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
@@ -216,9 +221,10 @@ internal class InteractiveSessionServiceTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `runs a projection`(encoding: String): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
         val stationEleven = Book(title = "Station Eleven", wordCount = 42, authorId = UUID.randomUUID().toString())
         val kindred = Book(title = "Kindred", wordCount = 42, authorId = UUID.randomUUID().toString())
-        testKafka.produceRecords("books", encoding, stationEleven, kindred)
+        testKafka.produceRecords(topic, encoding, stationEleven, kindred)
 
         app.use {
             val serverName = InProcessServerBuilder.generateName()
@@ -236,7 +242,7 @@ internal class InteractiveSessionServiceTest {
 
             val sessionId = stub.startSession(StartSessionRequest.newBuilder().setUserId("user_id").build()).sessionId
 
-            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/books | cut title")
+            val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/$topic | cut title")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
@@ -259,8 +265,10 @@ internal class InteractiveSessionServiceTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `runs a redirection`(encoding: String): Unit = runBlocking {
+        val usersTopic = TestKafka.uniqueTopic("users")
+        val userNamesTopic = TestKafka.uniqueTopic("user_names")
         val users = testKafka.produceRecords(
-            "users", encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
+            usersTopic, encoding, User(name = "Grace Hopper"), User(name = "Margaret Hamilton")
         )
 
         app.use {
@@ -281,15 +289,15 @@ internal class InteractiveSessionServiceTest {
 
             val cat = stub.runProgram(
                 sessionId,
-                "cat /dev/kafka/local/topics/users | grep 'Margaret' > /dev/kafka/local/topics/user_names"
+                "cat /dev/kafka/local/topics/$usersTopic | grep 'Margaret' > /dev/kafka/local/topics/$userNamesTopic"
             )
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput")
                 .containsExactly("running ${cat.id} in the background", "", false)
 
-            until("file") { stub.runProgram(sessionId, "file /dev/kafka/local/topics/user_names") }
+            until("file") { stub.runProgram(sessionId, "file /dev/kafka/local/topics/$userNamesTopic") }
 
-            val catNames = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/user_names")
+            val catNames = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/$userNamesTopic")
 
             until("ps") { assertThat(stub.runProgram(sessionId, "ps").stdOut).contains(catNames.id) }
 

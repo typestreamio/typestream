@@ -24,8 +24,11 @@ import org.testcontainers.junit.jupiter.Testcontainers
 class EncodingTest {
     companion object {
         private lateinit var fileSystem: FileSystem
+        private lateinit var authorsTopic: String
+        private lateinit var booksTopic: String
 
         @Container
+        @JvmStatic
         private val testKafka = TestKafka()
 
         @JvmStatic
@@ -33,10 +36,13 @@ class EncodingTest {
         fun beforeAll() {
             fileSystem = FileSystem(testConfig(testKafka), Dispatchers.IO)
 
+            authorsTopic = TestKafka.uniqueTopic("authors")
+            booksTopic = TestKafka.uniqueTopic("books")
+
             val author = Author(name = "Octavia E. Butler")
-            testKafka.produceRecords("authors", "avro", author)
+            testKafka.produceRecords(authorsTopic, "avro", author)
             testKafka.produceRecords(
-                "books",
+                booksTopic,
                 "proto",
                 Book(title = "Parable of the Sower", authorId = author.id, wordCount = 100)
             )
@@ -47,7 +53,7 @@ class EncodingTest {
 
     @Test
     fun `infers avro encoding`() {
-        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
         dataCommand.dataStreams.add(author())
 
@@ -56,7 +62,7 @@ class EncodingTest {
 
     @Test
     fun `infers proto encoding`() {
-        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/books")))
+        val dataCommand = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$booksTopic")))
 
         dataCommand.dataStreams.add(book(title = "Parable of the Sower"))
 
@@ -65,7 +71,7 @@ class EncodingTest {
 
     @Test
     fun `infers pipeline encoding`() {
-        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
         cat.dataStreams.add(author())
 
@@ -79,11 +85,11 @@ class EncodingTest {
 
     @Test
     fun `infers mixed pipeline encoding`() {
-        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/authors")))
+        val cat = Cat(listOf(Expr.BareWord("/dev/kafka/local/topics/$authorsTopic")))
 
         cat.dataStreams.add(author())
 
-        val join = Join(listOf(Expr.BareWord("/dev/kafka/local/topics/books")))
+        val join = Join(listOf(Expr.BareWord("/dev/kafka/local/topics/$booksTopic")))
 
         join.dataStreams.add(book(title = "Parable of the Sower"))
 
@@ -92,4 +98,3 @@ class EncodingTest {
         Assertions.assertThat(fileSystem.inferEncoding(pipeline)).isEqualTo(Encoding.JSON)
     }
 }
-

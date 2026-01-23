@@ -22,8 +22,11 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 internal class CdKtTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     private lateinit var fileSystem: FileSystem
     private lateinit var session: Session
@@ -77,16 +80,18 @@ internal class CdKtTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `changes directory only to dirs`(encoding: String) {
+        val topic = TestKafka.uniqueTopic("authors")
+
         fileSystem.use {
-            testKafka.produceRecords("authors", encoding, Author(name = "Ann Leckie"))
+            testKafka.produceRecords(topic, encoding, Author(name = "Ann Leckie"))
             fileSystem.refresh()
 
             val cd = ShellCommand.mustFind("cd")
 
-            val programResult = cd(session, listOf("dev/kafka/local/topics/authors"))
+            val programResult = cd(session, listOf("dev/kafka/local/topics/$topic"))
 
             assertThat(programResult).isEqualTo(
-                ShellCommandOutput.withError("cd: cannot cd into dev/kafka/local/topics/authors: not a directory")
+                ShellCommandOutput.withError("cd: cannot cd into dev/kafka/local/topics/$topic: not a directory")
             )
 
             assertThat(session.env.pwd).isEqualTo("/")

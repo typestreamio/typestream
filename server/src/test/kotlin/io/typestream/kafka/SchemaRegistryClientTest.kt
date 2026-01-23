@@ -15,21 +15,25 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @Testcontainers
 internal class SchemaRegistryClientTest {
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     @Test
     fun `fetches schemas`() {
-        testKafka.produceRecords("users", "avro", User(name = "Margaret Hamilton"))
+        val topic = TestKafka.uniqueTopic("users")
+        testKafka.produceRecords(topic, "avro", User(name = "Margaret Hamilton"))
 
         val schemaRegistryClient = SchemaRegistryClient(SchemaRegistryConfig(testKafka.schemaRegistryAddress))
 
         val subjects = schemaRegistryClient.subjects()
-        assertThat(subjects).hasSize(1).containsKey("users-value")
+        assertThat(subjects).containsKey("$topic-value")
 
-        val schema = subjects["users-value"]
+        val schema = subjects["$topic-value"]
 
-        assertThat(schema).extracting("subject", "schemaType").containsExactly("users-value", AVRO)
+        assertThat(schema).extracting("subject", "schemaType").containsExactly("$topic-value", AVRO)
 
         val avroSchema = Parser().parse(schema?.schema)
 

@@ -21,8 +21,12 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 class VmTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
+
     private val testDispatcher = Dispatchers.IO
     private lateinit var fileSystem: FileSystem
     private lateinit var session: Session
@@ -40,16 +44,18 @@ class VmTest {
 
     @Test
     fun `avro smokeType`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("smoke-type")
+
         scheduler.use {
             val smokeType = SmokeType()
             launch(testDispatcher) {
                 scheduler.start()
             }
-            testKafka.produceRecords("smoke-type", "avro", smokeType)
+            testKafka.produceRecords(topic, "avro", smokeType)
 
             fileSystem.refresh()
 
-            val vmResult = vm.run("cat /dev/kafka/local/topics/smoke-type", session)
+            val vmResult = vm.run("cat /dev/kafka/local/topics/$topic", session)
 
             until { scheduler.ps().any { it.id == vmResult.program.id } }
 

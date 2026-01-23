@@ -16,15 +16,19 @@ import java.util.UUID
 
 @Testcontainers
 internal class CatalogTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     //TODO add proto as soon as we support official imports
     @ParameterizedTest
     @ValueSource(strings = ["avro"])
     fun `fetches schema`(encoding: String) {
+        val topic = TestKafka.uniqueTopic("ratings")
         testKafka.produceRecords(
-            "ratings",
+            topic,
             encoding,
             Rating(
                 id = UUID.randomUUID().toString(),
@@ -37,7 +41,7 @@ internal class CatalogTest {
 
         catalog.refresh()
 
-        val ratingsPath = "${FileSystem.KAFKA_CLUSTERS_PREFIX}/local/topics/ratings"
+        val ratingsPath = "${FileSystem.KAFKA_CLUSTERS_PREFIX}/local/topics/$topic"
         val ratings = catalog[ratingsPath]
         requireNotNull(ratings)
         assertThat(ratings).extracting("dataStream.path").isEqualTo(ratingsPath)

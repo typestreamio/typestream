@@ -24,8 +24,11 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 internal class HttpKtTest {
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     private lateinit var fileSystem: FileSystem
     private lateinit var session: Session

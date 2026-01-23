@@ -30,8 +30,11 @@ internal class JobServiceTest {
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -40,9 +43,11 @@ internal class JobServiceTest {
 
     @Test
     fun `creates job from text source`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
@@ -62,7 +67,7 @@ internal class JobServiceTest {
 
             val request = Job.CreateJobRequest.newBuilder()
                 .setUserId("test-user")
-                .setSource("cat /dev/kafka/local/topics/books | grep 'Station'")
+                .setSource("cat /dev/kafka/local/topics/$topic | grep 'Station'")
                 .build()
 
             val response = stub.createJob(request)
@@ -75,9 +80,11 @@ internal class JobServiceTest {
 
     @Test
     fun `creates job from graph`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
@@ -100,7 +107,7 @@ internal class JobServiceTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()
@@ -183,9 +190,11 @@ internal class JobServiceTest {
 
     @Test
     fun `lists jobs returns jobs with valid structure`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "List Test", wordCount = 100, authorId = UUID.randomUUID().toString())
             )
@@ -226,9 +235,11 @@ internal class JobServiceTest {
 
     @Test
     fun `returns error for cyclic graph`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Cycle Test", wordCount = 1, authorId = UUID.randomUUID().toString())
             )
@@ -251,7 +262,7 @@ internal class JobServiceTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()

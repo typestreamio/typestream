@@ -21,8 +21,11 @@ import java.util.UUID
 @Testcontainers
 internal class InterpreterTest {
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     private lateinit var fileSystem: FileSystem
 
@@ -38,9 +41,11 @@ internal class InterpreterTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `handles non-existing fields on conditions`(encoding: String) {
+        val topic = TestKafka.uniqueTopic("books")
+
         fileSystem.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 encoding,
                 Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
@@ -48,7 +53,7 @@ internal class InterpreterTest {
             fileSystem.refresh()
 
             val statements =
-                Parser("cat /dev/kafka/local/topics/books | grep [ .notTheTitle == 'Station Eleven' ]").parse()
+                Parser("cat /dev/kafka/local/topics/$topic | grep [ .notTheTitle == 'Station Eleven' ]").parse()
 
             val analyzer = Interpreter(session)
 
@@ -57,8 +62,8 @@ internal class InterpreterTest {
             assertThat(analyzer.errors).hasSize(1)
                 .containsExactly(
                     """
-                    cannot find field 'notTheTitle' in /dev/kafka/local/topics/books.
-                    You can use 'file /dev/kafka/local/topics/books' to check available fields
+                    cannot find field 'notTheTitle' in /dev/kafka/local/topics/$topic.
+                    You can use 'file /dev/kafka/local/topics/$topic' to check available fields
                 """.trimIndent()
                 )
         }
@@ -67,16 +72,18 @@ internal class InterpreterTest {
     @ParameterizedTest
     @ValueSource(strings = ["avro", "proto"])
     fun `handles non-existing fields on projections`(encoding: String) {
+        val topic = TestKafka.uniqueTopic("books")
+
         fileSystem.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 encoding,
                 Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
 
             fileSystem.refresh()
 
-            val statements = Parser("cat /dev/kafka/local/topics/books | cut .notTheTitle").parse()
+            val statements = Parser("cat /dev/kafka/local/topics/$topic | cut .notTheTitle").parse()
 
             val analyzer = Interpreter(session)
 
@@ -85,8 +92,8 @@ internal class InterpreterTest {
             assertThat(analyzer.errors).hasSize(1)
                 .containsExactly(
                     """
-                    cannot find field 'notTheTitle' in /dev/kafka/local/topics/books.
-                    You can use 'file /dev/kafka/local/topics/books' to check available fields
+                    cannot find field 'notTheTitle' in /dev/kafka/local/topics/$topic.
+                    You can use 'file /dev/kafka/local/topics/$topic' to check available fields
                 """.trimIndent()
                 )
         }

@@ -19,15 +19,11 @@ import kotlin.io.path.createTempDirectory
 internal class FileSystemTest {
     private lateinit var fileSystem: FileSystem
 
-    @Container
-    private val testKafka = TestKafka()
-
-    @BeforeEach
-    fun beforeEach() {
-        fileSystem = FileSystem(testConfig(testKafka, createTempDirectory().toString()), Dispatchers.IO)
-    }
-
     companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+
         @JvmStatic
         fun completePathCases(): Stream<Arguments> = Stream.of(
             Arguments.of("d", "/", listOf("dev/")),
@@ -57,6 +53,11 @@ internal class FileSystemTest {
             Arguments.of("..", "/dev/kafka", "/dev"),
             Arguments.of("dev/whatever", "/", null),
         )
+    }
+
+    @BeforeEach
+    fun beforeEach() {
+        fileSystem = FileSystem(testConfig(testKafka, createTempDirectory().toString()), Dispatchers.IO)
     }
 
     @ParameterizedTest

@@ -35,8 +35,11 @@ internal class PreviewJobIntegrationTest {
     @get:Rule
     val grpcCleanupRule: GrpcCleanupRule = GrpcCleanupRule()
 
-    @Container
-    private val testKafka = TestKafka()
+    companion object {
+        @Container
+        @JvmStatic
+        private val testKafka = TestKafka()
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -45,14 +48,16 @@ internal class PreviewJobIntegrationTest {
 
     @Test
     fun `creates preview job and streams data from inspector`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
-            // Produce test data - must use supported topic name "books"
+            // Produce test data
             val testBooks = listOf(
                 Book(title = "Book One", wordCount = 100, authorId = UUID.randomUUID().toString()),
                 Book(title = "Book Two", wordCount = 200, authorId = UUID.randomUUID().toString()),
                 Book(title = "Book Three", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
-            testKafka.produceRecords("books", "avro", *testBooks.toTypedArray())
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
 
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
@@ -74,7 +79,7 @@ internal class PreviewJobIntegrationTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()
@@ -217,9 +222,11 @@ internal class PreviewJobIntegrationTest {
 
     @Test
     fun `stop preview job removes it from active jobs`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Stop Test", wordCount = 100, authorId = UUID.randomUUID().toString())
             )
@@ -242,7 +249,7 @@ internal class PreviewJobIntegrationTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()
@@ -287,6 +294,8 @@ internal class PreviewJobIntegrationTest {
 
     @Test
     fun `preview job can receive messages and be stopped after client disconnects`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         // This test verifies that:
         // 1. Preview jobs can stream messages to clients
         // 2. After client cancels, the job can still be manually stopped (fallback cleanup)
@@ -294,7 +303,7 @@ internal class PreviewJobIntegrationTest {
         // The TTL-based cleanup provides a reliable fallback
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "Cancel Test", wordCount = 100, authorId = UUID.randomUUID().toString())
             )
@@ -318,7 +327,7 @@ internal class PreviewJobIntegrationTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()
@@ -550,9 +559,11 @@ internal class PreviewJobIntegrationTest {
 
     @Test
     fun `preview job not in list jobs response`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             testKafka.produceRecords(
-                "books",
+                topic,
                 "avro",
                 Book(title = "List Test", wordCount = 100, authorId = UUID.randomUUID().toString())
             )
@@ -575,7 +586,7 @@ internal class PreviewJobIntegrationTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()
