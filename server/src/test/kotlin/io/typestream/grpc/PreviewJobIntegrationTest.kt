@@ -415,6 +415,8 @@ internal class PreviewJobIntegrationTest {
 
     @Test
     fun `filter node filters messages based on expression`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
         app.use {
             // Produce test data with varying word counts
             val testBooks = listOf(
@@ -424,7 +426,7 @@ internal class PreviewJobIntegrationTest {
                 Book(title = "Very Long Book", wordCount = 500, authorId = UUID.randomUUID().toString()),
                 Book(title = "Another Short", wordCount = 150, authorId = UUID.randomUUID().toString())
             )
-            testKafka.produceRecords("books", "avro", *testBooks.toTypedArray())
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
 
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
@@ -447,7 +449,7 @@ internal class PreviewJobIntegrationTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()

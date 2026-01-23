@@ -71,8 +71,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `compiles filter with field equality expression`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
         )
@@ -80,7 +81,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 filterNode("filter", ".title == \"Station Eleven\"")
             ),
             edges = listOf(edge("source", "filter"))
@@ -97,8 +98,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `compiles filter with numeric comparison expression`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Long Book", wordCount = 500, authorId = UUID.randomUUID().toString())
         )
@@ -106,7 +108,7 @@ internal class GraphCompilerTest {
 
         val request = createRequest(
             nodes = listOf(
-                streamSourceNode("source", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 filterNode("filter", ".word_count > 250")
             ),
             edges = listOf(edge("source", "filter"))
@@ -122,8 +124,9 @@ internal class GraphCompilerTest {
 
     @Test
     fun `inferNodeSchemasForUI propagates schema through filter`() {
+        val topic = TestKafka.uniqueTopic("books")
         testKafka.produceRecords(
-            "books",
+            topic,
             "avro",
             Book(title = "Schema Propagation Test", wordCount = 100, authorId = UUID.randomUUID().toString())
         )
@@ -131,7 +134,7 @@ internal class GraphCompilerTest {
 
         val graph = createGraph(
             nodes = listOf(
-                streamSourceNode("src-1", "/dev/kafka/local/topics/books", Job.Encoding.AVRO),
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
                 filterNode("filter-1", ".word_count > 50"),
                 sinkNode("sink-1", "/dev/kafka/local/topics/filtered_books")
             ),
