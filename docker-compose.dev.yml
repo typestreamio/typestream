@@ -1,0 +1,114 @@
+# Development mode overrides
+# Server runs on host for hot reload, not in Docker
+
+volumes:
+  uiv2_node_modules:
+
+services:
+  # Disable server container - runs on host instead
+  server:
+    profiles:
+      - prod-only
+
+  # Use dev envoy config (routes to host.docker.internal)
+  envoy:
+    volumes:
+      - ./docker/envoy-dev.yaml:/etc/envoy/envoy.yaml
+
+  # Kafka UI for debugging
+  kafbat-ui:
+    image: docker.io/kafbat/kafka-ui:v1.4.2
+    ports:
+      - 8088:8080
+    networks:
+      - typestream_network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: typestream_redpanda
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: redpanda:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://redpanda:8081
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: typestream-connect
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      kafka-connect:
+        condition: service_healthy
+
+  # Demo data generators
+  demo-data-coinbase:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["coinbase", "--products", "BTC-USD,ETH-USD"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  demo-data-wikipedia:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["wikipedia", "--wikis", "enwiki"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  demo-data-webvisits:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["webvisits", "--rate", "5"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  demo-data-fileuploads:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    volumes:
+      - /tmp/typestream-files:/tmp/typestream-files
+    networks:
+      - typestream_network
+    command: ["fileuploads", "--rate", "1"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  # React frontend with hot reload
+  uiv2:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./uiv2:/app
+      - ./protos:/protos:ro
+      - uiv2_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - typestream_network
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
+    depends_on:
+      - envoy
+    environment:
+      - VITE_SERVER_URL=http://localhost:8080
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - CHOKIDAR_USEPOLLING=true
