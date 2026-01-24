@@ -11,7 +11,7 @@ import (
 )
 
 // DevRunner handles docker-compose operations for development mode
-// Uses compose.yml + compose.dev.yml overlay (server runs on host)
+// Uses docker-compose.yml + docker-compose.dev.yml overlay (server runs on host)
 type DevRunner struct {
 	StdOut     chan string
 	composeDir string
@@ -39,8 +39,8 @@ func NewDevRunner() *DevRunner {
 }
 
 func (runner *DevRunner) RunCommand(arg ...string) error {
-	composePath := filepath.Join(runner.composeDir, "compose.yml")
-	composeDevPath := filepath.Join(runner.composeDir, "compose.dev.yml")
+	composePath := filepath.Join(runner.composeDir, "docker-compose.yml")
+	composeDevPath := filepath.Join(runner.composeDir, "docker-compose.dev.yml")
 
 	// Use both base compose and dev overlay
 	args := []string{

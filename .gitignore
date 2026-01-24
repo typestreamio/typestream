@@ -11,5 +11,7 @@ out
 .direnv
 .envrc
 .env
+.env.local
+.env.*.local
 .kotlin/
 kls_database.db

@@ -23,7 +23,8 @@ func DockerImage(imgName string) string {
 	image := fmt.Sprintf("%s:%s", imgName, DockerVersion())
 
 	if Version == "beta" {
-		image = fmt.Sprintf("localhost:5001/%s", image)
+		// Use GHCR for beta/dev builds
+		image = fmt.Sprintf("ghcr.io/typestreamio/%s", image)
 	}
 
 	return image

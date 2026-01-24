@@ -13,7 +13,16 @@ import (
 )
 
 // getComposeDir returns the directory containing compose files
+// Checks project root first (new location), falls back to CLI embedded files
 func getComposeDir() string {
+	// Try project root first (new location)
+	cwd, _ := os.Getwd()
+	rootCompose := filepath.Join(cwd, "docker-docker-compose.yml")
+	if _, err := os.Stat(rootCompose); err == nil {
+		return cwd
+	}
+
+	// Fall back to CLI embedded files (backward compatibility)
 	exe, err := os.Executable()
 	if err != nil {
 		log.Fatalf("Failed to get executable path: %v", err)
@@ -32,8 +41,6 @@ func getComposeDir() string {
 
 	// Check if the compose directory exists
 	if _, err := os.Stat(composeDir); os.IsNotExist(err) {
-		// Fallback: try relative to current working directory
-		cwd, _ := os.Getwd()
 		composeDir = filepath.Join(cwd, "cli", "pkg", "compose")
 	}
 
@@ -58,7 +65,7 @@ func NewRunner() *Runner {
 }
 
 func (runner *Runner) Show() string {
-	composePath := filepath.Join(runner.composeDir, "compose.yml")
+	composePath := filepath.Join(runner.composeDir, "docker-compose.yml")
 	content, err := os.ReadFile(composePath)
 	if err != nil {
 		log.Fatalf("Failed to read compose file: %v", err)
@@ -67,7 +74,7 @@ func (runner *Runner) Show() string {
 }
 
 func (runner *Runner) RunCommand(arg ...string) error {
-	composePath := filepath.Join(runner.composeDir, "compose.yml")
+	composePath := filepath.Join(runner.composeDir, "docker-compose.yml")
 
 	args := []string{"-p", "typestream", "-f", composePath}
 	args = append(args, arg...)
