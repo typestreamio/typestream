@@ -13,38 +13,28 @@ import (
 )
 
 // getComposeDir returns the directory containing compose files
-// Checks project root first (new location), falls back to CLI embedded files
+// Walks up from cwd to find docker-compose.yml at project root
 func getComposeDir() string {
-	// Try project root first (new location)
 	cwd, _ := os.Getwd()
-	rootCompose := filepath.Join(cwd, "docker-docker-compose.yml")
-	if _, err := os.Stat(rootCompose); err == nil {
-		return cwd
+
+	// Walk up directories to find docker-compose.yml
+	dir := cwd
+	for {
+		composePath := filepath.Join(dir, "docker-compose.yml")
+		if _, err := os.Stat(composePath); err == nil {
+			return dir
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root, not found
+			break
+		}
+		dir = parent
 	}
 
-	// Fall back to CLI embedded files (backward compatibility)
-	exe, err := os.Executable()
-	if err != nil {
-		log.Fatalf("Failed to get executable path: %v", err)
-	}
-
-	// Resolve symlinks to get the real path
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		log.Fatalf("Failed to resolve symlinks: %v", err)
-	}
-
-	// The CLI binary is at <project>/cli/typestream (or similar)
-	// Compose files are at <project>/cli/pkg/compose/
-	cliDir := filepath.Dir(exe)
-	composeDir := filepath.Join(cliDir, "pkg", "compose")
-
-	// Check if the compose directory exists
-	if _, err := os.Stat(composeDir); os.IsNotExist(err) {
-		composeDir = filepath.Join(cwd, "cli", "pkg", "compose")
-	}
-
-	return composeDir
+	log.Fatalf("Could not find docker-compose.yml in %s or any parent directory", cwd)
+	return ""
 }
 
 type Runner struct {
