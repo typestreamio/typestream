@@ -72,7 +72,6 @@ jobs:
 
       - name: Check
         run: nix develop --command gradle :server:test ${{ matrix.tests }} -x :connectors:demo-data:check
-        continue-on-error: true
         env:
           GRADLE_TOKEN: ${{ secrets.GRADLE_TOKEN }}
 
