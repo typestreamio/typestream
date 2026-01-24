@@ -45,6 +45,17 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group: [compiler, grpc, other]
+        include:
+          - test-group: compiler
+            tests: "--tests 'io.typestream.compiler.*'"
+          - test-group: grpc
+            tests: "--tests 'io.typestream.grpc.*'"
+          - test-group: other
+            tests: "--tests 'io.typestream.filesystem.*' --tests 'io.typestream.kafka.*' --tests 'io.typestream.geoip.*' --tests 'io.typestream.textextractor.*' --tests 'io.typestream.embedding.*'"
 
     steps:
       - uses: actions/checkout@v4
@@ -60,8 +71,7 @@ jobs:
           use-flakehub: false
 
       - name: Check
-        run: nix develop --command gradle check -x :connectors:demo-data:check
-        continue-on-error: true
+        run: nix develop --command gradle :server:test ${{ matrix.tests }} -x :connectors:demo-data:check
         env:
           GRADLE_TOKEN: ${{ secrets.GRADLE_TOKEN }}
 
@@ -69,6 +79,6 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: Server Tests
+          name: Server Tests (${{ matrix.test-group }})
           path: '**/build/test-results/test/*.xml'
           reporter: java-junit
