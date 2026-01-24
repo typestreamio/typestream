@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" class="light scroll-smooth" dir="ltr">
+  <head>
+    @@include("partials/title-meta.html", {"title": "Contact Us"})
+    @@include("partials/head-css.html")
+  </head>
+  <body
+    class="font-nunito text-base text-black dark:text-white dark:bg-slate-900"
+  >
+    @@include("partials/navbar/nav-center.html")
+    <!-- Start Hero -->
+    <section
+      class="relative table w-full py-32 lg:py-40 bg-gradient-to-br to-typestream-light-background from-typestream-accent"
+    >
+      <div class="container relative">
+        <div class="grid grid-cols-1 text-center mt-10">
+          <h3 class="text-3xl leading-normal font-medium">Let's Chat</h3>
+        </div>
+        <!--end grid-->
+      </div>
+      <!--end container-->
+    </section>
+    <!--end section-->
+    <div class="relative">
+      <div
+        class="shape absolute sm:-bottom-px -bottom-[2px] start-0 end-0 overflow-hidden z-1 text-white dark:text-slate-900"
+      >
+        <svg
+          class="w-full h-auto scale-[2.0] origin-top"
+          viewBox="0 0 2880 48"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z"
+            fill="currentColor"
+          ></path>
+        </svg>
+      </div>
+    </div>
+    <!-- End Hero -->
+
+    <div id="grid" class="md:flex justify-center mx-auto mt-4">
+      <div
+        class="lg:w-1/2 md:w-1/2 p-3 picture-item"
+        data-groups='["business"]'
+      >
+        <div
+          class="blog relative rounded-md shadow dark:shadow-gray-800 overflow-hidden"
+        >
+          <img src="assets/images/contact-left.jpg" alt="" />
+
+          <div class="content p-6">
+            <a
+              href="blog-detail.html"
+              class="title h5 text-lg font-medium hover:text-indigo-600 duration-500 ease-in-out"
+              >Join Our Discord</a
+            >
+            <p class="text-slate-400 mt-3">
+              Collaborate with other data streamers looking to accelerate their
+              product development<br />
+              <a
+                href="https://discord.gg/BWSHv4r78U"
+                class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle transition duration-500 ease-in-out text-base text-center bg-typestream-primary-darker hover:bg-typestream-primary-darkest border-typestream-primary-dark hover:border-indigo-700 text-white rounded-md me-2"
+                >Join Now</a
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+      <!--end content-->
+
+      <div class="lg:w-1/2 md:w-1/2 p-3 picture-item" data-groups='["tech"]'>
+        <div
+          class="blog relative rounded-md shadow dark:shadow-gray-800 overflow-hidden"
+        >
+          <img src="assets/images/contact-right.jpg" alt="" />
+
+          <div class="content p-6">
+            <a
+              href="blog-detail.html"
+              class="title h5 text-lg font-medium hover:text-indigo-600 duration-500 ease-in-out"
+              >Email Us</a
+            >
+            <p class="text-slate-400 mt-3">
+              Want to get in touch? Email us:
+              <a href="mailto:info@typestream.io">info@typestream.io</a>
+            </p>
+          </div>
+        </div>
+      </div>
+      <!--end content-->
+    </div>
+
+    <!-- End -->
+
+    @@include("partials/footer/footer.html")
+
+    <!-- Back to top -->
+    <a
+      href="#"
+      onclick="topFunction()"
+      id="back-to-top"
+      class="back-to-top fixed hidden text-lg rounded-full z-10 bottom-5 end-5 h-9 w-9 text-center bg-indigo-600 text-white leading-9"
+      ><i class="uil uil-arrow-up"></i
+    ></a>
+    <!-- Back to top -->
+
+    @@include("partials/script-file.html")
+  </body>
+</html>

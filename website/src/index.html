@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en" class="light scroll-smooth" dir="ltr">
+  <head>
+    @@include("partials/title-meta.html", {"title": "Home"})
+
+    <!-- Css -->
+    <link href="assets/libs/tobii/css/tobii.min.css" rel="stylesheet" />
+    @@include("partials/head-css.html")
+  </head>
+
+  <body class="font-nunito">
+    @@include("partials/navbar/nav-center-light.html")
+
+    <section
+      class="relative table w-full py-36 overflow-hidden bg-gradient-to-b to-transparent from-typestream-primary-dark dark:typestream-primary"
+    >
+      <div class="container relative">
+        <div
+          class="relative grid md:grid-cols-12 grid-cols-1 items-center mt-10 gap-[30px]"
+        >
+          <div class="md:col-span-6">
+            <div class="md:me-8">
+              <h4
+                class="font-bold lg:leading-normal leading-normal text-4xl lg:text-5xl mb-5 text-black dark:text-white relative"
+              >
+                <span
+                  class="before:block before:absolute before:-inset-1 before:-skew-y-3 before:bg-typestream-accent relative inline-block"
+                  ><span class="relative text-black">Accelerate</span></span
+                >
+                development with TypeStream
+              </h4>
+              <p class="text-slate-100 text-lg max-w-xl">
+                TypeStream is an open-source streaming platform that allows you
+                to write, run, and ship typed data pipelines with a minimal,
+                familiar syntax in a matter of minutes.
+              </p>
+
+              <div class="relative mt-8">
+                <a
+                  href="https://docs.typestream.io"
+                  class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle transition duration-500 ease-in-out text-base text-center bg-typestream-primary-darker hover:bg-typestream-primary-darkest border-typestream-primary-dark hover:border-indigo-700 text-white rounded-md me-2"
+                  >Learn More</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="md:col-span-6">
+            <div
+              class="relative overflow-hidden rounded-lg shadow-md dark:typestream-grey"
+            >
+              <video controls autoplay loop>
+                <source src="assets/images/modern.mp4" type="video/mp4" />
+              </video>
+
+              <div
+                class="absolute bottom-2/4 translate-y-2/4 start-0 end-0 text-center"
+              >
+                <a
+                  href="#!"
+                  data-type="youtube"
+                  data-id="x6LD_ix77ss"
+                  class="lightbox lg:h-20 h-16 lg:w-20 w-16 rounded-full shadow-lg dark:shadow-gray-800 inline-flex items-center justify-center bg-white dark:bg-slate-900 hover:bg-indigo-600 dark:hover:bg-indigo-600 text-indigo-600 hover:text-white duration-500 ease-in-out mx-auto"
+                >
+                  <i
+                    class="mdi mdi-play inline-flex items-center justify-center text-3xl"
+                  ></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container relative md:mt-24 mt-16">
+      <div class="grid grid-cols-1 pb-8 text-center">
+        <h3
+          class="mb-6 md:text-3xl text-2xl md:leading-normal leading-normal font-semibold"
+        >
+          From your terminal to production in seconds
+        </h3>
+
+        <p class="text-slate-400 mx-auto">
+          See how TypeStream radically speeds up your streaming applications
+          development 👇
+        </p>
+      </div>
+
+      <div
+        class="grid md:grid-cols-2 grid-cols-1 items-center mt-16 gap-[30px]"
+      >
+        <div class="lg:ms-8">
+          <h4 class="mb-4 text-2xl leading-normal font-medium text-center">
+            Traditional approach
+          </h4>
+          <p class="text-slate-400">
+            No matter how simple your data pipeline, you need to write an app,
+            test it exhaustively. You also have manage its deployment in the
+            cloud. This process always takes days, often weeks.
+          </p>
+          <ul class="list-none text-slate-400 mt-4">
+            <li class="mb-1">
+              <i class="uil uil-minus-circle text-indigo-600 text-xl me-2"></i
+              >Write a whole application even for the simplest transformations.
+            </li>
+            <li class="mb-1">
+              <i class="uil uil-minus-circle text-indigo-600 text-xl me-2"></i
+              >Slow development iterations.
+            </li>
+            <li class="mb-1">
+              <i class="uil uil-minus-circle text-indigo-600 text-xl me-2"></i
+              >Manage your app on your on in productions.
+            </li>
+          </ul>
+        </div>
+
+        <div class="lg:me-8 order-2 md:order-1">
+          <h4 class="mb-4 text-2xl leading-normal font-medium text-center">
+            TypeStream
+          </h4>
+          <p class="text-slate-400">
+            Fire up a TypeStream shell session to quickly iterate your
+            transformations locally. Once you're ready, ship them to production
+            with one simple command. Minutes, not days.
+          </p>
+          <ul class="list-none text-slate-400 mt-4">
+            <li class="mb-1">
+              <i class="uil uil-check-circle text-indigo-600 text-xl me-2"></i>
+              One liners with a familiar interface.
+            </li>
+            <li class="mb-1">
+              <i class="uil uil-check-circle text-indigo-600 text-xl me-2"></i>
+              Deploy with a single command.
+            </li>
+            <li class="mb-1">
+              <i class="uil uil-check-circle text-indigo-600 text-xl me-2"></i>
+              TypeStream manages your app in production.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container relative md:mt-24 mt-16">
+      <div class="grid grid-cols-1 pb-8 text-center">
+        <h3
+          class="mb-4 md:text-3xl md:leading-normal text-2xl leading-normal font-semibold"
+        >
+          Examples
+        </h3>
+
+        <p class="text-slate-400 mx-auto">
+          Replace whole applications with one-liners!
+        </p>
+      </div>
+
+      <div class="flex flex-col space-y-10">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">Enrich page views with country codes</h2>
+            <p class="text-slate-400">
+              Say we have a log of page views and we want to build a heatmap of
+              where people are visiting from. We can enrich those page views
+              with the country by making a `GET` call to an external API:
+            </p>
+
+            <div class="mockup-code">
+              <pre
+                data-prefix="$"
+              ><code>cat dev/kafka/local/topics/page_views | enrich { view -> http "https://api.country.is/#{$view.ip_address}" | cut .country}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              Remove PII (Personally Identifiable Information)
+            </h2>
+            <p class="text-slate-400">
+              Let's say you have a stream of page views of your site being
+              logged to a "page_views" topic. We can remove plunk the data we
+              want and re-emit the data:
+            </p>
+
+            <div class="mockup-code">
+              <pre
+                data-prefix="$"
+              ><code>cat dev/kafka/local/topics/page_views | cut .book_id .viewed_at</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">Enrich data with OpenAI</h2>
+            <p class="text-slate-400">
+              Say we have a bookstore and we record all new books to the topic
+              "books". We would like to enrich the book information with
+              summaries from OpenAI:
+            </p>
+
+            <div class="mockup-code">
+              <pre
+                data-prefix="$"
+              ><code>cat dev/kafka/local/topics/books | enrich { book -> openai-complete "Summarize the book #{$book.title}" | cut .text}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container relative md:mt-24 mt-16">
+      <div class="grid grid-cols-1 text-center">
+        <h3
+          class="mb-4 md:text-3xl md:leading-normal text-2xl leading-normal font-semibold"
+        >
+          Want to stay in touch?
+        </h3>
+
+        <p class="text-slate-400 max-w-xl mx-auto">
+          Join our wait list and we'll reach out as soon as possible!
+        </p>
+
+        <div class="mt-6">
+          <form name="contact" netlify>
+            <div>
+              <div class="mb-5">
+                <input
+                  type="email"
+                  class="form-input mt-2 w-full py-2 px-3 h-10 bg-transparent dark:bg-slate-900 dark:text-slate-200 rounded outline-none border border-gray-200 focus:border-indigo-600 dark:border-gray-800 dark:focus:border-indigo-600 focus:ring-0"
+                  placeholder="me@example.com"
+                  name="email"
+                  required="true"
+                />
+              </div>
+            </div>
+
+            <div class="mb-5">
+              <button
+                type="submit"
+                class="form-input mt-2 w-full py-2 px-3 h-10 rounded outline-none border bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 text-base text-white"
+              >
+                <i class="uil uil-at align-middle me-2"></i>Send
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    @@include("partials/footer/footer.html")
+
+    <script src="assets/libs/tobii/js/tobii.min.js"></script>
+    @@include("partials/script-file.html")
+  </body>
+</html>

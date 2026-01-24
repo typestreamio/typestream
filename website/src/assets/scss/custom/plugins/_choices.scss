@@ -1,0 +1,57 @@
+/*********************************/
+/*           Choices             */
+/*===============================*/
+.registration-form {
+  .submit-btn {
+    @apply rounded-lg;
+  }
+  .form-input,
+  .choices[data-type*="select-one"] .choices__inner {
+    @apply rounded-lg;
+  }
+}
+
+@media (min-width: 992px) {
+  .registration-form {
+    .choices[data-type*="select-one"] .choices__inner {
+      @apply rounded-none;
+    }
+  }
+}
+
+.filter-input-box,
+.filter-input-box.form-select,
+.filter-search-form .choices__inner {
+  @apply shadow-none border-0 rounded-none text-[15px] h-[60px] pt-[13px] pe-[6px] pb-[15px] ps-[45px];
+}
+
+.choices__inner {
+  @apply bg-gray-50 dark:bg-slate-800;
+}
+
+.choices__list--dropdown,
+.choices[data-type*="select-one"] .choices__input {
+  @apply bg-white dark:bg-slate-900 border-0 rounded-[5px] shadow dark:shadow-gray-800 z-999;
+}
+
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+  @apply bg-gray-50 dark:bg-slate-800 text-black dark:text-white;
+}
+
+.choices__list,
+.choices__list--dropdown .choices__item--selectable {
+  @apply text-slate-400;
+}
+
+.choices__list--dropdown,
+.choices__list[aria-expanded] {
+  @apply border-0 z-2;
+}
+
+.choices[data-type*="select-one"] {
+  @apply after:border-0 after:top-5 after:end-7 after:start-auto after:text-slate-900 dark:after:text-white;
+  &:after {
+    content: "\f0140" !important;
+    font-family: "Material Design Icons";
+  }
+}

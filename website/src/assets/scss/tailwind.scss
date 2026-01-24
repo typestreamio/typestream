@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "custom/fonts";
+
+@import "custom/general";
+
+@import "custom/structure/topnav";
+@import "custom/structure/footer";
+
+@import "custom/pages/helper";
+@import "custom/pages/hero";
+@import "custom/pages/contact";
+
+@import "custom/plugins/swiper-slider";
+@import "custom/plugins/testi";
+@import "custom/plugins/choices";

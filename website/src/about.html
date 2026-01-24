@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en" class="light scroll-smooth" dir="ltr">
+  <head>
+    @@include("partials/title-meta.html", {"title": "About Us"})
+
+    <!-- Css -->
+    <link href="assets/libs/tiny-slider/tiny-slider.css" rel="stylesheet" />
+    <link href="assets/libs/tobii/css/tobii.min.css" rel="stylesheet" />
+    @@include("partials/head-css.html")
+  </head>
+
+  <body
+    class="font-nunito text-base text-black dark:text-white dark:bg-slate-900"
+  >
+    @@include("partials/navbar/nav-center-light.html")
+
+    <!-- Start Hero -->
+    <section
+      class="relative table w-full py-36 lg:py-44 bg-[url('../../assets/images/about.jpg')] bg-no-repeat bg-center bg-cover"
+    >
+      <div class="absolute inset-0 bg-black opacity-75"></div>
+      <div class="container relative">
+        <div class="grid grid-cols-1 pb-8 text-center mt-10">
+          <h3
+            class="mb-6 md:text-4xl text-3xl md:leading-normal leading-normal font-medium text-white"
+          >
+            About Us
+          </h3>
+
+          <p class="text-slate-300 text-lg max-w-xl mx-auto">
+            We're been doing Data and Product Engineering for a long time. Let's
+            build a new way of doing things
+          </p>
+        </div>
+        <!--end grid-->
+      </div>
+      <!--end container-->
+    </section>
+    <!--end section-->
+    <div class="relative">
+      <div
+        class="shape absolute sm:-bottom-px -bottom-[2px] start-0 end-0 overflow-hidden z-1 text-white dark:text-slate-900"
+      >
+        <svg
+          class="w-full h-auto scale-[2.0] origin-top"
+          viewBox="0 0 2880 48"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z"
+            fill="currentColor"
+          ></path>
+        </svg>
+      </div>
+    </div>
+    <!-- End Hero -->
+
+    <!-- Start -->
+    <section
+      class="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800 md:pb-0 pb-0"
+    >
+      <div class="container relative">
+        <div class="grid grid-cols-1 pb-8 text-center">
+          <h3
+            class="mb-6 md:text-3xl text-2xl md:leading-normal leading-normal font-semibold"
+          >
+            Leadership
+          </h3>
+        </div>
+        <!--end grid-->
+
+        <div class="grid md:grid-cols-12 grid-cols-1 mt-8 gap-[30px]">
+          <div
+            class="lg:col-span-6 md:col-span-6 flex justify-center items-center"
+          >
+            <div
+              class="team p-6 rounded-md border border-gray-100 dark:border-gray-700 group bg-white dark:bg-slate-900"
+            >
+              <img
+                src="assets/images/team-luca.jpeg"
+                class="h-24 w-24 rounded-full shadow-md dark:shadow-gray-800"
+                alt=""
+              />
+
+              <div class="content mt-4">
+                <a
+                  href=""
+                  class="text-lg font-medium hover:text-indigo-600 block"
+                  >Luca Pette</a
+                >
+                <span class="text-slate-400 block"></span>
+
+                <p class="text-slate-400 mt-4">
+                  Kafka Streams expert.<br />Previously: Airy, Marley Spoon
+                </p>
+
+                <ul class="list-none mt-4">
+                  <li class="inline">
+                    <a
+                      href="https://twitter.com/lucapette"
+                      class="h-8 w-8 inline-flex items-center justify-center tracking-wide align-middle transition duration-500 ease-in-out text-base text-center border border-gray-100 dark:border-gray-800 rounded-md hover:border-indigo-600 dark:hover:border-indigo-600 hover:bg-indigo-600 hover:text-white"
+                      ><i data-feather="twitter" class="h-4 w-4"></i
+                    ></a>
+                  </li>
+                  <li class="inline">
+                    <a
+                      href="https://www.linkedin.com/in/lucapette/"
+                      class="h-8 w-8 inline-flex items-center justify-center tracking-wide align-middle transition duration-500 ease-in-out text-base text-center border border-gray-100 dark:border-gray-800 rounded-md hover:border-indigo-600 dark:hover:border-indigo-600 hover:bg-indigo-600 hover:text-white"
+                      ><i data-feather="linkedin" class="h-4 w-4"></i
+                    ></a>
+                  </li>
+                </ul>
+                <!--end icon-->
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="lg:col-span-6 md:col-span-6 flex justify-center items-center"
+          >
+            <div
+              class="team p-6 rounded-md border border-gray-100 dark:border-gray-700 group bg-white dark:bg-slate-900"
+            >
+              <img
+                src="assets/images/team-jevin.jpg"
+                class="h-24 w-24 rounded-full shadow-md dark:shadow-gray-800"
+                alt=""
+              />
+
+              <div class="content mt-4">
+                <a
+                  href=""
+                  class="text-lg font-medium hover:text-indigo-600 block"
+                  >Jevin Maltais</a
+                >
+                <span class="text-slate-400 block"></span>
+
+                <p class="text-slate-400 mt-4">
+                  Product and Data Engineering<br />
+                  Previously: Zapier, Clio, Humi
+                </p>
+
+                <ul class="list-none mt-4">
+                  <li class="inline">
+                    <a
+                      href="https://twitter.com/jevy"
+                      class="h-8 w-8 inline-flex items-center justify-center tracking-wide align-middle transition duration-500 ease-in-out text-base text-center border border-gray-100 dark:border-gray-800 rounded-md hover:border-indigo-600 dark:hover:border-indigo-600 hover:bg-indigo-600 hover:text-white"
+                      ><i data-feather="twitter" class="h-4 w-4"></i
+                    ></a>
+                  </li>
+                  <li class="inline">
+                    <a
+                      href="https://www.linkedin.com/in/jevinmaltais/"
+                      class="h-8 w-8 inline-flex items-center justify-center tracking-wide align-middle transition duration-500 ease-in-out text-base text-center border border-gray-100 dark:border-gray-800 rounded-md hover:border-indigo-600 dark:hover:border-indigo-600 hover:bg-indigo-600 hover:text-white"
+                      ><i data-feather="linkedin" class="h-4 w-4"></i
+                    ></a>
+                  </li>
+                </ul>
+                <!--end icon-->
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--end grid-->
+      </div>
+      <!--end container-->
+
+      @@include("partials/footer/footer.html")
+
+      <!-- Back to top -->
+      <a
+        href="#"
+        onclick="topFunction()"
+        id="back-to-top"
+        class="back-to-top fixed hidden text-lg rounded-full z-10 bottom-5 end-5 h-9 w-9 text-center bg-indigo-600 text-white leading-9"
+        ><i class="uil uil-arrow-up"></i
+      ></a>
+      <!-- Back to top -->
+
+      <!-- JAVASCRIPTS -->
+      <script src="assets/libs/tiny-slider/min/tiny-slider.js"></script>
+      <script src="assets/libs/tobii/js/tobii.min.js"></script>
+      @@include("partials/script-file.html")
+      <!-- JAVASCRIPTS -->
+    </section>
+  </body>
+</html>
