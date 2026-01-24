@@ -146,29 +146,31 @@ $ ./typestream --help
 For fast iteration when developing TypeStream:
 
 ```sh
-$ ./typestream local dev
+# Start infrastructure services (Redpanda, Envoy, UI, etc.)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Run the server on your host with hot reload
+./scripts/dev/server.sh
 ```
 
-This starts infrastructure services (Redpanda, Envoy, UI) in Docker. Then in another terminal:
+Edit Kotlin files and watch them auto-reload in ~5 seconds!
+
+To stop services:
 
 ```sh
-$ ./scripts/dev/server.sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
-This runs the TypeStream server on your host with hot reload. Edit Kotlin files and watch them auto-reload in ~5 seconds!
+### Running the Full Stack
 
-To stop dev services: `./typestream local dev stop`
-
-### Common
-
-You can now run:
+To run everything in Docker (including the server):
 
 ```sh
-typestream local start
-typestream local seed
+docker compose up -d
+./scripts/dev/seed.sh
 ```
 
-to start a local TypeStream server and seed it with some sample data. Now you're
+This starts the TypeStream server and seeds it with sample data. Now you're
 ready to start writing your own pipelines!
 
 Check out our [documentation](https://docs.typestream.io/) to learn more about
