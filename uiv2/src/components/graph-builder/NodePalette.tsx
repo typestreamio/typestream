@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSinkConnections, useWeaviateSinkConnections, type Connection, type WeaviateConnection } from '../../hooks/useConnections';
+import { useListOpenAIModels } from '../../hooks/useListOpenAIModels';
 
 interface PaletteItemProps {
   type: string;
@@ -25,10 +26,16 @@ interface PaletteItemProps {
   icon: React.ReactNode;
   data?: Record<string, unknown>;  // Additional data to pass with drag
   onAdd?: (type: string, data?: Record<string, unknown>) => void;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
-function PaletteItem({ type, label, icon, data, onAdd }: PaletteItemProps) {
+function PaletteItem({ type, label, icon, data, onAdd, disabled, disabledReason }: PaletteItemProps) {
   const onDragStart = (event: DragEvent) => {
+    if (disabled) {
+      event.preventDefault();
+      return;
+    }
     // Encode type and any additional data
     const payload = data ? JSON.stringify({ type, ...data }) : type;
     event.dataTransfer.setData('application/reactflow', payload);
@@ -36,6 +43,7 @@ function PaletteItem({ type, label, icon, data, onAdd }: PaletteItemProps) {
   };
 
   const handleClick = () => {
+    if (disabled) return;
     if (onAdd) {
       onAdd(type, data);
     }
@@ -44,26 +52,28 @@ function PaletteItem({ type, label, icon, data, onAdd }: PaletteItemProps) {
   return (
     <Paper
       elevation={1}
-      draggable
+      draggable={!disabled}
       onDragStart={onDragStart}
       onClick={handleClick}
+      title={disabled ? disabledReason : undefined}
       sx={{
         p: 1.5,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: 1,
+        opacity: disabled ? 0.5 : 1,
         '&:hover': {
-          bgcolor: 'action.hover',
+          bgcolor: disabled ? 'transparent' : 'action.hover',
         },
         '&:active': {
-          cursor: 'grabbing',
+          cursor: disabled ? 'not-allowed' : 'grabbing',
         },
       }}
     >
       {icon}
-      <Typography variant="body2" noWrap sx={{ flex: 1 }}>{label}</Typography>
-      <AddIcon fontSize="small" sx={{ color: 'text.secondary', opacity: 0.6 }} />
+      <Typography variant="body2" noWrap sx={{ flex: 1, color: disabled ? 'text.disabled' : 'text.primary' }}>{label}</Typography>
+      {!disabled && <AddIcon fontSize="small" sx={{ color: 'text.secondary', opacity: 0.6 }} />}
     </Paper>
   );
 }
@@ -114,6 +124,8 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   const navigate = useNavigate();
   const { data: connections } = useSinkConnections();
   const { data: weaviateConnections } = useWeaviateSinkConnections();
+  const { data: openAiModels } = useListOpenAIModels();
+  const isOpenAiConfigured = (openAiModels?.models?.length ?? 0) > 0;
 
   return (
     <Paper
@@ -171,6 +183,8 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
         label="OpenAI Transformer"
         icon={<AutoAwesomeIcon fontSize="small" />}
         onAdd={onAddNode}
+        disabled={!isOpenAiConfigured}
+        disabledReason="OPENAI_API_KEY not configured on server"
       />
 
       <Divider sx={{ my: 1 }} />
