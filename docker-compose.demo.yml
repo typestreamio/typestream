@@ -1,0 +1,138 @@
+# TypeStream Demo Deployment
+#
+# Usage:
+#   1. Build server image: ./gradlew :server:jibDockerBuild --image=typestream/server:latest
+#   2. Run: docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+#
+# Access:
+#   - http://localhost (or http://<ip> on server)
+#   - With domain: DOMAIN=demo.typestream.io docker compose ... (auto HTTPS)
+#
+
+volumes:
+  uiv2_node_modules:
+  caddy_data:
+  caddy_config:
+  weaviate_data:
+
+services:
+  # Override server to use locally built image and enable demo mode
+  server:
+    image: typestream/server:latest
+    environment:
+      TYPESTREAM_DEMO_MODE: "true"
+      TYPESTREAM_CONFIG: |-
+        [grpc]
+        port=4242
+        [sources.kafka.local]
+        bootstrapServers="redpanda:9092"
+        schemaRegistry.url="http://redpanda:8081"
+        fsRefreshRate=10
+
+  # React frontend via Vite
+  uiv2:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./uiv2:/app
+      - ./protos:/protos:ro
+      - uiv2_node_modules:/app/node_modules
+    networks:
+      - typestream_network
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
+    depends_on:
+      - envoy
+    environment:
+      # Empty string = same-origin requests (goes through Caddy)
+      - VITE_API_URL=
+
+  # Caddy reverse proxy
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - typestream_network
+    depends_on:
+      - uiv2
+      - envoy
+
+  # Weaviate vector database
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.28.4
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    ports:
+      - "8090:8080"   # REST API (external port 8090 to avoid conflict with envoy)
+      - "50051:50051" # gRPC
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - typestream_network
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      CLUSTER_HOSTNAME: 'node1'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/v1/.well-known/ready || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # Demo data generators
+  demo-data-coinbase:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["coinbase", "--products", "BTC-USD,ETH-USD"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  demo-data-wikipedia:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["wikipedia", "--wikis", "enwiki"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  demo-data-webvisits:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks:
+      - typestream_network
+    command: ["webvisits", "--rate", "5"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
