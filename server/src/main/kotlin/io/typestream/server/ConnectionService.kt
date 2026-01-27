@@ -542,6 +542,8 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         val connection = url.openConnection() as java.net.HttpURLConnection
 
         try {
+            connection.connectTimeout = 10000
+            connection.readTimeout = 30000
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
             connection.doOutput = true
