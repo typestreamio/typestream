@@ -72,8 +72,9 @@ RUN cd /kafka/connect/weaviate-sink/Weaviate-kafka-connect-weaviate-${WEAVIATE_C
     curl -sLO https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/${NETTY_VERSION}/netty-transport-native-unix-common-${NETTY_VERSION}.jar
 
 # Copy connector registration script and custom entrypoint
-COPY register-connector.sh /usr/local/bin/register-connector.sh
-COPY custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
+# Note: Build context is repo root, so prefix with docker/
+COPY docker/register-connector.sh /usr/local/bin/register-connector.sh
+COPY docker/custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
 RUN chmod +x /usr/local/bin/register-connector.sh /usr/local/bin/custom-entrypoint.sh
 
 USER 1001
