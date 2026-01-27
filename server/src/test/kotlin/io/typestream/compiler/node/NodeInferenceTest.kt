@@ -100,6 +100,44 @@ internal class NodeInferenceTest {
     }
 
     @Nested
+    inner class WindowedCountNodeTests {
+        @Test
+        fun `passes through input schema unchanged`() {
+            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 60)
+            val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
+
+            assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
+            assertThat(result.dataStream.path).isEqualTo(sampleDataStream.path)
+            assertThat(result.encoding).isEqualTo(Encoding.AVRO)
+        }
+
+        @Test
+        fun `preserves JSON encoding`() {
+            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 60)
+            val result = node.inferOutputSchema(sampleDataStream, Encoding.JSON, mockContext)
+
+            assertThat(result.encoding).isEqualTo(Encoding.JSON)
+        }
+
+        @Test
+        fun `throws error when input is missing`() {
+            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 60)
+
+            assertThatThrownBy {
+                node.inferOutputSchema(null, null, mockContext)
+            }.hasMessageContaining("windowedCount windowed-count-1 missing input")
+        }
+
+        @Test
+        fun `accepts different window sizes`() {
+            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 300)
+            val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
+
+            assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
+        }
+    }
+
+    @Nested
     inner class ReduceLatestNodeTests {
         @Test
         fun `passes through input schema unchanged`() {

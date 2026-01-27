@@ -34,7 +34,9 @@ import org.apache.kafka.streams.kstream.KGroupedStream
 import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.kstream.TimeWindows
 import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.state.WindowStore
 import java.time.Duration
 
 // TODO we need to support schemas for keys
@@ -208,6 +210,22 @@ data class KafkaStreamSource(
         countStoreName = storeName
         val materialized = Materialized.`as`<DataStream, Long, KeyValueStore<Bytes, ByteArray>>(storeName)
         stream = groupedStream!!.count(materialized).mapValues { v -> DataStream.fromLong("", v) }.toStream()
+    }
+
+    fun windowedCount(storeName: String, windowSize: Duration) {
+        requireNotNull(groupedStream) { "cannot count a non-grouped stream" }
+
+        countStoreName = storeName
+        val timeWindows = TimeWindows.ofSizeWithNoGrace(windowSize)
+
+        val materialized = Materialized.`as`<DataStream, Long, WindowStore<Bytes, ByteArray>>(storeName)
+        stream = groupedStream!!
+            .windowedBy(timeWindows)
+            .count(materialized)
+            .toStream()
+            .map { windowedKey, count ->
+                org.apache.kafka.streams.KeyValue(windowedKey.key(), DataStream.fromLong("", count))
+            }
     }
 
     fun reduceLatest(storeName: String) {

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.flow
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StoreQueryParameters
 import org.apache.kafka.streams.state.QueryableStoreTypes
+import java.time.Instant
 
 /**
  * gRPC service for querying state stores from running Kafka Streams jobs.
@@ -69,22 +70,36 @@ class StateQueryService(private val vm: Vm) :
                 job.getStateStoreNames().forEach { storeName ->
                     try {
                         // Use naming convention to determine store type
-                        val approxCount = if (storeName.contains("reduce")) {
-                            val store = kafkaStreams.store(
-                                StoreQueryParameters.fromNameAndType(
-                                    storeName,
-                                    QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+                        val approxCount = when {
+                            storeName.contains("reduce") -> {
+                                val store = kafkaStreams.store(
+                                    StoreQueryParameters.fromNameAndType(
+                                        storeName,
+                                        QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+                                    )
                                 )
-                            )
-                            store.approximateNumEntries()
-                        } else {
-                            val store = kafkaStreams.store(
-                                StoreQueryParameters.fromNameAndType(
-                                    storeName,
-                                    QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                                store.approximateNumEntries()
+                            }
+                            storeName.contains("windowed") -> {
+                                // WindowStore doesn't support approximateNumEntries, return -1
+                                // The store exists if we can query it
+                                kafkaStreams.store(
+                                    StoreQueryParameters.fromNameAndType(
+                                        storeName,
+                                        QueryableStoreTypes.windowStore<DataStream, Long>()
+                                    )
                                 )
-                            )
-                            store.approximateNumEntries()
+                                -1L
+                            }
+                            else -> {
+                                val store = kafkaStreams.store(
+                                    StoreQueryParameters.fromNameAndType(
+                                        storeName,
+                                        QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                                    )
+                                )
+                                store.approximateNumEntries()
+                            }
                         }
                         stores.add(storeInfo {
                             name = storeName
@@ -138,56 +153,91 @@ class StateQueryService(private val vm: Vm) :
 
         try {
             // Use naming convention to determine store type
-            if (storeName.contains("reduce")) {
-                val store = kafkaStreams.store(
-                    StoreQueryParameters.fromNameAndType(
-                        storeName,
-                        QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+            when {
+                storeName.contains("reduce") -> {
+                    val store = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            storeName,
+                            QueryableStoreTypes.keyValueStore<DataStream, DataStream>()
+                        )
                     )
-                )
 
-                store.all().use { iterator ->
-                    var count = 0
-                    try {
-                        while (iterator.hasNext() && count < limit) {
-                            val kv = iterator.next()
-                            emit(keyValuePair {
-                                // Serialize key using schema's JSON representation
-                                key = kv.key.schema.toJsonElement().toString()
-                                // Value is a DataStream from reduce operations
-                                value = kv.value.schema.toJsonElement().toString()
-                            })
-                            count++
+                    store.all().use { iterator ->
+                        var count = 0
+                        try {
+                            while (iterator.hasNext() && count < limit) {
+                                val kv = iterator.next()
+                                emit(keyValuePair {
+                                    // Serialize key using schema's JSON representation
+                                    key = kv.key.schema.toJsonElement().toString()
+                                    // Value is a DataStream from reduce operations
+                                    value = kv.value.schema.toJsonElement().toString()
+                                })
+                                count++
+                            }
+                        } catch (e: CancellationException) {
+                            logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
+                            throw e
                         }
-                    } catch (e: CancellationException) {
-                        logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
-                        throw e
                     }
                 }
-            } else {
-                val store = kafkaStreams.store(
-                    StoreQueryParameters.fromNameAndType(
-                        storeName,
-                        QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                storeName.contains("windowed") -> {
+                    val store = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            storeName,
+                            QueryableStoreTypes.windowStore<DataStream, Long>()
+                        )
                     )
-                )
 
-                store.all().use { iterator ->
-                    var count = 0
-                    try {
-                        while (iterator.hasNext() && count < limit) {
-                            val kv = iterator.next()
-                            emit(keyValuePair {
-                                // Serialize key using schema's JSON representation
-                                key = kv.key.schema.toJsonElement().toString()
-                                // Value is a Long from count operations
-                                value = kv.value.toString()
-                            })
-                            count++
+                    // Fetch all windows from epoch to far future
+                    val timeFrom = Instant.EPOCH
+                    val timeTo = Instant.now().plusSeconds(86400 * 365) // 1 year in the future
+                    store.fetchAll(timeFrom, timeTo).use { iterator ->
+                        var count = 0
+                        try {
+                            while (iterator.hasNext() && count < limit) {
+                                val kv = iterator.next()
+                                val windowedKey = kv.key
+                                val windowStart = Instant.ofEpochMilli(windowedKey.window().start())
+                                val windowEnd = Instant.ofEpochMilli(windowedKey.window().end())
+                                emit(keyValuePair {
+                                    // Include window info in the key as JSON
+                                    key = """{"key": ${windowedKey.key().schema.toJsonElement()}, "window": {"start": "$windowStart", "end": "$windowEnd"}}"""
+                                    value = kv.value.toString()
+                                })
+                                count++
+                            }
+                        } catch (e: CancellationException) {
+                            logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
+                            throw e
                         }
-                    } catch (e: CancellationException) {
-                        logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
-                        throw e
+                    }
+                }
+                else -> {
+                    val store = kafkaStreams.store(
+                        StoreQueryParameters.fromNameAndType(
+                            storeName,
+                            QueryableStoreTypes.keyValueStore<DataStream, Long>()
+                        )
+                    )
+
+                    store.all().use { iterator ->
+                        var count = 0
+                        try {
+                            while (iterator.hasNext() && count < limit) {
+                                val kv = iterator.next()
+                                emit(keyValuePair {
+                                    // Serialize key using schema's JSON representation
+                                    key = kv.key.schema.toJsonElement().toString()
+                                    // Value is a Long from count operations
+                                    value = kv.value.toString()
+                                })
+                                count++
+                            }
+                        } catch (e: CancellationException) {
+                            logger.debug { "getAllValues flow cancelled for store $storeName after $count entries" }
+                            throw e
+                        }
                     }
                 }
             }

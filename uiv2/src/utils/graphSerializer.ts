@@ -15,6 +15,7 @@ import {
   PredicateProto,
   GroupNode,
   CountNode,
+  WindowedCountNode,
   ReduceLatestNode,
   DbSinkConfig,
   WeaviateSinkConfig,
@@ -225,10 +226,22 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
 
       // Create aggregation node based on type
       if (data.aggregationType === 'count') {
-        pipelineNodes.push(new PipelineNode({
-          id: node.id,
-          nodeType: { case: 'count', value: new CountNode({}) },
-        }));
+        if (data.enableWindowing && data.windowSizeSeconds) {
+          // Windowed count
+          pipelineNodes.push(new PipelineNode({
+            id: node.id,
+            nodeType: {
+              case: 'windowedCount',
+              value: new WindowedCountNode({ windowSizeSeconds: BigInt(data.windowSizeSeconds) }),
+            },
+          }));
+        } else {
+          // Regular count
+          pipelineNodes.push(new PipelineNode({
+            id: node.id,
+            nodeType: { case: 'count', value: new CountNode({}) },
+          }));
+        }
       } else {
         pipelineNodes.push(new PipelineNode({
           id: node.id,

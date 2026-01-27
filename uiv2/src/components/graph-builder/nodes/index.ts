@@ -78,6 +78,8 @@ export interface InspectorNodeData extends Record<string, unknown>, NodeValidati
 export interface MaterializedViewNodeData extends Record<string, unknown>, NodeValidationState {
   aggregationType: AggregationType;
   groupByField: string;
+  enableWindowing?: boolean;
+  windowSizeSeconds?: number;
 }
 
 

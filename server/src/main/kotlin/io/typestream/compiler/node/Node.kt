@@ -40,6 +40,18 @@ sealed interface Node {
     }
 
     @Serializable
+    data class WindowedCount(override val id: String, val windowSizeSeconds: Long) : Node {
+        override fun inferOutputSchema(
+            input: DataStream?,
+            inputEncoding: Encoding?,
+            context: InferenceContext
+        ): InferenceResult {
+            val stream = input ?: error("windowedCount $id missing input")
+            return InferenceResult(stream, inputEncoding ?: Encoding.AVRO)
+        }
+    }
+
+    @Serializable
     data class Filter(override val id: String, val byKey: Boolean, val predicate: Predicate) : Node {
         override fun inferOutputSchema(
             input: DataStream?,

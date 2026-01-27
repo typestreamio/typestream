@@ -622,4 +622,156 @@ internal class PreviewJobIntegrationTest {
             stub.stopPreviewJob(Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build())
         }
     }
+
+    @Test
+    fun `windowed count aggregates records within time window`(): Unit = runBlocking {
+        app.use {
+            val topic = TestKafka.uniqueTopic("books")
+            // Produce multiple records with same title to test aggregation
+            val testBooks = listOf(
+                Book(title = "Dune", wordCount = 100, authorId = UUID.randomUUID().toString()),
+                Book(title = "Dune", wordCount = 150, authorId = UUID.randomUUID().toString()),
+                Book(title = "Dune", wordCount = 200, authorId = UUID.randomUUID().toString()),
+                Book(title = "Foundation", wordCount = 300, authorId = UUID.randomUUID().toString()),
+                Book(title = "Foundation", wordCount = 350, authorId = UUID.randomUUID().toString())
+            )
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> Group(title) -> WindowedCount -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val groupNode = Job.PipelineNode.newBuilder()
+                .setId("group")
+                .setGroup(
+                    Job.GroupNode.newBuilder()
+                        .setKeyMapperExpr(".title")
+                )
+                .build()
+
+            val windowedCountNode = Job.PipelineNode.newBuilder()
+                .setId("windowed-count")
+                .setWindowedCount(
+                    Job.WindowedCountNode.newBuilder()
+                        .setWindowSizeSeconds(60) // 1-minute windows
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("windowed-count-output"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(groupNode)
+                .addNodes(windowedCountNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("group"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("group").setToId("windowed-count"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("windowed-count").setToId("inspector-node-1"))
+                .build()
+
+            // Create preview job
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            println("CreatePreviewJob (windowed count) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
+
+            assertThat(createResponse.success).isTrue()
+            assertThat(createResponse.jobId).isNotEmpty()
+
+            val jobId = createResponse.jobId
+
+            // Wait for Kafka Streams to start processing
+            delay(3000)
+
+            // Stream preview data
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            println("Starting streamPreview for windowed count jobId=$jobId")
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received windowed count message: key=${response.key}, value=${response.value}")
+                    receivedMessages.add(response)
+                    // Windowed counts emit updates as records arrive, expect at least 2 groups (Dune, Foundation)
+                    if (receivedMessages.size >= 2) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    println("Stream completed with ${receivedMessages.size} windowed count messages")
+                    latch.countDown()
+                }
+            })
+
+            // Wait for messages or timeout
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            println("Latch result: received=$received, messageCount=${receivedMessages.size}, error=$streamError")
+
+            // Stop preview job
+            val stopRequest = Job.StopPreviewJobRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+            blockingStub.stopPreviewJob(stopRequest)
+
+            // Assertions
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+
+            // Verify we received windowed count output
+            // The output should contain count information for the grouped keys
+            val allValues = receivedMessages.map { it.value }
+            val allKeys = receivedMessages.map { it.key }
+
+            println("All keys: $allKeys")
+            println("All values: $allValues")
+
+            // Keys should contain the group keys (title)
+            assertThat(allKeys.any { it.contains("Dune") || it.contains("Foundation") }).isTrue()
+
+            // Values should contain count data
+            assertThat(allValues).isNotEmpty()
+        }
+    }
 }

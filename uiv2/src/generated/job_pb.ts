@@ -343,6 +343,45 @@ export class CountNode extends Message<CountNode> {
 }
 
 /**
+ * @generated from message io.typestream.grpc.WindowedCountNode
+ */
+export class WindowedCountNode extends Message<WindowedCountNode> {
+  /**
+   * e.g., 60 for 1-minute windows
+   *
+   * @generated from field: int64 window_size_seconds = 1;
+   */
+  windowSizeSeconds = protoInt64.zero;
+
+  constructor(data?: PartialMessage<WindowedCountNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.WindowedCountNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "window_size_seconds", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WindowedCountNode {
+    return new WindowedCountNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WindowedCountNode {
+    return new WindowedCountNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WindowedCountNode {
+    return new WindowedCountNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WindowedCountNode | PlainMessage<WindowedCountNode> | undefined, b: WindowedCountNode | PlainMessage<WindowedCountNode> | undefined): boolean {
+    return proto3.util.equals(WindowedCountNode, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.FilterNode
  */
 export class FilterNode extends Message<FilterNode> {
@@ -1083,6 +1122,12 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: OpenAiTransformerNode;
     case: "openAiTransformer";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.WindowedCountNode windowed_count = 18;
+     */
+    value: WindowedCountNode;
+    case: "windowedCount";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -1110,6 +1155,7 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 15, name: "text_extractor", kind: "message", T: TextExtractorNode, oneof: "node_type" },
     { no: 16, name: "embedding_generator", kind: "message", T: EmbeddingGeneratorNode, oneof: "node_type" },
     { no: 17, name: "open_ai_transformer", kind: "message", T: OpenAiTransformerNode, oneof: "node_type" },
+    { no: 18, name: "windowed_count", kind: "message", T: WindowedCountNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {
