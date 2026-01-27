@@ -131,8 +131,9 @@ sealed interface Node {
             context: InferenceContext
         ): InferenceResult {
             // StreamSource has pre-resolved dataStream and encoding
-            // If unwrapCdc is true, the dataStream should already be unwrapped
-            return InferenceResult(dataStream, encoding)
+            // If unwrapCdc is true, extract 'after' payload from CDC envelope
+            val outputStream = if (unwrapCdc) dataStream.unwrapCdc() else dataStream
+            return InferenceResult(outputStream, encoding)
         }
     }
 

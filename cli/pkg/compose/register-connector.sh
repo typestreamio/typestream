@@ -32,7 +32,7 @@ curl -X POST "${CONNECT_URL}/connectors" \
       "database.dbname": "demo",
       "topic.prefix": "dbserver",
       "schema.include.list": "public",
-      "table.include.list": "public.users,public.orders",
+      "table.include.list": "public.users,public.orders,public.file_uploads",
       "plugin.name": "pgoutput",
       "slot.name": "typestream_slot",
       "publication.name": "typestream_pub",

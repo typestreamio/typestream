@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSinkConnections, useWeaviateSinkConnections, type Connection, type WeaviateConnection } from '../../hooks/useConnections';
+import { usePostgresTables } from '../../hooks/usePostgresTables';
 import { useListOpenAIModels } from '../../hooks/useListOpenAIModels';
 
 interface PaletteItemProps {
@@ -95,6 +96,21 @@ function ConnectionSinkItem({ connection, onAdd }: { connection: Connection; onA
   );
 }
 
+function PostgresSourceItem({ connection, onAdd }: { connection: Connection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
+  return (
+    <PaletteItem
+      type="postgresSource"
+      label={connection.name}
+      icon={<StorageIcon fontSize="small" color="primary" />}
+      data={{
+        connectionId: connection.id,
+        connectionName: connection.name,
+      }}
+      onAdd={onAdd}
+    />
+  );
+}
+
 function WeaviateSinkItem({ connection, onAdd }: { connection: WeaviateConnection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
   return (
     <PaletteItem
@@ -124,8 +140,11 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   const navigate = useNavigate();
   const { data: connections } = useSinkConnections();
   const { data: weaviateConnections } = useWeaviateSinkConnections();
+  const { postgresConnections, tables: postgresTables } = usePostgresTables();
   const { data: openAiModels } = useListOpenAIModels();
   const isOpenAiConfigured = (openAiModels?.models?.length ?? 0) > 0;
+  // Only show Postgres connections as sources if there are Debezium tables available
+  const hasPostgresSources = postgresConnections.length > 0 && postgresTables.length > 0;
 
   return (
     <Paper
@@ -148,6 +167,9 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
         icon={<InputIcon fontSize="small" />}
         onAdd={onAddNode}
       />
+      {hasPostgresSources && postgresConnections.map((conn) => (
+        <PostgresSourceItem key={conn.id} connection={conn} onAdd={onAddNode} />
+      ))}
 
       <Divider sx={{ my: 1 }} />
 

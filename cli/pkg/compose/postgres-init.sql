@@ -16,6 +16,17 @@ CREATE TABLE orders (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- File uploads table for CDC demo
+-- The demo-data connector writes to this table, and Debezium captures changes to Kafka
+CREATE TABLE file_uploads (
+    id VARCHAR(36) PRIMARY KEY,
+    file_path VARCHAR(512) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    uploaded_by VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Insert sample data
 INSERT INTO users (email, name) VALUES
     ('alice@example.com', 'Alice'),

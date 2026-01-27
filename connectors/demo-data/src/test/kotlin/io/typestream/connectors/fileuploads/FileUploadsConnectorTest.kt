@@ -1,83 +1,149 @@
 package io.typestream.connectors.fileuploads
 
-import io.typestream.connectors.avro.FileUpload
-import io.typestream.connectors.kafka.MessageSender
-import org.apache.avro.specific.SpecificRecord
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.File
 import java.nio.file.Path
-import java.util.concurrent.CopyOnWriteArrayList
+import java.sql.DriverManager
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@Timeout(10, unit = TimeUnit.SECONDS)
+@Testcontainers
+@Timeout(60, unit = TimeUnit.SECONDS)
 internal class FileUploadsConnectorTest {
 
-    @Test
-    fun `generates file uploads with valid fields`(@TempDir tempDir: Path) {
-        val receivedMessages = CopyOnWriteArrayList<Pair<String, FileUpload>>()
-        val messageLatch = CountDownLatch(5)
+    companion object {
+        @Container
+        @JvmStatic
+        val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16")
+            .withDatabaseName("demo")
+            .withUsername("typestream")
+            .withPassword("typestream")
 
-        val mockSender = object : MessageSender {
-            override fun send(key: String, value: SpecificRecord) {
-                if (messageLatch.count > 0) {
-                    receivedMessages.add(key to value as FileUpload)
-                    messageLatch.countDown()
+        @JvmStatic
+        @BeforeAll
+        fun setupSchema() {
+            DriverManager.getConnection(
+                postgres.jdbcUrl,
+                postgres.username,
+                postgres.password
+            ).use { conn ->
+                conn.createStatement().use { stmt ->
+                    stmt.execute("""
+                        CREATE TABLE file_uploads (
+                            id VARCHAR(36) PRIMARY KEY,
+                            file_path VARCHAR(512) NOT NULL,
+                            file_name VARCHAR(255) NOT NULL,
+                            content_type VARCHAR(100) NOT NULL,
+                            uploaded_by VARCHAR(255) NOT NULL,
+                            created_at TIMESTAMP DEFAULT NOW()
+                        )
+                    """.trimIndent())
                 }
             }
-            override fun close() {}
         }
+
+        @JvmStatic
+        @AfterAll
+        fun cleanup() {
+            // Container cleanup handled by Testcontainers
+        }
+    }
+
+    private fun createConnectionProvider(): ConnectionProvider {
+        return ConnectionProvider {
+            DriverManager.getConnection(
+                postgres.jdbcUrl,
+                postgres.username,
+                postgres.password
+            )
+        }
+    }
+
+    private fun countRecords(): Int {
+        return DriverManager.getConnection(
+            postgres.jdbcUrl,
+            postgres.username,
+            postgres.password
+        ).use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery("SELECT COUNT(*) FROM file_uploads").use { rs ->
+                    rs.next()
+                    rs.getInt(1)
+                }
+            }
+        }
+    }
+
+    private fun clearTable() {
+        DriverManager.getConnection(
+            postgres.jdbcUrl,
+            postgres.username,
+            postgres.password
+        ).use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.execute("DELETE FROM file_uploads")
+            }
+        }
+    }
+
+    @Test
+    fun `inserts file uploads into PostgreSQL with valid fields`(@TempDir tempDir: Path) {
+        clearTable()
 
         val connector = FileUploadsConnector(
             outputDir = tempDir.toString(),
             ratePerSecond = 100.0,  // Fast for testing
-            sender = mockSender
+            maxMessages = 5,
+            connectionProvider = createConnectionProvider()
         )
         connector.start()
-
-        val received = messageLatch.await(5, TimeUnit.SECONDS)
+        connector.awaitTermination()
         connector.close()
 
-        assertThat(received).withFailMessage("Did not receive 5 messages within timeout").isTrue()
-        assertThat(receivedMessages).hasSize(5)
+        val count = countRecords()
+        assertThat(count).isEqualTo(5)
 
-        receivedMessages.forEach { (key, upload) ->
-            // Key should be upload ID
-            assertThat(key).isEqualTo(upload.id)
-
-            // Validate all fields
-            assertThat(upload.id).isNotBlank()
-            assertThat(upload.filePath).startsWith(tempDir.toString())
-            assertThat(upload.fileName).isNotBlank()
-            assertThat(upload.contentType).isEqualTo("text/plain")
-            assertThat(upload.uploadedBy).contains("@")
-            assertThat(upload.timestamp).isNotNull()
+        // Verify records have valid data
+        DriverManager.getConnection(
+            postgres.jdbcUrl,
+            postgres.username,
+            postgres.password
+        ).use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery("SELECT * FROM file_uploads").use { rs ->
+                    while (rs.next()) {
+                        assertThat(rs.getString("id")).isNotBlank()
+                        assertThat(rs.getString("file_path")).startsWith(tempDir.toString())
+                        assertThat(rs.getString("file_name")).isNotBlank()
+                        assertThat(rs.getString("content_type")).isEqualTo("text/plain")
+                        assertThat(rs.getString("uploaded_by")).contains("@")
+                        assertThat(rs.getTimestamp("created_at")).isNotNull()
+                    }
+                }
+            }
         }
     }
 
     @Test
     fun `creates sample files in output directory`(@TempDir tempDir: Path) {
-        val messageLatch = CountDownLatch(1)
-
-        val mockSender = object : MessageSender {
-            override fun send(key: String, value: SpecificRecord) {
-                messageLatch.countDown()
-            }
-            override fun close() {}
-        }
+        clearTable()
 
         val connector = FileUploadsConnector(
             outputDir = tempDir.toString(),
             ratePerSecond = 100.0,
-            sender = mockSender
+            maxMessages = 1,
+            connectionProvider = createConnectionProvider()
         )
         connector.start()
-
-        // Wait for at least one message to ensure files are created
-        messageLatch.await(5, TimeUnit.SECONDS)
+        connector.awaitTermination()
         connector.close()
 
         // Verify sample files were created
@@ -96,34 +162,54 @@ internal class FileUploadsConnectorTest {
     }
 
     @Test
-    fun `references existing files in messages`(@TempDir tempDir: Path) {
-        val receivedMessages = CopyOnWriteArrayList<FileUpload>()
-        val messageLatch = CountDownLatch(10)
-
-        val mockSender = object : MessageSender {
-            override fun send(key: String, value: SpecificRecord) {
-                receivedMessages.add(value as FileUpload)
-                messageLatch.countDown()
-            }
-            override fun close() {}
-        }
+    fun `references existing files in database records`(@TempDir tempDir: Path) {
+        clearTable()
 
         val connector = FileUploadsConnector(
             outputDir = tempDir.toString(),
             ratePerSecond = 100.0,
-            sender = mockSender
+            maxMessages = 10,
+            connectionProvider = createConnectionProvider()
         )
         connector.start()
-
-        val received = messageLatch.await(5, TimeUnit.SECONDS)
+        connector.awaitTermination()
         connector.close()
 
-        assertThat(received).isTrue()
-
         // All file paths should reference actual files
-        receivedMessages.forEach { upload ->
-            val file = File(upload.filePath)
-            assertThat(file.exists()).withFailMessage("File should exist: ${upload.filePath}").isTrue()
+        DriverManager.getConnection(
+            postgres.jdbcUrl,
+            postgres.username,
+            postgres.password
+        ).use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery("SELECT file_path FROM file_uploads").use { rs ->
+                    while (rs.next()) {
+                        val filePath = rs.getString("file_path")
+                        val file = File(filePath)
+                        assertThat(file.exists())
+                            .withFailMessage("File should exist: $filePath")
+                            .isTrue()
+                    }
+                }
+            }
         }
+    }
+
+    @Test
+    fun `stops after max messages reached`(@TempDir tempDir: Path) {
+        clearTable()
+
+        val connector = FileUploadsConnector(
+            outputDir = tempDir.toString(),
+            ratePerSecond = 100.0,
+            maxMessages = 3,
+            connectionProvider = createConnectionProvider()
+        )
+        connector.start()
+        connector.awaitTermination()
+        connector.close()
+
+        val count = countRecords()
+        assertThat(count).isEqualTo(3)
     }
 }

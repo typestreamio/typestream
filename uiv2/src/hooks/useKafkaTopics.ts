@@ -12,8 +12,16 @@ const INTERNAL_TOPIC_PATTERNS = [
   /^_schemas$/,       // Schema Registry topic
 ];
 
+// Debezium topics follow the pattern: {prefix}.{schema}.{table}
+// e.g., "dbserver.public.orders" or "debezium.inventory.products"
+const DEBEZIUM_TOPIC_PATTERN = /^[a-z0-9_-]+\.[a-z0-9_]+\.[a-z0-9_]+$/i;
+
 function isInternalTopic(name: string): boolean {
   return INTERNAL_TOPIC_PATTERNS.some((pattern) => pattern.test(name));
+}
+
+function isDebeziumTopic(name: string): boolean {
+  return DEBEZIUM_TOPIC_PATTERN.test(name);
 }
 
 export function useKafkaTopics(userId: string = 'local') {
@@ -23,10 +31,14 @@ export function useKafkaTopics(userId: string = 'local') {
   );
 
   const allTopics: FileInfo[] = query.data?.files ?? [];
-  const topics = allTopics.filter((topic) => !isInternalTopic(topic.name));
+  // Filter out internal topics and Debezium topics (shown separately as Postgres tables)
+  const topics = allTopics.filter((topic) => !isInternalTopic(topic.name) && !isDebeziumTopic(topic.name));
+  // Export Debezium topics for use by Postgres source
+  const debeziumTopics = allTopics.filter((topic) => isDebeziumTopic(topic.name));
 
   return {
     ...query,
     topics,
+    debeziumTopics,
   };
 }

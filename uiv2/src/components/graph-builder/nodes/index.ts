@@ -1,5 +1,6 @@
 import type { Node, NodeTypes } from '@xyflow/react';
 import { KafkaSourceNode, kafkaSourceRole } from './KafkaSourceNode';
+import { PostgresSourceNode, postgresSourceRole } from './PostgresSourceNode';
 import { KafkaSinkNode, kafkaSinkRole } from './KafkaSinkNode';
 import { GeoIpNode, geoIpRole } from './GeoIpNode';
 import { InspectorNode, inspectorRole } from './InspectorNode';
@@ -51,6 +52,14 @@ export function isTypeCompatible(fieldType: string, required: FieldTypeCategory)
 export interface KafkaSourceNodeData extends Record<string, unknown>, NodeValidationState {
   topicPath: string;
   unwrapCdc?: boolean;  // Extract 'after' payload from CDC envelope
+}
+
+export interface PostgresSourceNodeData extends Record<string, unknown>, NodeValidationState {
+  connectionId: string;        // Reference to the connection
+  connectionName: string;      // Display name
+  topicPath: string;           // Full path to the Debezium topic
+  tableName: string;           // Table name (extracted from topic)
+  schemaName: string;          // Schema name (extracted from topic)
 }
 
 export interface KafkaSinkNodeData extends Record<string, unknown>, NodeValidationState {
@@ -118,6 +127,7 @@ export interface FilterNodeData extends Record<string, unknown>, NodeValidationS
 }
 
 export type KafkaSourceNodeType = Node<KafkaSourceNodeData, 'kafkaSource'>;
+export type PostgresSourceNodeType = Node<PostgresSourceNodeData, 'postgresSource'>;
 export type KafkaSinkNodeType = Node<KafkaSinkNodeData, 'kafkaSink'>;
 export type GeoIpNodeType = Node<GeoIpNodeData, 'geoIp'>;
 export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
@@ -129,10 +139,11 @@ export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embed
 export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
 export type FilterNodeType = Node<FilterNodeData, 'filter'>;
 
-export type AppNode = KafkaSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType | FilterNodeType;
+export type AppNode = KafkaSourceNodeType | PostgresSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType | FilterNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
+  postgresSource: PostgresSourceNode,
   kafkaSink: KafkaSinkNode,
   geoIp: GeoIpNode,
   inspector: InspectorNode,
@@ -150,6 +161,7 @@ export type NodeRole = 'source' | 'transform' | 'sink';
 
 const nodeRoles: Record<string, NodeRole> = {
   kafkaSource: kafkaSourceRole,
+  postgresSource: postgresSourceRole,
   kafkaSink: kafkaSinkRole,
   geoIp: geoIpRole,
   inspector: inspectorRole,

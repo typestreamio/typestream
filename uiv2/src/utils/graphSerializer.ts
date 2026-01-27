@@ -19,7 +19,7 @@ import {
   DbSinkConfig,
   WeaviateSinkConfig,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, PostgresSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
 
 /**
  * Result of serializing a graph with sink connectors
@@ -79,6 +79,22 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
             dataStream: new DataStreamProto({ path: data.topicPath }),
             // Encoding is auto-detected from Schema Registry by the backend
             unwrapCdc: data.unwrapCdc ?? false,
+          }),
+        },
+      }));
+      return;
+    }
+
+    if (node.type === 'postgresSource') {
+      const data = node.data as PostgresSourceNodeData;
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'streamSource',
+          value: new StreamSourceNode({
+            dataStream: new DataStreamProto({ path: data.topicPath }),
+            // Postgres source always unwraps CDC to present clean table data
+            unwrapCdc: true,
           }),
         },
       }));

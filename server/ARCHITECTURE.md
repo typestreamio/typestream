@@ -221,7 +221,7 @@ Debezium Topic (CDC envelope)
         ↓
 StreamSource(unwrapCdc=true)
         ↓
-[GraphCompiler.unwrapCdcDataStream()]
+[StreamSource.inferOutputSchema() → DataStream.unwrapCdc()]
   ├── Detects CDC envelope (before/after/source/op fields)
   ├── Extracts schema from "after" field
   └── Returns DataStream with unwrapped schema
@@ -233,8 +233,8 @@ Downstream nodes receive flattened records
 
 | File | Function |
 |------|----------|
-| `GraphCompiler.kt:unwrapCdcDataStream()` | Schema extraction from CDC envelope |
-| `Node.kt:StreamSource.unwrapCdc` | Boolean flag to enable unwrapping |
+| `DataStream.kt:unwrapCdc()` | Schema extraction from CDC envelope |
+| `Node.kt:StreamSource.inferOutputSchema()` | Calls unwrapCdc() when flag is set |
 | `AvroExt.kt` | Preserves null values for before/after fields |
 
 ### Proto Definition

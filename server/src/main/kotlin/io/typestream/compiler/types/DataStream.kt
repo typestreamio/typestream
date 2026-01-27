@@ -65,4 +65,31 @@ data class DataStream(
             else -> fieldValue.value?.toString()
         }
     }
+
+    /**
+     * Unwrap CDC envelope schema by extracting 'after' struct fields as top-level.
+     * CDC envelopes have: before, after, source, op, ts_ms (and optionally ts_us, ts_ns, transaction)
+     * @return A new DataStream with the unwrapped schema, or this if not a CDC envelope
+     */
+    fun unwrapCdc(): DataStream {
+        if (schema !is Schema.Struct) return this
+
+        val fieldNames = schema.value.map { it.name }.toSet()
+        val isCdcEnvelope = fieldNames.containsAll(setOf("before", "after", "source", "op"))
+
+        if (!isCdcEnvelope) return this
+
+        // Find the 'after' field and extract its struct
+        val afterField = schema.value.find { it.name == "after" }
+        val afterValue = afterField?.value
+
+        // Handle both direct Struct and Optional<Struct> (nullable in Avro)
+        val unwrappedSchema = when (afterValue) {
+            is Schema.Struct -> afterValue
+            is Schema.Optional -> afterValue.value as? Schema.Struct
+            else -> null
+        } ?: return this
+
+        return DataStream(path, unwrappedSchema)
+    }
 }
