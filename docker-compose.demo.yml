@@ -14,6 +14,7 @@ volumes:
   caddy_data:
   caddy_config:
   weaviate_data:
+  demo_files:  # Shared volume for demo file uploads
 
 services:
   # Override server to use locally built image and enable demo mode
@@ -21,6 +22,11 @@ services:
     image: typestream/server:latest
     environment:
       TYPESTREAM_DEMO_MODE: "true"
+      # Docker hostnames for connection health checks (server runs in Docker)
+      TYPESTREAM_POSTGRES_HOST: postgres
+      TYPESTREAM_WEAVIATE_REST_URL: http://weaviate:8080
+      TYPESTREAM_WEAVIATE_GRPC_URL: weaviate:50051
+      KAFKA_CONNECT_URL: http://kafka-connect:8083
       TYPESTREAM_CONFIG: |-
         [grpc]
         port=4242
@@ -28,6 +34,11 @@ services:
         bootstrapServers="redpanda:9092"
         schemaRegistry.url="http://redpanda:8081"
         fsRefreshRate=10
+    volumes:
+      - demo_files:/tmp/typestream-files:ro  # Read sample files for TextExtractor
+    depends_on:
+      weaviate:
+        condition: service_healthy
 
   # React frontend via Vite
   uiv2:
@@ -45,6 +56,13 @@ services:
     environment:
       # Empty string = same-origin requests (goes through Caddy)
       - VITE_API_URL=
+      # Direct IP for gRPC since Cloudflare blocks non-HTTP on port 8080
+      - VITE_GRPC_HOST=${GRPC_HOST:-}
+
+  # Expose envoy for remote gRPC access
+  envoy:
+    ports:
+      - "8080:8080"
 
   # Caddy reverse proxy
   caddy:
@@ -135,4 +153,26 @@ services:
     command: ["webvisits", "--rate", "5"]
     depends_on:
       redpanda:
+        condition: service_healthy
+
+  # File uploads connector - writes to PostgreSQL, Debezium captures to Kafka
+  # This demonstrates CDC (Change Data Capture) without users needing to know Debezium
+  demo-data-fileuploads:
+    build:
+      context: .
+      dockerfile: connectors/demo-data/Dockerfile
+    environment:
+      # PostgreSQL connection (Debezium captures changes to Kafka)
+      POSTGRES_JDBC_URL: jdbc:postgresql://postgres:5432/demo
+      POSTGRES_USER: typestream
+      POSTGRES_PASSWORD: typestream
+    volumes:
+      - demo_files:/tmp/typestream-files  # Creates sample files for TextExtractor
+    networks:
+      - typestream_network
+    command: ["fileuploads", "--rate", "0.5"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-connect:
         condition: service_healthy
