@@ -626,6 +626,7 @@ internal class PreviewJobIntegrationTest {
     @Test
     fun `windowed count aggregates records within time window`(): Unit = runBlocking {
         app.use {
+            val topic = TestKafka.uniqueTopic("books")
             // Produce multiple records with same title to test aggregation
             val testBooks = listOf(
                 Book(title = "Dune", wordCount = 100, authorId = UUID.randomUUID().toString()),
@@ -634,7 +635,7 @@ internal class PreviewJobIntegrationTest {
                 Book(title = "Foundation", wordCount = 300, authorId = UUID.randomUUID().toString()),
                 Book(title = "Foundation", wordCount = 350, authorId = UUID.randomUUID().toString())
             )
-            testKafka.produceRecords("books", "avro", *testBooks.toTypedArray())
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
 
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {

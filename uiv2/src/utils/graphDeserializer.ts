@@ -39,6 +39,8 @@ function getNodeLabel(pipelineNode: PipelineNode): string {
       return `Group: ${nodeType.value.keyMapperExpr}`;
     case 'count':
       return 'Count';
+    case 'windowedCount':
+      return `Windowed Count (${nodeType.value.windowSizeSeconds}s)`;
     case 'reduceLatest':
       return 'Reduce Latest';
     case 'join':
