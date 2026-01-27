@@ -167,6 +167,9 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
         icon={<InputIcon fontSize="small" />}
         onAdd={onAddNode}
       />
+      {hasPostgresSources && postgresConnections.map((conn) => (
+        <PostgresSourceItem key={conn.id} connection={conn} onAdd={onAddNode} />
+      ))}
 
       <Divider sx={{ my: 1 }} />
 
@@ -229,19 +232,6 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
         icon={<TableChartIcon fontSize="small" />}
         onAdd={onAddNode}
       />
-
-      {hasPostgresSources && (
-        <>
-          <Divider sx={{ my: 1 }} />
-
-          <Typography variant="subtitle2" color="text.secondary">
-            Database Sources
-          </Typography>
-          {postgresConnections.map((conn) => (
-            <PostgresSourceItem key={conn.id} connection={conn} onAdd={onAddNode} />
-          ))}
-        </>
-      )}
 
       <Divider sx={{ my: 1 }} />
 
