@@ -427,4 +427,91 @@ internal class StateQueryServiceTest {
             jobStub.stopPreviewJob(Job.StopPreviewJobRequest.newBuilder().setJobId(jobResponse.jobId).build())
         }
     }
+
+    @Test
+    fun `listStores returns windowed count stores from regular jobs created via createJobFromGraph`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            // Produce records
+            testKafka.produceRecords(
+                topic,
+                "avro",
+                Book(title = "Dune", wordCount = 300, authorId = UUID.randomUUID().toString()),
+                Book(title = "Dune", wordCount = 250, authorId = UUID.randomUUID().toString()),
+                Book(title = "Foundation", wordCount = 200, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val jobStub = JobServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            // Create a regular job (NOT preview) with windowed count via createJobFromGraph
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val groupNode = Job.PipelineNode.newBuilder()
+                .setId("group")
+                .setGroup(Job.GroupNode.newBuilder().setKeyMapperExpr(".title"))
+                .build()
+
+            val windowedCountNode = Job.PipelineNode.newBuilder()
+                .setId("windowed-count")
+                .setWindowedCount(Job.WindowedCountNode.newBuilder().setWindowSizeSeconds(60))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(groupNode)
+                .addNodes(windowedCountNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("group"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("group").setToId("windowed-count"))
+                .build()
+
+            // Use createJobFromGraph (not createPreviewJob)
+            val createRequest = Job.CreateJobFromGraphRequest.newBuilder()
+                .setUserId("test-user")
+                .setGraph(graph)
+                .build()
+
+            val jobResponse = jobStub.createJobFromGraph(createRequest)
+            assertThat(jobResponse.success).isTrue()
+            assertThat(jobResponse.jobId).isNotEmpty()
+
+            val stateQueryStub = StateQueryServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            // Wait for job to process records
+            Thread.sleep(7000)
+
+            // Get store names - should include windowed count store
+            val listResponse = stateQueryStub.listStores(StateQuery.ListStoresRequest.getDefaultInstance())
+
+            // Verify we get at least one store with "windowed" in the name
+            val windowedStores = listResponse.storesList.filter { it.name.contains("windowed") }
+            println("Found windowed stores: ${windowedStores.map { it.name }}")
+            println("All stores: ${listResponse.storesList.map { it.name }}")
+            assertThat(windowedStores).isNotEmpty()
+
+            // Verify the store belongs to our job
+            val ourJobStore = windowedStores.find { it.jobId == jobResponse.jobId }
+            assertThat(ourJobStore).isNotNull()
+        }
+    }
 }
