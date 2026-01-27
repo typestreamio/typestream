@@ -9,7 +9,7 @@ volumes:
 
 services:
   redpanda:
-    image: docker.redpanda.com/redpandadata/redpanda:v24.2.9
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.18
     command:
       - redpanda start
       - --smp 1
@@ -58,7 +58,7 @@ services:
         condition: service_healthy
 
   envoy:
-    image: envoyproxy/envoy:v1.28-latest
+    image: envoyproxy/envoy:v1.37-latest
     volumes:
       - ./docker/envoy.yaml:/etc/envoy/envoy.yaml
     ports:

@@ -1,4 +1,4 @@
-FROM quay.io/debezium/connect:3.4
+FROM quay.io/debezium/connect:3.5
 
 # Debezium 3.4 includes:
 # - PostgresConnector for CDC

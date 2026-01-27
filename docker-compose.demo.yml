@@ -84,7 +84,7 @@ services:
 
   # Weaviate vector database
   weaviate:
-    image: cr.weaviate.io/semitechnologies/weaviate:1.28.4
+    image: cr.weaviate.io/semitechnologies/weaviate:1.35.4
     command:
       - --host
       - 0.0.0.0

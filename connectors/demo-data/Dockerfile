@@ -20,7 +20,7 @@ COPY connectors/demo-data/src/ connectors/demo-data/src/
 # Build the application
 RUN gradle :connectors:demo-data:shadowJar --no-daemon
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21.0.9_10-jre
 WORKDIR /app
 COPY --from=build /app/connectors/demo-data/build/libs/*-all.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
