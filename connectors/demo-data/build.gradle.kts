@@ -34,6 +34,11 @@ dependencies {
 
     // PostgreSQL JDBC driver for file uploads connector
     implementation("org.postgresql:postgresql:42.7.4")
+
+    // Test dependencies
+    testImplementation("org.testcontainers:testcontainers:1.20.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    testImplementation("org.testcontainers:postgresql:1.20.4")
 }
 
 avro {
