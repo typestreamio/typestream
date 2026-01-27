@@ -216,7 +216,7 @@ data class KafkaStreamSource(
         requireNotNull(groupedStream) { "cannot count a non-grouped stream" }
 
         countStoreName = storeName
-        val timeWindows = TimeWindows.ofSizeWithNoGrace(windowSize)
+        val timeWindows = TimeWindows.ofSizeAndGrace(windowSize, Duration.ofSeconds(30))
 
         val materialized = Materialized.`as`<DataStream, Long, WindowStore<Bytes, ByteArray>>(storeName)
         stream = groupedStream!!
