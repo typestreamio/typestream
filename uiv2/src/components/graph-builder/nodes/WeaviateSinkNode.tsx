@@ -90,6 +90,9 @@ export const WeaviateSinkNode = memo(function WeaviateSinkNode({ id, data }: Nod
           placeholder="Documents"
           className="nodrag nowheel"
           sx={{ mb: 1 }}
+          required
+          error={!data.collectionName || data.collectionName.trim().length === 0}
+          helperText={!data.collectionName || data.collectionName.trim().length === 0 ? 'Collection name is required' : undefined}
         />
         <TextField
           fullWidth
