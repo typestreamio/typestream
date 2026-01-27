@@ -128,11 +128,12 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      * Register the default dev postgres connection on startup
      */
     private fun registerDevPostgresConnection() {
+        val hostname = System.getenv("TYPESTREAM_POSTGRES_HOST") ?: "localhost"
         val devConfig = Connection.DatabaseConnectionConfig.newBuilder()
             .setId("dev-postgres")
             .setName("dev-postgres")
             .setDatabaseType(DatabaseType.POSTGRES)
-            .setHostname("localhost")              // For server health checks
+            .setHostname(hostname)                // For server health checks (configurable via TYPESTREAM_POSTGRES_HOST)
             .setConnectorHostname("postgres")     // For Kafka Connect (Docker network)
             .setPort(5432)
             .setDatabase("demo")
@@ -140,7 +141,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             .setPassword("typestream")
             .build()
 
-        logger.info { "Registering default dev-postgres connection (localhost)" }
+        logger.info { "Registering default dev-postgres connection (hostname=$hostname)" }
 
         try {
             val jdbcConnection = createJdbcConnection(devConfig)
