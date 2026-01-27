@@ -1,7 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "repositories": ["typestreamio/typestream"],
   "labels": ["dependencies"],
   "packageRules": [
     {
