@@ -31,6 +31,9 @@ dependencies {
     // Web visits connector dependencies
     implementation("net.datafaker:datafaker:2.4.2")
     implementation("commons-net:commons-net:3.11.1")
+
+    // PostgreSQL JDBC driver for file uploads connector
+    implementation("org.postgresql:postgresql:42.7.4")
 }
 
 avro {
