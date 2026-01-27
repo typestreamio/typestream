@@ -1,20 +1,16 @@
 package io.typestream.connectors.fileuploads
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.typestream.connectors.Config
-import io.typestream.connectors.avro.FileUpload
-import io.typestream.connectors.kafka.MessageSender
-import io.typestream.connectors.kafka.Producer
 import java.io.File
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
-
-private const val DEFAULT_TOPIC = "file_uploads"
-private const val RETENTION_MS = 60 * 60 * 1000L // 1 hour retention
 
 /**
  * Represents a sample file to be created and referenced in file upload messages.
@@ -26,26 +22,40 @@ data class SampleFile(
 )
 
 /**
- * A demo-data connector that generates synthetic file upload messages.
+ * Represents a file upload record to be inserted into PostgreSQL.
+ */
+data class FileUploadRecord(
+    val id: String,
+    val filePath: String,
+    val fileName: String,
+    val contentType: String,
+    val uploadedBy: String
+)
+
+/**
+ * A demo-data connector that generates synthetic file upload records in PostgreSQL.
  *
  * On startup, creates sample text files in the output directory.
- * During runtime, generates messages (at configurable rate) that randomly
- * reference one of these file paths.
+ * During runtime, inserts records (at configurable rate) into the file_uploads
+ * PostgreSQL table, which Debezium captures and publishes to Kafka.
  *
- * This is useful for testing the TextExtractor node, which extracts
- * text content from files using Apache Tika.
+ * This demonstrates how TypeStream can work with CDC (Change Data Capture) from
+ * PostgreSQL without users needing to know Debezium internals - they just see
+ * file uploads appearing in Kafka via the CDC topic.
  */
 class FileUploadsConnector(
     private val outputDir: String = "/tmp/typestream-files",
     private val ratePerSecond: Double = 1.0,
     private val maxMessages: Long = 50,
-    topic: String = DEFAULT_TOPIC,
-    private val sender: MessageSender = Producer(Config.fromEnv(topic).copy(retentionMs = RETENTION_MS))
+    private val jdbcUrl: String = "jdbc:postgresql://localhost:5432/demo",
+    private val jdbcUser: String = "typestream",
+    private val jdbcPassword: String = "typestream"
 ) : AutoCloseable {
     private val logger = KotlinLogging.logger {}
     private val running = AtomicBoolean(true)
     private val closeLatch = CountDownLatch(1)
     private val messageCount = AtomicLong(0)
+    private var connection: Connection? = null
 
     private val sampleFiles = listOf(
         SampleFile(
@@ -207,12 +217,14 @@ class FileUploadsConnector(
     )
 
     fun start() {
-        logger.info { "Starting FileUploads connector" }
+        logger.info { "Starting FileUploads connector (PostgreSQL mode)" }
         logger.info { "  Output directory: $outputDir" }
         logger.info { "  Rate: ~$ratePerSecond events/sec" }
         logger.info { "  Max messages: $maxMessages" }
+        logger.info { "  JDBC URL: $jdbcUrl" }
 
         createSampleFiles()
+        initializeDatabase()
 
         Thread {
             try {
@@ -220,13 +232,13 @@ class FileUploadsConnector(
 
                 while (running.get() && messageCount.get() < maxMessages) {
                     val upload = generateUpload()
-                    sender.send(upload.id, upload)
+                    insertUpload(upload)
 
                     val count = messageCount.incrementAndGet()
                     if (count % 10 == 0L) {
-                        logger.info { "Produced $count file uploads (latest: ${upload.fileName})" }
+                        logger.info { "Inserted $count file uploads (latest: ${upload.fileName})" }
                     } else {
-                        logger.debug { "Produced upload: ${upload.id} -> ${upload.filePath}" }
+                        logger.debug { "Inserted upload: ${upload.id} -> ${upload.filePath}" }
                     }
 
                     Thread.sleep(delayMs)
@@ -237,6 +249,8 @@ class FileUploadsConnector(
                 }
             } catch (e: InterruptedException) {
                 logger.info { "Generator thread interrupted" }
+            } catch (e: Exception) {
+                logger.error(e) { "Error in generator thread" }
             } finally {
                 closeLatch.countDown()
             }
@@ -245,6 +259,12 @@ class FileUploadsConnector(
             isDaemon = true
             start()
         }
+    }
+
+    private fun initializeDatabase() {
+        logger.info { "Connecting to PostgreSQL..." }
+        connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword)
+        logger.info { "Connected to PostgreSQL successfully" }
     }
 
     private fun createSampleFiles() {
@@ -267,19 +287,37 @@ class FileUploadsConnector(
         logger.info { "Created ${sampleFiles.size} sample files in $outputDir" }
     }
 
-    private fun generateUpload(): FileUpload {
+    private fun generateUpload(): FileUploadRecord {
         val sample = sampleFiles[Random.nextInt(sampleFiles.size)]
         val uploader = uploaders[Random.nextInt(uploaders.size)]
         val filePath = "$outputDir/${sample.fileName}"
 
-        return FileUpload.newBuilder()
-            .setId(UUID.randomUUID().toString())
-            .setFilePath(filePath)
-            .setFileName(sample.fileName)
-            .setContentType(sample.contentType)
-            .setUploadedBy(uploader)
-            .setTimestamp(Instant.now())
-            .build()
+        return FileUploadRecord(
+            id = UUID.randomUUID().toString(),
+            filePath = filePath,
+            fileName = sample.fileName,
+            contentType = sample.contentType,
+            uploadedBy = uploader
+        )
+    }
+
+    private fun insertUpload(upload: FileUploadRecord) {
+        val conn = connection ?: throw IllegalStateException("Database connection not initialized")
+
+        val sql = """
+            INSERT INTO file_uploads (id, file_path, file_name, content_type, uploaded_by, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """.trimIndent()
+
+        conn.prepareStatement(sql).use { stmt ->
+            stmt.setString(1, upload.id)
+            stmt.setString(2, upload.filePath)
+            stmt.setString(3, upload.fileName)
+            stmt.setString(4, upload.contentType)
+            stmt.setString(5, upload.uploadedBy)
+            stmt.setTimestamp(6, Timestamp.from(Instant.now()))
+            stmt.executeUpdate()
+        }
     }
 
     fun awaitTermination() {
@@ -287,8 +325,8 @@ class FileUploadsConnector(
     }
 
     override fun close() {
-        logger.info { "Shutting down FileUploads connector (produced ${messageCount.get()} messages)..." }
+        logger.info { "Shutting down FileUploads connector (inserted ${messageCount.get()} records)..." }
         running.set(false)
-        sender.close()
+        connection?.close()
     }
 }
