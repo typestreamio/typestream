@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.double
+import com.github.ajalt.clikt.parameters.types.long
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.connectors.coinbase.CoinbaseConnector
 import io.typestream.connectors.fileuploads.FileUploadsConnector
@@ -99,23 +100,38 @@ class FileUploadsCommand : CliktCommand(name = "fileuploads") {
     private val outputDir by option("--output-dir", "-d", help = "Directory to create sample files")
         .default("/tmp/typestream-files")
 
-    private val rate by option("--rate", "-r", help = "Messages per second")
+    private val rate by option("--rate", "-r", help = "Records per second")
         .double()
         .default(1.0)
 
-    private val topic by option("--topic", "-t", help = "Kafka topic name")
-        .default("file_uploads")
+    private val maxMessages by option("--max", "-m", help = "Maximum number of records to insert (0 = unlimited)")
+        .long()
+        .default(50)
+
+    private val jdbcUrl by option("--jdbc-url", help = "PostgreSQL JDBC URL")
+        .default(System.getenv("POSTGRES_JDBC_URL") ?: "jdbc:postgresql://localhost:5432/demo")
+
+    private val jdbcUser by option("--jdbc-user", help = "PostgreSQL username")
+        .default(System.getenv("POSTGRES_USER") ?: "typestream")
+
+    private val jdbcPassword by option("--jdbc-password", help = "PostgreSQL password")
+        .default(System.getenv("POSTGRES_PASSWORD") ?: "typestream")
 
     override fun run() {
-        logger.info { "Starting FileUploads connector" }
+        logger.info { "Starting FileUploads connector (PostgreSQL CDC mode)" }
         logger.info { "  Output directory: $outputDir" }
-        logger.info { "  Rate: ~$rate events/sec" }
-        logger.info { "  Topic: $topic" }
+        logger.info { "  Rate: ~$rate records/sec" }
+        logger.info { "  Max records: $maxMessages" }
+        logger.info { "  JDBC URL: $jdbcUrl" }
+        logger.info { "  Records will be captured by Debezium and published to Kafka" }
 
         val connector = FileUploadsConnector(
             outputDir = outputDir,
             ratePerSecond = rate,
-            topic = topic
+            maxMessages = maxMessages,
+            jdbcUrl = jdbcUrl,
+            jdbcUser = jdbcUser,
+            jdbcPassword = jdbcPassword
         )
 
         Runtime.getRuntime().addShutdownHook(Thread {
