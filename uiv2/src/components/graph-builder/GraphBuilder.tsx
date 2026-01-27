@@ -193,6 +193,15 @@ export function GraphBuilder() {
       return { prompt: '', outputField: 'ai_response', model: 'gpt-4o-mini' };
     } else if (type === 'filter') {
       return { expression: '' };
+    } else if (type === 'postgresSource') {
+      // Postgres source - connection info comes from drag data, table selected in node
+      return {
+        connectionId: dragData.connectionId || '',
+        connectionName: dragData.connectionName || '',
+        topicPath: '',
+        tableName: '',
+        schemaName: '',
+      };
     } else {
       return { topicPath: '' };
     }
