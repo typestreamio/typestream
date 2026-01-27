@@ -4,20 +4,8 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "matchManagers": ["gradle", "gradle-wrapper"],
-      "groupName": "gradle dependencies"
-    },
-    {
-      "matchManagers": ["npm"],
-      "groupName": "npm dependencies"
-    },
-    {
-      "matchManagers": ["dockerfile", "docker-compose"],
-      "groupName": "docker dependencies"
-    },
-    {
-      "matchManagers": ["gomod"],
-      "groupName": "go dependencies"
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
     }
   ]
 }
