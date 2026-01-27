@@ -173,18 +173,20 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      * Register the default dev weaviate connection on startup
      */
     private fun registerDevWeaviateConnection() {
+        val restUrl = System.getenv("TYPESTREAM_WEAVIATE_REST_URL") ?: "http://localhost:8090"
+        val grpcUrl = System.getenv("TYPESTREAM_WEAVIATE_GRPC_URL") ?: "localhost:50051"
         val devConfig = Connection.WeaviateConnectionConfig.newBuilder()
             .setId("dev-weaviate")
             .setName("dev-weaviate")
-            .setRestUrl("http://localhost:8090")
-            .setGrpcUrl("localhost:50051")
+            .setRestUrl(restUrl)
+            .setGrpcUrl(grpcUrl)
             .setGrpcSecured(false)
             .setAuthScheme("NONE")
             .setConnectorRestUrl("http://weaviate:8080")
             .setConnectorGrpcUrl("weaviate:50051")
             .build()
 
-        logger.info { "Registering default dev-weaviate connection" }
+        logger.info { "Registering default dev-weaviate connection (restUrl=$restUrl)" }
 
         val isHealthy = checkWeaviateHealth(devConfig.restUrl)
         weaviateConnections["dev-weaviate"] = MonitoredWeaviateConnection(
