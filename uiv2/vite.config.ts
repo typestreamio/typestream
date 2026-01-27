@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
+    allowedHosts: ['demo.typestream.io'],
     watch: {
       usePolling: process.env.CHOKIDAR_USEPOLLING === 'true',
       ignored: ['**/.pnpm-store/**'],

@@ -128,11 +128,12 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      * Register the default dev postgres connection on startup
      */
     private fun registerDevPostgresConnection() {
+        val hostname = System.getenv("TYPESTREAM_POSTGRES_HOST") ?: "localhost"
         val devConfig = Connection.DatabaseConnectionConfig.newBuilder()
             .setId("dev-postgres")
             .setName("dev-postgres")
             .setDatabaseType(DatabaseType.POSTGRES)
-            .setHostname("localhost")              // For server health checks
+            .setHostname(hostname)                // For server health checks (configurable via TYPESTREAM_POSTGRES_HOST)
             .setConnectorHostname("postgres")     // For Kafka Connect (Docker network)
             .setPort(5432)
             .setDatabase("demo")
@@ -140,7 +141,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             .setPassword("typestream")
             .build()
 
-        logger.info { "Registering default dev-postgres connection (localhost)" }
+        logger.info { "Registering default dev-postgres connection (hostname=$hostname)" }
 
         try {
             val jdbcConnection = createJdbcConnection(devConfig)
@@ -172,18 +173,20 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      * Register the default dev weaviate connection on startup
      */
     private fun registerDevWeaviateConnection() {
+        val restUrl = System.getenv("TYPESTREAM_WEAVIATE_REST_URL") ?: "http://localhost:8090"
+        val grpcUrl = System.getenv("TYPESTREAM_WEAVIATE_GRPC_URL") ?: "localhost:50051"
         val devConfig = Connection.WeaviateConnectionConfig.newBuilder()
             .setId("dev-weaviate")
             .setName("dev-weaviate")
-            .setRestUrl("http://localhost:8090")
-            .setGrpcUrl("localhost:50051")
+            .setRestUrl(restUrl)
+            .setGrpcUrl(grpcUrl)
             .setGrpcSecured(false)
             .setAuthScheme("NONE")
             .setConnectorRestUrl("http://weaviate:8080")
             .setConnectorGrpcUrl("weaviate:50051")
             .build()
 
-        logger.info { "Registering default dev-weaviate connection" }
+        logger.info { "Registering default dev-weaviate connection (restUrl=$restUrl)" }
 
         val isHealthy = checkWeaviateHealth(devConfig.restUrl)
         weaviateConnections["dev-weaviate"] = MonitoredWeaviateConnection(
