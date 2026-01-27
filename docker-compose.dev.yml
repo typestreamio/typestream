@@ -82,15 +82,18 @@ services:
       context: .
       dockerfile: connectors/demo-data/Dockerfile
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
-      SCHEMA_REGISTRY_URL: http://redpanda:8081
+      POSTGRES_JDBC_URL: jdbc:postgresql://postgres:5432/demo
+      POSTGRES_USER: typestream
+      POSTGRES_PASSWORD: typestream
     volumes:
       - /tmp/typestream-files:/tmp/typestream-files
     networks:
       - typestream_network
     command: ["fileuploads", "--rate", "1"]
     depends_on:
-      redpanda:
+      postgres:
+        condition: service_healthy
+      kafka-connect:
         condition: service_healthy
 
   # React frontend with hot reload

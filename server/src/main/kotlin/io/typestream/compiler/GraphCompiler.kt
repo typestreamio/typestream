@@ -227,14 +227,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     val tempNode: Node = when {
       proto.hasStreamSource() -> {
         val path = proto.streamSource.dataStream.path
-        var ds = context.lookupDataStream(path)
+        val ds = context.lookupDataStream(path)
         val enc = context.lookupEncoding(path)
-
-        // Unwrap CDC envelope if requested
-        if (proto.streamSource.unwrapCdc) {
-          ds = unwrapCdcDataStream(ds)
-        }
-
+        // CDC unwrapping is handled in StreamSource.inferOutputSchema
         Node.StreamSource(nodeId, ds, enc, proto.streamSource.unwrapCdc)
       }
       proto.hasShellSource() -> {
@@ -349,33 +344,6 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     if (conflicts.isNotEmpty()) {
       error("Cannot write to the same topic being read: ${conflicts.joinToString(", ")}")
     }
-  }
-
-  /**
-   * Unwrap CDC envelope schema by extracting 'after' struct fields as top-level.
-   * CDC envelopes have: before, after, source, op, ts_ms (and optionally ts_us, ts_ns, transaction)
-   */
-  private fun unwrapCdcDataStream(ds: DataStream): DataStream {
-    val schema = ds.schema
-    if (schema !is Schema.Struct) return ds
-
-    val fieldNames = schema.value.map { it.name }.toSet()
-    val isCdcEnvelope = fieldNames.containsAll(setOf("before", "after", "source", "op"))
-
-    if (!isCdcEnvelope) return ds
-
-    // Find the 'after' field and extract its struct
-    val afterField = schema.value.find { it.name == "after" }
-    val afterValue = afterField?.value
-
-    // Handle both direct Struct and Optional<Struct> (nullable in Avro)
-    val unwrappedSchema = when (afterValue) {
-      is Schema.Struct -> afterValue
-      is Schema.Optional -> afterValue.value as? Schema.Struct
-      else -> null
-    } ?: return ds
-
-    return DataStream(ds.path, unwrappedSchema)
   }
 }
 
