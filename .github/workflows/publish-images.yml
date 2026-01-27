@@ -3,6 +3,13 @@ name: Publish Docker Images
 on:
   push:
     branches: [main]
+    paths:
+      - 'server/**'
+      - 'connectors/demo-data/**'
+      - 'docker/Dockerfile.kafka-connect'
+      - 'docker/register-connector.sh'
+      - 'docker/custom-entrypoint.sh'
+      - '.github/workflows/publish-images.yml'
     tags: ['v*']
   workflow_dispatch:
 
