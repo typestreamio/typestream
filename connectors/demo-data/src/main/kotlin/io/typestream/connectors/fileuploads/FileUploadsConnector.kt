@@ -33,6 +33,27 @@ data class FileUploadRecord(
 )
 
 /**
+ * Interface for providing database connections.
+ * Allows for dependency injection and easier testing.
+ */
+fun interface ConnectionProvider {
+    fun getConnection(): Connection
+}
+
+/**
+ * Default connection provider using JDBC DriverManager.
+ */
+class JdbcConnectionProvider(
+    private val jdbcUrl: String,
+    private val jdbcUser: String,
+    private val jdbcPassword: String
+) : ConnectionProvider {
+    override fun getConnection(): Connection {
+        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword)
+    }
+}
+
+/**
  * A demo-data connector that generates synthetic file upload records in PostgreSQL.
  *
  * On startup, creates sample text files in the output directory.
@@ -47,15 +68,30 @@ class FileUploadsConnector(
     private val outputDir: String = "/tmp/typestream-files",
     private val ratePerSecond: Double = 1.0,
     private val maxMessages: Long = 50,
-    private val jdbcUrl: String = "jdbc:postgresql://localhost:5432/demo",
-    private val jdbcUser: String = "typestream",
-    private val jdbcPassword: String = "typestream"
+    private val connectionProvider: ConnectionProvider
 ) : AutoCloseable {
     private val logger = KotlinLogging.logger {}
     private val running = AtomicBoolean(true)
     private val closeLatch = CountDownLatch(1)
     private val messageCount = AtomicLong(0)
     private var connection: Connection? = null
+
+    /**
+     * Convenience constructor for JDBC connection parameters.
+     */
+    constructor(
+        outputDir: String = "/tmp/typestream-files",
+        ratePerSecond: Double = 1.0,
+        maxMessages: Long = 50,
+        jdbcUrl: String = "jdbc:postgresql://localhost:5432/demo",
+        jdbcUser: String = "typestream",
+        jdbcPassword: String = "typestream"
+    ) : this(
+        outputDir = outputDir,
+        ratePerSecond = ratePerSecond,
+        maxMessages = maxMessages,
+        connectionProvider = JdbcConnectionProvider(jdbcUrl, jdbcUser, jdbcPassword)
+    )
 
     private val sampleFiles = listOf(
         SampleFile(
@@ -221,7 +257,6 @@ class FileUploadsConnector(
         logger.info { "  Output directory: $outputDir" }
         logger.info { "  Rate: ~$ratePerSecond events/sec" }
         logger.info { "  Max messages: $maxMessages" }
-        logger.info { "  JDBC URL: $jdbcUrl" }
 
         createSampleFiles()
         initializeDatabase()
@@ -263,7 +298,7 @@ class FileUploadsConnector(
 
     private fun initializeDatabase() {
         logger.info { "Connecting to PostgreSQL..." }
-        connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword)
+        connection = connectionProvider.getConnection()
         logger.info { "Connected to PostgreSQL successfully" }
     }
 
