@@ -159,6 +159,9 @@ internal class InteractiveSessionServiceTest {
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
 
+            // Wait for job to be scheduled before reading output
+            until("ps") { require(stub.runProgram(sessionId, "ps").stdOut.contains(cat.id)) { "job not yet scheduled" } }
+
             val responseStream =
                 stub.getProgramOutput(
                     GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(cat.id).build()
@@ -200,6 +203,9 @@ internal class InteractiveSessionServiceTest {
             val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/$topic | grep \"Margaret\"")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
+
+            // Wait for job to be scheduled before reading output
+            until("ps") { require(stub.runProgram(sessionId, "ps").stdOut.contains(cat.id)) { "job not yet scheduled" } }
 
             val responseStream =
                 stub.getProgramOutput(
@@ -243,6 +249,9 @@ internal class InteractiveSessionServiceTest {
             val cat = stub.runProgram(sessionId, "cat /dev/kafka/local/topics/$topic | cut title")
 
             assertThat(cat).extracting("stdOut", "stdErr", "hasMoreOutput").containsExactly("", "", true)
+
+            // Wait for job to be scheduled before reading output
+            until("ps") { require(stub.runProgram(sessionId, "ps").stdOut.contains(cat.id)) { "job not yet scheduled" } }
 
             val responseStream = stub.getProgramOutput(
                 GetProgramOutputRequest.newBuilder().setSessionId(sessionId).setId(cat.id).build()
