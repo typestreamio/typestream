@@ -43,10 +43,18 @@ jobs:
           # Wait for server to be ready (up to 30 seconds)
           echo "Waiting for server to start..."
           for i in {1..30}; do
-            if docker logs server-smoke-test 2>&1 | grep -q "started"; then
+            # First check container is still running
+            if ! docker ps | grep -q server-smoke-test; then
+              echo "Server container exited unexpectedly"
+              docker logs server-smoke-test
+              exit 1
+            fi
+
+            if docker logs server-smoke-test 2>&1 | grep -q "grpc server listening on port"; then
               echo "Server started successfully"
               break
             fi
+
             if [ $i -eq 30 ]; then
               echo "Server failed to start in time"
               docker logs server-smoke-test
@@ -54,13 +62,6 @@ jobs:
             fi
             sleep 1
           done
-
-          # Check container is still running
-          if ! docker ps | grep -q server-smoke-test; then
-            echo "Server container exited unexpectedly"
-            docker logs server-smoke-test
-            exit 1
-          fi
 
           # Health check: verify gRPC port is responding
           echo "Checking gRPC port..."
@@ -192,12 +193,16 @@ jobs:
       - name: Load and push server image
         run: |
           gunzip -c /tmp/images/server-image/server-image.tar.gz | docker load
-          
-          # Tag with version and SHA
-          VERSION="${GITHUB_REF_NAME#v}"
+
+          # Tag with version and SHA (handle manual dispatch vs tag trigger)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
           docker tag ghcr.io/typestreamio/server:latest ghcr.io/typestreamio/server:${VERSION}
           docker tag ghcr.io/typestreamio/server:latest ghcr.io/typestreamio/server:${GITHUB_SHA::7}
-          
+
           # Push all tags
           docker push ghcr.io/typestreamio/server:latest
           docker push ghcr.io/typestreamio/server:${VERSION}
@@ -207,13 +212,17 @@ jobs:
       - name: Load and push demo-data image
         run: |
           gunzip -c /tmp/images/demo-data-image/demo-data-image.tar.gz | docker load
-          
-          # Tag with proper names
-          VERSION="${GITHUB_REF_NAME#v}"
+
+          # Tag with version and SHA (handle manual dispatch vs tag trigger)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
           docker tag demo-data:test ghcr.io/typestreamio/demo-data:latest
           docker tag demo-data:test ghcr.io/typestreamio/demo-data:${VERSION}
           docker tag demo-data:test ghcr.io/typestreamio/demo-data:${GITHUB_SHA::7}
-          
+
           # Push all tags
           docker push ghcr.io/typestreamio/demo-data:latest
           docker push ghcr.io/typestreamio/demo-data:${VERSION}
@@ -223,13 +232,17 @@ jobs:
       - name: Load and push kafka-connect image
         run: |
           gunzip -c /tmp/images/kafka-connect-image/kafka-connect-image.tar.gz | docker load
-          
-          # Tag with proper names
-          VERSION="${GITHUB_REF_NAME#v}"
+
+          # Tag with version and SHA (handle manual dispatch vs tag trigger)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
           docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:latest
           docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:${VERSION}
           docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:${GITHUB_SHA::7}
-          
+
           # Push all tags
           docker push ghcr.io/typestreamio/kafka-connect:latest
           docker push ghcr.io/typestreamio/kafka-connect:${VERSION}
