@@ -47,7 +47,7 @@ jobs:
           # Start the server container
           docker run -d --name server-smoke-test \
             -p 4242:4242 \
-            typestream/server:latest
+            ghcr.io/typestreamio/server:latest
 
           # Wait for server to be ready (up to 30 seconds)
           echo "Waiting for server to start..."
