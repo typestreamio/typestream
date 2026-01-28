@@ -27,6 +27,7 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
+
 /**
  * Immutable snapshot of connection state for thread-safe reads
  */
@@ -573,26 +574,6 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         } finally {
             connection.disconnect()
         }
-    }
-
-    /**
-     * Simple JSON builder for connector config
-     */
-    private fun buildJsonString(map: Map<String, Any>): String {
-        val sb = StringBuilder("{")
-        var first = true
-        for ((key, value) in map) {
-            if (!first) sb.append(",")
-            first = false
-            sb.append("\"$key\":")
-            when (value) {
-                is String -> sb.append("\"${value.replace("\"", "\\\"")}\"")
-                is Map<*, *> -> @Suppress("UNCHECKED_CAST") sb.append(buildJsonString(value as Map<String, Any>))
-                else -> sb.append(value)
-            }
-        }
-        sb.append("}")
-        return sb.toString()
     }
 
     // ==================== Weaviate Connection Methods ====================

@@ -55,7 +55,7 @@ class VmTest {
 
             val vmResult = vm.run("cat /dev/kafka/local/topics/$topic", session)
 
-            until { scheduler.ps().any { it.id == vmResult.program.id } }
+            until { require(scheduler.ps().any { it.id == vmResult.program.id }) { "job not yet scheduled" } }
 
             scheduler.jobOutput(vmResult.program.id).collect { output ->
                 val json = Json.parseToJsonElement(output).jsonObject
