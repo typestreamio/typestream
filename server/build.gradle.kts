@@ -51,8 +51,12 @@ dependencies {
 
 jib {
     to {
-        image = "typestream/server"
-        tags = mutableSetOf(project.version.toString())
+        image = "ghcr.io/typestreamio/server"
+        tags = mutableSetOf(project.version.toString(), "latest")
+        auth {
+            username = System.getenv("GITHUB_ACTOR") ?: ""
+            password = System.getenv("GITHUB_TOKEN") ?: ""
+        }
     }
 }
 

@@ -1,0 +1,249 @@
+name: Publish Docker Images
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # Build server image, run smoke test, save for publishing
+  build-and-test-server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+        with:
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
+      - name: Build server image locally
+        run: nix develop --command gradle :server:jibDockerBuild
+
+      - name: Smoke test - server starts and responds
+        run: |
+          # Start the server container
+          docker run -d --name server-smoke-test \
+            -p 4242:4242 \
+            ghcr.io/typestreamio/server:latest
+
+          # Wait for server to be ready (up to 30 seconds)
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            # First check container is still running
+            if ! docker ps | grep -q server-smoke-test; then
+              echo "Server container exited unexpectedly"
+              docker logs server-smoke-test
+              exit 1
+            fi
+
+            if docker logs server-smoke-test 2>&1 | grep -q "grpc server listening on port"; then
+              echo "Server started successfully"
+              break
+            fi
+
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start in time"
+              docker logs server-smoke-test
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Health check: verify gRPC port is responding
+          echo "Checking gRPC port..."
+          timeout 10 bash -c 'until nc -z localhost 4242; do sleep 1; done' || {
+            echo "gRPC port not responding"
+            docker logs server-smoke-test
+            exit 1
+          }
+          echo "gRPC port is responding"
+
+          # Cleanup
+          docker stop server-smoke-test
+          docker rm server-smoke-test
+          echo "Smoke test passed!"
+
+      - name: Save server image for publishing
+        run: docker save ghcr.io/typestreamio/server:latest | gzip > /tmp/server-image.tar.gz
+
+      - name: Upload server image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-image
+          path: /tmp/server-image.tar.gz
+          retention-days: 1
+
+  # Build and test demo-data
+  build-and-test-demo-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build demo-data image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: connectors/demo-data/Dockerfile
+          load: true
+          tags: demo-data:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test - demo-data container starts
+        run: |
+          # Verify --help exits successfully
+          docker run --rm demo-data:test --help
+          echo "Help command works"
+
+          # Verify coinbase generator starts (will fail on Kafka connection, but should not crash immediately)
+          OUTPUT=$(timeout 5 docker run --rm demo-data:test coinbase 2>&1 || true)
+          if echo "$OUTPUT" | grep -qE "(coinbase|Kafka|bootstrap)"; then
+            echo "Coinbase generator starts correctly"
+          else
+            echo "Unexpected output:"
+            echo "$OUTPUT"
+            exit 1
+          fi
+          echo "Smoke test passed!"
+
+      - name: Save demo-data image for publishing
+        run: docker save demo-data:test | gzip > /tmp/demo-data-image.tar.gz
+
+      - name: Upload demo-data image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-data-image
+          path: /tmp/demo-data-image.tar.gz
+          retention-days: 1
+
+  # Build and test kafka-connect
+  build-and-test-kafka-connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build kafka-connect image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.kafka-connect
+          load: true
+          tags: kafka-connect:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test - kafka-connect has required connectors
+        run: |
+          # Check that Debezium connector JARs are present
+          docker run --rm --entrypoint /bin/bash kafka-connect:test -c \
+            "ls -la /kafka/connect/ && test -d /kafka/connect/debezium-connector-postgres"
+          echo "Smoke test passed - Debezium connectors are installed"
+
+      - name: Save kafka-connect image for publishing
+        run: docker save kafka-connect:test | gzip > /tmp/kafka-connect-image.tar.gz
+
+      - name: Upload kafka-connect image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kafka-connect-image
+          path: /tmp/kafka-connect-image.tar.gz
+          retention-days: 1
+
+  # Publish all images after smoke tests pass
+  publish-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-and-test-server, build-and-test-demo-data, build-and-test-kafka-connect]
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download all image artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/images
+
+      # Publish server
+      - name: Load and push server image
+        run: |
+          gunzip -c /tmp/images/server-image/server-image.tar.gz | docker load
+
+          # Tag with version and SHA (handle manual dispatch vs tag trigger)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
+          docker tag ghcr.io/typestreamio/server:latest ghcr.io/typestreamio/server:${VERSION}
+          docker tag ghcr.io/typestreamio/server:latest ghcr.io/typestreamio/server:${GITHUB_SHA::7}
+
+          # Push all tags
+          docker push ghcr.io/typestreamio/server:latest
+          docker push ghcr.io/typestreamio/server:${VERSION}
+          docker push ghcr.io/typestreamio/server:${GITHUB_SHA::7}
+
+      # Publish demo-data
+      - name: Load and push demo-data image
+        run: |
+          gunzip -c /tmp/images/demo-data-image/demo-data-image.tar.gz | docker load
+
+          # Tag with version and SHA (handle manual dispatch vs tag trigger)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
+          docker tag demo-data:test ghcr.io/typestreamio/demo-data:latest
+          docker tag demo-data:test ghcr.io/typestreamio/demo-data:${VERSION}
+          docker tag demo-data:test ghcr.io/typestreamio/demo-data:${GITHUB_SHA::7}
+
+          # Push all tags
+          docker push ghcr.io/typestreamio/demo-data:latest
+          docker push ghcr.io/typestreamio/demo-data:${VERSION}
+          docker push ghcr.io/typestreamio/demo-data:${GITHUB_SHA::7}
+
+      # Publish kafka-connect
+      - name: Load and push kafka-connect image
+        run: |
+          gunzip -c /tmp/images/kafka-connect-image/kafka-connect-image.tar.gz | docker load
+
+          # Tag with version and SHA (handle manual dispatch vs tag trigger)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
+          docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:latest
+          docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:${VERSION}
+          docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:${GITHUB_SHA::7}
+
+          # Push all tags
+          docker push ghcr.io/typestreamio/kafka-connect:latest
+          docker push ghcr.io/typestreamio/kafka-connect:${VERSION}
+          docker push ghcr.io/typestreamio/kafka-connect:${GITHUB_SHA::7}
