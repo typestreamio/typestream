@@ -340,7 +340,15 @@ export function GraphBuilder() {
     });
   };
 
-  const canCreate = nodes.length > 0;
+  // Validate that all Weaviate sink nodes have required fields
+  const allWeaviateSinksValid = nodes
+    .filter((node) => node.type === 'weaviateSink')
+    .every((node) => {
+      const data = node.data as { collectionName?: string };
+      return data.collectionName && data.collectionName.trim().length > 0;
+    });
+
+  const canCreate = nodes.length > 0 && allWeaviateSinksValid;
 
   return (
     <Box sx={{ display: 'flex', height: '100%', gap: 2 }}>
