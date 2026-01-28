@@ -218,6 +218,14 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             }
         }
         connections.clear()
+
+        // Clean up Weaviate connections
+        // Note: MonitoredWeaviateConnection doesn't hold persistent HTTP connections
+        // (HttpURLConnection is used transiently for health checks and closed immediately)
+        // but we log cleanup for consistency and to support future resource management
+        weaviateConnections.keys.forEach { connectionId ->
+            logger.debug { "Cleaning up Weaviate connection: $connectionId" }
+        }
         weaviateConnections.clear()
     }
 
