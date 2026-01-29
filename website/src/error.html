@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="en" class="light scroll-smooth" dir="ltr">
   <head>
-    @@include("partials/title-meta.html", {"title": "404 Error"})
+    {{> title-meta title="404 Error"}}
 
-    <!-- Css -->
-    @@include("partials/head-css.html")
+    {{> head-css}}
   </head>
 
   <body
@@ -72,6 +71,6 @@
       ></a>
     </div>
 
-    @@include("partials/script-file.html")
+    {{> script-file}}
   </body>
 </html>

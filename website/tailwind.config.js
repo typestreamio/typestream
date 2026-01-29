@@ -1,8 +1,10 @@
+import tailwindForms from "@tailwindcss/forms";
+import daisyui from "daisyui";
+
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     "./src/**/*.{html,js}",
-    "./node_modules/tw-elements/dist/js/**/*.js",
   ],
   darkMode: "class",
   important: true,
@@ -81,9 +83,7 @@ module.exports = {
   },
 
   plugins: [
-    require("@tailwindcss/forms")({
-      strategy: "class", // only generate classes
-    }),
-    require("daisyui"),
+    tailwindForms({ strategy: "class" }),
+    daisyui,
   ],
 };

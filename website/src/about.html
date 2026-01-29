@@ -1,18 +1,15 @@
 <!doctype html>
 <html lang="en" class="light scroll-smooth" dir="ltr">
   <head>
-    @@include("partials/title-meta.html", {"title": "About Us"})
+    {{> title-meta title="About Us"}}
 
-    <!-- Css -->
-    <link href="assets/libs/tiny-slider/tiny-slider.css" rel="stylesheet" />
-    <link href="assets/libs/tobii/css/tobii.min.css" rel="stylesheet" />
-    @@include("partials/head-css.html")
+    {{> head-css}}
   </head>
 
   <body
     class="font-nunito text-base text-black dark:text-white dark:bg-slate-900"
   >
-    @@include("partials/navbar/nav-center-light.html")
+    {{> navbar/nav-center-light}}
 
     <!-- Start Hero -->
     <section
@@ -166,7 +163,7 @@
       </div>
       <!--end container-->
 
-      @@include("partials/footer/footer.html")
+      {{> footer/footer}}
 
       <!-- Back to top -->
       <a
@@ -178,11 +175,7 @@
       ></a>
       <!-- Back to top -->
 
-      <!-- JAVASCRIPTS -->
-      <script src="assets/libs/tiny-slider/min/tiny-slider.js"></script>
-      <script src="assets/libs/tobii/js/tobii.min.js"></script>
-      @@include("partials/script-file.html")
-      <!-- JAVASCRIPTS -->
+      {{> script-file}}
     </section>
   </body>
 </html>

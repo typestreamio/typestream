@@ -1,15 +1,13 @@
 <!doctype html>
 <html lang="en" class="light scroll-smooth" dir="ltr">
   <head>
-    @@include("partials/title-meta.html", {"title": "Home"})
+    {{> title-meta title="Home"}}
 
-    <!-- Css -->
-    <link href="assets/libs/tobii/css/tobii.min.css" rel="stylesheet" />
-    @@include("partials/head-css.html")
+    {{> head-css}}
   </head>
 
   <body class="font-nunito">
-    @@include("partials/navbar/nav-center-light.html")
+    {{> navbar/nav-center-light}}
 
     <section
       class="relative table w-full py-36 overflow-hidden bg-gradient-to-b to-transparent from-typestream-primary-dark dark:typestream-primary"
@@ -250,9 +248,8 @@
       </div>
     </div>
 
-    @@include("partials/footer/footer.html")
+    {{> footer/footer}}
 
-    <script src="assets/libs/tobii/js/tobii.min.js"></script>
-    @@include("partials/script-file.html")
+    {{> script-file}}
   </body>
 </html>

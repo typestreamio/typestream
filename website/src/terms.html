@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en" class="light scroll-smooth" dir="ltr">
   <head>
-    @@include("partials/title-meta.html", {"title": "Terms"})
+    {{> title-meta title="Terms"}}
 
     <!-- Css -->
-    @@include("partials/head-css.html")
+    {{> head-css}}
   </head>
   <body
     class="font-nunito text-base text-black dark:text-white dark:bg-slate-900"
   >
-    @@include("partials/navbar/nav-center.html")
+    {{> navbar/nav-center}}
 
     <!-- Start Hero -->
     <section
@@ -375,7 +375,7 @@
     <!--end section-->
     <!-- End Terms & Conditions -->
 
-    @@include("partials/footer/footer.html")
+    {{> footer/footer}}
 
     <!-- Back to top -->
     <a
@@ -387,6 +387,6 @@
     ></a>
     <!-- Back to top -->
 
-    @@include("partials/script-file.html")
+    {{> script-file}}
   </body>
 </html>
