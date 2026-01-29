@@ -1,3 +1,6 @@
+import tailwindForms from "@tailwindcss/forms";
+import daisyui from "daisyui";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -80,9 +83,7 @@ export default {
   },
 
   plugins: [
-    require("@tailwindcss/forms")({
-      strategy: "class", // only generate classes
-    }),
-    require("daisyui"),
+    tailwindForms({ strategy: "class" }),
+    daisyui,
   ],
 };

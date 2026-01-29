@@ -30,6 +30,9 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: "modern-compiler",
+        // TODO: Migrate SCSS files from @import to @use/@forward syntax.
+        // The @import rule is deprecated in Sass and will be removed in Dart Sass 3.0.
+        // See: https://sass-lang.com/documentation/at-rules/import
         silenceDeprecations: ["import"],
       },
     },
