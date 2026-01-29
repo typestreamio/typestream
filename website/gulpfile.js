@@ -259,7 +259,6 @@ gulp.task(
 gulp.task(
   "build",
   gulp.series(
-    "clean:packageLock",
     "clean:dist",
     "copy:all",
     "copy:libs",
