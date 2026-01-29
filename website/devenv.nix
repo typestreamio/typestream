@@ -5,10 +5,6 @@
   languages.javascript = {
     enable = true;
     npm.enable = true;
-    yarn = {
-      enable = true;
-      install.enable = true;
-    };
   };
 
   # Development scripts
