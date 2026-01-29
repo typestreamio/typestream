@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en" class="light scroll-smooth" dir="ltr">
   <head>
-    @@include("partials/title-meta.html", {"title": "Use Cases"})
+    {{> title-meta title="Use Cases"}}
 
     <!-- Css -->
-    @@include("partials/head-css.html")
+    {{> head-css}}
 
     <style>
       /* Scroll-Driven Video Presentation Styles */
@@ -322,7 +322,7 @@
   </head>
 
   <body class="font-nunito text-base text-black dark:text-white dark:bg-slate-900">
-    @@include("partials/navbar/nav-center.html")
+    {{> navbar/nav-center}}
 
     <!-- Progress Dots Navigation -->
     <nav class="progress-dots hidden lg:flex">
@@ -1217,9 +1217,9 @@
       </div>
     </div>
 
-    @@include("partials/footer/footer.html")
+    {{> footer/footer}}
 
-    @@include("partials/script-file.html")
+    {{> script-file}}
 
     <!-- React & ReactFlow via CDN -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>

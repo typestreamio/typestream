@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="en" class="light scroll-smooth" dir="ltr">
   <head>
-    @@include("partials/title-meta.html", {"title": "Contact Us"})
-    @@include("partials/head-css.html")
+    {{> title-meta title="Contact Us"}}
+    {{> head-css}}
   </head>
   <body
     class="font-nunito text-base text-black dark:text-white dark:bg-slate-900"
   >
-    @@include("partials/navbar/nav-center.html")
+    {{> navbar/nav-center}}
     <!-- Start Hero -->
     <section
       class="relative table w-full py-32 lg:py-40 bg-gradient-to-br to-typestream-light-background from-typestream-accent"
@@ -94,7 +94,7 @@
 
     <!-- End -->
 
-    @@include("partials/footer/footer.html")
+    {{> footer/footer}}
 
     <!-- Back to top -->
     <a
@@ -106,6 +106,6 @@
     ></a>
     <!-- Back to top -->
 
-    @@include("partials/script-file.html")
+    {{> script-file}}
   </body>
 </html>
