@@ -5,7 +5,7 @@
   "description": "typestream.io homepage",
   "type": "module",
   "browserslist": [
-    "last 2 version",
+    "last 2 versions",
     "> 2%"
   ],
   "scripts": {
@@ -36,7 +36,7 @@
     "jarallax": "^2.1.3",
     "js-datepicker": "^5.18.2",
     "shufflejs": "^6.1.0",
-    "swiper": "4.5.0",
+    "swiper": "^11.0.0",
     "tiny-slider": "^2.9.4",
     "tobii": "^2.0.0-alpha",
     "wow.js": "^1.2.2"
