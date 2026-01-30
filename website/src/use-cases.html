@@ -367,7 +367,7 @@
 
         <!-- Hero Architecture Diagram -->
         <div class="hero-diagram">
-          <div id="flow-hero" style="height: 400px;"></div>
+          <div id="flow-hero" style="height: 500px;"></div>
         </div>
 
         <div class="hero-scroll-hint">
@@ -1236,14 +1236,22 @@
       // Custom Node Component for pipeline nodes
       function PipelineNode({ data }) {
         const isHero = data.isHero;
+        const isRainbow = data.isRainbow;
+        const isBoring = data.isBoring;
         const isHeroSection = data.isHeroSection || isHero;
+
+        // Rainbow gradient for TypeStream hero
+        const rainbowGradient = 'linear-gradient(135deg, #ef4444 0%, #f97316 20%, #eab308 40%, #22c55e 60%, #3b82f6 80%, #8b5cf6 100%)';
+        // Boring muted style for the database
+        const boringStyle = 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
+
         const nodeStyle = {
-          background: isHero ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'white',
-          border: data.error ? '2px solid #ef4444' : isHero ? '2px solid #4f46e5' : '1px solid #e2e8f0',
-          borderRadius: isHero ? '16px' : '12px',
-          padding: isHero ? '32px 40px' : isHeroSection ? '24px 36px' : '14px 20px',
-          minWidth: isHero ? '300px' : isHeroSection ? '260px' : '160px',
-          boxShadow: data.error ? '0 0 12px rgba(239, 68, 68, 0.3)' : isHero ? '0 8px 24px rgba(99, 102, 241, 0.4)' : '0 4px 12px rgba(0,0,0,0.1)',
+          background: isRainbow ? rainbowGradient : isBoring ? boringStyle : isHero ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'white',
+          border: data.error ? '2px solid #ef4444' : isRainbow ? '3px solid transparent' : isBoring ? '2px dashed #94a3b8' : isHero ? '2px solid #4f46e5' : '1px solid #e2e8f0',
+          borderRadius: isHero ? '20px' : isHeroSection ? '16px' : '12px',
+          padding: isHero ? '36px 48px' : isHeroSection ? '20px 28px' : '14px 20px',
+          minWidth: isHero ? '340px' : isHeroSection ? '220px' : '160px',
+          boxShadow: data.error ? '0 0 12px rgba(239, 68, 68, 0.3)' : isRainbow ? '0 8px 32px rgba(139, 92, 246, 0.4), 0 4px 16px rgba(59, 130, 246, 0.3)' : isBoring ? '0 2px 8px rgba(0,0,0,0.05)' : isHero ? '0 8px 24px rgba(99, 102, 241, 0.4)' : '0 4px 12px rgba(0,0,0,0.1)',
         };
 
         const headerStyle = {
@@ -1254,31 +1262,34 @@
         };
 
         const iconStyle = {
-          width: isHero ? '40px' : isHeroSection ? '32px' : '24px',
-          height: isHero ? '40px' : isHeroSection ? '32px' : '24px',
+          width: isHero ? '48px' : isHeroSection ? '40px' : '24px',
+          height: isHero ? '48px' : isHeroSection ? '40px' : '24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: isHero ? '30px' : isHeroSection ? '24px' : '16px',
+          fontSize: isHero ? '36px' : isHeroSection ? '32px' : '16px',
         };
 
         const titleStyle = {
           fontWeight: isHero ? '700' : '600',
-          fontSize: isHero ? '26px' : isHeroSection ? '20px' : '14px',
-          color: data.error ? '#ef4444' : isHero ? 'white' : '#1e293b',
+          fontSize: isHero ? '32px' : isHeroSection ? '24px' : '14px',
+          color: data.error ? '#ef4444' : isHero ? 'white' : isBoring ? '#64748b' : '#1e293b',
         };
 
         const descStyle = {
-          fontSize: isHero ? '17px' : isHeroSection ? '15px' : '11px',
-          color: isHero ? 'rgba(255,255,255,0.85)' : '#64748b',
-          marginTop: '4px',
+          fontSize: isHero ? '20px' : isHeroSection ? '16px' : '11px',
+          color: isHero ? 'rgba(255,255,255,0.85)' : isBoring ? '#94a3b8' : '#64748b',
+          marginTop: '6px',
+          fontStyle: isBoring ? 'italic' : 'normal',
         };
+
+        const handleColor = data.error ? '#ef4444' : isBoring ? '#94a3b8' : isRainbow ? '#8b5cf6' : '#6366f1';
 
         return React.createElement('div', { style: nodeStyle },
           React.createElement(Handle, {
             type: 'target',
             position: Position.Left,
-            style: { background: data.error ? '#ef4444' : '#6366f1', width: 8, height: 8 }
+            style: { background: handleColor, width: 8, height: 8 }
           }),
           React.createElement('div', { style: headerStyle },
             React.createElement('span', { style: iconStyle }, data.icon || '📦'),
@@ -1288,7 +1299,7 @@
           React.createElement(Handle, {
             type: 'source',
             position: Position.Right,
-            style: { background: data.error ? '#ef4444' : '#6366f1', width: 8, height: 8 }
+            style: { background: handleColor, width: 8, height: 8 }
           })
         );
       }
@@ -1422,15 +1433,15 @@
         dagreGraph.setDefaultEdgeLabel(() => ({}));
 
         // Larger sizes for hero layout
-        const nodeWidth = isHeroLayout ? 300 : 172;
-        const nodeHeight = isHeroLayout ? 110 : 60;
-        const heroNodeWidth = 360;
-        const heroNodeHeight = 140;
+        const nodeWidth = isHeroLayout ? 280 : 172;
+        const nodeHeight = isHeroLayout ? 100 : 60;
+        const heroNodeWidth = 400;
+        const heroNodeHeight = 160;
 
         dagreGraph.setGraph({
           rankdir: direction,
-          nodesep: isHeroLayout ? 25 : 60,
-          ranksep: isHeroLayout ? 200 : 100
+          nodesep: isHeroLayout ? 20 : 60,
+          ranksep: isHeroLayout ? 180 : 100
         });
 
         nodes.forEach((node) => {
@@ -1501,18 +1512,14 @@
         // HERO: Full-width architecture diagram with Dagre layout
         // ==========================================
         'hero': {
-          height: 400,
+          height: 500,
           useDagre: true,
           isHeroLayout: true,
           nodes: [
-            // Sources (left column)
-            { id: 's1', type: 'pipeline', data: { icon: '🐘', label: 'PostgreSQL', description: 'CDC Events', isHeroSection: true } },
-            { id: 's2', type: 'pipeline', data: { icon: '🐬', label: 'MySQL', description: 'Binlog Stream', isHeroSection: true } },
-            { id: 's3', type: 'pipeline', data: { icon: '🍃', label: 'MongoDB', description: 'Change Streams', isHeroSection: true } },
-            { id: 's4', type: 'pipeline', data: { icon: '📨', label: 'Kafka', description: 'Topic Events', isHeroSection: true } },
-            { id: 's5', type: 'pipeline', data: { icon: '➕', label: '10+ Databases', description: 'Oracle, SQL Server...', isHeroSection: true } },
-            // TypeStream (center - hero node)
-            { id: 'ts', type: 'pipeline', data: { icon: '⚡', label: 'TypeStream', description: 'Filter • Enrich • Route', isHero: true } },
+            // Source (single boring database)
+            { id: 'db', type: 'pipeline', data: { icon: '🗄️', label: 'Your Database', description: 'PostgreSQL • MySQL • MongoDB • MariaDB', isHeroSection: true, isBoring: true } },
+            // TypeStream (center - rainbow hero node)
+            { id: 'ts', type: 'pipeline', data: { icon: '⚡', label: 'TypeStream', description: 'Filter • Enrich • Route', isHero: true, isRainbow: true } },
             // Destinations (right column)
             { id: 'd1', type: 'pipeline', data: { icon: '🌐', label: 'REST API', description: 'Real-time Endpoints', isHeroSection: true } },
             { id: 'd2', type: 'pipeline', data: { icon: '🏠', label: 'ClickHouse', description: 'Analytics', isHeroSection: true } },
@@ -1521,18 +1528,14 @@
             { id: 'd5', type: 'pipeline', data: { icon: '🔌', label: '200+ Connectors', description: 'S3, BigQuery, APIs...', isHeroSection: true } },
           ],
           edges: [
-            // Sources → TypeStream
-            { id: 'e-s1-ts', source: 's1', target: 'ts', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e-s2-ts', source: 's2', target: 'ts', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e-s3-ts', source: 's3', target: 'ts', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e-s4-ts', source: 's4', target: 'ts', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e-s5-ts', source: 's5', target: 'ts', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            // TypeStream → Destinations
-            { id: 'e-ts-d1', source: 'ts', target: 'd1', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-            { id: 'e-ts-d2', source: 'ts', target: 'd2', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-            { id: 'e-ts-d3', source: 'ts', target: 'd3', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-            { id: 'e-ts-d4', source: 'ts', target: 'd4', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-            { id: 'e-ts-d5', source: 'ts', target: 'd5', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
+            // Database → TypeStream
+            { id: 'e-db-ts', source: 'db', target: 'ts', type: 'smoothstep', animated: true, style: { stroke: '#94a3b8', strokeWidth: 3 }, markerEnd: { type: 'arrowclosed', color: '#94a3b8', width: 20, height: 20 } },
+            // TypeStream → Destinations (rainbow colors)
+            { id: 'e-ts-d1', source: 'ts', target: 'd1', type: 'smoothstep', animated: true, style: { stroke: '#ef4444', strokeWidth: 3 }, markerEnd: { type: 'arrowclosed', color: '#ef4444', width: 20, height: 20 } },
+            { id: 'e-ts-d2', source: 'ts', target: 'd2', type: 'smoothstep', animated: true, style: { stroke: '#f97316', strokeWidth: 3 }, markerEnd: { type: 'arrowclosed', color: '#f97316', width: 20, height: 20 } },
+            { id: 'e-ts-d3', source: 'ts', target: 'd3', type: 'smoothstep', animated: true, style: { stroke: '#eab308', strokeWidth: 3 }, markerEnd: { type: 'arrowclosed', color: '#eab308', width: 20, height: 20 } },
+            { id: 'e-ts-d4', source: 'ts', target: 'd4', type: 'smoothstep', animated: true, style: { stroke: '#22c55e', strokeWidth: 3 }, markerEnd: { type: 'arrowclosed', color: '#22c55e', width: 20, height: 20 } },
+            { id: 'e-ts-d5', source: 'ts', target: 'd5', type: 'smoothstep', animated: true, style: { stroke: '#8b5cf6', strokeWidth: 3 }, markerEnd: { type: 'arrowclosed', color: '#8b5cf6', width: 20, height: 20 } },
           ],
         },
 
