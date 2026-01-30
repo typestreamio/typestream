@@ -17,7 +17,6 @@ export default defineConfig({
         integrations: resolve(__dirname, "src/integrations.html"),
         privacy: resolve(__dirname, "src/privacy.html"),
         terms: resolve(__dirname, "src/terms.html"),
-        useCases: resolve(__dirname, "src/use-cases.html"),
       },
     },
   },
