@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="light scroll-smooth" dir="ltr">
+<html lang="en" class="light" dir="ltr">
   <head>
     {{> title-meta title="Use Cases"}}
 
@@ -1236,39 +1236,40 @@
       // Custom Node Component for pipeline nodes
       function PipelineNode({ data }) {
         const isHero = data.isHero;
+        const isHeroSection = data.isHeroSection || isHero;
         const nodeStyle = {
           background: isHero ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'white',
           border: data.error ? '2px solid #ef4444' : isHero ? '2px solid #4f46e5' : '1px solid #e2e8f0',
           borderRadius: isHero ? '16px' : '12px',
-          padding: isHero ? '24px 32px' : '14px 20px',
-          minWidth: isHero ? '200px' : '160px',
+          padding: isHero ? '32px 40px' : isHeroSection ? '24px 36px' : '14px 20px',
+          minWidth: isHero ? '300px' : isHeroSection ? '260px' : '160px',
           boxShadow: data.error ? '0 0 12px rgba(239, 68, 68, 0.3)' : isHero ? '0 8px 24px rgba(99, 102, 241, 0.4)' : '0 4px 12px rgba(0,0,0,0.1)',
         };
 
         const headerStyle = {
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '10px',
           marginBottom: '4px',
         };
 
         const iconStyle = {
-          width: isHero ? '32px' : '24px',
-          height: isHero ? '32px' : '24px',
+          width: isHero ? '40px' : isHeroSection ? '32px' : '24px',
+          height: isHero ? '40px' : isHeroSection ? '32px' : '24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: isHero ? '22px' : '16px',
+          fontSize: isHero ? '30px' : isHeroSection ? '24px' : '16px',
         };
 
         const titleStyle = {
           fontWeight: isHero ? '700' : '600',
-          fontSize: isHero ? '18px' : '14px',
+          fontSize: isHero ? '26px' : isHeroSection ? '20px' : '14px',
           color: data.error ? '#ef4444' : isHero ? 'white' : '#1e293b',
         };
 
         const descStyle = {
-          fontSize: isHero ? '13px' : '11px',
+          fontSize: isHero ? '17px' : isHeroSection ? '15px' : '11px',
           color: isHero ? 'rgba(255,255,255,0.85)' : '#64748b',
           marginTop: '4px',
         };
@@ -1421,10 +1422,10 @@
         dagreGraph.setDefaultEdgeLabel(() => ({}));
 
         // Larger sizes for hero layout
-        const nodeWidth = isHeroLayout ? 200 : 172;
-        const nodeHeight = isHeroLayout ? 75 : 60;
-        const heroNodeWidth = 240;
-        const heroNodeHeight = 100;
+        const nodeWidth = isHeroLayout ? 300 : 172;
+        const nodeHeight = isHeroLayout ? 110 : 60;
+        const heroNodeWidth = 360;
+        const heroNodeHeight = 140;
 
         dagreGraph.setGraph({
           rankdir: direction,
@@ -1505,19 +1506,19 @@
           isHeroLayout: true,
           nodes: [
             // Sources (left column)
-            { id: 's1', type: 'pipeline', data: { icon: '🐘', label: 'PostgreSQL', description: 'CDC Events' } },
-            { id: 's2', type: 'pipeline', data: { icon: '🐬', label: 'MySQL', description: 'Binlog Stream' } },
-            { id: 's3', type: 'pipeline', data: { icon: '🍃', label: 'MongoDB', description: 'Change Streams' } },
-            { id: 's4', type: 'pipeline', data: { icon: '📨', label: 'Kafka', description: 'Topic Events' } },
-            { id: 's5', type: 'pipeline', data: { icon: '➕', label: '10+ Databases', description: 'Oracle, SQL Server...' } },
+            { id: 's1', type: 'pipeline', data: { icon: '🐘', label: 'PostgreSQL', description: 'CDC Events', isHeroSection: true } },
+            { id: 's2', type: 'pipeline', data: { icon: '🐬', label: 'MySQL', description: 'Binlog Stream', isHeroSection: true } },
+            { id: 's3', type: 'pipeline', data: { icon: '🍃', label: 'MongoDB', description: 'Change Streams', isHeroSection: true } },
+            { id: 's4', type: 'pipeline', data: { icon: '📨', label: 'Kafka', description: 'Topic Events', isHeroSection: true } },
+            { id: 's5', type: 'pipeline', data: { icon: '➕', label: '10+ Databases', description: 'Oracle, SQL Server...', isHeroSection: true } },
             // TypeStream (center - hero node)
             { id: 'ts', type: 'pipeline', data: { icon: '⚡', label: 'TypeStream', description: 'Filter • Enrich • Route', isHero: true } },
             // Destinations (right column)
-            { id: 'd1', type: 'pipeline', data: { icon: '🔮', label: 'Weaviate', description: 'Vector Search' } },
-            { id: 'd2', type: 'pipeline', data: { icon: '❄️', label: 'Snowflake', description: 'Analytics' } },
-            { id: 'd3', type: 'pipeline', data: { icon: '📊', label: 'Elasticsearch', description: 'Search Index' } },
-            { id: 'd4', type: 'pipeline', data: { icon: '💬', label: 'Slack', description: 'Alerts' } },
-            { id: 'd5', type: 'pipeline', data: { icon: '🔌', label: '200+ Connectors', description: 'S3, BigQuery, APIs...' } },
+            { id: 'd1', type: 'pipeline', data: { icon: '🔮', label: 'Weaviate', description: 'Vector Search', isHeroSection: true } },
+            { id: 'd2', type: 'pipeline', data: { icon: '❄️', label: 'Snowflake', description: 'Analytics', isHeroSection: true } },
+            { id: 'd3', type: 'pipeline', data: { icon: '📊', label: 'Elasticsearch', description: 'Search Index', isHeroSection: true } },
+            { id: 'd4', type: 'pipeline', data: { icon: '💬', label: 'Slack', description: 'Alerts', isHeroSection: true } },
+            { id: 'd5', type: 'pipeline', data: { icon: '🔌', label: '200+ Connectors', description: 'S3, BigQuery, APIs...', isHeroSection: true } },
           ],
           edges: [
             // Sources → TypeStream
