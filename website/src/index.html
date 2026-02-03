@@ -310,12 +310,6 @@
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <a
-              href="https://docs.typestream.io"
-              class="px-8 py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
-            >
-              Get Started
-            </a>
-            <a
               href="https://github.com/typestreamio/typestream"
               class="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-600 dark:hover:border-indigo-600 transition-colors"
             >
@@ -572,12 +566,110 @@ Postgres CDC &#x2500;&#x2524;
           <h2
             class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
           >
-            Real-time pipelines for the things you've been putting off
+            Your pipeline is also your API.
           </h2>
+          <p
+            class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto"
+          >
+            Most streaming tools push data to a database. Then you build an API
+            on top. TypeStream's materialized views skip that step entirely
+            &mdash; your pipeline computes the result, and a gRPC endpoint
+            serves it directly. Query your streaming data like it's a database,
+            without running one.
+          </p>
         </div>
 
         <div class="max-w-4xl mx-auto space-y-20">
-          <!-- Transformed replicas -->
+          <!-- Live API from database changes -->
+          <div>
+            <h3
+              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
+            >
+              Live API from database changes
+            </h3>
+            <p
+              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
+            >
+              Your product catalog changes in Postgres. Normally you'd build an
+              API server, a cache layer, and invalidation logic. With
+              TypeStream, a materialized view keyed on <code>product_id</code>
+              gives you an instant gRPC endpoint with the latest state of every
+              row. No API server. No cache invalidation. No Redis.
+            </p>
+            <div class="pipeline-ascii mb-4">
+              Postgres CDC &rarr; Materialized View (latest, key: product_id) &rarr; gRPC endpoint
+            </div>
+            <div class="gif-placeholder">
+              [GIF: Building a CDC &rarr; materialized view pipeline, then
+              querying the gRPC endpoint live]
+            </div>
+            <div
+              class="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700"
+            >
+              <h4
+                class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
+              >
+                Same pattern, different data
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Latest order status per order. Current inventory per SKU.
+                Live crypto prices per trading pair. Any time you need a fast
+                read API over data that changes, it's a one-node pipeline.
+              </p>
+            </div>
+          </div>
+
+          <!-- Quota / rate-limit tracking -->
+          <div>
+            <h3
+              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
+            >
+              Quota tracking in real time
+            </h3>
+            <p
+              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
+            >
+              Count API calls per customer in a sliding window. Query the
+              result with a single gRPC call: &ldquo;Has this customer exceeded
+              100 requests this minute?&rdquo; No rate-limiting middleware to
+              build. No Redis counters to manage. The pipeline maintains the
+              count. The endpoint serves it.
+            </p>
+            <div class="pipeline-ascii mb-4">
+              Kafka Topic (API events) &rarr; Materialized View (count, windowed 60s, key: customer_id) &rarr; gRPC endpoint
+            </div>
+            <div class="gif-placeholder">
+              [GIF: Building a windowed count pipeline and querying the
+              per-customer counts via gRPC]
+            </div>
+          </div>
+
+          <!-- Visits by country -->
+          <div>
+            <h3
+              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
+            >
+              Live visits by country
+            </h3>
+            <p
+              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
+            >
+              Enrich page-view events with GeoIP, count them per country in a
+              rolling window, and query the result through the auto-generated
+              endpoint. You just built a real-time analytics backend without
+              Prometheus, a time-series database, or a single line of
+              application code.
+            </p>
+            <div class="pipeline-ascii mb-4">
+              Kafka Topic (page views) &rarr; GeoIP &rarr; Materialized View (count, windowed 60s, key: country) &rarr; gRPC endpoint
+            </div>
+            <div class="gif-placeholder">
+              [GIF: Building a GeoIP &rarr; windowed count &rarr; materialized
+              endpoint pipeline]
+            </div>
+          </div>
+
+          <!-- Perfect database replicas -->
           <div>
             <h3
               class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
@@ -587,59 +679,14 @@ Postgres CDC &#x2500;&#x2524;
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
             >
-              Replicate your data to over 200+ destinations supported by Kafka Connect, like:
-              <ul>
-                <li>Postgres</li>
-                <li>MySQL</li>
-                <li>Clickhouse</li>
-              </ul>
-              - Optionally filtered and reshaped in flight
-              - All with millisecond latency 
+              Replicate your data to 200+ destinations supported by Kafka
+              Connect &mdash; Postgres, MySQL, ClickHouse, and more.
+              Optionally filtered and reshaped in flight, all with millisecond
+              latency.
             </p>
             <div class="gif-placeholder">
               [GIF: Building a simple Postgres &rarr; filter &rarr; destination
               pipeline]
-            </div>
-          </div>
-
-          <!-- Real-time web analytics -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Real-time web analytics
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Enrich web events with GeoIP location data, compute windowed
-              aggregations like visits per minute or unique users by region, and
-              query the results through an auto-generated gRPC endpoint. Live
-              dashboards without a batch pipeline.
-            </p>
-            <div class="gif-placeholder">
-              [GIF: Building GeoIP &rarr; windowed count &rarr; materialized
-              endpoint pipeline]
-            </div>
-          </div>
-
-          <!-- Event-driven triggers -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Event-driven triggers
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Filter on a condition &mdash; order total above a threshold,
-              inventory below a limit, user status changed &mdash; and fire a
-              webhook or notification. Replace the cron jobs that poll your
-              database every minute.
-            </p>
-            <div class="gif-placeholder">
-              [GIF: Building a filter &rarr; webhook pipeline]
             </div>
           </div>
 
@@ -1096,22 +1143,10 @@ Postgres CDC &#x2500;&#x2524;
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://docs.typestream.io"
-              class="px-8 py-4 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-indigo-50 transition-colors"
-            >
-              Get Started
-            </a>
-            <a
               href="https://github.com/typestreamio/typestream"
               class="px-8 py-4 bg-indigo-400/30 text-white font-semibold rounded-xl border border-white/20 hover:bg-indigo-400/50 transition-colors"
             >
               View on GitHub
-            </a>
-            <a
-              href="https://docs.typestream.io"
-              class="px-8 py-4 bg-transparent text-white font-semibold rounded-xl border border-white/20 hover:bg-white/10 transition-colors"
-            >
-              Read the Docs
             </a>
           </div>
         </div>
