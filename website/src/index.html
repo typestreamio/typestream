@@ -682,253 +682,175 @@ Postgres CDC &#x2500;&#x2524;
           </h2>
         </div>
 
-        <div class="max-w-5xl mx-auto node-grid">
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">StreamSource</div>
-              <div class="node-desc">
-                Connects to your Postgres or MySQL CDC stream. Unwraps Debezium
-                change events into clean row data.
+        <div class="max-w-5xl mx-auto space-y-12">
+          <!-- Sources -->
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Sources</h3>
+            <div class="node-grid">
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Kafka Topic</div>
+                  <div class="node-desc">
+                    Connect to any Kafka topic directly. Read typed events from your existing streams.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Database Table</div>
+                  <div class="node-desc">
+                    Connect to your Postgres or MySQL via CDC. Unwraps Debezium change events into clean row data.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Filter</div>
-              <div class="node-desc">
-                Pass through only the events that match a condition on any
-                string key.
+          <!-- Transforms -->
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Transforms</h3>
+            <div class="node-grid">
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Filter</div>
+                  <div class="node-desc">
+                    Pass through only the events that match a condition on any string key.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">OpenAI Transformer</div>
+                  <div class="node-desc">
+                    Classify, summarize, score, or extract with a prompt. Attach any OpenAI model to your stream.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Embedding Generator</div>
+                  <div class="node-desc">
+                    Generate vector embeddings for any text field. Feed downstream vector databases.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Text Extractor</div>
+                  <div class="node-desc">
+                    Pull searchable text content from document fields. Prepare data for search indexing.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">GeoIP Node</div>
+                  <div class="node-desc">
+                    Convert IP addresses to country, city, and region. Every event arrives geo-tagged.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Count / WindowedCount / Group</div>
+                  <div class="node-desc">
+                    Compute real-time aggregations &mdash; events per minute, rolling counts, grouped metrics.
+                  </div>
+                </div>
+              </div>
+
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Materialized View</div>
+                  <div class="node-desc">
+                    Auto-generates a gRPC endpoint from windowed aggregations. Query your streaming data directly.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Map</div>
-              <div class="node-desc">
-                Add computed fields &mdash; derived values, reformatted data,
-                renamed keys.
+          <!-- Sinks -->
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Sinks</h3>
+            <div class="node-grid">
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Database Sink</div>
+                  <div class="node-desc">
+                    Write to Postgres, MySQL, Elasticsearch, Weaviate, and 200+ other destinations via Kafka Connect.
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">OpenAI Transformer</div>
-              <div class="node-desc">
-                Classify, summarize, score, or extract with a prompt. Attach any
-                OpenAI model to your stream.
-              </div>
-            </div>
-          </div>
-
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Embedding Generator</div>
-              <div class="node-desc">
-                Generate vector embeddings for any text field. Feed downstream
-                vector databases.
-              </div>
-            </div>
-          </div>
-
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Text Extractor</div>
-              <div class="node-desc">
-                Pull searchable text content from document fields. Prepare data
-                for search indexing.
-              </div>
-            </div>
-          </div>
-
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">GeoIP Node</div>
-              <div class="node-desc">
-                Convert IP addresses to country, city, and region. Every event
-                arrives geo-tagged.
-              </div>
-            </div>
-          </div>
-
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Count / WindowedCount / Group</div>
-              <div class="node-desc">
-                Compute real-time aggregations &mdash; events per minute,
-                rolling counts, grouped metrics.
-              </div>
-            </div>
-          </div>
-
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Materialized View</div>
-              <div class="node-desc">
-                Auto-generates a gRPC endpoint from windowed aggregations.
-                Query your streaming data directly.
-              </div>
-            </div>
-          </div>
-
-          <div class="node-card">
-            <div class="node-icon">
-              <svg
-                class="w-5 h-5 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="node-name">Kafka Connect Sink</div>
-              <div class="node-desc">
-                Push to any Kafka Connect destination &mdash; Postgres, MySQL,
-                Elasticsearch, Weaviate, and more.
+              <div class="node-card">
+                <div class="node-icon">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="node-name">Kafka Topic Sink</div>
+                  <div class="node-desc">
+                    Publish transformed events back to a Kafka topic for downstream consumers.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
