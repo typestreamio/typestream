@@ -10,6 +10,7 @@ const INTERNAL_TOPIC_PATTERNS = [
   /-reduce-store-/,   // TypeStream reduce state stores
   /^__/,              // Kafka internal topics (__consumer_offsets, etc.)
   /^_schemas$/,       // Schema Registry topic
+  /^connect-/,        // Kafka Connect internal topics
 ];
 
 // Debezium topics follow the pattern: {prefix}.{schema}.{table}
