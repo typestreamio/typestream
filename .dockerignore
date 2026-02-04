@@ -39,13 +39,11 @@ tools/
 # Other modules not needed for demo-data
 libs/
 stub/
-protos/
 config/
 scripts/
 assets/
 
-# UI build artifacts (dev overlay mounts source directly)
-uiv2/
+# Old UI
 ui/
 
 # Python
@@ -61,7 +59,9 @@ ui/
 *.swp
 *~
 
-# Keep what's needed for demo-data Gradle build:
+# Keep what's needed:
 # - gradle/, gradlew, settings.gradle.kts, gradle.properties
 # - buildSrc/
 # - connectors/demo-data/
+# - uiv2/ (production Docker build)
+# - protos/ (proto generation for uiv2)
