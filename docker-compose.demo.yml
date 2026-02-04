@@ -162,6 +162,8 @@ services:
       context: .
       dockerfile: connectors/demo-data/Dockerfile
     environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SCHEMA_REGISTRY_URL: http://redpanda:8081
       # PostgreSQL connection (Debezium captures changes to Kafka)
       POSTGRES_JDBC_URL: jdbc:postgresql://postgres:5432/demo
       POSTGRES_USER: typestream
