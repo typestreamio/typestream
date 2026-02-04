@@ -10,7 +10,6 @@
 #
 
 volumes:
-  uiv2_node_modules:
   caddy_data:
   caddy_config:
   weaviate_data:
@@ -40,24 +39,17 @@ services:
       weaviate:
         condition: service_healthy
 
-  # React frontend via Vite
+  # React frontend - production build served by Caddy
   uiv2:
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - ./uiv2:/app
-      - ./protos:/protos:ro
-      - uiv2_node_modules:/app/node_modules
+    build:
+      context: .
+      dockerfile: uiv2/Dockerfile
+      args:
+        - VITE_API_URL=
     networks:
       - typestream_network
-    command: sh -c "corepack enable && pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
     depends_on:
       - envoy
-    environment:
-      # Empty string = same-origin requests (goes through Caddy)
-      - VITE_API_URL=
-      # Direct IP for gRPC since Cloudflare blocks non-HTTP on port 8080
-      - VITE_GRPC_HOST=${GRPC_HOST:-}
 
   # Expose envoy for remote gRPC access
   envoy:

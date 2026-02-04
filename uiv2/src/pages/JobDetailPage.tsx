@@ -17,6 +17,7 @@ import { PipelineGraphViewer } from '../components/graph-builder/PipelineGraphVi
 import { Sparkline } from '../components/Sparkline';
 import { useThroughputHistory } from '../hooks/useThroughputHistory';
 import { useServerConnection } from '../providers/ServerConnectionContext';
+import { getGrpcHost, getWeaviateBaseUrl } from '../utils/endpoints';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -193,7 +194,7 @@ export function JobDetailPage() {
                       }}
                     >
 {`grpcurl -plaintext -d '{"store_name":"${store.name}","limit":10}' \\
-  localhost:8080 io.typestream.grpc.StateQueryService/GetAllValues \\
+  ${getGrpcHost()} io.typestream.grpc.StateQueryService/GetAllValues \\
   | jq '{key: .key | fromjson, value: .value | fromjson}'`}
                     </Typography>
                   </Box>
@@ -231,13 +232,13 @@ export function JobDetailPage() {
                       }}
                     >
 {`# Count objects in collection
-curl -s 'http://localhost:8090/v1/objects?class=${sink.collectionName}&limit=1' | jq '.totalResults'
+curl -s '${getWeaviateBaseUrl()}/v1/objects?class=${sink.collectionName}&limit=1' | jq '.totalResults'
 
 # List objects (first 5)
-curl -s 'http://localhost:8090/v1/objects?class=${sink.collectionName}&limit=5' | jq '.objects[] | {id, properties}'
+curl -s '${getWeaviateBaseUrl()}/v1/objects?class=${sink.collectionName}&limit=5' | jq '.objects[] | {id, properties}'
 
 # Semantic search
-curl -s 'http://localhost:8090/v1/graphql' -X POST \\
+curl -s '${getWeaviateBaseUrl()}/v1/graphql' -X POST \\
   -H 'Content-Type: application/json' \\
   -d '{"query": "{ Get { ${sink.collectionName}(limit: 5, nearText: {concepts: [\\"your search query\\"]}) { _additional { id distance } } } }"}' \\
   | jq '.data.Get.${sink.collectionName}'`}
