@@ -151,6 +151,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
       elevation={2}
       sx={{
         width: 240,
+        minHeight: 0,
         p: 2,
         display: 'flex',
         flexDirection: 'column',

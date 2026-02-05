@@ -351,9 +351,9 @@ export function GraphBuilder() {
   const canCreate = nodes.length > 0 && allWeaviateSinksValid;
 
   return (
-    <Box sx={{ display: 'flex', height: '100%', gap: 2 }}>
+    <Box sx={{ display: 'flex', height: '100%', gap: 2, minHeight: 0 }}>
       <NodePalette onAddNode={handleAddNode} />
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
         {(createJob.isError || createError) && (
           <Alert severity="error">
             {createJob.isError ? createJob.error.message : createError}
@@ -363,6 +363,7 @@ export function GraphBuilder() {
           ref={reactFlowWrapper}
           sx={{
             flex: 1,
+            minHeight: 0,
             border: '1px solid',
             borderColor: 'divider',
             borderRadius: 1,

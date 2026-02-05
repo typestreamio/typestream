@@ -19,7 +19,7 @@ export function GraphBuilderPage() {
         </Button>
         <Typography variant="h5">Create New Job</Typography>
       </Box>
-      <Box sx={{ flex: 1 }}>
+      <Box sx={{ flex: 1, minHeight: 0 }}>
         <GraphBuilder />
       </Box>
     </Box>
