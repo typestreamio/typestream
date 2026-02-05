@@ -7,6 +7,7 @@ import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.compiler.types.datastream.fromAvroGenericRecord
 import io.typestream.compiler.types.datastream.fromBytes
+import io.typestream.compiler.types.datastream.fromKeyBytes
 import io.typestream.compiler.types.datastream.fromProtoMessage
 import io.typestream.compiler.types.datastream.join
 import io.typestream.compiler.types.datastream.toAvroGenericRecord
@@ -22,8 +23,10 @@ import io.typestream.openai.OpenAiService
 import io.typestream.openai.OpenAiTransformerExecution
 import io.typestream.textextractor.TextExtractorExecution
 import io.typestream.textextractor.TextExtractorService
+import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.avro.AvroSerde
 import io.typestream.kafka.ProtoSerde
+import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.StreamsBuilderWrapper
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -39,7 +42,6 @@ import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.state.WindowStore
 import java.time.Duration
 
-// TODO we need to support schemas for keys
 data class KafkaStreamSource(
     val node: Node.StreamSource,
     private val streamsBuilder: StreamsBuilderWrapper,
@@ -48,6 +50,12 @@ data class KafkaStreamSource(
     private val embeddingGeneratorService: EmbeddingGeneratorService,
     private val openAiService: OpenAiService
 ) {
+    private val schemaRegistryClient: SchemaRegistryClient? by lazy {
+        try {
+            SchemaRegistryClient(SchemaRegistryConfig.fromMap(streamsBuilder.config.toMutableMap()))
+        } catch (_: Exception) { null }
+    }
+
     private var stream: KStream<DataStream, DataStream> = initStream()
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
     private var countStoreName: String? = null
@@ -119,7 +127,7 @@ data class KafkaStreamSource(
                     dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
                 ).map { k, v ->
                     pair(
-                        DataStream.fromBytes(dataStream.path, k), DataStream.fromAvroGenericRecord(dataStream.path, v)
+                        DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient), DataStream.fromAvroGenericRecord(dataStream.path, v)
                     )
                 }
             }
@@ -131,7 +139,7 @@ data class KafkaStreamSource(
                     dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
                 ).map { k, v ->
                     pair(
-                        DataStream.fromBytes(dataStream.path, k), DataStream.fromProtoMessage(dataStream.path, v)
+                        DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient), DataStream.fromProtoMessage(dataStream.path, v)
                     )
                 }
             }

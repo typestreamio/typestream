@@ -39,7 +39,10 @@ curl -X POST "${CONNECT_URL}/connectors" \
       "key.converter": "io.confluent.connect.avro.AvroConverter",
       "key.converter.schema.registry.url": "http://redpanda:8081",
       "value.converter": "io.confluent.connect.avro.AvroConverter",
-      "value.converter.schema.registry.url": "http://redpanda:8081"
+      "value.converter.schema.registry.url": "http://redpanda:8081",
+      "transforms": "extractKey",
+      "transforms.extractKey.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+      "transforms.extractKey.field": "id"
     }
   }'
 
