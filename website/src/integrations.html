@@ -49,135 +49,922 @@
     </div>
     <!-- End Hero -->
 
-    <!-- Start -->
+    <!-- ============================================ -->
+    <!-- SOURCES (Debezium CDC) -->
+    <!-- ============================================ -->
     <section class="relative md:py-24 py-16">
       <div class="container relative">
-        <div
-          class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]"
-        >
-          <!-- Start Wallet -->
-          <div
-            class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out"
-          >
-            <div
-              class="py-10 bg-gradient-to-r to-orange-600/70 from-indigo-600/70"
-            ></div>
-            <div class="p-6 pt-0 -mt-10 text-center">
-              <img
-                src="assets/images/logo-openai.png"
-                class="h-20 w-20 p-4 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto"
-                alt=""
-              />
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sources</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Databases
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Stream every insert, update, and delete from your database in real time. Connect your existing database and start streaming in minutes.
+          </p>
+        </div>
 
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Cassandra -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/cassandra.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-teal-600/70 to-cyan-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/apachecassandra" class="h-10 w-10" alt="Cassandra" />
+              </div>
               <div class="mt-4">
-                <h5 class="text-xl font-semibold mb-3">OpenAI</h5>
-                <p class="text-slate-400">
-                  Enrich your events with OpenAI data. Configure the common
-                  prompt and field that holds your context.
-                </p>
+                <h5 class="text-xl font-semibold mb-3">Cassandra</h5>
+                <p class="text-slate-400">Capture changes from Apache Cassandra using the commit log.</p>
               </div>
             </div>
           </div>
-          <div
-            class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out"
-          >
-            <div
-              class="py-10 bg-gradient-to-r to-orange-600/70 from-indigo-600/70"
-            ></div>
-            <div class="p-6 pt-0 -mt-10 text-center">
-              <img
-                src="assets/images/logo-schema-registry.png"
-                class="h-20 w-20 p-4 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto"
-                alt=""
-              />
+          </a>
 
+          <!-- Db2 -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/db2.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-slate-600/70 to-slate-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/ibm.svg" class="h-10 w-10" alt="IBM Db2" />
+              </div>
               <div class="mt-4">
-                <h5 class="text-xl font-semibold mb-3">
-                  Confluent Schema Registry
-                </h5>
-                <p class="text-slate-400">
-                  TypeStream detects the schema of your topics using the schema
-                  registry.
-                </p>
+                <h5 class="text-xl font-semibold mb-3">Db2</h5>
+                <p class="text-slate-400">Stream changes from IBM Db2 for Linux, UNIX, and Windows.</p>
               </div>
             </div>
           </div>
-          <!-- End Wallet -->
+          </a>
 
-          <!-- Start Wallet -->
-          <div
-            class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out"
-          >
-            <div
-              class="py-10 bg-gradient-to-r to-orange-600/70 from-indigo-600/70"
-            ></div>
+          <!-- Informix (Incubating) -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/informix.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-800/70 to-blue-600/70"></div>
             <div class="p-6 pt-0 -mt-10 text-center">
-              <img
-                src="assets/images/logo-kafka.png"
-                class="h-20 w-20 p-4 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto"
-                alt=""
-              />
-
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/ibm.svg" class="h-10 w-10" alt="IBM Informix" />
+              </div>
               <div class="mt-4">
-                <h5 class="text-xl font-semibold mb-3">Kafka</h5>
-                <p class="text-slate-400">
-                  Stream from either Confluent or MSK out of the box.
-                </p>
+                <h5 class="text-xl font-semibold mb-3">Informix</h5>
+                <p class="text-slate-400">Capture changes from IBM Informix using the CDC API.</p>
+                <span class="inline-block mt-2 text-xs font-semibold text-amber-600 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded">Incubating</span>
               </div>
             </div>
           </div>
-          <div
-            class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out"
-          >
-            <div
-              class="py-10 bg-gradient-to-r to-orange-600/70 from-indigo-600/70"
-            ></div>
-            <div class="p-6 pt-0 -mt-10 text-center">
-              <img
-                src="assets/images/logo-redpanda.jpg"
-                class="h-20 w-20 p-4 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto"
-                alt=""
-              />
+          </a>
 
+          <!-- MariaDB -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/mariadb.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-sky-600/70 to-sky-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/mariadb" class="h-10 w-10" alt="MariaDB" />
+              </div>
               <div class="mt-4">
-                <h5 class="text-xl font-semibold mb-3">Redpanda</h5>
-                <p class="text-slate-400">
-                  Stream from your cloud or self-managed Redpanda instance
-                </p>
+                <h5 class="text-xl font-semibold mb-3">MariaDB</h5>
+                <p class="text-slate-400">Capture row-level changes from MariaDB via the binlog with a dedicated connector.</p>
               </div>
             </div>
           </div>
+          </a>
 
-          <div
-            class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out"
-          >
-            <div
-              class="py-10 bg-gradient-to-r to-orange-600/70 from-indigo-600/70"
-            ></div>
+          <!-- MongoDB -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/mongodb.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-green-600/70 to-green-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/mongodb" class="h-10 w-10" alt="MongoDB" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">MongoDB</h5>
+                <p class="text-slate-400">Stream document changes from MongoDB using change streams. Supports replica sets and sharded clusters.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- MySQL -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/mysql.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-orange-500/70 to-yellow-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/mysql" class="h-10 w-10" alt="MySQL" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">MySQL</h5>
+                <p class="text-slate-400">Capture row-level changes from MySQL via the binlog.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Oracle -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/oracle.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-red-700/70 to-orange-600/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/oracle.svg" class="h-10 w-10" alt="Oracle" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Oracle</h5>
+                <p class="text-slate-400">Stream changes from Oracle Database using LogMiner or XStream.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- PostgreSQL -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/postgresql.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-600/70 to-blue-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/postgresql" class="h-10 w-10" alt="PostgreSQL" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">PostgreSQL</h5>
+                <p class="text-slate-400">Stream changes from PostgreSQL using logical replication. Supports all Postgres-compatible databases.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Spanner -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/spanner.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-500/70 to-indigo-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/googlecloud" class="h-10 w-10" alt="Google Cloud Spanner" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Spanner</h5>
+                <p class="text-slate-400">Stream changes from Google Cloud Spanner, the globally distributed relational database.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- SQL Server -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/sqlserver.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-red-600/70 to-red-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/microsoftsqlserver.svg" class="h-10 w-10" alt="SQL Server" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">SQL Server</h5>
+                <p class="text-slate-400">Capture changes from Microsoft SQL Server using its native CDC feature.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Vitess -->
+          <a href="https://debezium.io/documentation/reference/stable/connectors/vitess.html" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-purple-600/70 to-purple-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/vitess" class="h-10 w-10" alt="Vitess" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Vitess</h5>
+                <p class="text-slate-400">Capture changes from Vitess, the MySQL-compatible distributed database used by PlanetScale.</p>
+                <span class="inline-block mt-2 text-xs font-semibold text-amber-600 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded">Incubating</span>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (Databases) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Databases
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Write pipeline output directly to relational, document, graph, and key-value databases via Kafka Connect sink connectors.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Amazon DynamoDB -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-aws-dynamodb" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-indigo-600/70 to-blue-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazondynamodb.svg" class="h-10 w-10" alt="Amazon DynamoDB" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Amazon DynamoDB</h5>
+                <p class="text-slate-400">Export streaming data to DynamoDB for serverless NoSQL workloads at any scale.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Azure Cosmos DB -->
+          <a href="https://www.confluent.io/hub/microsoftcorporation/kafka-connect-cosmos" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-600/70 to-indigo-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/microsoftazure.svg" class="h-10 w-10" alt="Azure Cosmos DB" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Azure Cosmos DB</h5>
+                <p class="text-slate-400">Sink data into Azure Cosmos DB for globally distributed, multi-model database workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Cassandra -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-cassandra" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-teal-600/70 to-cyan-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/apachecassandra" class="h-10 w-10" alt="Cassandra" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Cassandra</h5>
+                <p class="text-slate-400">Sink data into Apache Cassandra for distributed, high-throughput writes.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- MongoDB -->
+          <a href="https://www.confluent.io/hub/mongodb/kafka-connect-mongodb" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-green-600/70 to-green-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/mongodb" class="h-10 w-10" alt="MongoDB" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">MongoDB</h5>
+                <p class="text-slate-400">Write pipeline output to MongoDB collections for document-based workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- MySQL (JDBC) -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-jdbc" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-orange-500/70 to-yellow-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/mysql" class="h-10 w-10" alt="MySQL" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">MySQL (JDBC)</h5>
+                <p class="text-slate-400">Sink pipeline results into MySQL or MariaDB via the JDBC sink connector.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Neo4j -->
+          <a href="https://www.confluent.io/hub/neo4j/kafka-connect-neo4j" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-500/70 to-blue-300/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/neo4j" class="h-10 w-10" alt="Neo4j" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Neo4j</h5>
+                <p class="text-slate-400">Sink streaming data into Neo4j for graph-based analytics and relationship discovery.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- PostgreSQL (JDBC) -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-jdbc" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-600/70 to-blue-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/postgresql" class="h-10 w-10" alt="PostgreSQL" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">PostgreSQL (JDBC)</h5>
+                <p class="text-slate-400">Write transformed data back to PostgreSQL or any JDBC-compatible database.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Redis -->
+          <a href="https://www.confluent.io/hub/jcustenborder/kafka-connect-redis" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-red-600/70 to-red-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/redis" class="h-10 w-10" alt="Redis" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Redis</h5>
+                <p class="text-slate-400">Push streaming results into Redis for low-latency caching and key-value lookups.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (Data Warehouses & Analytics) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Data Warehouses &amp; Analytics
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Stream data into warehouses and OLAP engines for real-time analytics, reporting, and business intelligence.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Amazon Redshift -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-aws-redshift" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-violet-600/70 to-purple-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonredshift.svg" class="h-10 w-10" alt="Amazon Redshift" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Amazon Redshift</h5>
+                <p class="text-slate-400">Export streaming data to Amazon Redshift for cloud data warehouse analytics.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Apache Druid (Native Kafka Ingestion) -->
+          <a href="https://druid.apache.org/docs/latest/ingestion/kafka-ingestion/" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-purple-500/70 to-pink-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/apachedruid" class="h-10 w-10" alt="Apache Druid" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Apache Druid</h5>
+                <p class="text-slate-400">Ingest streaming data into Druid for sub-second OLAP queries and real-time analytics.</p>
+                <span class="inline-block mt-2 text-xs font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">Native Kafka Ingestion</span>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Apache Pinot (Native Kafka Ingestion) -->
+          <a href="https://docs.pinot.apache.org/manage-data/data-import/pinot-stream-ingestion/import-from-apache-kafka" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-indigo-500/70 to-violet-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <span class="text-2xl font-bold text-indigo-600">Pi</span>
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Apache Pinot</h5>
+                <p class="text-slate-400">Feed data into Pinot for user-facing real-time analytics at scale.</p>
+                <span class="inline-block mt-2 text-xs font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">Native Kafka Ingestion</span>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- ClickHouse -->
+          <a href="https://www.confluent.io/hub/clickhouse/clickhouse-kafka-connect" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-yellow-400/70 to-yellow-200/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/clickhouse" class="h-10 w-10" alt="ClickHouse" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">ClickHouse</h5>
+                <p class="text-slate-400">Sink data into ClickHouse for real-time OLAP queries on streaming data.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Databricks Delta Lake -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-databricks-delta-lake" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-red-500/70 to-orange-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/databricks" class="h-10 w-10" alt="Databricks" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Databricks Delta Lake</h5>
+                <p class="text-slate-400">Sink streaming data into Databricks Delta Lake for unified analytics and ML workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Google BigQuery -->
+          <a href="https://www.confluent.io/hub/confluentinc/BigQueryStorageSink" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-700/70 to-blue-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/googlebigquery" class="h-10 w-10" alt="Google BigQuery" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Google BigQuery</h5>
+                <p class="text-slate-400">Stream data directly into BigQuery for warehouse analytics and reporting.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Snowflake -->
+          <a href="https://www.confluent.io/hub/snowflakeinc/snowflake-kafka-connector" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-cyan-500/70 to-blue-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/snowflake" class="h-10 w-10" alt="Snowflake" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Snowflake</h5>
+                <p class="text-slate-400">Load streaming data into Snowflake for cloud data warehousing and analytics.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (Search) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Search
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Index streaming data into search engines for full-text search, log analytics, and security workloads.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Elasticsearch -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-elasticsearch" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-yellow-500/70 to-yellow-300/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/elasticsearch" class="h-10 w-10" alt="Elasticsearch" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Elasticsearch</h5>
+                <p class="text-slate-400">Index streaming data into Elasticsearch for full-text search and analytics.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- OpenSearch -->
+          <a href="https://github.com/Aiven-Open/opensearch-connector-for-apache-kafka" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-500/70 to-cyan-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/opensearch" class="h-10 w-10" alt="OpenSearch" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">OpenSearch</h5>
+                <p class="text-slate-400">Sink data into OpenSearch for search, observability, and security analytics.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (Object & File Storage) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Object &amp; File Storage
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Write streaming data to cloud object stores and distributed file systems for data lake, archival, and batch processing workloads.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Amazon S3 -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-s3" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-orange-500/70 to-amber-400/70"></div>
             <div class="p-6 pt-0 -mt-10 text-center">
               <img
                 src="assets/images/logo-s3.png"
                 class="h-20 w-20 p-4 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto"
-                alt=""
+                alt="Amazon S3"
               />
-
               <div class="mt-4">
-                <h5 class="text-xl font-semibold mb-3">S3</h5>
-                <p class="text-slate-400">
-                  COMING SOON - Stream data to and from S3 for persistent
-                  storage and backups
-                </p>
+                <h5 class="text-xl font-semibold mb-3">Amazon S3</h5>
+                <p class="text-slate-400">Write streaming data to S3 in Parquet, Avro, or JSON for data lake and archival workloads.</p>
               </div>
             </div>
           </div>
-          <!-- End Wallet -->
+          </a>
+
+          <!-- Azure Blob Storage -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-azure-blob-storage" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-500/70 to-blue-300/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/microsoftazure.svg" class="h-10 w-10" alt="Azure Blob Storage" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Azure Blob Storage</h5>
+                <p class="text-slate-400">Write streaming data to Azure Blob Storage for cloud-native data lake workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Google Cloud Storage -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-gcs" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-600/70 to-cyan-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/googlecloud" class="h-10 w-10" alt="Google Cloud Storage" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Google Cloud Storage</h5>
+                <p class="text-slate-400">Sink data to GCS buckets in Parquet, Avro, or JSON format.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- HDFS 3 -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-hdfs3" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-amber-600/70 to-yellow-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/apachehadoop" class="h-10 w-10" alt="HDFS" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">HDFS 3</h5>
+                <p class="text-slate-400">Write to Hadoop Distributed File System for big data batch processing pipelines.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
         </div>
-        <!--end grid-->
       </div>
-      <!--end container-->
     </section>
-    <!--end end section-->
-    <!-- End -->
+
+    <!-- ============================================ -->
+    <!-- Observability -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sources &amp; Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Observability
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Ingest traces, metrics, and logs into Kafka and route them to observability platforms for monitoring, alerting, and performance analysis.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Datadog -->
+          <a href="https://github.com/DataDog/datadog-kafka-connect-logs" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-purple-600/70 to-violet-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/datadog" class="h-10 w-10" alt="Datadog" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Datadog</h5>
+                <p class="text-slate-400">Route logs and events to Datadog for monitoring, alerting, and observability dashboards.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- InfluxDB -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-influxdb" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-violet-600/70 to-purple-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/influxdb" class="h-10 w-10" alt="InfluxDB" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">InfluxDB</h5>
+                <p class="text-slate-400">Write time-series data into InfluxDB for monitoring and IoT workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- OpenTelemetry -->
+          <a href="https://github.com/conduktor/kafka-connect-opentelemetry" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-600/70 to-indigo-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/opentelemetry" class="h-10 w-10" alt="OpenTelemetry" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">OpenTelemetry</h5>
+                <p class="text-slate-400">Ingest OTLP traces, metrics, and logs into Kafka topics for observability pipelines.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- New Relic -->
+          <a href="https://github.com/newrelic/kafka-connect-newrelic" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-green-500/70 to-teal-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/newrelic" class="h-10 w-10" alt="New Relic" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">New Relic</h5>
+                <p class="text-slate-400">Stream events and logs to New Relic for full-stack observability and performance monitoring.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Splunk -->
+          <a href="https://www.confluent.io/hub/splunk/kafka-connect-splunk" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-green-500/70 to-emerald-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/splunk" class="h-10 w-10" alt="Splunk" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Splunk</h5>
+                <p class="text-slate-400">Route events to Splunk for security information and event management.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (Messaging & Streaming) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            Messaging &amp; Streaming
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Forward events to other messaging systems and streaming platforms for cross-cloud and hybrid architectures.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Amazon Kinesis -->
+          <a href="https://github.com/awslabs/kinesis-kafka-connector" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-orange-600/70 to-orange-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <span class="text-2xl font-bold text-orange-600">Ki</span>
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Amazon Kinesis</h5>
+                <p class="text-slate-400">Forward streaming data to Kinesis Data Streams for AWS-native pipelines.</p>
+                <span class="inline-block mt-2 text-xs font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">Community Connector</span>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Google Pub/Sub -->
+          <a href="https://github.com/GoogleCloudPlatform/pubsub/tree/master/kafka-connector" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-600/70 to-indigo-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/googlepubsub" class="h-10 w-10" alt="Google Pub/Sub" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Google Pub/Sub</h5>
+                <p class="text-slate-400">Publish events to Google Cloud Pub/Sub for GCP-native messaging workflows.</p>
+                <span class="inline-block mt-2 text-xs font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">Community Connector</span>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- MQTT -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-mqtt" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-purple-700/70 to-indigo-500/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/mqtt" class="h-10 w-10" alt="MQTT" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">MQTT</h5>
+                <p class="text-slate-400">Publish events to MQTT brokers for IoT and edge computing workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- RabbitMQ -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-rabbitmq-sink" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-orange-500/70 to-orange-300/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/rabbitmq" class="h-10 w-10" alt="RabbitMQ" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">RabbitMQ</h5>
+                <p class="text-slate-400">Forward streaming data to RabbitMQ for message queue and routing workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (AI & Vector) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            AI &amp; Vector
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Push streaming data into vector databases for similarity search, RAG pipelines, and AI/ML embedding workloads.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- Google Cloud Bigtable -->
+          <a href="https://github.com/GoogleCloudPlatform/cloud-bigtable-ecosystem/tree/main/kafka-connect-bigtable-sink" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-500/70 to-blue-300/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/googlebigtable" class="h-10 w-10" alt="Google Cloud Bigtable" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Google Cloud Bigtable</h5>
+                <p class="text-slate-400">Sink data into Cloud Bigtable for wide-column NoSQL workloads at petabyte scale.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Milvus -->
+          <a href="https://github.com/zilliztech/kafka-connect-milvus" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-blue-500/70 to-cyan-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/milvus" class="h-10 w-10" alt="Milvus" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Milvus</h5>
+                <p class="text-slate-400">Sink streaming data into Milvus for vector search and AI/ML embedding workloads.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+          <!-- Qdrant -->
+          <a href="https://github.com/qdrant/qdrant-kafka" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-rose-500/70 to-pink-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <img src="https://cdn.simpleicons.org/qdrant" class="h-10 w-10" alt="Qdrant" />
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">Qdrant</h5>
+                <p class="text-slate-400">Push streaming data into Qdrant for vector similarity search and RAG pipelines.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SINKS (General) -->
+    <!-- ============================================ -->
+    <section class="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <span class="text-indigo-600 font-semibold uppercase tracking-wider text-sm">Sinks</span>
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white mt-2 mb-4">
+            General
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Send streaming data to any HTTP endpoint or webhook for custom integrations and general-purpose connectivity.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
+
+          <!-- HTTP / REST -->
+          <a href="https://www.confluent.io/hub/confluentinc/kafka-connect-http" target="_blank" rel="noopener noreferrer" class="block">
+          <div class="group relative overflow-hidden rounded-md shadow dark:shadow-gray-800 hover:shadow-lg dark:hover:shadow-gray-800 duration-500 ease-in-out">
+            <div class="py-10 bg-gradient-to-r from-slate-600/70 to-slate-400/70"></div>
+            <div class="p-6 pt-0 -mt-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white dark:bg-slate-900 shadow-lg dark:shadow-gray-800 mx-auto flex items-center justify-center">
+                <span class="text-2xl font-bold text-slate-600">Ht</span>
+              </div>
+              <div class="mt-4">
+                <h5 class="text-xl font-semibold mb-3">HTTP / REST</h5>
+                <p class="text-slate-400">POST events to any HTTP endpoint or webhook for custom integrations.</p>
+              </div>
+            </div>
+          </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
 
     {{> footer/footer}}
 

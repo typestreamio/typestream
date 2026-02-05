@@ -173,7 +173,9 @@ function topFunction() {
 /*********************/
 /*   Feather Icons   */
 /*********************/
-feather.replace();
+try {
+  feather.replace();
+} catch (err) {}
 
 /*********************/
 /*     Small Menu    */

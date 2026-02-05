@@ -12,7 +12,6 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "src/index.html"),
         about: resolve(__dirname, "src/about.html"),
-        contact: resolve(__dirname, "src/contact.html"),
         error: resolve(__dirname, "src/error.html"),
         integrations: resolve(__dirname, "src/integrations.html"),
         privacy: resolve(__dirname, "src/privacy.html"),
