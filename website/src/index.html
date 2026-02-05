@@ -581,6 +581,87 @@ Postgres CDC &#x2500;&#x2524;
     <hr class="section-divider" />
 
     <!-- ============================================ -->
+    <!-- ANCHOR EXAMPLE: MATERIALIZED API -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto">
+          <h2
+            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-6"
+          >
+            Turn high-throughput data into a materialized API
+          </h2>
+
+          <div class="mb-8">
+            <h3
+              class="text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-2"
+            >
+              The problem
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Your data changes constantly &mdash; rows updating in your
+              database, webhooks firing from external services, events streaming
+              from third-party APIs. You need a fast endpoint that always
+              returns the latest state. The usual answer: build a database, an
+              API server, upsert logic, a cache layer, and invalidation code.
+              That's a lot of plumbing for what should be simple: keep the
+              latest value, serve it on demand.
+            </p>
+          </div>
+
+          <div class="mb-8">
+            <h3
+              class="text-sm font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-2"
+            >
+              The pipeline
+            </h3>
+            <video
+              autoplay
+              muted
+              loop
+              playsinline
+              class="w-full rounded-xl border border-slate-200 dark:border-slate-700 mb-4"
+            >
+              <source src="assets/images/crypto-demo.webm" type="video/webm" />
+              <source src="assets/images/crypto-demo.mp4" type="video/mp4" />
+            </video>
+            <div class="pipeline-ascii">
+              Kafka Topic (Coinbase prices) &rarr; Materialized View (latest, key: trading_pair) &rarr; gRPC endpoint
+            </div>
+            <p
+              class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
+            >
+              Here, crypto prices stream in from Coinbase. A materialized view
+              keeps the latest value per trading pair. A gRPC endpoint serves it
+              instantly. No database. No cache. No API server. The same pattern
+              works for any high-throughput source &mdash; CDC from your
+              Postgres, IoT telemetry, payment events &mdash; anything where
+              you need a fast read API over data that never stops changing.
+            </p>
+          </div>
+
+          <div
+            class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700"
+          >
+            <h3
+              class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
+            >
+              What this replaces
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              A webhook handler or polling job, a Postgres table, upsert logic,
+              an Express or FastAPI server, maybe Redis for caching, and
+              invalidation code to keep it all consistent. With TypeStream, the
+              pipeline <em>is</em> the API.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <!-- ============================================ -->
     <!-- WHAT ELSE YOU CAN BUILD -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
