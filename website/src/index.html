@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="light" dir="ltr">
+<html lang="en" class="light" dir="ltr" data-theme="light">
   <head>
     {{> title-meta title="Home"}}
 
@@ -332,10 +332,16 @@
             </a>
           </div>
 
-          <!-- GIF placeholder: visual builder opening shot -->
-          <div class="gif-placeholder">
-            [GIF: Building a pipeline in the TypeStream visual builder]
-          </div>
+          <video
+            autoplay
+            muted
+            loop
+            playsinline
+            class="w-full rounded-xl border border-slate-200 dark:border-slate-700"
+          >
+            <source src="assets/images/hero-demo.webm" type="video/webm" />
+            <source src="assets/images/hero-demo.mp4" type="video/mp4" />
+          </video>
         </div>
       </div>
     </section>

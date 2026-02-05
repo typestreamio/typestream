@@ -14,6 +14,7 @@ For detailed architecture documentation, see:
 - **[uiv2/ARCHITECTURE.md](uiv2/ARCHITECTURE.md)** - React UI architecture with visual graph builder and job management
 - **[connectors/demo-data/ARCHITECTURE.md](connectors/demo-data/ARCHITECTURE.md)** - Demo data generators for Coinbase, Wikipedia, and synthetic web visits
 - cli/ - A Go program to start and stop docker compose containers etc
+- **[website/docs/video-encoding.md](website/docs/video-encoding.md)** - How to record, encode, and embed demo videos on the landing page
 
 # Developing
 
