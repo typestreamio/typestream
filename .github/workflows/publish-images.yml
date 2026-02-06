@@ -176,12 +176,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build-and-test-server, build-and-test-demo-data, build-and-test-kafka-connect]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     steps:
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download all image artifacts
