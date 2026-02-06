@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/docs-check.yml'
   pull_request:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/docs-check.yml'
 
 permissions:
@@ -32,13 +34,10 @@ jobs:
           use-flakehub: false
 
       - name: Install dependencies
-        working-directory: docs
-        run: nix develop --command npm ci
+        run: nix develop --command pnpm install --filter typestream-docs...
 
       - name: Type check
-        working-directory: docs
-        run: nix develop --command npm run typecheck
+        run: nix develop --command pnpm --filter typestream-docs run typecheck
 
       - name: Build
-        working-directory: docs
-        run: nix develop --command npm run build
+        run: nix develop --command pnpm --filter typestream-docs run build

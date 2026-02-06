@@ -6,6 +6,7 @@ on:
     paths:
       - 'uiv2/**'
       - 'protos/**'
+      - 'pnpm-lock.yaml'
       - 'flake.nix'
       - 'flake.lock'
       - '.github/workflows/frontend-check.yml'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'uiv2/**'
       - 'protos/**'
+      - 'pnpm-lock.yaml'
       - 'flake.nix'
       - 'flake.lock'
       - '.github/workflows/frontend-check.yml'
@@ -39,20 +41,16 @@ jobs:
           use-flakehub: false
 
       - name: Install dependencies
-        working-directory: uiv2
-        run: nix develop --command pnpm install
+        run: nix develop --command pnpm install --filter uiv2...
 
       - name: Lint
-        working-directory: uiv2
-        run: nix develop --command pnpm lint
+        run: nix develop --command pnpm --filter uiv2 run lint
 
       - name: Build
-        working-directory: uiv2
-        run: nix develop --command pnpm build
+        run: nix develop --command pnpm --filter uiv2 run build
 
       - name: Test
-        working-directory: uiv2
-        run: nix develop --command pnpm test -- --reporter=default --reporter=junit --outputFile.junit=test-results.xml
+        run: nix develop --command pnpm --filter uiv2 run test -- --reporter=default --reporter=junit --outputFile.junit=test-results.xml
         continue-on-error: true
 
       - name: Publish Test Results
