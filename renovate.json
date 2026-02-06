@@ -9,5 +9,24 @@
       "matchUpdateTypes": ["patch"],
       "automerge": true
     }
+  ],
+  "dockerfile": {
+    "fileMatch": [
+      "(^|/|\\\\)[Dd]ockerfile$",
+      "(^|/)[Dd]ockerfile[^/]*$",
+      "^uiv2/Dockerfile$"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Elasticsearch Docker images in docker-compose files",
+      "fileMatch": ["docker-compose.*\\.ya?ml$"],
+      "matchStrings": [
+        "image:\\s*docker\\.elastic\\.co/elasticsearch/elasticsearch:(?<currentValue>[^\\s\"']+)"
+      ],
+      "depNameTemplate": "docker.elastic.co/elasticsearch/elasticsearch",
+      "datasourceTemplate": "docker"
+    }
   ]
 }
