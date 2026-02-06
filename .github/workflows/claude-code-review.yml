@@ -15,7 +15,7 @@ jobs:
     if: github.event.workflow_run.event == 'pull_request'
 
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
       actions: read
       id-token: write
@@ -23,11 +23,27 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ===== Nix Development Environment =====
+      # Uses flake.nix - same environment as local development
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+        with:
+          flakehub: false
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
 
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Prevent Claude from merging or closing PRs
+          disallowed_tools: 'Bash(gh pr merge:*),Bash(gh pr close:*)'
           prompt: |
             REPO: ${{ github.repository }}
             WORKFLOW: ${{ github.event.workflow_run.name }}
@@ -39,20 +55,31 @@ jobs:
             First, find the PR for this branch:
             gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json number,title --jq '.[0]'
 
-            If TEST RESULT is "failure":
-            - Check the failed logs: gh run view <RUN ID> --log-failed
-            - Analyze the test failure - identify root cause and whether it's flaky or a real bug
-            - Include this analysis in your review
+            To run commands, use: nix develop --command <cmd>
+            Examples:
+            - nix develop --command gradle :server:test --tests 'io.typestream.compiler.SomeTest'
+            - nix develop --command pnpm --filter uiv2 run test
 
-            Review this pull request focusing on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+            If TEST RESULT is "failure":
+            1. Check the failed logs: gh run view ${{ github.event.workflow_run.id }} --log-failed
+            2. Analyze the failure - identify if it's a test bug, code bug, or flaky test
+            3. Make ONE attempt to fix the issue:
+               - Edit the relevant file(s)
+               - Run the appropriate test command to verify your fix works (use nix develop --command)
+               - If fix works: commit with message "[Claude] Fix: <brief description>" and push
+               - If fix doesn't work: DO NOT retry, proceed to review step
+            4. Post a PR comment explaining what you found and what you did
+
+            IMPORTANT: Only make ONE fix attempt. Do not iterate or retry if it fails.
+
+            If TEST RESULT is "success":
+            - Review this pull request focusing on:
+              - Code quality and best practices
+              - Potential bugs or issues
+              - Performance considerations
+              - Security concerns
+              - Test coverage
 
             Use the repository's CLAUDE.md for guidance on style and conventions.
 
             Post your review as a PR comment using: gh pr comment <number> --body "your review"
-
-          claude_args: '--allowed-tools "Bash(gh run view:*),Bash(gh run download:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Read,Glob,Grep"'
