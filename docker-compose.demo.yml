@@ -13,6 +13,7 @@ volumes:
   caddy_data:
   caddy_config:
   weaviate_data:
+  elasticsearch_data:
   demo_files:  # Shared volume for demo file uploads
 
 services:
@@ -25,6 +26,7 @@ services:
       TYPESTREAM_POSTGRES_HOST: postgres
       TYPESTREAM_WEAVIATE_REST_URL: http://weaviate:8080
       TYPESTREAM_WEAVIATE_GRPC_URL: weaviate:50051
+      TYPESTREAM_ELASTICSEARCH_URL: http://elasticsearch:9200
       KAFKA_CONNECT_URL: http://kafka-connect:8083
       TYPESTREAM_CONFIG: |-
         [grpc]
@@ -37,6 +39,8 @@ services:
       - demo_files:/tmp/typestream-files:ro  # Read sample files for TextExtractor
     depends_on:
       weaviate:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
 
   # React frontend - production build served by Caddy
@@ -103,6 +107,27 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
+
+  # Elasticsearch search engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - typestream_network
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.name=typestream-es
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
 
   # Demo data generators
   demo-data-coinbase:
