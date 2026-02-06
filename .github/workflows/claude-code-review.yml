@@ -1,57 +1,58 @@
 name: Claude Code Review
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+  workflow_run:
+    workflows:
+      - "server check"
+      - "frontend check"
+      - "connectors check"
+    types: [completed]
 
 jobs:
-  claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
+  review:
     runs-on: ubuntu-latest
+    # Only review PR builds
+    if: github.event.workflow_run.event == 'pull_request'
+
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      actions: read
       id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Run Claude Code Review
-        id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            WORKFLOW: ${{ github.event.workflow_run.name }}
+            BRANCH: ${{ github.event.workflow_run.head_branch }}
+            TEST RESULT: ${{ github.event.workflow_run.conclusion }}
+            RUN ID: ${{ github.event.workflow_run.id }}
+            WORKFLOW URL: ${{ github.event.workflow_run.html_url }}
 
-            Please review this pull request and provide feedback on:
+            First, find the PR for this branch:
+            gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json number,title --jq '.[0]'
+
+            If TEST RESULT is "failure":
+            - Check the failed logs: gh run view <RUN ID> --log-failed
+            - Analyze the test failure - identify root cause and whether it's flaky or a real bug
+            - Include this analysis in your review
+
+            Review this pull request focusing on:
             - Code quality and best practices
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
             - Test coverage
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            Use the repository's CLAUDE.md for guidance on style and conventions.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            Post your review as a PR comment using: gh pr comment <number> --body "your review"
 
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
-
+          claude_args: '--allowed-tools "Bash(gh run view:*),Bash(gh run download:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Read,Glob,Grep"'
