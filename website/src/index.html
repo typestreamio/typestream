@@ -164,43 +164,6 @@
         }
       }
 
-      /* GIF placeholder */
-      .gif-placeholder {
-        background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-        border: 2px dashed #c7d2fe;
-        border-radius: 1rem;
-        padding: 3rem 2rem;
-        text-align: center;
-        color: #6366f1;
-        font-weight: 500;
-        font-size: 0.9rem;
-      }
-
-      .dark .gif-placeholder {
-        background: linear-gradient(135deg, #1e293b 0%, #312e81 50%, #1e293b 100%);
-        border-color: #4338ca;
-        color: #a5b4fc;
-      }
-
-      /* Pipeline diagram text */
-      .pipeline-ascii {
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 0.85rem;
-        line-height: 1.8;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        padding: 1.5rem 2rem;
-        overflow-x: auto;
-        color: #334155;
-      }
-
-      .dark .pipeline-ascii {
-        background: #0f172a;
-        border-color: #1e293b;
-        color: #94a3b8;
-      }
-
       /* Node grid */
       .node-grid {
         display: grid;
@@ -498,13 +461,8 @@
             >
               The pipeline
             </h3>
-            <!-- GIF placeholder -->
-            <div class="gif-placeholder mb-4">
-              [GIF: Building this pipeline in the TypeStream GUI]
-            </div>
-            <div class="pipeline-ascii">
-              Postgres CDC &rarr; Text Extraction &rarr; Elasticsearch
-            </div>
+            <!-- ReactFlow Pipeline Diagram -->
+            <div id="flow-search-sync" class="mb-4" style="height: 160px;"></div>
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
             >
@@ -538,18 +496,8 @@
             Now add semantic search &mdash; one more node
           </h2>
 
-          <!-- GIF placeholder -->
-          <div class="gif-placeholder mb-6">
-            [GIF: Extending the previous pipeline with an embedding node and
-            Weaviate sink]
-          </div>
-
-          <div class="pipeline-ascii mb-8">
-            <pre>
-                              &#x250C;&rarr; Text Extraction &rarr; Elasticsearch (keyword search)
-Postgres CDC &#x2500;&#x2524;
-                              &#x2514;&rarr; Embedding Generator &rarr; Weaviate (semantic search)</pre>
-          </div>
+          <!-- ReactFlow Pipeline Diagram -->
+          <div id="flow-semantic-search" class="mb-6" style="height: 200px;"></div>
 
           <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
             Same CDC source. Now feeding both keyword search and semantic
@@ -625,9 +573,6 @@ Postgres CDC &#x2500;&#x2524;
               <source src="assets/images/crypto-demo.webm" type="video/webm" />
               <source src="assets/images/crypto-demo.mp4" type="video/mp4" />
             </video>
-            <div class="pipeline-ascii">
-              Kafka Topic (Coinbase prices) &rarr; Materialized View (latest, key: trading_pair) &rarr; gRPC endpoint
-            </div>
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
             >
@@ -700,13 +645,8 @@ Postgres CDC &#x2500;&#x2524;
               gives you an instant gRPC endpoint with the latest state of every
               row. No API server. No cache invalidation. No Redis.
             </p>
-            <div class="pipeline-ascii mb-4">
-              Postgres CDC &rarr; Materialized View (latest, key: product_id) &rarr; gRPC endpoint
-            </div>
-            <div class="gif-placeholder">
-              [GIF: Building a CDC &rarr; materialized view pipeline, then
-              querying the gRPC endpoint live]
-            </div>
+            <!-- ReactFlow Pipeline Diagram -->
+            <div id="flow-live-api" style="height: 160px;"></div>
             <div
               class="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700"
             >
@@ -739,13 +679,8 @@ Postgres CDC &#x2500;&#x2524;
               build. No Redis counters to manage. The pipeline maintains the
               count. The endpoint serves it.
             </p>
-            <div class="pipeline-ascii mb-4">
-              Kafka Topic (API events) &rarr; Materialized View (count, windowed 60s, key: customer_id) &rarr; gRPC endpoint
-            </div>
-            <div class="gif-placeholder">
-              [GIF: Building a windowed count pipeline and querying the
-              per-customer counts via gRPC]
-            </div>
+            <!-- ReactFlow Pipeline Diagram -->
+            <div id="flow-quota-tracking" style="height: 160px;"></div>
           </div>
 
           <!-- Visits by country -->
@@ -764,13 +699,8 @@ Postgres CDC &#x2500;&#x2524;
               Prometheus, a time-series database, or a single line of
               application code.
             </p>
-            <div class="pipeline-ascii mb-4">
-              Kafka Topic (page views) &rarr; GeoIP &rarr; Materialized View (count, windowed 60s, key: country) &rarr; gRPC endpoint
-            </div>
-            <div class="gif-placeholder">
-              [GIF: Building a GeoIP &rarr; windowed count &rarr; materialized
-              endpoint pipeline]
-            </div>
+            <!-- ReactFlow Pipeline Diagram -->
+            <div id="flow-visits-country" style="height: 160px;"></div>
           </div>
 
           <!-- Perfect database replicas -->
@@ -788,10 +718,8 @@ Postgres CDC &#x2500;&#x2524;
               Optionally filtered and reshaped in flight, all with millisecond
               latency.
             </p>
-            <div class="gif-placeholder">
-              [GIF: Building a simple Postgres &rarr; filter &rarr; destination
-              pipeline]
-            </div>
+            <!-- ReactFlow Pipeline Diagram -->
+            <div id="flow-database-replica" style="height: 160px;"></div>
           </div>
 
           <!-- AI classification in-flight -->
@@ -809,10 +737,8 @@ Postgres CDC &#x2500;&#x2524;
               leads, categorize content, or extract entities. Your data arrives
               enriched and ready, not raw and waiting for a batch job.
             </p>
-            <div class="gif-placeholder">
-              [GIF: Building a CDC &rarr; OpenAI enrichment &rarr; destination
-              pipeline]
-            </div>
+            <!-- ReactFlow Pipeline Diagram -->
+            <div id="flow-ai-classification" style="height: 160px;"></div>
           </div>
         </div>
       </div>
@@ -1246,5 +1172,233 @@ Postgres CDC &#x2500;&#x2524;
     {{> footer/footer}}
 
     {{> script-file}}
+
+    <!-- React & ReactFlow via CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js" crossorigin></script>
+    <link href="https://unpkg.com/reactflow@11.11.4/dist/style.css" rel="stylesheet" />
+
+    <!-- ReactFlow Pipeline Components -->
+    <script>
+      // ReactFlow v11 UMD exposes on window.ReactFlow
+      const { ReactFlow, Background, useNodesState, useEdgesState, Handle, Position } = window.ReactFlowModule || window.reactflow || window.ReactFlow || {};
+
+      // Custom Node Component for pipeline nodes
+      function PipelineNode({ data }) {
+        const nodeStyle = {
+          background: data.error ? 'white' : 'white',
+          border: data.error ? '2px solid #ef4444' : '1px solid #e2e8f0',
+          borderRadius: '12px',
+          padding: '14px 20px',
+          minWidth: '160px',
+          boxShadow: data.error ? '0 0 12px rgba(239, 68, 68, 0.3)' : '0 4px 12px rgba(0,0,0,0.1)',
+        };
+
+        const headerStyle = {
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginBottom: '4px',
+        };
+
+        const iconStyle = {
+          width: '24px',
+          height: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '16px',
+        };
+
+        const titleStyle = {
+          fontWeight: '600',
+          fontSize: '14px',
+          color: data.error ? '#ef4444' : '#1e293b',
+        };
+
+        const descStyle = {
+          fontSize: '11px',
+          color: '#64748b',
+          marginTop: '4px',
+        };
+
+        const handleColor = data.error ? '#ef4444' : '#6366f1';
+
+        return React.createElement('div', { style: nodeStyle },
+          React.createElement(Handle, {
+            type: 'target',
+            position: Position.Left,
+            style: { background: handleColor, width: 8, height: 8 }
+          }),
+          React.createElement('div', { style: headerStyle },
+            React.createElement('span', { style: iconStyle }, data.icon || '📦'),
+            React.createElement('span', { style: titleStyle }, data.label)
+          ),
+          data.description && React.createElement('div', { style: descStyle }, data.description),
+          React.createElement(Handle, {
+            type: 'source',
+            position: Position.Right,
+            style: { background: handleColor, width: 8, height: 8 }
+          })
+        );
+      }
+
+      const nodeTypes = {
+        pipeline: PipelineNode,
+      };
+
+      // Pipeline Flow Component
+      function PipelineFlow({ nodes: initialNodes, edges: initialEdges, height = 180 }) {
+        const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+        const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+        return React.createElement('div', { style: { height: height + 'px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' } },
+          React.createElement(ReactFlow, {
+            nodes: nodes,
+            edges: edges,
+            onNodesChange: onNodesChange,
+            onEdgesChange: onEdgesChange,
+            nodeTypes: nodeTypes,
+            fitView: true,
+            fitViewOptions: { padding: 0.2 },
+            proOptions: { hideAttribution: true },
+            nodesDraggable: false,
+            nodesConnectable: false,
+            elementsSelectable: false,
+            panOnDrag: false,
+            zoomOnScroll: false,
+            zoomOnPinch: false,
+            zoomOnDoubleClick: false,
+            defaultEdgeOptions: { type: 'smoothstep', animated: true },
+          },
+            React.createElement(Background, { variant: 'dots', gap: 16, size: 1, color: '#cbd5e1' })
+          )
+        );
+      }
+
+      // Define pipeline configurations (no group boxes, just nodes)
+      const pipelines = {
+        // Search Sync: Postgres CDC → Text Extraction → Elasticsearch
+        'search-sync': {
+          height: 160,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🐘', label: 'Postgres CDC', description: 'Products table' } },
+            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '📝', label: 'Text Extract', description: 'Pull content' } },
+            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '🔍', label: 'Elasticsearch', description: 'Always in sync' } },
+          ],
+          edges: [
+            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
+          ]
+        },
+
+        // Semantic Search: CDC → Text + Embedding branches
+        'semantic-search': {
+          height: 200,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 55 }, data: { icon: '🐘', label: 'Postgres CDC', description: 'Products table' } },
+            { id: '2a', type: 'pipeline', position: { x: 220, y: 0 }, data: { icon: '📝', label: 'Text Extract', description: 'Keywords' } },
+            { id: '2b', type: 'pipeline', position: { x: 220, y: 110 }, data: { icon: '🔮', label: 'Embedding', description: 'Vectors' } },
+            { id: '3a', type: 'pipeline', position: { x: 440, y: 0 }, data: { icon: '🔍', label: 'Elasticsearch', description: 'Keyword search' } },
+            { id: '3b', type: 'pipeline', position: { x: 440, y: 110 }, data: { icon: '🧠', label: 'Weaviate', description: 'Semantic search' } },
+          ],
+          edges: [
+            { id: 'e1-2a', source: '1', target: '2a', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e1-2b', source: '1', target: '2b', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2a-3a', source: '2a', target: '3a', type: 'smoothstep', animated: true, style: { stroke: '#eab308', strokeWidth: 2 } },
+            { id: 'e2b-3b', source: '2b', target: '3b', type: 'smoothstep', animated: true, style: { stroke: '#8b5cf6', strokeWidth: 2 } },
+          ]
+        },
+
+        // Live API: CDC → Materialized View → gRPC
+        'live-api': {
+          height: 160,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🐘', label: 'Postgres CDC', description: 'Products table' } },
+            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '💾', label: 'Materialize', description: 'key: product_id' } },
+            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '🌐', label: 'gRPC Endpoint', description: '/products/{id}' } },
+          ],
+          edges: [
+            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
+          ]
+        },
+
+        // Quota Tracking: Kafka → Windowed Count → gRPC
+        'quota-tracking': {
+          height: 160,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '📊', label: 'API Events', description: 'Kafka topic' } },
+            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '⏱️', label: 'Windowed Count', description: '60s window' } },
+            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '🌐', label: 'gRPC Endpoint', description: '/quota/{customer}' } },
+          ],
+          edges: [
+            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#f59e0b', strokeWidth: 2 } },
+          ]
+        },
+
+        // Visits by Country: Page Views → GeoIP → Count → gRPC
+        'visits-country': {
+          height: 160,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '👁️', label: 'Page Views', description: 'Kafka topic' } },
+            { id: '2a', type: 'pipeline', position: { x: 180, y: 40 }, data: { icon: '🌍', label: 'GeoIP', description: 'ip → country' } },
+            { id: '2b', type: 'pipeline', position: { x: 360, y: 40 }, data: { icon: '📊', label: 'Count', description: 'by country' } },
+            { id: '3', type: 'pipeline', position: { x: 540, y: 40 }, data: { icon: '🌐', label: 'gRPC', description: '/visits' } },
+          ],
+          edges: [
+            { id: 'e1-2a', source: '1', target: '2a', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2a-2b', source: '2a', target: '2b', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2b-3', source: '2b', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#06b6d4', strokeWidth: 2 } },
+          ]
+        },
+
+        // Database Replica: Postgres → Filter → Destination
+        'database-replica': {
+          height: 160,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🐘', label: 'Postgres', description: 'CDC stream' } },
+            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '🔍', label: 'Filter', description: 'status = active' } },
+            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '📊', label: 'ClickHouse', description: 'Analytics' } },
+          ],
+          edges: [
+            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#22c55e', strokeWidth: 2 } },
+          ]
+        },
+
+        // AI Classification: CDC → OpenAI → Destination
+        'ai-classification': {
+          height: 160,
+          nodes: [
+            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🎫', label: 'Tickets', description: 'CDC stream' } },
+            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '🤖', label: 'OpenAI', description: 'Classify urgency' } },
+            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '📊', label: 'Warehouse', description: 'Pre-tagged' } },
+          ],
+          edges: [
+            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
+            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#ec4899', strokeWidth: 2 } },
+          ]
+        },
+      };
+
+      // Mount ReactFlow components after DOM loads
+      document.addEventListener('DOMContentLoaded', function() {
+        Object.keys(pipelines).forEach(id => {
+          const container = document.getElementById('flow-' + id);
+          if (container) {
+            const config = pipelines[id];
+            const root = ReactDOM.createRoot(container);
+            root.render(React.createElement(PipelineFlow, {
+              nodes: config.nodes,
+              edges: config.edges,
+              height: config.height || 200,
+            }));
+          }
+        });
+      });
+    </script>
   </body>
 </html>
