@@ -81,8 +81,9 @@ RUN mkdir -p /kafka/connect/elasticsearch-sink && \
     curl -sLO https://repo1.maven.org/maven2/org/elasticsearch/client/elasticsearch-rest-client-sniffer/8.12.0/elasticsearch-rest-client-sniffer-8.12.0.jar
 
 # Copy connector registration script and custom entrypoint
-COPY register-connector.sh /usr/local/bin/register-connector.sh
-COPY custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
+# Note: Build context is repo root, so prefix with docker/
+COPY docker/register-connector.sh /usr/local/bin/register-connector.sh
+COPY docker/custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
 RUN chmod +x /usr/local/bin/register-connector.sh /usr/local/bin/custom-entrypoint.sh
 
 USER 1001
