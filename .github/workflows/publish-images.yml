@@ -188,6 +188,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp/images
+          pattern: '*-image'
 
       # Publish server
       - name: Load and push server image
