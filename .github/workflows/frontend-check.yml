@@ -41,7 +41,7 @@ jobs:
           use-flakehub: false
 
       - name: Install dependencies
-        run: nix develop --command pnpm install --filter uiv2...
+        run: nix develop --command pnpm install
 
       - name: Lint
         run: nix develop --command pnpm --filter uiv2 run lint
