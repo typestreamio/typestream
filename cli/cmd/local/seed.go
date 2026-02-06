@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/charmbracelet/log"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"github.com/typestreamio/typestream/cli/pkg/version"
@@ -39,8 +39,8 @@ var seedCmd = &cobra.Command{
 		ctx := context.Background()
 
 		cli.NegotiateAPIVersion(ctx)
-		image := version.DockerImage(imgName)
-		out, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
+		imgRef := version.DockerImage(imgName)
+		out, err := cli.ImagePull(ctx, imgRef, image.PullOptions{})
 		if err != nil {
 			log.Fatalf("💥 image pull failed: %v", err)
 		}
@@ -53,7 +53,7 @@ var seedCmd = &cobra.Command{
 		log.Info("⛽ starting seeding process")
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image: image,
+			Image: imgRef,
 			Env: []string{
 				fmt.Sprintf("TYPESTREAM_CONFIG=%s", config),
 			},
@@ -63,7 +63,7 @@ var seedCmd = &cobra.Command{
 		}
 
 		id := resp.ID
-		if err := cli.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
+		if err := cli.ContainerStart(ctx, id, container.StartOptions{}); err != nil {
 			log.Fatalf("💥 failed to start container: %v", err)
 		}
 
@@ -79,7 +79,7 @@ var seedCmd = &cobra.Command{
 		log.Info("🎉 seeding successful")
 
 		log.Info("🗑️  deleting container")
-		err = cli.ContainerRemove(context.Background(), id, types.ContainerRemoveOptions{Force: true})
+		err = cli.ContainerRemove(context.Background(), id, container.RemoveOptions{Force: true})
 		if err != nil {
 			log.Errorf("💥 failed to remove container: %v", err)
 		}
