@@ -4,6 +4,7 @@
   "labels": ["dependencies"],
   "prConcurrentLimit": 0,
   "branchConcurrentLimit": 0,
+  "platformAutomerge": true,
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
