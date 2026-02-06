@@ -16,3 +16,7 @@ out
 .kotlin/
 kls_database.db
 /.container-use
+node_modules/
+devenv.lock
+.devenv/
+.devenv.flake.nix
