@@ -1,0 +1,14 @@
+{
+  "versionGroups": [
+    {
+      "label": "React ecosystem",
+      "packages": ["**"],
+      "dependencies": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    },
+    {
+      "label": "Build tools",
+      "packages": ["**"],
+      "dependencies": ["typescript", "vite", "sass"]
+    }
+  ]
+}
