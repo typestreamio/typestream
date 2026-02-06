@@ -20,6 +20,8 @@
     ·
     <a href="#getting-started">Getting started</a>
     ·
+    <a href="#releasing">Releasing</a>
+    ·
     <a href="#how-to-contribute">How to contribute</a>
     ·
     <a href="#code-of-conduct">Code of conduct</a>
@@ -175,6 +177,24 @@ ready to start writing your own pipelines!
 
 Check out our [documentation](https://docs.typestream.io/) to learn more about
 TypeStream.
+
+### Releasing
+
+To create a new release:
+
+1. Push a version tag (e.g., `v1.0.0`):
+   ```sh
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. The CI workflow will automatically:
+   - Build and smoke test all Docker images (server, demo-data, kafka-connect)
+   - Publish the images to GitHub Container Registry (ghcr.io)
+   - Create a GitHub Release with placeholder notes
+
+3. After the release is created, edit the release notes in the GitHub UI to add
+   details about the changes.
 
 ## How to contribute
 
