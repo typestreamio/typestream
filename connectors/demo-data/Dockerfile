@@ -21,6 +21,7 @@ COPY connectors/demo-data/src/ connectors/demo-data/src/
 RUN gradle :connectors:demo-data:shadowJar --no-daemon
 
 FROM eclipse-temurin:21-jre
+LABEL org.opencontainers.image.source=https://github.com/typestreamio/typestream
 WORKDIR /app
 COPY --from=build /app/connectors/demo-data/build/libs/*-all.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

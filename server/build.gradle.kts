@@ -58,6 +58,11 @@ jib {
             password = System.getenv("GITHUB_TOKEN") ?: ""
         }
     }
+    container {
+        labels.set(mapOf(
+            "org.opencontainers.image.source" to "https://github.com/typestreamio/typestream"
+        ))
+    }
 }
 
 tasks.named("classes") {

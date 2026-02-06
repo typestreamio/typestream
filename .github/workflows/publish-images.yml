@@ -179,13 +179,12 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
     steps:
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download all image artifacts
@@ -194,61 +193,62 @@ jobs:
           path: /tmp/images
           pattern: '*-image'
 
-      # Publish server
-      - name: Load and push server image
+      # Server
+      - name: Load server image
+        run: gunzip -c /tmp/images/server-image/server-image.tar.gz | docker load
+
+      - name: Extract server metadata
+        id: server-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/typestreamio/server
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
+
+      - name: Tag and push server image
         run: |
-          gunzip -c /tmp/images/server-image/server-image.tar.gz | docker load
+          echo '${{ steps.server-meta.outputs.tags }}' | while IFS= read -r tag; do
+            [ -n "$tag" ] && docker tag ghcr.io/typestreamio/server:latest "$tag" && docker push "$tag"
+          done
 
-          # Tag with version and SHA (handle manual dispatch vs tag trigger)
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="dev-${GITHUB_SHA::7}"
-          fi
-          docker tag ghcr.io/typestreamio/server:latest ghcr.io/typestreamio/server:${VERSION}
-          docker tag ghcr.io/typestreamio/server:latest ghcr.io/typestreamio/server:${GITHUB_SHA::7}
+      # Demo-data
+      - name: Load demo-data image
+        run: gunzip -c /tmp/images/demo-data-image/demo-data-image.tar.gz | docker load
 
-          # Push all tags
-          docker push ghcr.io/typestreamio/server:latest
-          docker push ghcr.io/typestreamio/server:${VERSION}
-          docker push ghcr.io/typestreamio/server:${GITHUB_SHA::7}
+      - name: Extract demo-data metadata
+        id: demo-data-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/typestreamio/demo-data
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
 
-      # Publish demo-data
-      - name: Load and push demo-data image
+      - name: Tag and push demo-data image
         run: |
-          gunzip -c /tmp/images/demo-data-image/demo-data-image.tar.gz | docker load
+          echo '${{ steps.demo-data-meta.outputs.tags }}' | while IFS= read -r tag; do
+            [ -n "$tag" ] && docker tag demo-data:test "$tag" && docker push "$tag"
+          done
 
-          # Tag with version and SHA (handle manual dispatch vs tag trigger)
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="dev-${GITHUB_SHA::7}"
-          fi
-          docker tag demo-data:test ghcr.io/typestreamio/demo-data:latest
-          docker tag demo-data:test ghcr.io/typestreamio/demo-data:${VERSION}
-          docker tag demo-data:test ghcr.io/typestreamio/demo-data:${GITHUB_SHA::7}
+      # Kafka-connect
+      - name: Load kafka-connect image
+        run: gunzip -c /tmp/images/kafka-connect-image/kafka-connect-image.tar.gz | docker load
 
-          # Push all tags
-          docker push ghcr.io/typestreamio/demo-data:latest
-          docker push ghcr.io/typestreamio/demo-data:${VERSION}
-          docker push ghcr.io/typestreamio/demo-data:${GITHUB_SHA::7}
+      - name: Extract kafka-connect metadata
+        id: kafka-connect-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/typestreamio/kafka-connect
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
 
-      # Publish kafka-connect
-      - name: Load and push kafka-connect image
+      - name: Tag and push kafka-connect image
         run: |
-          gunzip -c /tmp/images/kafka-connect-image/kafka-connect-image.tar.gz | docker load
-
-          # Tag with version and SHA (handle manual dispatch vs tag trigger)
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="dev-${GITHUB_SHA::7}"
-          fi
-          docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:latest
-          docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:${VERSION}
-          docker tag kafka-connect:test ghcr.io/typestreamio/kafka-connect:${GITHUB_SHA::7}
-
-          # Push all tags
-          docker push ghcr.io/typestreamio/kafka-connect:latest
-          docker push ghcr.io/typestreamio/kafka-connect:${VERSION}
-          docker push ghcr.io/typestreamio/kafka-connect:${GITHUB_SHA::7}
+          echo '${{ steps.kafka-connect-meta.outputs.tags }}' | while IFS= read -r tag; do
+            [ -n "$tag" ] && docker tag kafka-connect:test "$tag" && docker push "$tag"
+          done

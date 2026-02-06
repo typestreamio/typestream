@@ -1,4 +1,5 @@
 FROM quay.io/debezium/connect:3.4
+LABEL org.opencontainers.image.source=https://github.com/typestreamio/typestream
 
 # Debezium 3.4 includes:
 # - PostgresConnector for CDC
