@@ -48,12 +48,18 @@ importers:
       '@docusaurus/module-type-aliases':
         specifier: 3.7.0
         version: 3.7.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@docusaurus/theme-classic':
+        specifier: 3.7.0
+        version: 3.7.0(@types/react@19.2.13)(eslint@9.39.2(jiti@1.21.7))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@docusaurus/types':
         specifier: 3.7.0
         version: 3.7.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tsconfig/docusaurus':
         specifier: ^2.0.7
         version: 2.0.8
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.11
       sass:
         specifier: ^1.77.0
         version: 1.97.3
