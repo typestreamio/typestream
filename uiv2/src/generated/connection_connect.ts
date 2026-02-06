@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
+import { CreateElasticsearchSinkConnectorRequest, CreateElasticsearchSinkConnectorResponse, CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetElasticsearchConnectionStatusesRequest, GetElasticsearchConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterElasticsearchConnectionRequest, RegisterElasticsearchConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -95,6 +95,35 @@ export const ConnectionService = {
       name: "CreateWeaviateSinkConnector",
       I: CreateWeaviateSinkConnectorRequest,
       O: CreateWeaviateSinkConnectorResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Elasticsearch connection management
+     *
+     * @generated from rpc io.typestream.grpc.ConnectionService.RegisterElasticsearchConnection
+     */
+    registerElasticsearchConnection: {
+      name: "RegisterElasticsearchConnection",
+      I: RegisterElasticsearchConnectionRequest,
+      O: RegisterElasticsearchConnectionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.ConnectionService.GetElasticsearchConnectionStatuses
+     */
+    getElasticsearchConnectionStatuses: {
+      name: "GetElasticsearchConnectionStatuses",
+      I: GetElasticsearchConnectionStatusesRequest,
+      O: GetElasticsearchConnectionStatusesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc io.typestream.grpc.ConnectionService.CreateElasticsearchSinkConnector
+     */
+    createElasticsearchSinkConnector: {
+      name: "CreateElasticsearchSinkConnector",
+      I: CreateElasticsearchSinkConnectorRequest,
+      O: CreateElasticsearchSinkConnectorResponse,
       kind: MethodKind.Unary,
     },
   }

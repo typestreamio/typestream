@@ -7,6 +7,7 @@ import { InspectorNode, inspectorRole } from './InspectorNode';
 import { MaterializedViewNode, materializedViewRole, type AggregationType } from './MaterializedViewNode';
 import { DbSinkNode, dbSinkRole } from './DbSinkNode';
 import { WeaviateSinkNode, weaviateSinkRole } from './WeaviateSinkNode';
+import { ElasticsearchSinkNode, elasticsearchSinkRole } from './ElasticsearchSinkNode';
 import { TextExtractorNode, textExtractorRole } from './TextExtractorNode';
 import { EmbeddingGeneratorNode, embeddingGeneratorRole } from './EmbeddingGeneratorNode';
 import { OpenAiTransformerNode, openAiTransformerRole } from './OpenAiTransformerNode';
@@ -124,6 +125,16 @@ export interface WeaviateSinkNodeData extends Record<string, unknown>, NodeValid
   timestampField: string;  // Optional: field name for timestamp conversion (empty = no transform)
 }
 
+// ElasticsearchSinkNode - uses a pre-configured Elasticsearch connection
+export interface ElasticsearchSinkNodeData extends Record<string, unknown>, NodeValidationState {
+  connectionId: string;
+  connectionName: string;
+  indexName: string;
+  documentIdStrategy: 'RECORD_KEY' | 'TOPIC_PARTITION_OFFSET';
+  writeMethod: 'INSERT' | 'UPSERT';
+  behaviorOnNullValues: 'IGNORE' | 'DELETE' | 'FAIL';
+}
+
 export interface FilterNodeData extends Record<string, unknown>, NodeValidationState {
   expression: string;
 }
@@ -136,12 +147,13 @@ export type InspectorNodeType = Node<InspectorNodeData, 'inspector'>;
 export type MaterializedViewNodeType = Node<MaterializedViewNodeData, 'materializedView'>;
 export type DbSinkNodeType = Node<DbSinkNodeData, 'dbSink'>;
 export type WeaviateSinkNodeType = Node<WeaviateSinkNodeData, 'weaviateSink'>;
+export type ElasticsearchSinkNodeType = Node<ElasticsearchSinkNodeData, 'elasticsearchSink'>;
 export type TextExtractorNodeType = Node<TextExtractorNodeData, 'textExtractor'>;
 export type EmbeddingGeneratorNodeType = Node<EmbeddingGeneratorNodeData, 'embeddingGenerator'>;
 export type OpenAiTransformerNodeType = Node<OpenAiTransformerNodeData, 'openAiTransformer'>;
 export type FilterNodeType = Node<FilterNodeData, 'filter'>;
 
-export type AppNode = KafkaSourceNodeType | PostgresSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType | FilterNodeType;
+export type AppNode = KafkaSourceNodeType | PostgresSourceNodeType | KafkaSinkNodeType | GeoIpNodeType | InspectorNodeType | MaterializedViewNodeType | DbSinkNodeType | WeaviateSinkNodeType | ElasticsearchSinkNodeType | TextExtractorNodeType | EmbeddingGeneratorNodeType | OpenAiTransformerNodeType | FilterNodeType;
 
 export const nodeTypes: NodeTypes = {
   kafkaSource: KafkaSourceNode,
@@ -152,6 +164,7 @@ export const nodeTypes: NodeTypes = {
   materializedView: MaterializedViewNode,
   dbSink: DbSinkNode,
   weaviateSink: WeaviateSinkNode,
+  elasticsearchSink: ElasticsearchSinkNode,
   textExtractor: TextExtractorNode,
   embeddingGenerator: EmbeddingGeneratorNode,
   openAiTransformer: OpenAiTransformerNode,
@@ -170,6 +183,7 @@ const nodeRoles: Record<string, NodeRole> = {
   materializedView: materializedViewRole,
   dbSink: dbSinkRole,
   weaviateSink: weaviateSinkRole,
+  elasticsearchSink: elasticsearchSinkRole,
   textExtractor: textExtractorRole,
   embeddingGenerator: embeddingGeneratorRole,
   openAiTransformer: openAiTransformerRole,

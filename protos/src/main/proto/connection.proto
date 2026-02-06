@@ -29,6 +29,11 @@ service ConnectionService {
     rpc RegisterWeaviateConnection(RegisterWeaviateConnectionRequest) returns (RegisterWeaviateConnectionResponse) {}
     rpc GetWeaviateConnectionStatuses(GetWeaviateConnectionStatusesRequest) returns (GetWeaviateConnectionStatusesResponse) {}
     rpc CreateWeaviateSinkConnector(CreateWeaviateSinkConnectorRequest) returns (CreateWeaviateSinkConnectorResponse) {}
+
+    // Elasticsearch connection management
+    rpc RegisterElasticsearchConnection(RegisterElasticsearchConnectionRequest) returns (RegisterElasticsearchConnectionResponse) {}
+    rpc GetElasticsearchConnectionStatuses(GetElasticsearchConnectionStatusesRequest) returns (GetElasticsearchConnectionStatusesResponse) {}
+    rpc CreateElasticsearchSinkConnector(CreateElasticsearchSinkConnectorRequest) returns (CreateElasticsearchSinkConnectorResponse) {}
 }
 
 // Database connection configuration
@@ -202,6 +207,69 @@ message CreateWeaviateSinkConnectorRequest {
 }
 
 message CreateWeaviateSinkConnectorResponse {
+    bool success = 1;
+    string error = 2;
+    string connector_name = 3;
+}
+
+// Elasticsearch connection configuration
+message ElasticsearchConnectionConfig {
+    string id = 1;
+    string name = 2;
+    string connection_url = 3;        // e.g., "http://localhost:9200"
+    string username = 4;              // Optional: for authentication
+    string password = 5;              // Optional: for authentication
+    string connector_url = 6;         // For Kafka Connect (e.g., "http://elasticsearch:9200")
+}
+
+message ElasticsearchConnectionConfigPublic {
+    string id = 1;
+    string name = 2;
+    string connection_url = 3;
+    string username = 4;
+    // password intentionally excluded
+    string connector_url = 5;
+}
+
+message ElasticsearchConnectionStatus {
+    string id = 1;
+    string name = 2;
+    ConnectionState state = 3;
+    string error = 4;
+    google.protobuf.Timestamp last_checked = 5;
+    ElasticsearchConnectionConfigPublic config = 6;
+}
+
+// Register Elasticsearch connection for monitoring
+message RegisterElasticsearchConnectionRequest {
+    ElasticsearchConnectionConfig connection = 1;
+}
+
+message RegisterElasticsearchConnectionResponse {
+    bool success = 1;
+    string error = 2;
+    ElasticsearchConnectionStatus status = 3;
+}
+
+// Get all Elasticsearch connection statuses
+message GetElasticsearchConnectionStatusesRequest {}
+
+message GetElasticsearchConnectionStatusesResponse {
+    repeated ElasticsearchConnectionStatus statuses = 1;
+}
+
+// Create Elasticsearch sink connector
+message CreateElasticsearchSinkConnectorRequest {
+    string connection_id = 1;
+    string connector_name = 2;
+    string topics = 3;
+    string index_name = 4;
+    string document_id_strategy = 5;    // RECORD_KEY, TOPIC_PARTITION_OFFSET
+    string write_method = 6;            // INSERT, UPSERT
+    string behavior_on_null_values = 7; // IGNORE, DELETE, FAIL
+}
+
+message CreateElasticsearchSinkConnectorResponse {
     bool success = 1;
     string error = 2;
     string connector_name = 3;

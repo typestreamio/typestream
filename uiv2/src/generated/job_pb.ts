@@ -1424,6 +1424,87 @@ export class WeaviateSinkConfig extends Message<WeaviateSinkConfig> {
 }
 
 /**
+ * Configuration for Elasticsearch sink connectors
+ *
+ * @generated from message io.typestream.grpc.ElasticsearchSinkConfig
+ */
+export class ElasticsearchSinkConfig extends Message<ElasticsearchSinkConfig> {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId = "";
+
+  /**
+   * @generated from field: string connection_id = 2;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string intermediate_topic = 3;
+   */
+  intermediateTopic = "";
+
+  /**
+   * @generated from field: string index_name = 4;
+   */
+  indexName = "";
+
+  /**
+   * RECORD_KEY, TOPIC_PARTITION_OFFSET
+   *
+   * @generated from field: string document_id_strategy = 5;
+   */
+  documentIdStrategy = "";
+
+  /**
+   * INSERT, UPSERT
+   *
+   * @generated from field: string write_method = 6;
+   */
+  writeMethod = "";
+
+  /**
+   * IGNORE, DELETE, FAIL
+   *
+   * @generated from field: string behavior_on_null_values = 7;
+   */
+  behaviorOnNullValues = "";
+
+  constructor(data?: PartialMessage<ElasticsearchSinkConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ElasticsearchSinkConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "intermediate_topic", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "index_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "document_id_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "write_method", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "behavior_on_null_values", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ElasticsearchSinkConfig {
+    return new ElasticsearchSinkConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ElasticsearchSinkConfig {
+    return new ElasticsearchSinkConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ElasticsearchSinkConfig {
+    return new ElasticsearchSinkConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ElasticsearchSinkConfig | PlainMessage<ElasticsearchSinkConfig> | undefined, b: ElasticsearchSinkConfig | PlainMessage<ElasticsearchSinkConfig> | undefined): boolean {
+    return proto3.util.equals(ElasticsearchSinkConfig, a, b);
+  }
+}
+
+/**
  * @generated from message io.typestream.grpc.CreateJobFromGraphRequest
  */
 export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest> {
@@ -1451,6 +1532,13 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
    */
   weaviateSinkConfigs: WeaviateSinkConfig[] = [];
 
+  /**
+   * Elasticsearch sink configurations
+   *
+   * @generated from field: repeated io.typestream.grpc.ElasticsearchSinkConfig elasticsearch_sink_configs = 5;
+   */
+  elasticsearchSinkConfigs: ElasticsearchSinkConfig[] = [];
+
   constructor(data?: PartialMessage<CreateJobFromGraphRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1463,6 +1551,7 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
     { no: 2, name: "graph", kind: "message", T: PipelineGraph },
     { no: 3, name: "db_sink_configs", kind: "message", T: DbSinkConfig, repeated: true },
     { no: 4, name: "weaviate_sink_configs", kind: "message", T: WeaviateSinkConfig, repeated: true },
+    { no: 5, name: "elasticsearch_sink_configs", kind: "message", T: ElasticsearchSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJobFromGraphRequest {
@@ -1624,6 +1713,13 @@ export class JobInfo extends Message<JobInfo> {
    */
   weaviateSinks: WeaviateSinkConfig[] = [];
 
+  /**
+   * Elasticsearch sink configs for this job
+   *
+   * @generated from field: repeated io.typestream.grpc.ElasticsearchSinkConfig elasticsearch_sinks = 7;
+   */
+  elasticsearchSinks: ElasticsearchSinkConfig[] = [];
+
   constructor(data?: PartialMessage<JobInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1638,6 +1734,7 @@ export class JobInfo extends Message<JobInfo> {
     { no: 4, name: "graph", kind: "message", T: PipelineGraph },
     { no: 5, name: "throughput", kind: "message", T: JobThroughput },
     { no: 6, name: "weaviate_sinks", kind: "message", T: WeaviateSinkConfig, repeated: true },
+    { no: 7, name: "elasticsearch_sinks", kind: "message", T: ElasticsearchSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JobInfo {

@@ -179,11 +179,23 @@ message WeaviateSinkConfig {
   string timestamp_field = 9;       // Optional: field name for timestamp conversion (empty = no transform)
 }
 
+// Configuration for Elasticsearch sink connectors
+message ElasticsearchSinkConfig {
+  string node_id = 1;
+  string connection_id = 2;
+  string intermediate_topic = 3;
+  string index_name = 4;
+  string document_id_strategy = 5;    // RECORD_KEY, TOPIC_PARTITION_OFFSET
+  string write_method = 6;            // INSERT, UPSERT
+  string behavior_on_null_values = 7; // IGNORE, DELETE, FAIL
+}
+
 message CreateJobFromGraphRequest {
   string user_id = 1;
   PipelineGraph graph = 2;
   repeated DbSinkConfig db_sink_configs = 3;  // DB sink configurations
   repeated WeaviateSinkConfig weaviate_sink_configs = 4;  // Weaviate sink configurations
+  repeated ElasticsearchSinkConfig elasticsearch_sink_configs = 5;  // Elasticsearch sink configurations
 }
 
 message ListJobsRequest {
@@ -214,6 +226,7 @@ message JobInfo {
   PipelineGraph graph = 4;  // Optional: the job's pipeline graph
   JobThroughput throughput = 5;  // Throughput metrics
   repeated WeaviateSinkConfig weaviate_sinks = 6;  // Weaviate sink configs for this job
+  repeated ElasticsearchSinkConfig elasticsearch_sinks = 7;  // Elasticsearch sink configs for this job
 }
 
 message ListJobsResponse {

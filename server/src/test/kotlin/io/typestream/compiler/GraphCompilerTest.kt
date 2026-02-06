@@ -630,4 +630,72 @@ internal class GraphCompilerTest {
             .setGraph(graphBuilder.build())
             .build()
     }
+
+    // ===== Elasticsearch Sink Tests =====
+
+    @Test
+    fun `compiles stream source with elasticsearch sink`() {
+        val sourceTopic = TestKafka.uniqueTopic("books")
+        val intermediateTopic = "elasticsearch-sink-test-${System.currentTimeMillis()}"
+        testKafka.produceRecords(
+            sourceTopic,
+            "avro",
+            Book(title = "Elasticsearch Test", wordCount = 200, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        // Elasticsearch sink uses an intermediate topic (same pattern as JDBC/Weaviate sinks)
+        // The actual Elasticsearch connector is created via ConnectionService
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/$sourceTopic", Job.Encoding.AVRO),
+                sinkNode("es-sink", "/dev/kafka/local/topics/$intermediateTopic")
+            ),
+            edges = listOf(edge("source", "es-sink"))
+        )
+
+        val program = compiler.compile(request)
+
+        val streamGraph = program.graph.children.single()
+        val stream = streamGraph.ref as Node.StreamSource
+        assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
+        assertThat(stream.dataStream.path).isEqualTo("/dev/kafka/local/topics/$sourceTopic")
+
+        val sink = streamGraph.children.single().ref as Node.Sink
+        assertThat(sink.output.path).isEqualTo("/dev/kafka/local/topics/$intermediateTopic")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI propagates schema to elasticsearch sink`() {
+        val sourceTopic = TestKafka.uniqueTopic("books")
+        val intermediateTopic = "elasticsearch-sink-${System.currentTimeMillis()}"
+        testKafka.produceRecords(
+            sourceTopic,
+            "avro",
+            Book(title = "Schema Propagation", wordCount = 150, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$sourceTopic", Job.Encoding.AVRO),
+                sinkNode("es-sink-1", "/dev/kafka/local/topics/$intermediateTopic")
+            ),
+            edges = listOf(edge("src-1", "es-sink-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        // Both nodes should succeed without errors
+        assertThat(results["src-1"]?.error).isNull()
+        assertThat(results["es-sink-1"]?.error).isNull()
+
+        // Verify schema propagates to sink
+        val sourceSchema = results["src-1"]?.schema?.schema as io.typestream.compiler.types.schema.Schema.Struct
+        val sinkSchema = results["es-sink-1"]?.schema?.schema as io.typestream.compiler.types.schema.Schema.Struct
+
+        assertThat(sinkSchema.value.map { it.name }).containsExactlyInAnyOrderElementsOf(
+            sourceSchema.value.map { it.name }
+        )
+    }
 }

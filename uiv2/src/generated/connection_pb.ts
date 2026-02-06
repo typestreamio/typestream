@@ -1322,3 +1322,498 @@ export class CreateWeaviateSinkConnectorResponse extends Message<CreateWeaviateS
   }
 }
 
+/**
+ * Elasticsearch connection configuration
+ *
+ * @generated from message io.typestream.grpc.ElasticsearchConnectionConfig
+ */
+export class ElasticsearchConnectionConfig extends Message<ElasticsearchConnectionConfig> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * e.g., "http://localhost:9200"
+   *
+   * @generated from field: string connection_url = 3;
+   */
+  connectionUrl = "";
+
+  /**
+   * Optional: for authentication
+   *
+   * @generated from field: string username = 4;
+   */
+  username = "";
+
+  /**
+   * Optional: for authentication
+   *
+   * @generated from field: string password = 5;
+   */
+  password = "";
+
+  /**
+   * For Kafka Connect (e.g., "http://elasticsearch:9200")
+   *
+   * @generated from field: string connector_url = 6;
+   */
+  connectorUrl = "";
+
+  constructor(data?: PartialMessage<ElasticsearchConnectionConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ElasticsearchConnectionConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "connection_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "password", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "connector_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ElasticsearchConnectionConfig {
+    return new ElasticsearchConnectionConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ElasticsearchConnectionConfig {
+    return new ElasticsearchConnectionConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ElasticsearchConnectionConfig {
+    return new ElasticsearchConnectionConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ElasticsearchConnectionConfig | PlainMessage<ElasticsearchConnectionConfig> | undefined, b: ElasticsearchConnectionConfig | PlainMessage<ElasticsearchConnectionConfig> | undefined): boolean {
+    return proto3.util.equals(ElasticsearchConnectionConfig, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.ElasticsearchConnectionConfigPublic
+ */
+export class ElasticsearchConnectionConfigPublic extends Message<ElasticsearchConnectionConfigPublic> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string connection_url = 3;
+   */
+  connectionUrl = "";
+
+  /**
+   * @generated from field: string username = 4;
+   */
+  username = "";
+
+  /**
+   * password intentionally excluded
+   *
+   * @generated from field: string connector_url = 5;
+   */
+  connectorUrl = "";
+
+  constructor(data?: PartialMessage<ElasticsearchConnectionConfigPublic>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ElasticsearchConnectionConfigPublic";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "connection_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "connector_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ElasticsearchConnectionConfigPublic {
+    return new ElasticsearchConnectionConfigPublic().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ElasticsearchConnectionConfigPublic {
+    return new ElasticsearchConnectionConfigPublic().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ElasticsearchConnectionConfigPublic {
+    return new ElasticsearchConnectionConfigPublic().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ElasticsearchConnectionConfigPublic | PlainMessage<ElasticsearchConnectionConfigPublic> | undefined, b: ElasticsearchConnectionConfigPublic | PlainMessage<ElasticsearchConnectionConfigPublic> | undefined): boolean {
+    return proto3.util.equals(ElasticsearchConnectionConfigPublic, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.ElasticsearchConnectionStatus
+ */
+export class ElasticsearchConnectionStatus extends Message<ElasticsearchConnectionStatus> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.ConnectionState state = 3;
+   */
+  state = ConnectionState.CONNECTION_STATE_UNSPECIFIED;
+
+  /**
+   * @generated from field: string error = 4;
+   */
+  error = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_checked = 5;
+   */
+  lastChecked?: Timestamp;
+
+  /**
+   * @generated from field: io.typestream.grpc.ElasticsearchConnectionConfigPublic config = 6;
+   */
+  config?: ElasticsearchConnectionConfigPublic;
+
+  constructor(data?: PartialMessage<ElasticsearchConnectionStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ElasticsearchConnectionStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "state", kind: "enum", T: proto3.getEnumType(ConnectionState) },
+    { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "last_checked", kind: "message", T: Timestamp },
+    { no: 6, name: "config", kind: "message", T: ElasticsearchConnectionConfigPublic },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ElasticsearchConnectionStatus {
+    return new ElasticsearchConnectionStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ElasticsearchConnectionStatus {
+    return new ElasticsearchConnectionStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ElasticsearchConnectionStatus {
+    return new ElasticsearchConnectionStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ElasticsearchConnectionStatus | PlainMessage<ElasticsearchConnectionStatus> | undefined, b: ElasticsearchConnectionStatus | PlainMessage<ElasticsearchConnectionStatus> | undefined): boolean {
+    return proto3.util.equals(ElasticsearchConnectionStatus, a, b);
+  }
+}
+
+/**
+ * Register Elasticsearch connection for monitoring
+ *
+ * @generated from message io.typestream.grpc.RegisterElasticsearchConnectionRequest
+ */
+export class RegisterElasticsearchConnectionRequest extends Message<RegisterElasticsearchConnectionRequest> {
+  /**
+   * @generated from field: io.typestream.grpc.ElasticsearchConnectionConfig connection = 1;
+   */
+  connection?: ElasticsearchConnectionConfig;
+
+  constructor(data?: PartialMessage<RegisterElasticsearchConnectionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.RegisterElasticsearchConnectionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection", kind: "message", T: ElasticsearchConnectionConfig },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterElasticsearchConnectionRequest {
+    return new RegisterElasticsearchConnectionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterElasticsearchConnectionRequest {
+    return new RegisterElasticsearchConnectionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterElasticsearchConnectionRequest {
+    return new RegisterElasticsearchConnectionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterElasticsearchConnectionRequest | PlainMessage<RegisterElasticsearchConnectionRequest> | undefined, b: RegisterElasticsearchConnectionRequest | PlainMessage<RegisterElasticsearchConnectionRequest> | undefined): boolean {
+    return proto3.util.equals(RegisterElasticsearchConnectionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.RegisterElasticsearchConnectionResponse
+ */
+export class RegisterElasticsearchConnectionResponse extends Message<RegisterElasticsearchConnectionResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.ElasticsearchConnectionStatus status = 3;
+   */
+  status?: ElasticsearchConnectionStatus;
+
+  constructor(data?: PartialMessage<RegisterElasticsearchConnectionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.RegisterElasticsearchConnectionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "status", kind: "message", T: ElasticsearchConnectionStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterElasticsearchConnectionResponse {
+    return new RegisterElasticsearchConnectionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterElasticsearchConnectionResponse {
+    return new RegisterElasticsearchConnectionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterElasticsearchConnectionResponse {
+    return new RegisterElasticsearchConnectionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterElasticsearchConnectionResponse | PlainMessage<RegisterElasticsearchConnectionResponse> | undefined, b: RegisterElasticsearchConnectionResponse | PlainMessage<RegisterElasticsearchConnectionResponse> | undefined): boolean {
+    return proto3.util.equals(RegisterElasticsearchConnectionResponse, a, b);
+  }
+}
+
+/**
+ * Get all Elasticsearch connection statuses
+ *
+ * @generated from message io.typestream.grpc.GetElasticsearchConnectionStatusesRequest
+ */
+export class GetElasticsearchConnectionStatusesRequest extends Message<GetElasticsearchConnectionStatusesRequest> {
+  constructor(data?: PartialMessage<GetElasticsearchConnectionStatusesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GetElasticsearchConnectionStatusesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetElasticsearchConnectionStatusesRequest {
+    return new GetElasticsearchConnectionStatusesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetElasticsearchConnectionStatusesRequest {
+    return new GetElasticsearchConnectionStatusesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetElasticsearchConnectionStatusesRequest {
+    return new GetElasticsearchConnectionStatusesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetElasticsearchConnectionStatusesRequest | PlainMessage<GetElasticsearchConnectionStatusesRequest> | undefined, b: GetElasticsearchConnectionStatusesRequest | PlainMessage<GetElasticsearchConnectionStatusesRequest> | undefined): boolean {
+    return proto3.util.equals(GetElasticsearchConnectionStatusesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.GetElasticsearchConnectionStatusesResponse
+ */
+export class GetElasticsearchConnectionStatusesResponse extends Message<GetElasticsearchConnectionStatusesResponse> {
+  /**
+   * @generated from field: repeated io.typestream.grpc.ElasticsearchConnectionStatus statuses = 1;
+   */
+  statuses: ElasticsearchConnectionStatus[] = [];
+
+  constructor(data?: PartialMessage<GetElasticsearchConnectionStatusesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GetElasticsearchConnectionStatusesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "statuses", kind: "message", T: ElasticsearchConnectionStatus, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetElasticsearchConnectionStatusesResponse {
+    return new GetElasticsearchConnectionStatusesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetElasticsearchConnectionStatusesResponse {
+    return new GetElasticsearchConnectionStatusesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetElasticsearchConnectionStatusesResponse {
+    return new GetElasticsearchConnectionStatusesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetElasticsearchConnectionStatusesResponse | PlainMessage<GetElasticsearchConnectionStatusesResponse> | undefined, b: GetElasticsearchConnectionStatusesResponse | PlainMessage<GetElasticsearchConnectionStatusesResponse> | undefined): boolean {
+    return proto3.util.equals(GetElasticsearchConnectionStatusesResponse, a, b);
+  }
+}
+
+/**
+ * Create Elasticsearch sink connector
+ *
+ * @generated from message io.typestream.grpc.CreateElasticsearchSinkConnectorRequest
+ */
+export class CreateElasticsearchSinkConnectorRequest extends Message<CreateElasticsearchSinkConnectorRequest> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string connector_name = 2;
+   */
+  connectorName = "";
+
+  /**
+   * @generated from field: string topics = 3;
+   */
+  topics = "";
+
+  /**
+   * @generated from field: string index_name = 4;
+   */
+  indexName = "";
+
+  /**
+   * RECORD_KEY, TOPIC_PARTITION_OFFSET
+   *
+   * @generated from field: string document_id_strategy = 5;
+   */
+  documentIdStrategy = "";
+
+  /**
+   * INSERT, UPSERT
+   *
+   * @generated from field: string write_method = 6;
+   */
+  writeMethod = "";
+
+  /**
+   * IGNORE, DELETE, FAIL
+   *
+   * @generated from field: string behavior_on_null_values = 7;
+   */
+  behaviorOnNullValues = "";
+
+  constructor(data?: PartialMessage<CreateElasticsearchSinkConnectorRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateElasticsearchSinkConnectorRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "topics", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "index_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "document_id_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "write_method", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "behavior_on_null_values", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateElasticsearchSinkConnectorRequest {
+    return new CreateElasticsearchSinkConnectorRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateElasticsearchSinkConnectorRequest {
+    return new CreateElasticsearchSinkConnectorRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateElasticsearchSinkConnectorRequest {
+    return new CreateElasticsearchSinkConnectorRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateElasticsearchSinkConnectorRequest | PlainMessage<CreateElasticsearchSinkConnectorRequest> | undefined, b: CreateElasticsearchSinkConnectorRequest | PlainMessage<CreateElasticsearchSinkConnectorRequest> | undefined): boolean {
+    return proto3.util.equals(CreateElasticsearchSinkConnectorRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.CreateElasticsearchSinkConnectorResponse
+ */
+export class CreateElasticsearchSinkConnectorResponse extends Message<CreateElasticsearchSinkConnectorResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * @generated from field: string connector_name = 3;
+   */
+  connectorName = "";
+
+  constructor(data?: PartialMessage<CreateElasticsearchSinkConnectorResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateElasticsearchSinkConnectorResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateElasticsearchSinkConnectorResponse {
+    return new CreateElasticsearchSinkConnectorResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateElasticsearchSinkConnectorResponse {
+    return new CreateElasticsearchSinkConnectorResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateElasticsearchSinkConnectorResponse {
+    return new CreateElasticsearchSinkConnectorResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateElasticsearchSinkConnectorResponse | PlainMessage<CreateElasticsearchSinkConnectorResponse> | undefined, b: CreateElasticsearchSinkConnectorResponse | PlainMessage<CreateElasticsearchSinkConnectorResponse> | undefined): boolean {
+    return proto3.util.equals(CreateElasticsearchSinkConnectorResponse, a, b);
+  }
+}
+

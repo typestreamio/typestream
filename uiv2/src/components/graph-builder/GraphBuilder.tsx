@@ -185,6 +185,16 @@ export function GraphBuilder() {
         vectorField: dragData.vectorField || '',
         timestampField: dragData.timestampField || '',
       };
+    } else if (type === 'elasticsearchSink') {
+      // ElasticsearchSink node - only non-sensitive fields (credentials resolved server-side)
+      return {
+        connectionId: dragData.connectionId || '',
+        connectionName: dragData.connectionName || '',
+        indexName: dragData.indexName || '',
+        documentIdStrategy: dragData.documentIdStrategy || 'RECORD_KEY',
+        writeMethod: dragData.writeMethod || 'INSERT',
+        behaviorOnNullValues: dragData.behaviorOnNullValues || 'IGNORE',
+      };
     } else if (type === 'textExtractor') {
       return { filePathField: '', outputField: 'text' };
     } else if (type === 'embeddingGenerator') {
@@ -315,7 +325,7 @@ export function GraphBuilder() {
 
   const handleCreateJob = async () => {
     setCreateError(null);
-    const { graph, dbSinkConfigs, weaviateSinkConfigs } = serializeGraphWithSinks(nodes, edges);
+    const { graph, dbSinkConfigs, weaviateSinkConfigs, elasticsearchSinkConfigs } = serializeGraphWithSinks(nodes, edges);
 
     // Single consolidated request - server handles both job + connectors atomically
     const request = new CreateJobFromGraphRequest({
@@ -323,6 +333,7 @@ export function GraphBuilder() {
       graph,
       dbSinkConfigs,  // Server creates connectors and rolls back on failure
       weaviateSinkConfigs,  // Server creates Weaviate connectors and rolls back on failure
+      elasticsearchSinkConfigs,  // Server creates Elasticsearch connectors and rolls back on failure
     });
 
     createJob.mutate(request, {
@@ -348,7 +359,15 @@ export function GraphBuilder() {
       return data.collectionName && data.collectionName.trim().length > 0;
     });
 
-  const canCreate = nodes.length > 0 && allWeaviateSinksValid;
+  // Validate that all Elasticsearch sink nodes have required fields
+  const allElasticsearchSinksValid = nodes
+    .filter((node) => node.type === 'elasticsearchSink')
+    .every((node) => {
+      const data = node.data as { indexName?: string };
+      return data.indexName && data.indexName.trim().length > 0;
+    });
+
+  const canCreate = nodes.length > 0 && allWeaviateSinksValid && allElasticsearchSinksValid;
 
   return (
     <Box sx={{ display: 'flex', height: '100%', gap: 2, minHeight: 0 }}>

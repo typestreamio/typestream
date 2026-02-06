@@ -71,6 +71,15 @@ RUN cd /kafka/connect/weaviate-sink/Weaviate-kafka-connect-weaviate-${WEAVIATE_C
     curl -sLO https://repo1.maven.org/maven2/io/netty/netty-transport/${NETTY_VERSION}/netty-transport-${NETTY_VERSION}.jar && \
     curl -sLO https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/${NETTY_VERSION}/netty-transport-native-unix-common-${NETTY_VERSION}.jar
 
+# Install Confluent Elasticsearch Sink connector
+ENV ES_CONNECTOR_VERSION=14.1.0
+
+RUN mkdir -p /kafka/connect/elasticsearch-sink && \
+    cd /kafka/connect/elasticsearch-sink && \
+    curl -sLO https://packages.confluent.io/maven/io/confluent/kafka-connect-elasticsearch/${ES_CONNECTOR_VERSION}/kafka-connect-elasticsearch-${ES_CONNECTOR_VERSION}.jar && \
+    curl -sLO https://repo1.maven.org/maven2/org/elasticsearch/client/elasticsearch-rest-client/8.12.0/elasticsearch-rest-client-8.12.0.jar && \
+    curl -sLO https://repo1.maven.org/maven2/org/elasticsearch/client/elasticsearch-rest-client-sniffer/8.12.0/elasticsearch-rest-client-sniffer-8.12.0.jar
+
 # Copy connector registration script and custom entrypoint
 COPY register-connector.sh /usr/local/bin/register-connector.sh
 COPY custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh

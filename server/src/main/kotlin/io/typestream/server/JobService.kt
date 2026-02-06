@@ -73,6 +73,9 @@ class JobService(
     // Track weaviate sink configs per job: jobId -> List<WeaviateSinkConfig>
     private val jobWeaviateSinks = ConcurrentHashMap<String, List<ProtoJob.WeaviateSinkConfig>>()
 
+    // Track elasticsearch sink configs per job: jobId -> List<ElasticsearchSinkConfig>
+    private val jobElasticsearchSinks = ConcurrentHashMap<String, List<ProtoJob.ElasticsearchSinkConfig>>()
+
     // TTL for preview jobs (cleanup if no client connected for this long)
     private val previewJobTtl = 10.minutes
 
@@ -267,9 +270,57 @@ class JobService(
                 }
             }
 
+            // Create Elasticsearch sink connectors
+            val elasticsearchSinkConfigs = request.elasticsearchSinkConfigsList
+            if (elasticsearchSinkConfigs.isNotEmpty()) {
+                logger.info { "Creating ${elasticsearchSinkConfigs.size} Elasticsearch sink connector(s) for job ${program.id}" }
+
+                for (config in elasticsearchSinkConfigs) {
+                    val connectorName = "${program.id}-elasticsearch-sink-${config.nodeId}"
+                    val intermediateTopic = config.intermediateTopic.ifEmpty {
+                        generateElasticsearchIntermediateTopicName(config.nodeId)
+                    }
+
+                    try {
+                        val connectorRequest = io.typestream.grpc.connection_service.Connection.CreateElasticsearchSinkConnectorRequest.newBuilder()
+                            .setConnectionId(config.connectionId)
+                            .setConnectorName(connectorName)
+                            .setTopics(intermediateTopic)
+                            .setIndexName(config.indexName)
+                            .setDocumentIdStrategy(config.documentIdStrategy)
+                            .setWriteMethod(config.writeMethod)
+                            .setBehaviorOnNullValues(config.behaviorOnNullValues)
+                            .build()
+
+                        val response = connectionService.createElasticsearchSinkConnector(connectorRequest)
+
+                        if (!response.success) {
+                            throw RuntimeException("Failed to create Elasticsearch connector $connectorName: ${response.error}")
+                        }
+
+                        createdConnectorNames.add(connectorName)
+                        logger.info { "Created Elasticsearch sink connector: $connectorName" }
+                    } catch (e: Exception) {
+                        // Rollback: Kill the job and delete any created connectors
+                        logger.error(e) { "Elasticsearch connector creation failed, rolling back job ${program.id}" }
+                        rollbackJobAndConnectors(program.id, createdConnectorNames)
+
+                        this.success = false
+                        this.jobId = ""
+                        this.error = "Elasticsearch connector creation failed: ${e.message}"
+                        return@createJobResponse
+                    }
+                }
+            }
+
             // Store weaviate sink configs for this job (for job details display)
             if (weaviateSinkConfigs.isNotEmpty()) {
                 jobWeaviateSinks[program.id] = weaviateSinkConfigs
+            }
+
+            // Store elasticsearch sink configs for this job (for job details display)
+            if (elasticsearchSinkConfigs.isNotEmpty()) {
+                jobElasticsearchSinks[program.id] = elasticsearchSinkConfigs
             }
 
             this.success = true
@@ -299,6 +350,15 @@ class JobService(
         val timestamp = System.currentTimeMillis()
         val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
         return "weaviate-sink-$sanitizedNodeId-$timestamp"
+    }
+
+    /**
+     * Generate a unique topic name for intermediate Elasticsearch sink output
+     */
+    private fun generateElasticsearchIntermediateTopicName(nodeId: String): String {
+        val timestamp = System.currentTimeMillis()
+        val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
+        return "elasticsearch-sink-$sanitizedNodeId-$timestamp"
     }
 
     /**
@@ -378,6 +438,10 @@ class JobService(
                     // Include weaviate sink configs if available
                     jobWeaviateSinks[schedulerJob.id]?.let { configs ->
                         weaviateSinks.addAll(configs)
+                    }
+                    // Include elasticsearch sink configs if available
+                    jobElasticsearchSinks[schedulerJob.id]?.let { configs ->
+                        elasticsearchSinks.addAll(configs)
                     }
                 })
             }

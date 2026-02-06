@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
+import { CreateElasticsearchSinkConnectorRequest, CreateElasticsearchSinkConnectorResponse, CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetElasticsearchConnectionStatusesRequest, GetElasticsearchConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterElasticsearchConnectionRequest, RegisterElasticsearchConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
 
 /**
  * Register a database connection for monitoring
@@ -126,6 +126,50 @@ export const createWeaviateSinkConnector = {
   kind: MethodKind.Unary,
   I: CreateWeaviateSinkConnectorRequest,
   O: CreateWeaviateSinkConnectorResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * Elasticsearch connection management
+ *
+ * @generated from rpc io.typestream.grpc.ConnectionService.RegisterElasticsearchConnection
+ */
+export const registerElasticsearchConnection = {
+  localName: "registerElasticsearchConnection",
+  name: "RegisterElasticsearchConnection",
+  kind: MethodKind.Unary,
+  I: RegisterElasticsearchConnectionRequest,
+  O: RegisterElasticsearchConnectionResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.ConnectionService.GetElasticsearchConnectionStatuses
+ */
+export const getElasticsearchConnectionStatuses = {
+  localName: "getElasticsearchConnectionStatuses",
+  name: "GetElasticsearchConnectionStatuses",
+  kind: MethodKind.Unary,
+  I: GetElasticsearchConnectionStatusesRequest,
+  O: GetElasticsearchConnectionStatusesResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * @generated from rpc io.typestream.grpc.ConnectionService.CreateElasticsearchSinkConnector
+ */
+export const createElasticsearchSinkConnector = {
+  localName: "createElasticsearchSinkConnector",
+  name: "CreateElasticsearchSinkConnector",
+  kind: MethodKind.Unary,
+  I: CreateElasticsearchSinkConnectorRequest,
+  O: CreateElasticsearchSinkConnectorResponse,
   service: {
     typeName: "io.typestream.grpc.ConnectionService"
   }

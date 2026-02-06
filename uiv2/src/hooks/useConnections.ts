@@ -12,10 +12,14 @@ import {
   GetWeaviateConnectionStatusesRequest,
   RegisterWeaviateConnectionRequest,
   WeaviateConnectionConfig,
+  GetElasticsearchConnectionStatusesRequest,
+  RegisterElasticsearchConnectionRequest,
+  ElasticsearchConnectionConfig,
 } from '../generated/connection_pb';
 
 const CONNECTIONS_KEY = ['connections'];
 const WEAVIATE_CONNECTIONS_KEY = ['weaviateConnections'];
+const ELASTICSEARCH_CONNECTIONS_KEY = ['elasticsearchConnections'];
 
 /**
  * Connection data structure used throughout the UI.
@@ -352,9 +356,106 @@ export function useWeaviateSinkConnections() {
 export function useAllSinkConnections() {
   const { data: dbConnections } = useSinkConnections();
   const { data: weaviateConnections } = useWeaviateSinkConnections();
+  const { data: elasticsearchConnections } = useElasticsearchSinkConnections();
 
   return {
     dbConnections: dbConnections ?? [],
     weaviateConnections: weaviateConnections ?? [],
+    elasticsearchConnections: elasticsearchConnections ?? [],
+  };
+}
+
+// ==================== Elasticsearch Connection Hooks ====================
+
+/**
+ * Elasticsearch connection data structure used throughout the UI.
+ * Note: Password is intentionally excluded for security - credentials stay server-side.
+ */
+export interface ElasticsearchConnection {
+  id: string;
+  name: string;
+  connectionUrl: string;
+  username: string;
+  connectorUrl: string;
+  // password intentionally excluded - credentials resolved server-side
+  state: 'connected' | 'disconnected' | 'error' | 'connecting' | 'unknown';
+  error?: string;
+  lastChecked?: Date;
+}
+
+/**
+ * Fetch all Elasticsearch connections from the backend
+ * Polls every 5 seconds for live status updates
+ */
+export function useElasticsearchConnections() {
+  const transport = useTransport();
+
+  return useQuery({
+    queryKey: ELASTICSEARCH_CONNECTIONS_KEY,
+    queryFn: async (): Promise<ElasticsearchConnection[]> => {
+      const client = createClient(ConnectionService, transport);
+      const response = await client.getElasticsearchConnectionStatuses(new GetElasticsearchConnectionStatusesRequest());
+
+      return response.statuses.map((status) => ({
+        id: status.id,
+        name: status.name,
+        connectionUrl: status.config?.connectionUrl || '',
+        username: status.config?.username || '',
+        connectorUrl: status.config?.connectorUrl || '',
+        // password excluded - credentials resolved server-side
+        state: mapConnectionState(status.state),
+        error: status.error || undefined,
+        lastChecked: status.lastChecked ? new Date(Number(status.lastChecked.seconds) * 1000) : undefined,
+      }));
+    },
+    refetchInterval: 5000,
+  });
+}
+
+/**
+ * Register a new Elasticsearch connection with the backend
+ */
+export function useRegisterElasticsearchConnection() {
+  const transport = useTransport();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (config: {
+      id: string;
+      name: string;
+      connectionUrl: string;
+      username?: string;
+      password?: string;
+      connectorUrl?: string;
+    }) => {
+      const client = createClient(ConnectionService, transport);
+      const request = new RegisterElasticsearchConnectionRequest({
+        connection: new ElasticsearchConnectionConfig({
+          id: config.id,
+          name: config.name,
+          connectionUrl: config.connectionUrl,
+          username: config.username || '',
+          password: config.password || '',
+          connectorUrl: config.connectorUrl || '',
+        }),
+      });
+      return client.registerElasticsearchConnection(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ELASTICSEARCH_CONNECTIONS_KEY });
+    },
+  });
+}
+
+/**
+ * Get Elasticsearch connections that can be used as sinks (for NodePalette)
+ * Only returns connected connections
+ */
+export function useElasticsearchSinkConnections() {
+  const { data: connections, ...rest } = useElasticsearchConnections();
+
+  return {
+    ...rest,
+    data: connections?.filter((c) => c.state === 'connected'),
   };
 }

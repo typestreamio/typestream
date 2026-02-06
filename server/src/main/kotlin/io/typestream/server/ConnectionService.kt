@@ -75,6 +75,27 @@ data class MonitoredWeaviateConnection(
 )
 
 /**
+ * Immutable snapshot of Elasticsearch connection state for thread-safe reads
+ */
+data class ElasticsearchConnectionStateSnapshot(
+    val state: ConnectionState,
+    val error: String?,
+    val lastChecked: Instant
+)
+
+/**
+ * Represents a monitored Elasticsearch connection with its current state.
+ */
+data class MonitoredElasticsearchConnection(
+    val config: Connection.ElasticsearchConnectionConfig,
+    @Volatile var stateSnapshot: ElasticsearchConnectionStateSnapshot = ElasticsearchConnectionStateSnapshot(
+        state = ConnectionState.CONNECTION_STATE_UNSPECIFIED,
+        error = null,
+        lastChecked = Instant.now()
+    )
+)
+
+/**
  * Service that monitors database connections and reports their status.
  * Maintains persistent JDBC connections to detect connectivity issues.
  */
@@ -88,6 +109,9 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     // Map of Weaviate connection ID to monitored Weaviate connection
     private val weaviateConnections = ConcurrentHashMap<String, MonitoredWeaviateConnection>()
 
+    // Map of Elasticsearch connection ID to monitored Elasticsearch connection
+    private val elasticsearchConnections = ConcurrentHashMap<String, MonitoredElasticsearchConnection>()
+
     // Background monitoring coroutine scope
     private val monitorScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var monitorJob: Job? = null
@@ -98,6 +122,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     // Whether to register the default dev connections (can be disabled via env vars)
     private val registerDevConnection = System.getenv("TYPESTREAM_REGISTER_DEV_POSTGRES")?.toBoolean() ?: true
     private val registerDevWeaviate = System.getenv("TYPESTREAM_REGISTER_DEV_WEAVIATE")?.toBoolean() ?: true
+    private val registerDevElasticsearch = System.getenv("TYPESTREAM_REGISTER_DEV_ELASTICSEARCH")?.toBoolean() ?: true
 
     init {
         // Start background health monitoring
@@ -106,6 +131,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                 delay(healthCheckInterval)
                 checkAllConnections()
                 checkAllWeaviateConnections()
+                checkAllElasticsearchConnections()
             }
         }
         logger.info { "ConnectionService started with ${healthCheckInterval.inWholeSeconds}s health check interval" }
@@ -122,6 +148,13 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             registerDevWeaviateConnection()
         } else {
             logger.info { "Skipping dev-weaviate registration (TYPESTREAM_REGISTER_DEV_WEAVIATE=false)" }
+        }
+
+        // Register default dev elasticsearch connection for testing (can be disabled via TYPESTREAM_REGISTER_DEV_ELASTICSEARCH=false)
+        if (registerDevElasticsearch) {
+            registerDevElasticsearchConnection()
+        } else {
+            logger.info { "Skipping dev-elasticsearch registration (TYPESTREAM_REGISTER_DEV_ELASTICSEARCH=false)" }
         }
     }
 
@@ -205,6 +238,36 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
         }
     }
 
+    /**
+     * Register the default dev elasticsearch connection on startup
+     */
+    private fun registerDevElasticsearchConnection() {
+        val connectionUrl = System.getenv("TYPESTREAM_ELASTICSEARCH_URL") ?: "http://localhost:9200"
+        val devConfig = Connection.ElasticsearchConnectionConfig.newBuilder()
+            .setId("dev-elasticsearch")
+            .setName("dev-elasticsearch")
+            .setConnectionUrl(connectionUrl)
+            .setConnectorUrl("http://elasticsearch:9200")
+            .build()
+
+        logger.info { "Registering default dev-elasticsearch connection (url=$connectionUrl)" }
+
+        val isHealthy = checkElasticsearchHealth(devConfig.connectionUrl)
+        elasticsearchConnections["dev-elasticsearch"] = MonitoredElasticsearchConnection(
+            config = devConfig,
+            stateSnapshot = ElasticsearchConnectionStateSnapshot(
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                error = if (isHealthy) null else "Elasticsearch not reachable",
+                lastChecked = Instant.now()
+            )
+        )
+        if (isHealthy) {
+            logger.info { "dev-elasticsearch connection established successfully" }
+        } else {
+            logger.warn { "dev-elasticsearch connection failed (this is normal if elasticsearch is not running)" }
+        }
+    }
+
     override fun close() {
         logger.info { "Shutting down ConnectionService" }
         monitorJob?.cancel()
@@ -228,6 +291,12 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             logger.debug { "Cleaning up Weaviate connection: $connectionId" }
         }
         weaviateConnections.clear()
+
+        // Clean up Elasticsearch connections
+        elasticsearchConnections.keys.forEach { connectionId ->
+            logger.debug { "Cleaning up Elasticsearch connection: $connectionId" }
+        }
+        elasticsearchConnections.clear()
     }
 
     override suspend fun registerConnection(request: Connection.RegisterConnectionRequest): Connection.RegisterConnectionResponse =
@@ -841,5 +910,252 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      */
     fun getWeaviateConnection(connectionId: String): MonitoredWeaviateConnection? {
         return weaviateConnections[connectionId]
+    }
+
+    // ==================== Elasticsearch Connection Methods ====================
+
+    /**
+     * Register an Elasticsearch connection for monitoring
+     */
+    override suspend fun registerElasticsearchConnection(request: Connection.RegisterElasticsearchConnectionRequest): Connection.RegisterElasticsearchConnectionResponse {
+        val config = request.connection
+
+        // Validate required fields
+        if (config.id.isBlank() || config.name.isBlank() || config.connectionUrl.isBlank()) {
+            return Connection.RegisterElasticsearchConnectionResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Connection id, name, and connectionUrl are required")
+                .build()
+        }
+
+        logger.info { "Registering Elasticsearch connection: ${config.name} (${config.id})" }
+
+        val isHealthy = checkElasticsearchHealth(config.connectionUrl)
+        val monitored = MonitoredElasticsearchConnection(
+            config = config,
+            stateSnapshot = ElasticsearchConnectionStateSnapshot(
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                error = if (isHealthy) null else "Elasticsearch not reachable at ${config.connectionUrl}",
+                lastChecked = Instant.now()
+            )
+        )
+        elasticsearchConnections[config.id] = monitored
+
+        return Connection.RegisterElasticsearchConnectionResponse.newBuilder()
+            .setSuccess(true)
+            .setStatus(monitored.toElasticsearchProto())
+            .build()
+    }
+
+    /**
+     * Get status of all Elasticsearch connections
+     */
+    override suspend fun getElasticsearchConnectionStatuses(request: Connection.GetElasticsearchConnectionStatusesRequest): Connection.GetElasticsearchConnectionStatusesResponse {
+        val builder = Connection.GetElasticsearchConnectionStatusesResponse.newBuilder()
+        elasticsearchConnections.values.forEach { monitored ->
+            builder.addStatuses(monitored.toElasticsearchProto())
+        }
+        return builder.build()
+    }
+
+    /**
+     * Create an Elasticsearch sink connector using a registered connection.
+     * Credentials are resolved server-side from the connection ID.
+     */
+    override suspend fun createElasticsearchSinkConnector(request: Connection.CreateElasticsearchSinkConnectorRequest): Connection.CreateElasticsearchSinkConnectorResponse {
+        val connectionId = request.connectionId
+        val monitored = elasticsearchConnections[connectionId]
+
+        if (monitored == null) {
+            return Connection.CreateElasticsearchSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Elasticsearch connection not found: $connectionId")
+                .build()
+        }
+
+        val config = monitored.config
+        logger.info { "Creating Elasticsearch sink connector: ${request.connectorName} for connection ${config.name}" }
+
+        try {
+            // Build Elasticsearch sink connector configuration
+            val connectorConfig = buildElasticsearchSinkConnectorConfig(
+                name = request.connectorName,
+                config = config,
+                topics = request.topics,
+                indexName = request.indexName,
+                documentIdStrategy = request.documentIdStrategy,
+                writeMethod = request.writeMethod,
+                behaviorOnNullValues = request.behaviorOnNullValues
+            )
+
+            // Create connector via Kafka Connect REST API
+            createKafkaConnectConnector(connectorConfig)
+
+            return Connection.CreateElasticsearchSinkConnectorResponse.newBuilder()
+                .setSuccess(true)
+                .setConnectorName(request.connectorName)
+                .build()
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to create Elasticsearch sink connector: ${request.connectorName}" }
+            return Connection.CreateElasticsearchSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError(e.message ?: "Unknown error")
+                .build()
+        }
+    }
+
+    /**
+     * Build the Kafka Connect Elasticsearch sink connector configuration
+     */
+    private fun buildElasticsearchSinkConnectorConfig(
+        name: String,
+        config: Connection.ElasticsearchConnectionConfig,
+        topics: String,
+        indexName: String,
+        documentIdStrategy: String,
+        writeMethod: String,
+        behaviorOnNullValues: String
+    ): Map<String, Any> {
+        // Validate required fields
+        require(indexName.isNotBlank()) { "Index name cannot be empty" }
+
+        // Use connector URL for Kafka Connect (Docker network)
+        val esUrl = config.connectorUrl.ifEmpty { config.connectionUrl }
+
+        val connectorConfig = mutableMapOf<String, Any>(
+            "name" to name,
+            "connector.class" to "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+            "tasks.max" to "1",
+            "topics" to topics,
+            "connection.url" to esUrl,
+            "type.name" to "_doc",
+            // Keys are written as UTF-8 strings by TypeStream
+            "key.converter" to "org.apache.kafka.connect.storage.StringConverter",
+            "value.converter" to "io.confluent.connect.avro.AvroConverter",
+            "value.converter.schema.registry.url" to (System.getenv("SCHEMA_REGISTRY_URL") ?: "http://redpanda:8081")
+        )
+
+        // Set the index name
+        connectorConfig["index.name"] = indexName
+
+        // Document ID strategy
+        when (documentIdStrategy) {
+            "RECORD_KEY" -> {
+                connectorConfig["key.ignore"] = "false"
+            }
+            "TOPIC_PARTITION_OFFSET" -> {
+                connectorConfig["key.ignore"] = "true"
+            }
+            else -> {
+                connectorConfig["key.ignore"] = "false"
+            }
+        }
+
+        // Write method
+        when (writeMethod.uppercase()) {
+            "INSERT" -> connectorConfig["write.method"] = "INSERT"
+            "UPSERT" -> connectorConfig["write.method"] = "UPSERT"
+            else -> connectorConfig["write.method"] = "INSERT"
+        }
+
+        // Behavior on null values
+        when (behaviorOnNullValues.uppercase()) {
+            "IGNORE" -> connectorConfig["behavior.on.null.values"] = "IGNORE"
+            "DELETE" -> connectorConfig["behavior.on.null.values"] = "DELETE"
+            "FAIL" -> connectorConfig["behavior.on.null.values"] = "FAIL"
+            else -> connectorConfig["behavior.on.null.values"] = "IGNORE"
+        }
+
+        // Add authentication if provided
+        if (config.username.isNotEmpty()) {
+            connectorConfig["connection.username"] = config.username
+            if (config.password.isNotEmpty()) {
+                connectorConfig["connection.password"] = config.password
+            }
+        }
+
+        return mapOf("name" to name, "config" to connectorConfig)
+    }
+
+    /**
+     * Check health of Elasticsearch by calling its cluster health endpoint
+     */
+    private fun checkElasticsearchHealth(connectionUrl: String): Boolean {
+        return try {
+            val url = java.net.URI.create("$connectionUrl/_cluster/health").toURL()
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            connection.requestMethod = "GET"
+
+            try {
+                val responseCode = connection.responseCode
+                responseCode == 200
+            } finally {
+                connection.disconnect()
+            }
+        } catch (e: Exception) {
+            logger.debug { "Elasticsearch health check failed for $connectionUrl: ${e.message}" }
+            false
+        }
+    }
+
+    /**
+     * Check health of all registered Elasticsearch connections
+     */
+    private fun checkAllElasticsearchConnections() {
+        elasticsearchConnections.values.forEach { monitored ->
+            try {
+                val isHealthy = checkElasticsearchHealth(monitored.config.connectionUrl)
+                monitored.stateSnapshot = ElasticsearchConnectionStateSnapshot(
+                    state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                    error = if (isHealthy) null else "Elasticsearch not reachable",
+                    lastChecked = Instant.now()
+                )
+            } catch (e: Exception) {
+                logger.warn(e) { "Error checking Elasticsearch connection ${monitored.config.id}" }
+                monitored.stateSnapshot = ElasticsearchConnectionStateSnapshot(
+                    state = ConnectionState.ERROR,
+                    error = e.message ?: "Unknown error during health check",
+                    lastChecked = Instant.now()
+                )
+            }
+        }
+    }
+
+    /**
+     * Convert MonitoredElasticsearchConnection to proto (excludes password for security)
+     */
+    private fun MonitoredElasticsearchConnection.toElasticsearchProto(): Connection.ElasticsearchConnectionStatus {
+        val snapshot = this.stateSnapshot
+        return Connection.ElasticsearchConnectionStatus.newBuilder()
+            .setId(this.config.id)
+            .setName(this.config.name)
+            .setState(snapshot.state)
+            .setError(snapshot.error ?: "")
+            .setLastChecked(
+                Timestamp.newBuilder()
+                    .setSeconds(snapshot.lastChecked.epochSecond)
+                    .setNanos(snapshot.lastChecked.nano)
+                    .build()
+            )
+            .setConfig(
+                Connection.ElasticsearchConnectionConfigPublic.newBuilder()
+                    .setId(this.config.id)
+                    .setName(this.config.name)
+                    .setConnectionUrl(this.config.connectionUrl)
+                    .setUsername(this.config.username)
+                    // password intentionally excluded
+                    .setConnectorUrl(this.config.connectorUrl)
+                    .build()
+            )
+            .build()
+    }
+
+    /**
+     * Get an Elasticsearch connection config by ID (used by JobService)
+     */
+    fun getElasticsearchConnection(connectionId: String): MonitoredElasticsearchConnection? {
+        return elasticsearchConnections[connectionId]
     }
 }

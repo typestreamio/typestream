@@ -19,8 +19,9 @@ import {
   ReduceLatestNode,
   DbSinkConfig,
   WeaviateSinkConfig,
+  ElasticsearchSinkConfig,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, PostgresSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, PostgresSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, ElasticsearchSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
 
 /**
  * Result of serializing a graph with sink connectors
@@ -29,6 +30,7 @@ export interface SerializedGraphWithSinks {
   graph: PipelineGraph;
   dbSinkConfigs: DbSinkConfig[];  // Proto objects ready for request
   weaviateSinkConfigs: WeaviateSinkConfig[];  // Proto objects ready for request
+  elasticsearchSinkConfigs: ElasticsearchSinkConfig[];  // Proto objects ready for request
 }
 
 // Re-export for backward compatibility
@@ -38,7 +40,7 @@ export interface SerializedGraphWithDbSinks {
 }
 
 // Re-export for consumers that need the type
-export { DbSinkConfig, WeaviateSinkConfig };
+export { DbSinkConfig, WeaviateSinkConfig, ElasticsearchSinkConfig };
 
 /**
  * Generate a unique topic name for intermediate JDBC sink output
@@ -59,6 +61,15 @@ function generateWeaviateIntermediateTopicName(nodeId: string): string {
 }
 
 /**
+ * Generate a unique topic name for intermediate Elasticsearch sink output
+ */
+function generateElasticsearchIntermediateTopicName(nodeId: string): string {
+  const timestamp = Date.now();
+  const sanitizedNodeId = nodeId.replace(/[^a-zA-Z0-9]/g, '-');
+  return `elasticsearch-sink-${sanitizedNodeId}-${timestamp}`;
+}
+
+/**
  * Serialize a graph to a PipelineGraph proto and extract all sink configurations
  * (credentials resolved server-side for security)
  */
@@ -67,6 +78,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
   const pipelineEdges: PipelineEdge[] = [];
   const dbSinkConfigs: DbSinkConfig[] = [];
   const weaviateSinkConfigs: WeaviateSinkConfig[] = [];
+  const elasticsearchSinkConfigs: ElasticsearchSinkConfig[] = [];
 
   // Process each node
   nodes.forEach((node) => {
@@ -177,6 +189,37 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
         vectorStrategy: data.vectorStrategy || 'NoVectorStrategy',
         vectorField: data.vectorField || '',
         timestampField: data.timestampField || '',
+      }));
+      return;
+    }
+
+    if (node.type === 'elasticsearchSink') {
+      const data = node.data as ElasticsearchSinkNodeData;
+
+      // Generate an intermediate topic for the TypeStream job to write to
+      const intermediateTopic = generateElasticsearchIntermediateTopicName(node.id);
+      const fullPath = `/dev/kafka/local/topics/${intermediateTopic}`;
+
+      // Create a regular SinkNode that writes to the intermediate topic
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'sink',
+          value: new SinkNode({
+            output: new DataStreamProto({ path: fullPath }),
+          }),
+        },
+      }));
+
+      // Record the Elasticsearch sink configuration as proto (credentials resolved server-side)
+      elasticsearchSinkConfigs.push(new ElasticsearchSinkConfig({
+        nodeId: node.id,
+        connectionId: data.connectionId,
+        intermediateTopic,
+        indexName: data.indexName || '',
+        documentIdStrategy: data.documentIdStrategy || 'RECORD_KEY',
+        writeMethod: data.writeMethod || 'INSERT',
+        behaviorOnNullValues: data.behaviorOnNullValues || 'IGNORE',
       }));
       return;
     }
@@ -332,6 +375,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
     }),
     dbSinkConfigs,
     weaviateSinkConfigs,
+    elasticsearchSinkConfigs,
   };
 }
 

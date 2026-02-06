@@ -7,6 +7,8 @@ import { ConnectionsPage } from './pages/ConnectionsPage';
 import { ConnectionCreatePage } from './pages/ConnectionCreatePage';
 import { WeaviateConnectionsPage } from './pages/WeaviateConnectionsPage';
 import { WeaviateConnectionCreatePage } from './pages/WeaviateConnectionCreatePage';
+import { ElasticsearchConnectionsPage } from './pages/ElasticsearchConnectionsPage';
+import { ElasticsearchConnectionCreatePage } from './pages/ElasticsearchConnectionCreatePage';
 import { ConnectorsPage } from './pages/ConnectorsPage';
 import { ConnectorCreatePage } from './pages/ConnectorCreatePage';
 import { ThroughputHistoryProvider } from './providers/ThroughputHistoryProvider';
@@ -24,6 +26,8 @@ function App() {
         <Route path="/connections/new" element={<ConnectionCreatePage />} />
         <Route path="/connections/weaviate" element={<WeaviateConnectionsPage />} />
         <Route path="/connections/weaviate/new" element={<WeaviateConnectionCreatePage />} />
+        <Route path="/connections/elasticsearch" element={<ElasticsearchConnectionsPage />} />
+        <Route path="/connections/elasticsearch/new" element={<ElasticsearchConnectionCreatePage />} />
         {/* Kafka Connect connectors - for debugging */}
         <Route path="/connectors" element={<ConnectorsPage />} />
         <Route path="/connectors/new" element={<ConnectorCreatePage />} />

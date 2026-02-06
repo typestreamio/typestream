@@ -13,11 +13,12 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import StorageIcon from '@mui/icons-material/Storage';
 import HubIcon from '@mui/icons-material/Hub';
+import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSinkConnections, useWeaviateSinkConnections, type Connection, type WeaviateConnection } from '../../hooks/useConnections';
+import { useSinkConnections, useWeaviateSinkConnections, useElasticsearchSinkConnections, type Connection, type WeaviateConnection, type ElasticsearchConnection } from '../../hooks/useConnections';
 import { usePostgresTables } from '../../hooks/usePostgresTables';
 import { useListOpenAIModels } from '../../hooks/useListOpenAIModels';
 
@@ -132,6 +133,26 @@ function WeaviateSinkItem({ connection, onAdd }: { connection: WeaviateConnectio
   );
 }
 
+function ElasticsearchSinkItem({ connection, onAdd }: { connection: ElasticsearchConnection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
+  return (
+    <PaletteItem
+      type="elasticsearchSink"
+      label={connection.name}
+      icon={<SearchIcon fontSize="small" color="warning" />}
+      data={{
+        // Only pass non-sensitive data - credentials stay server-side
+        connectionId: connection.id,
+        connectionName: connection.name,
+        indexName: '',
+        documentIdStrategy: 'RECORD_KEY',
+        writeMethod: 'INSERT',
+        behaviorOnNullValues: 'IGNORE',
+      }}
+      onAdd={onAdd}
+    />
+  );
+}
+
 interface NodePaletteProps {
   onAddNode?: (type: string, data?: Record<string, unknown>) => void;
 }
@@ -140,6 +161,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   const navigate = useNavigate();
   const { data: connections } = useSinkConnections();
   const { data: weaviateConnections } = useWeaviateSinkConnections();
+  const { data: elasticsearchConnections } = useElasticsearchSinkConnections();
   const { postgresConnections, tables: postgresTables } = usePostgresTables();
   const { data: openAiModels } = useListOpenAIModels();
   const isOpenAiConfigured = (openAiModels?.models?.length ?? 0) > 0;
@@ -282,6 +304,32 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
             fullWidth
           >
             Add Weaviate
+          </Button>
+        </Box>
+      )}
+
+      <Divider sx={{ my: 1 }} />
+
+      <Typography variant="subtitle2" color="text.secondary">
+        Search Database Sinks
+      </Typography>
+      {elasticsearchConnections && elasticsearchConnections.length > 0 ? (
+        elasticsearchConnections.map((conn) => (
+          <ElasticsearchSinkItem key={conn.id} connection={conn} onAdd={onAddNode} />
+        ))
+      ) : (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            No Elasticsearch connections
+          </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/connections/elasticsearch/new')}
+            fullWidth
+          >
+            Add Elasticsearch
           </Button>
         </Box>
       )}
