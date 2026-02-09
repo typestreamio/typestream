@@ -6,7 +6,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY uiv2/package.json uiv2/package.json
 RUN corepack enable && pnpm install --frozen-lockfile --filter uiv2
 COPY uiv2/ uiv2/
-COPY protos/ /protos/
+COPY protos/ /app/protos/
 WORKDIR /app/uiv2
 RUN pnpm proto && pnpm build
 
