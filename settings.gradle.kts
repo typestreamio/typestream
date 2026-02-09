@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
             version("avro", "1.11.3")
-            version("confluent", "7.1.0")
+            version("confluent", "8.1.1")
             version("grpc", "1.57.2")
             version("grpcKotlin", "1.3.1")
             version("kafka", "4.1.1")
