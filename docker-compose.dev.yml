@@ -15,6 +15,12 @@ services:
     volumes:
       - ./docker/envoy-dev.yaml:/etc/envoy/envoy.yaml
 
+  # Build kafka-connect from source for local development
+  kafka-connect:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.kafka-connect
+
   # Kafka UI for debugging
   kafbat-ui:
     image: docker.io/kafbat/kafka-ui:v1.4.2

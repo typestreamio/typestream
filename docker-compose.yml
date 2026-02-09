@@ -69,9 +69,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   kafka-connect:
-    build:
-      context: ./docker
-      dockerfile: Dockerfile.kafka-connect
+    image: ghcr.io/typestreamio/kafka-connect:${TYPESTREAM_VERSION:-latest}
     ports:
       - "8083:8083"
     environment:
