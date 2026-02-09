@@ -11,6 +11,9 @@ COPY buildSrc/ buildSrc/
 # Copy only build.gradle.kts files to download dependencies
 COPY connectors/demo-data/build.gradle.kts connectors/demo-data/
 
+# Create stub directories for other projects in settings.gradle.kts (Gradle 9 requires them)
+RUN mkdir -p config libs/testing libs/k8s-client libs/option protos stub server tools
+
 # Download dependencies (cached unless build files change)
 RUN gradle :connectors:demo-data:dependencies --no-daemon || true
 
