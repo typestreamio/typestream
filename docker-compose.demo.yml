@@ -49,14 +49,11 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # React frontend - production build served by Caddy
-  # TODO: publish uiv2 to GHCR to avoid building from source
+  # React frontend - pre-built image from GHCR
   uiv2:
-    build:
-      context: .
-      dockerfile: uiv2/Dockerfile
-      args:
-        - VITE_API_URL=
+    image: ghcr.io/typestreamio/ui:${TYPESTREAM_VERSION:-latest}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - typestream_network
     depends_on:
