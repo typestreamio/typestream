@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -252,3 +252,18 @@ jobs:
           echo '${{ steps.kafka-connect-meta.outputs.tags }}' | while IFS= read -r tag; do
             [ -n "$tag" ] && docker tag kafka-connect:test "$tag" && docker push "$tag"
           done
+
+  # Create GitHub Release after images are published (only on tag push)
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [publish-images]
+    if: github.ref_type == 'tag'
+    steps:
+      - name: Create GitHub Release
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Release $GITHUB_REF_NAME - release notes pending."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
