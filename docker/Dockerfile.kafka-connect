@@ -10,7 +10,7 @@ LABEL org.opencontainers.image.source=https://github.com/typestreamio/typestream
 # Debezium 2.0+ doesn't include these - required for TypeStream Avro integration
 # Per Debezium docs: https://debezium.io/documentation/reference/stable/configuration/avro.html
 
-ENV CONFLUENT_VERSION=7.5.0
+ENV CONFLUENT_VERSION=8.1.1
 ENV AVRO_VERSION=1.11.3
 ENV JACKSON_VERSION=2.14.2
 ENV GUAVA_VERSION=32.1.3-jre
@@ -82,9 +82,8 @@ RUN mkdir -p /kafka/connect/elasticsearch-sink && \
     curl -sLO https://repo1.maven.org/maven2/org/elasticsearch/client/elasticsearch-rest-client-sniffer/8.12.0/elasticsearch-rest-client-sniffer-8.12.0.jar
 
 # Copy connector registration script and custom entrypoint
-# Note: Build context is repo root, so prefix with docker/
-COPY docker/register-connector.sh /usr/local/bin/register-connector.sh
-COPY docker/custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
+COPY register-connector.sh /usr/local/bin/register-connector.sh
+COPY custom-entrypoint.sh /usr/local/bin/custom-entrypoint.sh
 RUN chmod +x /usr/local/bin/register-connector.sh /usr/local/bin/custom-entrypoint.sh
 
 USER 1001
