@@ -52,13 +52,28 @@ cd typestream
 # Copy environment template and customize
 cp .env.example .env
 
-# Start all services
-docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+# Start core services
+docker compose up -d
 ```
 
 Open the TypeStream UI at **http://localhost** and start building pipelines.
-Demo data generators (Coinbase prices, Wikipedia changes, web visits, and file
-uploads) start automatically — you'll see data flowing within seconds.
+
+### Start Demo Data
+
+To see TypeStream in action with live data, start the demo data generators:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+```
+
+This adds four data generators that produce a continuous stream of events:
+
+| Generator | What it does |
+|-----------|-------------|
+| **Coinbase** | Real-time BTC-USD and ETH-USD crypto prices via the Coinbase WebSocket API |
+| **Wikipedia** | Live edit events from the English Wikipedia recent changes stream |
+| **Web Visits** | Synthetic page-view events with IP addresses, user agents, and paths |
+| **File Uploads** | Inserts sample documents into Postgres (captured via Debezium CDC) |
 
 ### Configuration
 
