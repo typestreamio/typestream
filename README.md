@@ -57,6 +57,8 @@ docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
 ```
 
 Open the TypeStream UI at **http://localhost** and start building pipelines.
+Demo data generators (Coinbase prices, Wikipedia changes, web visits, and file
+uploads) start automatically — you'll see data flowing within seconds.
 
 ### Configuration
 
@@ -121,15 +123,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 Edit Kotlin files and watch them auto-reload in ~5 seconds.
 
-The UI is available at **http://localhost:5173** with hot reload.
-
-### Seed Sample Data
-
-To bootstrap topics and test data:
-
-```sh
-./scripts/dev/seed.sh
-```
+The UI is available at **http://localhost:5173** with hot reload. Demo data
+generators (Coinbase, Wikipedia, web visits, file uploads) are included in the
+dev overlay and start automatically.
 
 ### Stop Services
 
