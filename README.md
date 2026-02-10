@@ -16,167 +16,126 @@
 </div>
 
 <p align="center">
-    <a href="#why-typestream">Why TypeStream?</a>
-    ·
     <a href="#getting-started">Getting started</a>
     ·
-    <a href="#releasing">Releasing</a>
+    <a href="#development">Development</a>
     ·
     <a href="#how-to-contribute">How to contribute</a>
-    ·
-    <a href="#code-of-conduct">Code of conduct</a>
     ·
     <a href="#license">License</a>
 </p>
 
 <h3 align="center">
 
-TypeStream is an abstraction layer on top of Kafka that allows you to write
-and run <i>typed</i> data pipelines with a minimal, familiar syntax.
+TypeStream connects to your Postgres or MySQL and turns every insert, update,
+and delete into a real-time pipeline — syncing data, enriching it with AI, and
+exposing it instantly.
 
-</h3 >
+</h3>
 
-## Why TypeStream?
+![Building a pipeline with TypeStream](/assets/images/hero-demo.gif?raw=true)
 
-Building streaming data pipelines on top of Kafka comes with some fixed costs.
-You have to write an app, test it, then deploy and manage it in production. Even
-for the simplest pipelines, this can be a lot of work.
+![Materialized API with live crypto prices](/assets/images/crypto-demo.gif?raw=true)
 
-With TypeStream you can write powerful, typed data pipelines the way you'd write
-a simple UNIX pipeline in your terminal. For example, imagine you'd like to
-filter a "books" topic. With TypeStream, it's a one liner:
+## Getting Started
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+
+### Start TypeStream
 
 ```sh
-$ typestream
-> grep /dev/kafka/local/topics/books the > /dev/kafka/local/topics/books_with_the
+git clone https://github.com/typestreamio/typestream.git
+cd typestream
+
+# Copy environment template and customize
+cp .env.example .env
+
+# Start all services
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
 ```
 
-TypeStream will take care of type-checking your pipeline and then run it for
-you. Here's how it looks like in action:
+Open the TypeStream UI at **http://localhost** and start building pipelines.
 
-![grepping with TypeStream](/assets/vhs/grep.gif?raw=true)
+### Configuration
 
-Another common use case that requires a lot of boilerplate is to enrich a topic
-with data from an external source. For example, you might have a topic with an
-ip address field and you may want to enrich it with country information. With
-TypeStream, you can do it (again!) in a single line:
+Edit `.env` to customize your deployment:
 
 ```sh
-$ typestream
-> cat /dev/kafka/local/topics/page_views | enrich { view -> http "https://api.country.is/#{$view.ip_address}" | cut .country } > /dev/kafka/local/topics/page_views_with_country
+# Image version (defaults to latest)
+TYPESTREAM_VERSION=latest
+
+# External ports
+UI_PORT=5173
+KAFKA_EXTERNAL_PORT=19092
+SCHEMA_REGISTRY_PORT=18081
+ENVOY_PORT=8080
+KAFBAT_PORT=8088
+
+# Optional: enable AI features
+OPENAI_API_KEY=your-key-here
 ```
 
-Here's how enriching looks like in action:
+### Access Points
 
-![enriching with TypeStream](/assets/vhs/enrich.gif?raw=true)
+| Service | URL |
+|---------|-----|
+| TypeStream UI | http://localhost |
+| Kafbat (Kafka UI) | http://localhost:8088 |
+| Kafka Bootstrap | localhost:19092 |
+| Schema Registry | http://localhost:18081 |
+| gRPC-Web (Envoy) | http://localhost:8080 |
 
-As you can see from the previous command, in the spirit of UNIX, we used cut to
-extract the country field from the response. Here's the kick, you can use `cut`
-(and many other Unix commands) on streams as well:
+### Stop Services
 
 ```sh
-$ typestream
-> cat /dev/kafka/local/topics/books | cut .title > /dev/kafka/local/topics/book_titles
+docker compose -f docker-compose.yml -f docker-compose.demo.yml down
+
+# Remove volumes for a fresh start
+docker compose -f docker-compose.yml -f docker-compose.demo.yml down -v
 ```
 
-Here's how cutting looks like in action:
+## Development
 
-![cutting with TypeStream](/assets/vhs/cut.gif?raw=true)
+For contributing to TypeStream, the dev overlay runs the UI with hot reload and
+builds services from source.
 
-Another problem that TypeStream solves is preventing you from writing faulty
-pipelines by type-checking them before executing them. Here's type checking in
-action:
+### Prerequisites
 
-![type checking with TypeStream](/assets/vhs/type-checking.gif?raw=true)
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+- [Nix](https://nixos.org/download.html) (for building the server)
 
-Deploying a pipeline to production is as simple as running:
-
-```sh
-typestream run 'cat /dev/kafka/local/topics/books | cut .title > /dev/kafka/local/topics/book_titles'
-```
-
-See it in action here:
-
-![running a pipeline with TypeStream](/assets/vhs/run.gif?raw=true)
-
-If you'd like to learn more about TypeStream, check out [the official
-documentation](https://docs.typestream.io/).
-
-## Getting started
-
-### Homebrew (MacOS)
-
-If you use [Homebrew](https://brew.sh/):
+### Setup
 
 ```sh
-brew install typestreamio/tap/typestream
-$ typestream --version
-```
+# Enter the Nix dev shell
+nix develop
 
-if you see something like this:
-
-```sh
-typestream version 2023.08.31+3 42f7762daac1872416bebab7a34d0b79a838d40a (2023-09-02 09:20:52)
-```
-
-then you're good to go!
-
-### Nix (MacOS/Linux)
-
-We use flakes to build the environments.
-
-```sh
-$ nix develop
-```
-
-Then to build the images:
-
-```sh
-$ ./gradle build
-$ ./scripts/dev/build-images.sh
-```
-
-Then to build the CLI:
-
-```sh
-$ cd cli && make
-$ ./typestream --help
-```
-
-### Development Workflow
-
-For fast iteration when developing TypeStream:
-
-```sh
-# Start infrastructure services (Redpanda, Envoy, UI, etc.)
+# Start infrastructure services (Redpanda, Envoy, UI, Kafka Connect, etc.)
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # Run the server on your host with hot reload
 ./scripts/dev/server.sh
 ```
 
-Edit Kotlin files and watch them auto-reload in ~5 seconds!
+Edit Kotlin files and watch them auto-reload in ~5 seconds.
 
-To stop services:
+The UI is available at **http://localhost:5173** with hot reload.
+
+### Seed Sample Data
+
+To bootstrap topics and test data:
+
+```sh
+./scripts/dev/seed.sh
+```
+
+### Stop Services
 
 ```sh
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
-
-### Running the Full Stack
-
-To run everything in Docker (including the server):
-
-```sh
-docker compose up -d
-./scripts/dev/seed.sh
-```
-
-This starts the TypeStream server and seeds it with sample data. Now you're
-ready to start writing your own pipelines!
-
-Check out our [documentation](https://docs.typestream.io/) to learn more about
-TypeStream.
 
 ### Releasing
 
@@ -196,7 +155,7 @@ To create a new release:
 3. After the release is created, edit the release notes in the GitHub UI to add
    details about the changes.
 
-## How to contribute
+## How to Contribute
 
 We love every form of contribution! Good entry points to the project are:
 
