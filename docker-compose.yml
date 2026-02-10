@@ -6,6 +6,8 @@ volumes:
   redpanda_data:
   postgres_data:
   typestream_data:
+  caddy_data:
+  caddy_config:
 
 services:
   redpanda:
@@ -132,3 +134,29 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # React frontend - pre-built image from GHCR
+  uiv2:
+    image: ghcr.io/typestreamio/ui:${TYPESTREAM_VERSION:-latest}
+    networks:
+      - typestream_network
+    depends_on:
+      - envoy
+
+  # Caddy reverse proxy - serves UI and proxies gRPC to Envoy
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - typestream_network
+    depends_on:
+      - uiv2
+      - envoy

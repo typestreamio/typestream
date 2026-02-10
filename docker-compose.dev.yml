@@ -15,6 +15,11 @@ services:
     volumes:
       - ./docker/envoy-dev.yaml:/etc/envoy/envoy.yaml
 
+  # Disable Caddy - access UI directly on port 5173
+  caddy:
+    profiles:
+      - prod-only
+
   # Build kafka-connect from source for local development
   kafka-connect:
     build:

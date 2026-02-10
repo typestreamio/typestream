@@ -12,8 +12,6 @@
 #
 
 volumes:
-  caddy_data:
-  caddy_config:
   weaviate_data:
   elasticsearch_data:
   demo_files:  # Shared volume for demo file uploads
@@ -48,39 +46,6 @@ services:
   kafka-connect:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-
-  # React frontend - pre-built image from GHCR
-  uiv2:
-    image: ghcr.io/typestreamio/ui:${TYPESTREAM_VERSION:-latest}
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - typestream_network
-    depends_on:
-      - envoy
-
-  # Expose envoy for remote gRPC access
-  envoy:
-    ports:
-      - "8080:8080"
-
-  # Caddy reverse proxy
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DOMAIN: ${DOMAIN:-:80}
-    volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - typestream_network
-    depends_on:
-      - uiv2
-      - envoy
 
   # Weaviate vector database
   weaviate:

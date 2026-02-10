@@ -52,14 +52,21 @@ cd typestream
 # Copy environment template and customize
 cp .env.example .env
 
-# Start TypeStream (server, UI, and demo data)
-docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+# Start TypeStream
+docker compose up -d
 ```
 
 Open the TypeStream UI at **http://localhost** and start building pipelines.
 
-Four demo data generators start automatically so you'll see data flowing within
-seconds:
+### Start Demo Data
+
+To explore TypeStream with live data, add the demo overlay:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+```
+
+This starts four data generators that produce a continuous stream of events:
 
 | Generator | What it does |
 |-----------|-------------|
@@ -100,16 +107,20 @@ OPENAI_API_KEY=your-key-here
 ### Stop Services
 
 ```sh
+# If running with demo data
 docker compose -f docker-compose.yml -f docker-compose.demo.yml down
 
+# If running base only
+docker compose down
+
 # Remove volumes for a fresh start
-docker compose -f docker-compose.yml -f docker-compose.demo.yml down -v
+docker compose down -v
 ```
 
 ## Development
 
-For contributing to TypeStream, the dev overlay runs the UI with hot reload and
-builds services from source.
+For contributing to TypeStream, the dev overlay swaps the UI for a hot-reload
+version and builds services from source.
 
 ### Prerequisites
 
