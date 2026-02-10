@@ -264,21 +264,21 @@
           <h1
             class="text-4xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight"
           >
-            Your database changes.<br />
-            Your search, your cache, your APIs.<br />
+            Stop writing sync jobs,<br />
+            cache invalidation, and API glue.<br />
             <span class="text-indigo-600 dark:text-indigo-400"
-              >all updated. Instantly.</span
+              >Let your database do the work.</span
             >
           </h1>
 
           <p
             class="text-lg lg:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto"
           >
-            TypeStream connects to your Postgres or MySQL and turns every
-            insert, update, and delete into a real-time pipeline you build
-            visually. Keep search in sync, serve live APIs, feed AI models
-            &mdash; no cron jobs, no background workers, no glue code.
-            Deploy with Docker Compose or Helm.
+            Every time you update a row, your backend has to reindex search,
+            bust the cache, and notify downstream services. TypeStream
+            watches your Postgres or MySQL and keeps everything in sync
+            automatically. Your app just writes to the database &mdash;
+            it doesn't need to know the rest exists.
           </p>
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
@@ -331,6 +331,15 @@
           >
             You draw pipelines. We handle the plumbing.
           </h2>
+          <p
+            class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto"
+          >
+            Today, every backend route that writes to your database also
+            calls the search reindex, invalidates the cache, and fires off
+            webhooks. Miss one call site and things drift out of sync.
+            With TypeStream, your app just writes to Postgres. Everything
+            else happens automatically.
+          </p>
         </div>
 
         <!-- Architecture diagram -->
@@ -395,38 +404,43 @@
           <p
             class="text-center text-slate-600 dark:text-slate-400 leading-relaxed mb-8"
           >
-            TypeStream packages Debezium, Kafka, and Kafka Connect &mdash;
-            the industry-standard open source stack for streaming. You
-            connect your database, build pipelines visually, and deploy. No
-            Kafka clusters to provision. No connectors to configure. No
-            Debezium to operate.
+            Under the hood, TypeStream uses the industry-standard streaming
+            stack &mdash; Debezium, Kafka, and Kafka Connect &mdash; so
+            you get battle-tested infrastructure without having to operate
+            it. You connect your database, build pipelines visually, and
+            deploy. No Kafka clusters to provision. No connectors to
+            configure. No infrastructure to learn.
           </p>
 
           <div class="grid sm:grid-cols-2 gap-6 text-sm text-slate-500 dark:text-slate-400">
             <div>
               <strong class="text-slate-700 dark:text-slate-300"
-                >Debezium</strong
+                >Your database</strong
               >
-              listens to your database's change log and emits every row change
-              as an event.
-            </div>
-            <div>
-              <strong class="text-slate-700 dark:text-slate-300">Kafka</strong>
-              durably stores and delivers those events at any scale.
+              is already logging every change. TypeStream taps into that log
+              so your app code doesn't have to broadcast updates.
             </div>
             <div>
               <strong class="text-slate-700 dark:text-slate-300"
-                >Kafka Connect</strong
+                >Durable delivery</strong
               >
-              pushes data to any destination through hundreds of pre-built
-              connectors.
+              means events are never lost, even if a destination goes down
+              temporarily. No retry logic for you to write.
             </div>
             <div>
               <strong class="text-slate-700 dark:text-slate-300"
-                >TypeStream</strong
+                >200+ destinations</strong
               >
-              is where you work &mdash; your visual transformations compile to
-              efficient stream processing applications.
+              are supported out of the box &mdash; Elasticsearch, Postgres,
+              Weaviate, ClickHouse, and more. No custom sync code.
+            </div>
+            <div>
+              <strong class="text-slate-700 dark:text-slate-300"
+                >Visual builder</strong
+              >
+              is where you work &mdash; draw the pipeline, add transforms,
+              and deploy. Your pipelines compile to efficient stream
+              processing under the hood.
             </div>
           </div>
         </div>
@@ -455,11 +469,12 @@
             </h3>
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
               Your product data lives in Postgres. Your search lives in
-              Elasticsearch. The sync between them is a cron job, a background
-              worker, or a reindex script someone wrote two years ago. Search
-              results are stale. Full reindexes hammer production. The sync
-              breaks when someone adds a column. Every engineer who's worked at
-              a company with search has this story.
+              Elasticsearch. Every API route that updates a product also has
+              to call the search reindex. A new engineer adds an update
+              endpoint and forgets the reindex call &mdash; now search is
+              stale and nobody notices for a week. Or someone builds a bulk
+              import that bypasses the API entirely. Every team with search
+              has this story.
             </p>
           </div>
 
@@ -474,9 +489,11 @@
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
             >
-              A row changes in Postgres. The text extraction node pulls
-              searchable content. Elasticsearch updates within seconds. Always
-              in sync. No application code. No reindex jobs.
+              A row changes in Postgres &mdash; from any source, any route,
+              any bulk import. TypeStream picks it up, extracts the
+              searchable content, and updates Elasticsearch within seconds.
+              Always in sync. No reindex calls sprinkled through your
+              backend. No sync code to maintain.
             </p>
           </div>
 
@@ -524,10 +541,11 @@
             </h3>
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
               "Add search that understands what users mean" usually means:
-              provision a vector database, build an embedding pipeline, write a
-              sync layer, and keep it all in sync with production. That's a
-              quarter of engineering work. With TypeStream, it's a branch in
-              your pipeline.
+              pick an embedding model, provision a vector database, write a
+              service to generate and store embeddings on every change, and
+              keep it all in sync with production. That's a quarter of
+              engineering work. With TypeStream, you add one node to your
+              existing pipeline.
             </p>
           </div>
         </div>
@@ -545,7 +563,7 @@
           <h2
             class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-6"
           >
-            Turn high-throughput data into a materialized API
+            Need a fast endpoint? Skip the database and cache layer.
           </h2>
 
           <div class="mb-8">
@@ -555,13 +573,12 @@
               The problem
             </h3>
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              Your data changes constantly &mdash; rows updating in your
-              database, webhooks firing from external services, events streaming
-              from third-party APIs. You need a fast endpoint that always
-              returns the latest state. The usual answer: build a database, an
-              API server, upsert logic, a cache layer, and invalidation code.
-              That's a lot of plumbing for what should be simple: keep the
-              latest value, serve it on demand.
+              You need an endpoint that always returns the latest state
+              &mdash; the current status of a job, the most recent price,
+              a customer's usage count. The usual answer: a Postgres table,
+              a Redis cache, an Express route, and invalidation logic to
+              keep them consistent. That's a lot of plumbing for what should
+              be simple: keep the latest value, serve it on demand.
             </p>
           </div>
 
@@ -584,12 +601,14 @@
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
             >
-              Here, crypto prices stream in from Coinbase. A materialized view
-              keeps the latest value per trading pair. A gRPC endpoint serves it
-              instantly. No database. No cache. No API server. The same pattern
-              works for any high-throughput source &mdash; CDC from your
-              Postgres, IoT telemetry, payment events &mdash; anything where
-              you need a fast read API over data that never stops changing.
+              In this example, crypto prices stream in from Coinbase. The
+              pipeline keeps the latest value per trading pair and serves it
+              through an auto-generated endpoint. No Postgres table. No
+              Redis cache. No Express route. The same pattern works for any
+              data that changes constantly &mdash; job statuses, inventory
+              counts, usage metrics &mdash; anything where you'd normally
+              build a database + cache + API stack just to serve the latest
+              value.
             </p>
           </div>
 
@@ -602,10 +621,10 @@
               What this replaces
             </h3>
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              A webhook handler or polling job, a Postgres table, upsert logic,
-              an Express or FastAPI server, maybe Redis for caching, and
-              invalidation code to keep it all consistent. With TypeStream, the
-              pipeline <em>is</em> the API.
+              A Postgres table with upsert logic, an Express route to serve
+              it, Redis to make it fast, and invalidation code to keep them
+              all consistent. With TypeStream, the pipeline <em>is</em> the
+              API &mdash; it maintains the result and serves it directly.
             </p>
           </div>
         </div>
@@ -628,11 +647,11 @@
           <p
             class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto"
           >
-            Most streaming tools push data to a database. Then you build an API
-            on top. TypeStream's materialized views skip that step entirely
-            &mdash; your pipeline computes the result, and a gRPC endpoint
-            serves it directly. Query your streaming data like it's a database,
-            without running one.
+            Most approaches push data to a database, then you build an API
+            on top and a cache to make it fast. TypeStream skips all of that
+            &mdash; your pipeline computes the result and serves it through
+            an auto-generated endpoint. No database. No cache. No API
+            server to maintain.
           </p>
         </div>
 
@@ -647,11 +666,12 @@
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
             >
-              Your product catalog changes in Postgres. Normally you'd build an
-              API server, a cache layer, and invalidation logic. With
-              TypeStream, a materialized view keyed on <code>product_id</code>
-              gives you an instant gRPC endpoint with the latest state of every
-              row. No API server. No cache invalidation. No Redis.
+              Your product catalog changes in Postgres. Normally you'd build
+              an Express route, a Redis cache, and invalidation logic to
+              keep them consistent. With TypeStream, the pipeline watches
+              your table and serves the latest state of every product
+              through an auto-generated endpoint. No API server to build.
+              No cache to invalidate.
             </p>
             <!-- ReactFlow Pipeline Diagram -->
             <div id="flow-live-api" style="height: 160px;"></div>
@@ -664,9 +684,10 @@
                 Same pattern, different data
               </h4>
               <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Latest order status per order. Current inventory per SKU.
-                Live crypto prices per trading pair. Any time you need a fast
-                read API over data that changes, it's a one-node pipeline.
+                Latest job status per project. Current inventory per SKU.
+                Most recent estimate per customer. Any time you'd normally
+                build a database + cache + API route just to serve the
+                latest value, it's a one-node pipeline instead.
               </p>
             </div>
           </div>
@@ -682,10 +703,10 @@
               class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
             >
               Count API calls per customer in a sliding window. Query the
-              result with a single gRPC call: &ldquo;Has this customer exceeded
-              100 requests this minute?&rdquo; No rate-limiting middleware to
-              build. No Redis counters to manage. The pipeline maintains the
-              count. The endpoint serves it.
+              result with a single call: &ldquo;Has this customer exceeded
+              100 requests this minute?&rdquo; No rate-limiting middleware
+              to build. No Redis counters to manage. No INCR/EXPIRE logic.
+              The pipeline maintains the count and serves it directly.
             </p>
             <!-- ReactFlow Pipeline Diagram -->
             <div id="flow-quota-tracking" style="height: 160px;"></div>
@@ -701,10 +722,10 @@
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
             >
-              Enrich page-view events with GeoIP, count them per country in a
+              Enrich page views with GeoIP, count them per country in a
               rolling window, and query the result through the auto-generated
               endpoint. You just built a real-time analytics backend without
-              Prometheus, a time-series database, or a single line of
+              a time-series database, a cron job, or a single line of
               application code.
             </p>
             <!-- ReactFlow Pipeline Diagram -->
@@ -721,10 +742,10 @@
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
             >
-              Replicate your data to 200+ destinations supported by Kafka
-              Connect &mdash; Postgres, MySQL, ClickHouse, and more.
-              Optionally filtered and reshaped in flight, all with millisecond
-              latency.
+              Replicate your data to 200+ destinations &mdash; Postgres,
+              MySQL, ClickHouse, and more. Filter and reshape it in flight.
+              No custom sync scripts. No ETL jobs. Changes flow through
+              with millisecond latency.
             </p>
             <!-- ReactFlow Pipeline Diagram -->
             <div id="flow-database-replica" style="height: 160px;"></div>
@@ -740,10 +761,11 @@
             <p
               class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
             >
-              Enrich every row with an OpenAI prompt as it flows through your
-              pipeline. Auto-tag support tickets by urgency, classify inbound
-              leads, categorize content, or extract entities. Your data arrives
-              enriched and ready, not raw and waiting for a batch job.
+              Classify every row with an OpenAI prompt as it flows through
+              your pipeline. Auto-tag support tickets by urgency, classify
+              inbound leads, categorize content, or extract entities. Your
+              data arrives enriched and ready &mdash; no background workers,
+              no batch jobs, no queue infrastructure to build.
             </p>
             <!-- ReactFlow Pipeline Diagram -->
             <div id="flow-ai-classification" style="height: 160px;"></div>
@@ -982,9 +1004,10 @@
               Backpressure and retries
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              OpenAI returns a 429. A destination goes temporarily unavailable.
-              TypeStream handles rate limiting, exponential backoff, and
-              queueing automatically. Your pipeline adapts. You don't get paged.
+              OpenAI returns a 429. Elasticsearch is temporarily down.
+              TypeStream handles rate limiting, retries, and queueing
+              automatically. No try/catch logic to write. No dead letter
+              queues to build. Your pipeline adapts and you don't get paged.
             </p>
           </div>
 
@@ -1064,7 +1087,7 @@
           <h2
             class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
           >
-            Your VPC. Your data. Your control.
+            Runs in your infrastructure. Your data never leaves.
           </h2>
         </div>
 
