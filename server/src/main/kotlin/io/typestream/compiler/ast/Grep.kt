@@ -17,6 +17,7 @@ data class Grep(override val expressions: List<Expr>) : DataCommand() {
     )
 
     val predicates = mutableListOf<Predicate>()
+    var rawPredicateExpr: String? = null
 
     override fun resolve(): Graph<Node> {
         val (options, args) = parseOptions<Options>(boundArgs)

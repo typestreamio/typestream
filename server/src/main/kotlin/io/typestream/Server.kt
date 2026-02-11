@@ -14,6 +14,7 @@ import io.typestream.server.FileSystemService
 import io.typestream.server.InteractiveSessionService
 import io.typestream.server.JobService
 import io.typestream.server.LoggerInterceptor
+import io.typestream.server.PipelineService
 import io.typestream.server.StateQueryService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +58,7 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         val jobService = JobService(config, vm, connectionService)
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
+        serverBuilder.addService(PipelineService(config, vm))
         serverBuilder.addService(StateQueryService(vm))
 
         serverBuilder.addService(ProtoReflectionService.newInstance())

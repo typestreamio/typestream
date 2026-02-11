@@ -8,6 +8,7 @@ import (
 	"github.com/typestreamio/typestream/cli/pkg/filesystem_service"
 	"github.com/typestreamio/typestream/cli/pkg/interactive_session_service"
 	"github.com/typestreamio/typestream/cli/pkg/job_service"
+	"github.com/typestreamio/typestream/cli/pkg/pipeline_service"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -87,6 +88,26 @@ func (c *Client) Unmount(ctx context.Context, endpoint string) (*filesystem_serv
 
 	// TODO get from config
 	return client.Unmount(ctx, &filesystem_service.UnmountRequest{Endpoint: endpoint, UserId: "42"})
+}
+
+func (c *Client) ValidatePipeline(ctx context.Context, req *pipeline_service.ValidatePipelineRequest) (*pipeline_service.ValidatePipelineResponse, error) {
+	client := pipeline_service.NewPipelineServiceClient(c.conn)
+	return client.ValidatePipeline(ctx, req)
+}
+
+func (c *Client) ApplyPipeline(ctx context.Context, req *pipeline_service.ApplyPipelineRequest) (*pipeline_service.ApplyPipelineResponse, error) {
+	client := pipeline_service.NewPipelineServiceClient(c.conn)
+	return client.ApplyPipeline(ctx, req)
+}
+
+func (c *Client) ListPipelines(ctx context.Context, req *pipeline_service.ListPipelinesRequest) (*pipeline_service.ListPipelinesResponse, error) {
+	client := pipeline_service.NewPipelineServiceClient(c.conn)
+	return client.ListPipelines(ctx, req)
+}
+
+func (c *Client) DeletePipeline(ctx context.Context, req *pipeline_service.DeletePipelineRequest) (*pipeline_service.DeletePipelineResponse, error) {
+	client := pipeline_service.NewPipelineServiceClient(c.conn)
+	return client.DeletePipeline(ctx, req)
 }
 
 func (c *Client) Close() error {

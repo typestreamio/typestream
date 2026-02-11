@@ -52,6 +52,42 @@ class Compiler(private val session: Session) : Statement.Visitor<Unit> {
             return CompilerResult(program, errors)
         }
 
+        // Try unified path: DSL → PipelineGraph → GraphCompiler
+        val emitter = PipelineGraphEmitter()
+        val pipelineGraph = emitter.emit(statements)
+
+        if (pipelineGraph != null && pipelineGraph.nodesCount > 0) {
+            return try {
+                val graphCompiler = GraphCompiler(session.fileSystem)
+                val graphProgram = graphCompiler.compileFromGraph(pipelineGraph, id)
+                addAutoSinkIfNeeded(graphProgram, id)
+                CompilerResult(graphProgram, errors)
+            } catch (e: Exception) {
+                // If the unified path fails, fall back to direct compilation
+                compileDirectly(statements, program, id)
+            }
+        }
+
+        // Fallback: direct compilation (for blocks, shell commands, etc.)
+        return compileDirectly(statements, program, id)
+    }
+
+    private fun addAutoSinkIfNeeded(program: Program, id: String) {
+        if (!program.hasRedirections() && program.hasStreamSources()) {
+            val sinkNode: Graph<Node> = Graph(
+                Node.Sink(
+                    "$id-stdout", DataStream.fromString(
+                        "${FileSystem.KAFKA_CLUSTERS_PREFIX}/${program.runtime().name}/topics/$id-stdout", ""
+                    ), Encoding.JSON
+                )
+            )
+            for (leaf in program.graph.findLeaves()) {
+                leaf.addChild(sinkNode)
+            }
+        }
+    }
+
+    private fun compileDirectly(statements: List<Statement>, program: Program, id: String): CompilerResult {
         statements.forEach {
             it.accept(this)
             currentNode = root

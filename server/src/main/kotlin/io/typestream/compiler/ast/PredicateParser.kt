@@ -67,9 +67,22 @@ object PredicateParser {
     private fun parsePrimary(tokenizer: Tokenizer): Predicate {
         // Handle parenthesized expressions
         if (tokenizer.match("(")) {
-            val expr = parseOr(tokenizer)
-            tokenizer.consume(")")
-            return expr
+            // Try structured expression first, fall back to regex pattern
+            val saved = tokenizer.save()
+            try {
+                val expr = parseOr(tokenizer)
+                tokenizer.consume(")")
+                return expr
+            } catch (e: Exception) {
+                tokenizer.restore(saved)
+                // Collect tokens until matching ")" as a regex pattern
+                val parts = mutableListOf<String>()
+                while (tokenizer.peek() != null && tokenizer.peek() != ")") {
+                    parts.add(tokenizer.next()!!)
+                }
+                tokenizer.consume(")")
+                return Predicate.matches(parts.joinToString(" "))
+            }
         }
 
         // Handle field comparison: .field op value
@@ -184,6 +197,12 @@ object PredicateParser {
             if (!match(expected)) {
                 throw IllegalArgumentException("Expected '$expected' but got '${peek()}'")
             }
+        }
+
+        fun save(): Int = pos
+
+        fun restore(saved: Int) {
+            pos = saved
         }
 
         private fun tokenize(source: String): List<String> {

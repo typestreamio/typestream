@@ -15,6 +15,8 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { useNavigate } from 'react-router-dom';
 import { NodePalette } from './NodePalette';
 import { nodeTypes, nodeHasInput, nodeHasOutput, type AppNode } from './nodes';
@@ -23,6 +25,7 @@ import { getGraphDependencyKey } from '../../utils/graphDependencyKey';
 import { useCreateJob } from '../../hooks/useCreateJob';
 import { useInferGraphSchemas } from '../../hooks/useInferGraphSchemas';
 import { CreateJobFromGraphRequest, InferGraphSchemasRequest } from '../../generated/job_pb';
+import { exportPipelineFile, importPipelineFile } from '../../utils/pipelineFile';
 
 let nodeId = 0;
 const getId = () => `node-${nodeId++}`;
@@ -323,6 +326,40 @@ export function GraphBuilder() {
     [setNodes, setEdges, getDefaultNodeData]
   );
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = useCallback(() => {
+    const name = prompt('Pipeline name:', 'my-pipeline');
+    if (!name) return;
+    const description = prompt('Description (optional):', '') || '';
+    exportPipelineFile(nodes, edges, name, description);
+  }, [nodes, edges]);
+
+  const handleImport = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileSelected = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      const result = importPipelineFile(content);
+      if (result) {
+        setNodes(result.nodes as AppNode[]);
+        setEdges(result.edges);
+      } else {
+        setCreateError('Invalid pipeline file');
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset the input so the same file can be re-imported
+    event.target.value = '';
+  }, [setNodes, setEdges]);
+
   const handleCreateJob = async () => {
     setCreateError(null);
     const { graph, dbSinkConfigs, weaviateSinkConfigs, elasticsearchSinkConfigs } = serializeGraphWithSinks(nodes, edges);
@@ -405,7 +442,29 @@ export function GraphBuilder() {
             <Controls />
           </ReactFlow>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".typestream.json,.json"
+          onChange={handleFileSelected}
+          style={{ display: 'none' }}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<FileUploadIcon />}
+            onClick={handleImport}
+          >
+            Import
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadIcon />}
+            onClick={handleExport}
+            disabled={nodes.length === 0}
+          >
+            Export
+          </Button>
           <Button
             variant="contained"
             startIcon={<PlayArrowIcon />}

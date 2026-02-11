@@ -27,8 +27,10 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     fileSystem.findDataStream(path) ?: error("No DataStream for path: $path")
 
   fun compile(request: Job.CreateJobFromGraphRequest): Program {
-    val graphProto = request.graph
+    return compileFromGraph(request.graph)
+  }
 
+  fun compileFromGraph(graphProto: Job.PipelineGraph, programId: String? = null): Program {
     // Phase 1: Infer schemas and encodings for all nodes
     val (inferredSchemas, inferredEncodings) = inferNodeSchemasAndEncodings(graphProto)
 
@@ -46,8 +48,8 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     val root: Graph<Node> = Graph(Node.NoOp("root"))
     root.addChild(programGraph)
     Infer.infer(root)  // Validation still works!
-    val programId = UUID.randomUUID().toString()
-    return Program(programId, root, graphProto)
+    val id = programId ?: UUID.randomUUID().toString()
+    return Program(id, root, graphProto)
   }
 
   private fun buildGraph(
@@ -77,7 +79,11 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     proto.hasGroup() -> {
       val fieldPath = proto.group.keyMapperExpr  // e.g., ".user" or ".product_id"
       val fields = fieldPath.trimStart('.').split('.').filter { it.isNotBlank() }
-      Node.Group(proto.id) { kv -> kv.value.select(fields) }
+      if (fields.isEmpty()) {
+        Node.Group(proto.id) { kv -> kv.key }
+      } else {
+        Node.Group(proto.id) { kv -> kv.value.select(fields) }
+      }
     }
     proto.hasJoin() -> {
       val j = proto.join
@@ -85,7 +91,15 @@ class GraphCompiler(private val fileSystem: FileSystem) {
       val with = findDataStreamOrError(path)
       Node.Join(proto.id, with, JoinType(j.joinType.byKey, j.joinType.isLookup))
     }
-    proto.hasMap() -> Node.Map(proto.id) { kv -> kv }
+    proto.hasMap() -> {
+      val expr = proto.map.mapperExpr
+      if (expr.startsWith("select ")) {
+        val fields = expr.removePrefix("select ").trim().split(" ").map { it.trimStart('.') }
+        Node.Map(proto.id) { kv -> KeyValue(kv.key, kv.value.select(fields)) }
+      } else {
+        Node.Map(proto.id) { kv -> kv }
+      }
+    }
     proto.hasNoop() -> Node.NoOp(proto.id)
     proto.hasShellSource() -> {
       val data = proto.shellSource.dataList.map { dsProto ->

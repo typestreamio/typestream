@@ -56,6 +56,20 @@ sealed interface Predicate {
     fun or(other: Predicate): Predicate = Or(this, other)
     fun not(): Predicate = Not(this)
 
+    fun toExpr(): String = when (this) {
+        is And -> "(${left.toExpr()}) && (${right.toExpr()})"
+        is Or -> "(${left.toExpr()}) || (${right.toExpr()})"
+        is Not -> "!(${predicate.toExpr()})"
+        is GreaterThan -> ".${key} > ${schemaToExpr(value)}"
+        is GreaterOrEqualThan -> ".${key} >= ${schemaToExpr(value)}"
+        is LessThan -> ".${key} < ${schemaToExpr(value)}"
+        is LessOrEqualThan -> ".${key} <= ${schemaToExpr(value)}"
+        is Equals -> ".${key} == ${schemaToExpr(value)}"
+        is AlmostEquals -> ".${key} ~= ${schemaToExpr(value)}"
+        is Matches -> pattern
+        is AlwaysTrue -> ""
+    }
+
     fun typeCheck(dataStream: DataStream): List<String> {
         return when (this) {
             is And -> left.typeCheck(dataStream) + right.typeCheck(dataStream)
@@ -92,5 +106,15 @@ sealed interface Predicate {
         fun greaterOrEqualThan(key: String, value: Schema): Predicate = GreaterOrEqualThan(key, value)
         fun lessThan(key: String, value: Schema): Predicate = LessThan(key, value)
         fun lessOrEqualThan(key: String, value: Schema): Predicate = LessOrEqualThan(key, value)
+
+        private fun schemaToExpr(value: Schema): String = when (value) {
+            is Schema.String -> "\"${value.value}\""
+            is Schema.Long -> value.value.toString()
+            is Schema.Double -> value.value.toString()
+            is Schema.Int -> value.value.toString()
+            is Schema.Float -> value.value.toString()
+            is Schema.Boolean -> value.value.toString()
+            else -> value.toString()
+        }
     }
 }

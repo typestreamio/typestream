@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package io.typestream.grpc;
+
+import "job.proto";
+
+option java_package = "io.typestream.grpc.pipeline_service";
+
+option go_package = "github.com/typestreamio/typestream/cli/pkg/pipeline_service";
+
+service PipelineService {
+    rpc ValidatePipeline(ValidatePipelineRequest) returns (ValidatePipelineResponse);
+    rpc ApplyPipeline(ApplyPipelineRequest) returns (ApplyPipelineResponse);
+    rpc ListPipelines(ListPipelinesRequest) returns (ListPipelinesResponse);
+    rpc DeletePipeline(DeletePipelineRequest) returns (DeletePipelineResponse);
+}
+
+message PipelineMetadata {
+    string name = 1;
+    string version = 2;
+    string description = 3;
+}
+
+message ValidatePipelineRequest {
+    PipelineMetadata metadata = 1;
+    PipelineGraph graph = 2;
+}
+
+message ValidatePipelineResponse {
+    bool valid = 1;
+    repeated string errors = 2;
+    repeated string warnings = 3;
+}
+
+message ApplyPipelineRequest {
+    PipelineMetadata metadata = 1;
+    PipelineGraph graph = 2;
+}
+
+message ApplyPipelineResponse {
+    bool success = 1;
+    string job_id = 2;
+    string error = 3;
+    PipelineState state = 4;
+}
+
+enum PipelineState {
+    PIPELINE_STATE_UNSPECIFIED = 0;
+    CREATED = 1;
+    UPDATED = 2;
+    UNCHANGED = 3;
+}
+
+message ListPipelinesRequest {}
+
+message PipelineInfo {
+    string name = 1;
+    string version = 2;
+    string description = 3;
+    string job_id = 4;
+    JobState job_state = 5;
+    int64 applied_at = 6;
+    PipelineGraph graph = 7;
+}
+
+message ListPipelinesResponse {
+    repeated PipelineInfo pipelines = 1;
+}
+
+message DeletePipelineRequest {
+    string name = 1;
+}
+
+message DeletePipelineResponse {
+    bool success = 1;
+    string error = 2;
+}
