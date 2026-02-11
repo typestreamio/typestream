@@ -8,7 +8,7 @@
 
 <div align="center">
     <a href="https://github.com/typestreamio/typestream/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/typestreamio/typestream" />
+        <img src="https://img.shields.io/badge/license-BSL%201.1-blue" />
     </a>
     <a href="https://discord.gg/Ha9sJWXb">
         <img src="https://img.shields.io/badge/Chat-on%20Discord-blue" alt="Discord invite" />
@@ -194,4 +194,23 @@ covenant](http://contributor-covenant.org/) initiative!
 
 ## License
 
-[Apache 2.0](/LICENSE)
+TypeStream is licensed under the [Business Source License 1.1](/LICENSE) (BSL).
+
+### Why BSL?
+
+We're a small team building TypeStream in the open. We chose the Business Source License because it lets us:
+
+- **Stay transparent**: You can read, audit, and learn from every line of code
+- **Enable adoption**: You can freely use TypeStream for internal projects, development, testing, and non-commercial use
+- **Protect our work**: The BSL prevents large cloud providers from offering TypeStream as a competing service without contributing back
+- **Commit to open source**: After 4 years, each version automatically converts to Apache 2.0
+
+**What this means for you:**
+- ✅ Use TypeStream internally at your company
+- ✅ Modify and extend it for your own needs  
+- ✅ Contribute back to the project
+- ❌ Offer TypeStream as a managed streaming service to third parties (without a commercial license)
+
+If you're building a product on TypeStream or have questions about licensing, reach out to us at licensing@typestream.io.
+
+Companies like [MariaDB](https://mariadb.com/bsl11/), [CockroachDB](https://www.cockroachlabs.com/blog/oss-relicensing-cockroachdb/), [Sentry](https://blog.sentry.io/introducing-the-functional-source-license-freedom-without-free-riding/), and [HashiCorp](https://www.hashicorp.com/license-faq) use similar licenses to balance openness with sustainability.
