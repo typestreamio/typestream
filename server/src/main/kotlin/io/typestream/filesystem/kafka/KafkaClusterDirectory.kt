@@ -97,6 +97,7 @@ class KafkaClusterDirectory(
         topicsDir.replaceAll(kafkaAdminClient.topicNames()
             .filterNot {
                 it.startsWith("typestream-app-") ||
+                it.startsWith("__typestream") ||
                 it.contains("-inspect-") ||
                 it.endsWith("-stdout")  // Filter preview job output topics
             }
