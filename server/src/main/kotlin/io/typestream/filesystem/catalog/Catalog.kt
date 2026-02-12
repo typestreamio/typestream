@@ -60,7 +60,7 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
 
     private fun refreshRegistry(name: String) {
         val path = FileSystem.KAFKA_CLUSTERS_PREFIX + "/" + name
-        logger.info { "fetching schemas for $path" }
+        logger.debug { "fetching schemas for $path" }
         val schemaRegistryClient = schemaRegistries[path]
 
         requireNotNull(schemaRegistryClient) { "schema registry client not found for $path" }

@@ -83,17 +83,17 @@ class KafkaClusterDirectory(
     }
 
     private fun refreshBrokersDir() {
-        logger.info { "$name brokers refresh" }
+        logger.debug { "$name brokers refresh" }
         brokersDir.replaceAll(kafkaAdminClient.brokerIds().map { Broker(it) })
     }
 
     private fun refreshConsumerGroupsDir() {
-        logger.info { "$name consumer groups refresh" }
+        logger.debug { "$name consumer groups refresh" }
         consumerGroupsDir.replaceAll(kafkaAdminClient.consumerGroupIds().map { ConsumerGroup(it) })
     }
 
     private fun refreshTopicsDir() {
-        logger.info { "$name topics refresh" }
+        logger.debug { "$name topics refresh" }
         topicsDir.replaceAll(kafkaAdminClient.topicNames()
             .filterNot {
                 it.startsWith("typestream-app-") ||
@@ -106,7 +106,7 @@ class KafkaClusterDirectory(
 
 
     private fun refreshSchemaRegistryDir() {
-        logger.info { "$name schema registry refresh" }
+        logger.debug { "$name schema registry refresh" }
         schemaRegistryDir.replaceAll(schemaRegistryClient.subjects().keys.map { t -> Directory(t) })
     }
 }
