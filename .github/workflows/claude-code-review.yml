@@ -42,8 +42,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Allow review to run after Claude's own fix commits
+          allowed_bots: 'claude'
           # Prevent Claude from merging or closing PRs
-          disallowed_tools: 'Bash(gh pr merge:*),Bash(gh pr close:*)'
+          claude_args: '--disallowedTools "Bash(gh pr merge:*),Bash(gh pr close:*)"'
           prompt: |
             REPO: ${{ github.repository }}
             WORKFLOW: ${{ github.event.workflow_run.name }}
@@ -72,8 +74,7 @@ jobs:
 
             IMPORTANT: Only make ONE fix attempt. Do not iterate or retry if it fails.
 
-            If TEST RESULT is "success":
-            - Review this pull request focusing on:
+            ALWAYS review the pull request (whether tests passed or failed). Focus on:
               - Code quality and best practices
               - Potential bugs or issues
               - Performance considerations
