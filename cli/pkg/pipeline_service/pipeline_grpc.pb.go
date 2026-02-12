@@ -26,6 +26,7 @@ type PipelineServiceClient interface {
 	ApplyPipeline(ctx context.Context, in *ApplyPipelineRequest, opts ...grpc.CallOption) (*ApplyPipelineResponse, error)
 	ListPipelines(ctx context.Context, in *ListPipelinesRequest, opts ...grpc.CallOption) (*ListPipelinesResponse, error)
 	DeletePipeline(ctx context.Context, in *DeletePipelineRequest, opts ...grpc.CallOption) (*DeletePipelineResponse, error)
+	PlanPipelines(ctx context.Context, in *PlanPipelinesRequest, opts ...grpc.CallOption) (*PlanPipelinesResponse, error)
 }
 
 type pipelineServiceClient struct {
@@ -72,6 +73,15 @@ func (c *pipelineServiceClient) DeletePipeline(ctx context.Context, in *DeletePi
 	return out, nil
 }
 
+func (c *pipelineServiceClient) PlanPipelines(ctx context.Context, in *PlanPipelinesRequest, opts ...grpc.CallOption) (*PlanPipelinesResponse, error) {
+	out := new(PlanPipelinesResponse)
+	err := c.cc.Invoke(ctx, "/io.typestream.grpc.PipelineService/PlanPipelines", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PipelineServiceServer is the server API for PipelineService service.
 // All implementations must embed UnimplementedPipelineServiceServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type PipelineServiceServer interface {
 	ApplyPipeline(context.Context, *ApplyPipelineRequest) (*ApplyPipelineResponse, error)
 	ListPipelines(context.Context, *ListPipelinesRequest) (*ListPipelinesResponse, error)
 	DeletePipeline(context.Context, *DeletePipelineRequest) (*DeletePipelineResponse, error)
+	PlanPipelines(context.Context, *PlanPipelinesRequest) (*PlanPipelinesResponse, error)
 	mustEmbedUnimplementedPipelineServiceServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedPipelineServiceServer) ListPipelines(context.Context, *ListPi
 }
 func (UnimplementedPipelineServiceServer) DeletePipeline(context.Context, *DeletePipelineRequest) (*DeletePipelineResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePipeline not implemented")
+}
+func (UnimplementedPipelineServiceServer) PlanPipelines(context.Context, *PlanPipelinesRequest) (*PlanPipelinesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlanPipelines not implemented")
 }
 func (UnimplementedPipelineServiceServer) mustEmbedUnimplementedPipelineServiceServer() {}
 
@@ -184,6 +198,24 @@ func _PipelineService_DeletePipeline_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PipelineService_PlanPipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PlanPipelinesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PipelineServiceServer).PlanPipelines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/io.typestream.grpc.PipelineService/PlanPipelines",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PipelineServiceServer).PlanPipelines(ctx, req.(*PlanPipelinesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PipelineService_ServiceDesc is the grpc.ServiceDesc for PipelineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +238,10 @@ var PipelineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeletePipeline",
 			Handler:    _PipelineService_DeletePipeline_Handler,
+		},
+		{
+			MethodName: "PlanPipelines",
+			Handler:    _PipelineService_PlanPipelines_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

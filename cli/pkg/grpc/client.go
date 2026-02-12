@@ -110,6 +110,11 @@ func (c *Client) DeletePipeline(ctx context.Context, req *pipeline_service.Delet
 	return client.DeletePipeline(ctx, req)
 }
 
+func (c *Client) PlanPipelines(ctx context.Context, req *pipeline_service.PlanPipelinesRequest) (*pipeline_service.PlanPipelinesResponse, error) {
+	client := pipeline_service.NewPipelineServiceClient(c.conn)
+	return client.PlanPipelines(ctx, req)
+}
+
 func (c *Client) Close() error {
 	return c.conn.Close()
 }

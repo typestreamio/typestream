@@ -13,6 +13,8 @@ import io.typestream.grpc.pipeline_service.applyPipelineResponse
 import io.typestream.grpc.pipeline_service.deletePipelineResponse
 import io.typestream.grpc.pipeline_service.listPipelinesResponse
 import io.typestream.grpc.pipeline_service.pipelineInfo
+import io.typestream.grpc.pipeline_service.pipelinePlanResult
+import io.typestream.grpc.pipeline_service.planPipelinesResponse
 import io.typestream.grpc.pipeline_service.validatePipelineResponse
 import io.typestream.pipeline.PipelineRecord
 import io.typestream.pipeline.PipelineStateStore
@@ -207,6 +209,53 @@ class PipelineService(
         stateStore?.delete(name)
 
         success = true
+    }
+
+    override suspend fun planPipelines(
+        request: Pipeline.PlanPipelinesRequest
+    ): Pipeline.PlanPipelinesResponse = planPipelinesResponse {
+        val requestedNames = mutableSetOf<String>()
+
+        for (plan in request.pipelinesList) {
+            val name = plan.metadata.name
+            if (name.isBlank()) {
+                errors.add("Pipeline name is required")
+                continue
+            }
+            requestedNames.add(name)
+
+            val existing = managedPipelines[name]
+            results.add(pipelinePlanResult {
+                this.name = name
+                when {
+                    existing == null -> {
+                        action = Pipeline.PipelineAction.CREATE
+                        newVersion = plan.metadata.version
+                    }
+                    existing.graph == plan.graph -> {
+                        action = Pipeline.PipelineAction.UNCHANGED_ACTION
+                        currentVersion = existing.metadata.version
+                        newVersion = plan.metadata.version
+                    }
+                    else -> {
+                        action = Pipeline.PipelineAction.UPDATE
+                        currentVersion = existing.metadata.version
+                        newVersion = plan.metadata.version
+                    }
+                }
+            })
+        }
+
+        // Pipelines that exist but are not in the request → DELETE
+        for ((name, managed) in managedPipelines) {
+            if (name !in requestedNames) {
+                results.add(pipelinePlanResult {
+                    this.name = name
+                    action = Pipeline.PipelineAction.DELETE
+                    currentVersion = managed.metadata.version
+                })
+            }
+        }
     }
 
     override fun close() {
