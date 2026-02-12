@@ -16,6 +16,7 @@ import io.typestream.server.JobService
 import io.typestream.server.LoggerInterceptor
 import io.typestream.server.PipelineService
 import io.typestream.server.StateQueryService
+import io.typestream.pipeline.PipelineStateStore
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,7 +59,14 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         val jobService = JobService(config, vm, connectionService)
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
-        serverBuilder.addService(PipelineService(config, vm))
+        val kafkaConfig = fileSystem.config.sources.kafka.values.firstOrNull()
+        val stateStore = if (kafkaConfig != null) PipelineStateStore(kafkaConfig) else null
+        val pipelineService = PipelineService(config, vm, stateStore)
+        subSystems.add(pipelineService)
+        serverBuilder.addService(pipelineService)
+        if (stateStore != null) {
+            launch(dispatcher) { pipelineService.recoverPipelines() }
+        }
         serverBuilder.addService(StateQueryService(vm))
 
         serverBuilder.addService(ProtoReflectionService.newInstance())
