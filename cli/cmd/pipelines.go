@@ -38,9 +38,9 @@ var pipelinesListCmd = &cobra.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tVERSION\tJOB ID\tSTATE\tDESCRIPTION")
+		_, _ = fmt.Fprintln(w, "NAME\tVERSION\tJOB ID\tSTATE\tDESCRIPTION")
 		for _, p := range resp.Pipelines {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 				p.Name,
 				p.Version,
 				p.JobId,
@@ -48,7 +48,7 @@ var pipelinesListCmd = &cobra.Command{
 				p.Description,
 			)
 		}
-		w.Flush()
+		_ = w.Flush()
 	},
 }
 

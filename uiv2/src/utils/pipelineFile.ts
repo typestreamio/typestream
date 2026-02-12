@@ -1,4 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
+import type { JsonValue } from '@bufbuild/protobuf';
 import { PipelineGraph } from '../generated/job_pb';
 import { serializeGraph } from './graphSerializer';
 import { deserializeGraph } from './graphDeserializer';
@@ -65,7 +66,7 @@ export function importPipelineFile(content: string): {
       return null;
     }
 
-    const graph = PipelineGraph.fromJson(parsed.graph);
+    const graph = PipelineGraph.fromJson(parsed.graph as JsonValue);
     const { nodes, edges } = deserializeGraph(graph);
 
     // Remove read-only flag since we're importing for editing
