@@ -1,0 +1,23 @@
+# Git Workflow
+
+## Branch/PR for Major Work
+All significant development MUST happen on a feature branch with a PR:
+- New features, node types, or commands
+- Refactors touching multiple files
+- Proto changes (affect server, CLI, and UI stubs)
+- Any work spanning more than a handful of lines
+
+Workflow:
+1. Create a branch from main: `git checkout -b <descriptive-name>`
+2. Make commits on the branch
+3. Push and create a PR with `gh pr create`
+4. Merge via GitHub after review
+
+## Direct Commits to Main
+Only for quick, low-risk fixes:
+- Typo fixes in docs or code
+- Single-line bug fixes with obvious correctness
+- Config tweaks (e.g. docker-compose ports, dev scripts)
+- Memory/rules file updates
+
+When in doubt, use a branch.

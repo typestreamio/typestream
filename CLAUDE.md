@@ -2,9 +2,9 @@
 
 # Big Idea
 
-**TypeStream** is a streaming data platform acting as a remote interpreter and orchestrator for Kafka Streams. It abstracts Kafka topics into a UNIX-like filesystem (/dev/kafka/...) and executes pipe-based commands (cat topic | grep 42).
+**TypeStream** lets application developers stop writing sync jobs, cache invalidation, and API glue. Your app writes to Postgres or MySQL -- TypeStream watches for changes and keeps everything else in sync automatically: search indexes, caches, vector databases, analytics warehouses, and more.
 
-Basically we can build a graph of multiple data streams that go together, that are all typed from the source (topic, debezium table etc), the transformations into the sink.
+You draw pipelines visually, TypeStream handles the plumbing. Under the hood it uses Debezium (CDC), Kafka (events), Kafka Streams (transforms), and Kafka Connect (sinks). Your pipeline is also your API -- it computes results and serves them through auto-generated endpoints. No separate database, cache, or API server to maintain.
 
 # Architecture Deep Dives
 
@@ -49,3 +49,7 @@ See [VISION.md](./VISION.md) for the demo vision plan. This document describes:
 - Sample data schemas
 
 Use this as a reference point for how features should be built to support the core demo narrative: "Build visual data pipelines on Kafka and query results in real-time—no code, no databases."
+
+# Git Workflow
+
+See [.claude/rules](.claude/rules) for the branching policy. TL;DR: branches + PRs for all major work, direct commits to main only for quick fixes.

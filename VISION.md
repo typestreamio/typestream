@@ -1,211 +1,156 @@
-# TypeStream Demo Vision
+# TypeStream Vision
 
-**Status**: Draft
-**Last Updated**: January 2025
+## The Pitch
 
----
+> Stop writing sync jobs, cache invalidation, and API glue. Let your database do the work.
 
-## Demo Story
+Every time you update a row, your backend has to reindex search, bust the cache, and notify downstream services. TypeStream watches your Postgres or MySQL and keeps everything in sync automatically. Your app just writes to the database -- it doesn't need to know the rest exists.
 
-> "Build visual data pipelines on Kafka and query results in real-time—no code, no databases."
-
-**Target Audience**: Developers and data engineers evaluating streaming platforms.
-
-**Key Differentiator**: Visual pipeline builder + queryable state stores = no Kafka Streams boilerplate, no separate database for serving layer.
+**Target audience**: Application developers and backend engineers who are tired of writing glue code between their database and downstream services.
 
 ---
 
-## Demo Flow (2-minute walkthrough)
+## Core Concept: Your Pipeline is Your API
 
-1. **Show the data source**
-   - Postgres database with `users` and `orders` tables
-   - "This is a typical OLTP database"
-
-2. **Show CDC flowing to Kafka**
-   - Debezium is pre-configured, streaming changes
-   - Topics appear in TypeStream: `/dev/kafka/local/topics/dbserver.public.orders`
-   - "Changes are captured in real-time"
-
-3. **Build pipeline visually**
-   - Drag source node, select orders topic (schema auto-detected)
-   - Add filter: `status = 'completed'`
-   - Add group by: `customer_id`
-   - Add count aggregation
-   - "No code, just drag and connect"
-
-4. **Run the pipeline**
-   - Click "Run" → Job starts
-   - Show job status (running, processing records)
-
-5. **Query the state**
-   - `curl http://localhost:8080/api/v1/jobs/{id}/state/order-counts`
-   - Returns current counts per customer
-   - "Real-time queryable endpoint, no database needed"
-
-6. **Show real-time update**
-   - Insert new order in Postgres
-   - Query again → count updated
-   - "Sub-second latency from database change to queryable result"
+Most approaches push data to a database, then you build an API on top and a cache to make it fast. TypeStream skips all of that -- your pipeline computes the result and serves it through an auto-generated endpoint. No database. No cache. No API server to maintain.
 
 ---
 
-## Architecture for Demo
+## Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────────────┐
-│  Postgres   │────▶│  Debezium   │────▶│   Kafka (Redpanda)  │
-│  (source)   │ CDC │  Connect    │     │   - dbserver.*      │
-└─────────────┘     └─────────────┘     └──────────┬──────────┘
-                                                   │
-                                                   ▼
-                                        ┌─────────────────────┐
-                                        │  TypeStream Server  │
-                                        │  ┌───────────────┐  │
-                                        │  │ Graph Builder │  │
-                                        │  │   (UI)        │  │
-                                        │  └───────┬───────┘  │
-                                        │          │          │
-                                        │          ▼          │
-                                        │  ┌───────────────┐  │
-                                        │  │ Kafka Streams │  │
-                                        │  │   Runtime     │  │
-                                        │  └───────┬───────┘  │
-                                        │          │          │
-                                        │          ▼          │
-                                        │  ┌───────────────┐  │
-                                        │  │ State Store   │◀─┼──── REST Query
-                                        │  │ (KTable)      │  │
-                                        │  └───────────────┘  │
-                                        └─────────────────────┘
+┌──────────────┐         ┌──────────────────────────────────────────┐         ┌──────────────────┐
+│              │         │  TypeStream                              │         │                  │
+│ Your Database│────────▶│                                          │────────▶│ Your Destinations│
+│ Postgres     │         │  ┌────────────────────────────────────┐  │         │ Postgres, ES,    │
+│ MySQL        │         │  │ Visual Pipeline Builder            │  │         │ Weaviate, ...    │
+│              │         │  │ -- you work here                   │  │         │                  │
+│              │         │  └────────────────────────────────────┘  │         └──────────────────┘
+│              │         │                                          │
+│              │         │  Debezium ──▶ Kafka ──▶ Kafka Streams ──▶ Kafka Connect │
+│              │         │  (CDC)       (events)   (transforms)      (sinks)       │
+│              │         └──────────────────────────────────────────┘
 ```
 
-**Key Point**: Debezium is pre-configured. TypeStream doesn't manage connectors—it discovers and transforms the data.
+Under the hood, TypeStream uses the industry-standard streaming stack -- Debezium, Kafka, and Kafka Connect -- so you get battle-tested infrastructure without having to operate it. You connect your database, build pipelines visually, and deploy.
 
 ---
 
-## Implementation Phases
+## Anchor Use Cases
 
-### Phase 1: Debezium + Sample Data
+### 1. Keep your search index in sync -- automatically
 
-**Goal**: CDC data flowing through TypeStream
+**The problem**: Your product data lives in Postgres. Your search lives in Elasticsearch. Every API route that updates a product also has to call the search reindex. A new engineer adds an update endpoint and forgets the reindex call -- now search is stale and nobody notices for a week.
 
-- Add Debezium Connect to docker-compose
-- Add Postgres with sample schema
-- Create connector registration script
-- Seed sample data (users, orders)
-
-**Success Criteria**:
-- `./typestream local dev start` brings up Debezium + Postgres
-- Topics `dbserver.public.users` and `dbserver.public.orders` visible
-- Schema auto-detected from Schema Registry
-
----
-
-### Phase 2: Polish Graph Builder UI
-
-**Goal**: Smooth visual pipeline building experience
-
-- Topic browser panel (browse `/dev/kafka/` visually, preview messages, drag to create nodes)
-- Improved node configuration (topic dropdown, schema preview, field picker)
-- Visual feedback (schema flows through connections, validation errors, running/stopped states)
-- Job management (Run Pipeline button, job status, stop/restart controls)
-
-**Success Criteria**:
-- Can build filter → group → count pipeline entirely in UI
-- No CLI needed for basic demo flow
-- Clear visual feedback at each step
-
----
-
-### Phase 3: State Query REST API
-
-**Goal**: Query KTable state stores via REST
-
-Based on: `docs/docs/designs/interactive-query-rest-api.md`
-
-- Proto definitions for StateQueryService
-- StateStoreRegistry to track job → state store mappings
-- Modify KafkaStreamsJob to register materialized stores
-- StateQueryService implementation with key lookup and range scans
-- REST endpoint: `GET /api/v1/jobs/{job-id}/state/{store-name}?key={key}`
-- UI integration with "Query State" panel
-
-**Success Criteria**:
-- Can query KTable state via curl
-- Response includes current aggregated values
-- Updates visible within 1 second of source change
-
----
-
-### Phase 4: Demo Polish
-
-**Goal**: Smooth end-to-end demo experience
-
-- One-command startup (everything with `./typestream local dev start`)
-- Pre-built example pipelines ("Order Count by Customer", "High Value Orders")
-- Demo script documentation
-
-**Success Criteria**:
-- Can run full demo in under 3 minutes
-- No manual setup steps
-- Compelling visual story
-
----
-
-## Sample Data Schema
-
-### users table
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    name VARCHAR(255),
-    tier VARCHAR(50) DEFAULT 'standard',
-    created_at TIMESTAMP DEFAULT NOW()
-);
+**The pipeline**:
+```
+Postgres CDC ──▶ Text Extract ──▶ Elasticsearch
+(Products)       (Pull content)    (Always in sync)
 ```
 
-### orders table
-```sql
-CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    total DECIMAL(10,2),
-    status VARCHAR(50) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT NOW()
-);
+A row changes in Postgres -- from any source, any route, any bulk import. TypeStream picks it up, extracts the searchable content, and updates Elasticsearch within seconds.
+
+### 2. Add semantic search -- one more node
+
+**The pipeline**:
+```
+                 ┌──▶ Text Extract ──▶ Elasticsearch (keyword search)
+Postgres CDC ──▶─┤
+                 └──▶ Embedding ──▶ Weaviate (semantic search)
 ```
 
+Same CDC source. Now feeding both keyword search and semantic search. Both always in sync with production. "Add search that understands what users mean" usually means a quarter of engineering work. With TypeStream, you add one node.
+
+### 3. Live API from database changes (materialized views)
+
+**The problem**: You need an endpoint that always returns the latest state -- the current status of a job, the most recent price, a customer's usage count. The usual answer: a Postgres table, a Redis cache, an Express route, and invalidation logic.
+
+**The pipeline**:
+```
+Postgres CDC ──▶ Materialize ──▶ gRPC Endpoint
+(Products)       (key: product_id)  (/products/{id})
+```
+
+The pipeline keeps the latest value per key and serves it through an auto-generated endpoint. No Postgres table. No Redis cache. No Express route. Works for job statuses, inventory counts, usage metrics -- anything where you'd normally build a database + cache + API stack.
+
+### 4. Quota tracking in real time
+
+```
+API Events ──▶ Windowed Count ──▶ gRPC Endpoint
+(Kafka topic)   (60s window)       (/quota/{customer})
+```
+
+Count API calls per customer in a sliding window. No rate-limiting middleware. No Redis counters. No INCR/EXPIRE logic.
+
+### 5. Live visits by country
+
+```
+Page Views ──▶ GeoIP ──▶ Count ──▶ gRPC Endpoint
+(Kafka topic)   (ip → country)  (by country)   (/visits)
+```
+
+Real-time analytics backend without a time-series database, a cron job, or application code.
+
+### 6. Perfect database replicas
+
+```
+Postgres CDC ──▶ Filter ──▶ ClickHouse
+(CDC stream)     (status = active)  (Analytics)
+```
+
+Replicate to 200+ destinations. Filter and reshape in flight. No custom sync scripts. No ETL jobs. Millisecond latency.
+
+### 7. AI classification in-flight
+
+```
+Tickets ──▶ OpenAI ──▶ Warehouse
+(CDC stream)  (Classify urgency)  (Pre-tagged)
+```
+
+Classify every row with an OpenAI prompt as it flows through. Auto-tag support tickets, classify leads, categorize content, extract entities. No background workers, no batch jobs, no queue infrastructure.
+
 ---
 
-## Out of Scope (Future Phases)
+## Available Nodes
 
-These features are deferred for now:
+### Sources
+- **Kafka Topic** -- Connect to any Kafka topic directly. Read typed events from existing streams.
+- **Database Table** -- Connect to Postgres or MySQL via CDC. Unwraps Debezium change events into clean row data.
 
-- **Connector Management UI** - Debezium is pre-configured, not managed
-- **AI/ML Nodes** - EmbeddingGenerator, LLMEnrichment, Classification
-- **Document Processing** - S3Fetch, TextExtractor, TextChunker
-- **PII Detection/Masking** - Data quality nodes
-- **Named REST Endpoints** - `/dev/rest/` filesystem extension
-- **Multi-Instance State Queries** - Distributed query routing
-- **Pipeline Persistence** - Save/load to database
-- **User/Workspace Management** - Multi-tenancy
+### Transforms
+- **Filter** -- Pass through only events matching a condition on any string key.
+- **OpenAI Transformer** -- Classify, summarize, score, or extract with a prompt. Attach any OpenAI model to your stream.
+- **Embedding Generator** -- Generate vector embeddings for any text field. Feed downstream vector databases.
+- **Text Extractor** -- Pull searchable text content from document fields. Prepare data for search indexing.
+- **GeoIP Node** -- Convert IP addresses to country, city, and region. Every event arrives geo-tagged.
+- **Count / WindowedCount / Group** -- Compute real-time aggregations: events per minute, rolling counts, grouped metrics.
+- **Materialized View** -- Auto-generates a gRPC endpoint from windowed aggregations. Query your streaming data directly.
+
+### Sinks
+- **Database Sink** -- Write to Postgres, MySQL, Elasticsearch, Weaviate, and 200+ other destinations via Kafka Connect.
+- **Kafka Topic Sink** -- Publish transformed events back to a Kafka topic for downstream consumers.
 
 ---
 
-## Open Questions
+## Production Qualities
 
-1. **Debezium image**: Use official `debezium/connect` or `confluentinc/cp-kafka-connect`?
-2. **Schema Registry**: Currently using Confluent SR. Debezium works with it, but need to verify Avro format compatibility.
-3. **State store naming**: Auto-generated from job ID, or user-specified?
-4. **REST gateway**: Use grpc-gateway or standalone HTTP handler?
+- **Backpressure and retries** -- OpenAI returns a 429. Elasticsearch is temporarily down. TypeStream handles rate limiting, retries, and queueing automatically.
+- **Pipelines are code** -- Version control them. Review changes in pull requests. Deploy through CI/CD. No clicking through a UI in production.
+- **Observability included** -- See what's flowing, what's stuck, and why. Metrics, logs, and traces built in.
+
+---
+
+## Deployment
+
+- **Self-hosted**: Deploy with `docker compose up` or Helm chart. Your data never leaves your environment.
+- **Source available (BSL)**: Inspect every line of code. Converts to full open source after each release. No vendor lock-in.
 
 ---
 
 ## Success Metrics
 
-**Demo is successful if**:
-- Zero CLI commands needed during demo (all visual)
-- Postgres change → queryable result in < 2 seconds
-- Audience understands value prop: "visual pipelines + queryable state"
-- No errors or manual restarts during demo
+The vision is successful when:
+- A developer can go from "I need to keep Elasticsearch in sync with Postgres" to a running pipeline in under 5 minutes
+- Adding a new downstream destination (e.g., semantic search) is adding one node, not a quarter of engineering work
+- Zero glue code in the application -- the app writes to the database and doesn't know the rest exists
+- Pipelines survive destination outages without data loss (backpressure + retries)
