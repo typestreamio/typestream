@@ -77,8 +77,17 @@ class PipelineStateStore(private val kafkaConfig: KafkaConfig) : Closeable {
         )
         val newTopic = NewTopic(TOPIC_NAME, 1, 1.toShort()).configs(topicConfig)
 
-        admin.createTopics(listOf(newTopic)).all().get()
-        logger.info { "Created pipeline state topic '$TOPIC_NAME'" }
+        try {
+            admin.createTopics(listOf(newTopic)).all().get()
+            logger.info { "Created pipeline state topic '$TOPIC_NAME'" }
+        } catch (e: Exception) {
+            // If the topic was created between our check and create attempt, that's fine
+            if (e.cause is org.apache.kafka.common.errors.TopicExistsException) {
+                logger.info { "Pipeline state topic '$TOPIC_NAME' already exists" }
+            } else {
+                throw e
+            }
+        }
     }
 
     fun load(): Map<String, PipelineRecord> {
