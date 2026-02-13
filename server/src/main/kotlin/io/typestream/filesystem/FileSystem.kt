@@ -164,8 +164,6 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
 
     override fun close() {
         jobs.forEach(Job::cancel)
-        kafkaDir.children().filterIsInstance<KafkaClusterDirectory>().forEach { it.close() }
-        catalog.close()
     }
 
     fun completePath(incompletePath: String, pwd: String): List<String> = buildList {

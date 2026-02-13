@@ -14,19 +14,16 @@ import io.typestream.kafka.schemaregistry.SchemaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.supervisorScope
-import java.io.Closeable
 import org.apache.avro.Schema.Parser
 import java.util.Collections
 import kotlin.time.Duration.Companion.seconds
 
 
-class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: CoroutineDispatcher) : Closeable {
+class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: CoroutineDispatcher) {
     private val logger = KotlinLogging.logger {}
     private val store = Collections.synchronizedMap(mutableMapOf<String, Metadata>())
     private val schemaRegistries = mutableMapOf<String, SchemaRegistryClient>()
-    private var watchScope: CoroutineScope? = null
 
     init {
         sourcesConfig.kafka.forEach { (name, config) ->
@@ -53,7 +50,6 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
         }
 
         val scope = CoroutineScope(dispatcher + handler)
-        watchScope = scope
         // loop on subjects and default to string on fetching from the catalog is a better strategy
         sourcesConfig.kafka.forEach { (name, config) ->
             scope.tick(config.fsRefreshRate.seconds, networkExceptionHandler) {
@@ -90,11 +86,6 @@ class Catalog(private val sourcesConfig: SourcesConfig, private val dispatcher: 
                 logger.error(e) { "failed to fetch schema for $topicPath" }
             }
         }
-    }
-
-    override fun close() {
-        logger.info { "closing catalog" }
-        watchScope?.cancel()
     }
 
     fun refresh() {
