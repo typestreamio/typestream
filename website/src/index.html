@@ -640,8 +640,11 @@
             <div class="code-block">
 <span class="token-punct">{</span>
   <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"search-sync"</span><span class="token-punct">,</span>
-  <span class="token-key">"source"</span><span class="token-punct">:</span> <span class="token-string">"postgres:orders"</span><span class="token-punct">,</span>
-  <span class="token-key">"pipeline"</span><span class="token-punct">: [</span><span class="token-string">"unwrap-cdc"</span><span class="token-punct">,</span> <span class="token-string">"text-extract"</span><span class="token-punct">,</span> <span class="token-string">"elasticsearch"</span><span class="token-punct">]</span>
+  <span class="token-key">"pipeline"</span><span class="token-punct">: [</span>
+    <span class="token-punct">{</span> <span class="token-key">"postgres"</span><span class="token-punct">:</span> <span class="token-string">"orders"</span> <span class="token-punct">},</span>
+    <span class="token-punct">{</span> <span class="token-key">"text_extract"</span><span class="token-punct">:</span> <span class="token-string">"body"</span> <span class="token-punct">},</span>
+    <span class="token-punct">{</span> <span class="token-key">"elastic_search"</span><span class="token-punct">:</span> <span class="token-string">"orders"</span> <span class="token-punct">}</span>
+  <span class="token-punct">]</span>
 <span class="token-punct">}</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
