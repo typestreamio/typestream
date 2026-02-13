@@ -194,7 +194,7 @@ class PipelineStateStore(private val kafkaConfig: KafkaConfig) : Closeable {
     }
 
     override fun close() {
-        producer.close()
-        admin.close()
+        producer.close(Duration.ofSeconds(2))
+        admin.close(Duration.ofSeconds(2))
     }
 }
