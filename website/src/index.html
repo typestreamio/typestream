@@ -564,7 +564,7 @@
               </p>
 
               <div class="cli-block mb-3">
-                <span class="path">cat /dev/kafka/local/topics/products</span> <span class="pipe">|</span> <span class="filter-expr">text-extract</span> <span class="pipe">|</span> <span class="filter-expr">elasticsearch</span>
+                <span class="path">cat postgres:orders</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
               </div>
               <p class="text-xs text-slate-400 dark:text-slate-500">
                 Or as a config file &mdash; version-controlled, CI/CD friendly, reviewable in a PR.
@@ -655,7 +655,7 @@
           <!-- CLI panel -->
           <div class="pipeline-panel" data-panel="cli">
             <div class="cli-block" style="padding: 2rem 1.5rem;">
-              <span class="path">cat /dev/kafka/local/topics/products</span> <span class="pipe">|</span> <span class="filter-expr">text-extract</span> <span class="pipe">|</span> <span class="filter-expr">elasticsearch</span>
+              <span class="path">cat postgres:orders</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
               Pipe commands together. Great for prototyping and exploration.
