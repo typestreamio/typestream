@@ -1027,7 +1027,7 @@
                 <tr>
                   <td class="font-medium text-slate-700 dark:text-slate-300">Aggregate or count</td>
                   <td>Write to a database, run queries against it later</td>
-                  <td>Built-in. Group, count, window -- all in config</td>
+                  <td>Aggregate into an auto-generated REST endpoint you can query directly</td>
                 </tr>
                 <tr>
                   <td class="font-medium text-slate-700 dark:text-slate-300">Push to Elasticsearch, S3, etc.</td>
@@ -1042,7 +1042,7 @@
                 <tr>
                   <td class="font-medium text-slate-700 dark:text-slate-300">Consumer goes down</td>
                   <td>Hope your offset management is right, debug at 2am</td>
-                  <td>Kafka Streams handles offsets, state, and recovery automatically</td>
+                  <td>TypeStream handles offsets, state, and recovery automatically</td>
                 </tr>
               </tbody>
             </table>
@@ -1053,7 +1053,7 @@
               <strong class="text-slate-700 dark:text-slate-300">Under the hood, it's Kafka Streams.</strong>
               TypeStream compiles your config into Kafka Streams topologies -- the
               same technology powering stream processing at LinkedIn, Netflix, and
-              Uber. You get the reliability without learning the framework.
+              Uber. You get reliability without writing Java microservices.
             </p>
           </div>
         </div>
@@ -1084,8 +1084,8 @@
           <div class="grid sm:grid-cols-3 gap-4 mb-6">
             <div class="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
               <div class="text-2xl mb-2 text-indigo-600 dark:text-indigo-400 font-bold">&empty;</div>
-              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">No serde config</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">Schemas resolved automatically from your registry</p>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Auto-generated clients</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Avro and Protobuf schemas generate typed clients in any language</p>
             </div>
             <div class="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
               <div class="text-2xl mb-2 text-indigo-600 dark:text-indigo-400 font-bold">&check;</div>
