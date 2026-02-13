@@ -83,7 +83,6 @@ class KafkaClusterDirectory(
     override fun close() {
         logger.info { "closing kafka cluster directory: $name" }
         watchScope?.cancel()
-        kafkaAdminClient.close()
     }
 
     override fun refresh() {

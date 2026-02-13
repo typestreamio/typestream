@@ -6,12 +6,10 @@ import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.KafkaAdminClient
 import org.apache.kafka.common.config.SaslConfigs
-import java.io.Closeable
-import java.time.Duration
 import java.util.Properties
 
 
-class KafkaAdminClient(kafkaConfig: KafkaConfig) : Closeable {
+class KafkaAdminClient(kafkaConfig: KafkaConfig) {
     private val logger = KotlinLogging.logger { }
     private val kafkaAdminClient: Admin
 
@@ -49,7 +47,4 @@ class KafkaAdminClient(kafkaConfig: KafkaConfig) : Closeable {
         kafkaAdminClient.deleteTopics(topics).all().get()
     }
 
-    override fun close() {
-        kafkaAdminClient.close(Duration.ofSeconds(2))
-    }
 }
