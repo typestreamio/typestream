@@ -170,6 +170,156 @@ The `apply`, `plan`, and `validate` commands all share `parsePipelineFile()` (de
 
 **Parsing**: The top-level fields (`name`, `version`, `description`) are extracted with `encoding/json`. The `graph` field is deserialized with `protojson.Unmarshal` into a `job_service.PipelineGraph` proto message. This produces a `PipelineMetadata` + `PipelineGraph` pair sent to the server.
 
+### Example Pipeline Files
+
+**Filter pipeline** -- filter web visits to US traffic and write to a new topic:
+
+```json
+{
+  "name": "webvisits-us",
+  "version": "1",
+  "description": "Filter web visits to US traffic",
+  "graph": {
+    "nodes": [
+      {
+        "id": "source-1",
+        "streamSource": {
+          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+          "encoding": "AVRO"
+        }
+      },
+      {
+        "id": "filter-1",
+        "filter": {
+          "predicate": { "expr": ".country == \"US\"" }
+        }
+      },
+      {
+        "id": "sink-1",
+        "sink": {
+          "output": { "path": "/dev/kafka/local/topics/web_visits_us" }
+        }
+      }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "filter-1" },
+      { "fromId": "filter-1", "toId": "sink-1" }
+    ]
+  }
+}
+```
+
+**Aggregation pipeline** -- count web visits by country:
+
+```json
+{
+  "name": "visits-by-country",
+  "version": "1",
+  "description": "Count web visits grouped by country",
+  "graph": {
+    "nodes": [
+      {
+        "id": "source-1",
+        "streamSource": {
+          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+          "encoding": "AVRO"
+        }
+      },
+      {
+        "id": "group-1",
+        "group": { "keyMapperExpr": ".country" }
+      },
+      {
+        "id": "count-1",
+        "count": {}
+      }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "group-1" },
+      { "fromId": "group-1", "toId": "count-1" }
+    ]
+  }
+}
+```
+
+**Enrichment pipeline** -- enrich web visits with GeoIP data and write to a new topic:
+
+```json
+{
+  "name": "webvisits-enriched",
+  "version": "1",
+  "description": "Enrich web visits with geolocation from IP address",
+  "graph": {
+    "nodes": [
+      {
+        "id": "source-1",
+        "streamSource": {
+          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+          "encoding": "AVRO"
+        }
+      },
+      {
+        "id": "geoip-1",
+        "geoIp": {
+          "ipField": "ip_address",
+          "outputField": "country_code"
+        }
+      },
+      {
+        "id": "sink-1",
+        "sink": {
+          "output": { "path": "/dev/kafka/local/topics/web_visits_enriched" },
+          "encoding": "AVRO"
+        }
+      }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "geoip-1" },
+      { "fromId": "geoip-1", "toId": "sink-1" }
+    ]
+  }
+}
+```
+
+**CDC join pipeline** -- join orders with users from a Postgres CDC source:
+
+```json
+{
+  "name": "orders-with-users",
+  "version": "1",
+  "description": "Join orders with user data from CDC",
+  "graph": {
+    "nodes": [
+      {
+        "id": "source-1",
+        "streamSource": {
+          "dataStream": { "path": "/dev/kafka/local/topics/demo.public.orders" },
+          "encoding": "AVRO",
+          "unwrapCdc": true
+        }
+      },
+      {
+        "id": "join-1",
+        "join": {
+          "with": { "path": "/dev/kafka/local/topics/demo.public.users" },
+          "joinType": { "byKey": true }
+        }
+      },
+      {
+        "id": "sink-1",
+        "sink": {
+          "output": { "path": "/dev/kafka/local/topics/orders_enriched" }
+        }
+      }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "join-1" },
+      { "fromId": "join-1", "toId": "sink-1" }
+    ]
+  }
+}
+```
+
 ### apply
 
 Sends `ApplyPipelineRequest` and reports whether the pipeline was CREATED, UPDATED, or UNCHANGED.
