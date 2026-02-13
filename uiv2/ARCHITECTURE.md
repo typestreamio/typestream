@@ -1,5 +1,7 @@
 # TypeStream UI v2 Architecture
 
+> Part of [TypeStream Architecture](../ARCHITECTURE.md)
+
 ## Overview
 
 The UI is a React-based single-page application that provides a visual interface for building and managing TypeStream data pipelines. Users can create streaming jobs using a drag-and-drop graph builder, manage database connections for sinks, or monitor existing jobs through a dashboard.
@@ -25,21 +27,26 @@ uiv2/
 │   ├── services/           # Transport config + API clients
 │   │   ├── transport.ts    # gRPC transport config
 │   │   └── connectApi.ts   # Kafka Connect REST API client
-│   ├── providers/          # React providers (Query, Transport)
+│   ├── providers/          # React providers (Query, Transport, ServerConnection, ThroughputHistory)
 │   ├── hooks/              # Custom hooks for gRPC calls + connections
 │   ├── pages/              # Route-level components
 │   │   ├── JobsPage.tsx
 │   │   ├── JobDetailPage.tsx
 │   │   ├── GraphBuilderPage.tsx
-│   │   ├── ConnectionsPage.tsx      # Database connection management
-│   │   └── ConnectionCreatePage.tsx
+│   │   ├── ConnectionsPage.tsx           # Database connection management
+│   │   ├── ConnectionCreatePage.tsx
+│   │   ├── ConnectorsPage.tsx            # Kafka Connect connector management
+│   │   ├── ElasticsearchConnectionsPage.tsx
+│   │   └── WeaviateConnectionsPage.tsx
 │   ├── components/         # Reusable UI components
-│   │   ├── layout/         # App shell (sidebar, header)
+│   │   ├── layout/         # App shell (sidebar, header, server status)
 │   │   └── graph-builder/  # Visual pipeline editor
-│   │       ├── nodes/      # Node components (KafkaSource, DbSink, etc.)
+│   │       ├── nodes/      # Node components (13 types)
+│   │       ├── edges/      # AnimatedEdge for data flow visualization
 │   │       ├── GraphBuilder.tsx
-│   │       └── NodePalette.tsx  # Draggable node list
-│   └── utils/              # Helpers (graph serialization)
+│   │       ├── NodePalette.tsx
+│   │       └── PipelineGraphViewer.tsx
+│   └── utils/              # Helpers (graph serialization, deserialization, pipeline files)
 ├── buf.yaml                # Proto source configuration
 └── buf.gen.yaml            # Code generation config
 ```
@@ -59,17 +66,60 @@ uiv2/
 
 ### Graph Builder (`/jobs/new`)
 - **Node Palette** organized by category:
-  - Sources: Kafka Source
-  - Transforms: GeoIP, Text Extractor, Embedding Generator, OpenAI Transformer
+  - Sources: Kafka Source, Postgres Source (CDC)
+  - Transforms: GeoIP, Text Extractor, Embedding Generator, OpenAI Transformer, Filter
   - Sinks: Kafka Sink, Inspector, Materialized View
-  - Database Sinks: Dynamically populated from Connections page
+  - Database/Vector Sinks: Dynamically populated from Connections pages (DB, Weaviate, Elasticsearch)
 - React Flow canvas for connecting nodes
-- Real-time schema inference as you build
+- Real-time schema inference as you build (via `useInferGraphSchemas` hook)
 - Submits pipeline graph to server via gRPC
 
 ### Job Details (`/jobs/:id`)
 - Displays job metadata (ID, status, start time)
-- Visualizes the pipeline graph
+- Visualizes the pipeline graph with `PipelineGraphViewer`
+- Stream inspector panel for viewing live data
+- Throughput sparkline visualization
+
+## Node Type Mapping
+
+The graph builder maps React Flow node types to proto `PipelineNode` types via `graphSerializer.ts`:
+
+| React Flow Type | Proto Case | Proto Message | Role |
+|----------------|------------|---------------|------|
+| `kafkaSource` | `streamSource` | `StreamSourceNode` | source |
+| `postgresSource` | `streamSource` | `StreamSourceNode` (unwrapCdc=true) | source |
+| `kafkaSink` | `sink` | `SinkNode` | sink |
+| `geoIp` | `geoIp` | `GeoIpNode` | transform |
+| `textExtractor` | `textExtractor` | `TextExtractorNode` | transform |
+| `embeddingGenerator` | `embeddingGenerator` | `EmbeddingGeneratorNode` | transform |
+| `openAiTransformer` | `openAiTransformer` | `OpenAiTransformerNode` | transform |
+| `filter` | `filter` | `FilterNode` | transform |
+| `inspector` | `inspector` | `InspectorNode` | sink |
+| `materializedView` | `group` + `count`/`windowedCount`/`reduceLatest` | `GroupNode` + aggregation | sink |
+| `dbSink` | `sink` | `SinkNode` (+ `DbSinkConfig`) | sink |
+| `weaviateSink` | `sink` | `SinkNode` (+ `WeaviateSinkConfig`) | sink |
+| `elasticsearchSink` | `sink` | `SinkNode` (+ `ElasticsearchSinkConfig`) | sink |
+
+Each node component exports a `role` constant (`'source'`, `'transform'`, or `'sink'`) that controls handle visibility:
+- Sources: output handle only
+- Transforms: input + output handles
+- Sinks: input handle only
+
+### Schema Validation
+
+Nodes declare field type requirements via `nodeFieldRequirements`:
+
+```typescript
+const nodeFieldRequirements = {
+  geoIp: { ipField: 'string' },
+  textExtractor: { filePathField: 'string' },
+  embeddingGenerator: { textField: 'string' },
+  materializedView: { groupByField: 'any' },
+  dbSink: { primaryKeyFields: 'any' },
+};
+```
+
+The `NodeValidationState` interface provides `outputSchema`, `schemaError`, and `isInferring` state populated by the schema inference response.
 
 ## Backend Communication
 
@@ -78,15 +128,16 @@ The UI communicates with multiple backends:
 | Backend | Protocol | Purpose |
 |---------|----------|---------|
 | TypeStream Server | gRPC (Connect) | Job management, schema inference, connection monitoring |
-| Kafka Connect | REST (via Envoy) | JDBC sink connector creation |
+| Kafka Connect | REST (via Envoy) | JDBC/Weaviate/Elasticsearch sink connector creation |
 
 ### gRPC Services
 
-| Service | Methods | Purpose |
-|---------|---------|---------|
-| JobService | ListJobs, CreateJobFromGraph, InferGraphSchemas | Job management |
-| FileSystemService | Ls | Browse topics for dropdown |
+| Service | Methods Used | Purpose |
+|---------|-------------|---------|
+| JobService | ListJobs, CreateJobFromGraph, InferGraphSchemas | Job management + real-time schema inference |
+| FileSystemService | Ls | Browse topics for dropdowns |
 | ConnectionService | GetConnectionStatuses, RegisterConnection, TestConnection | Database connection management |
+| StateQueryService | GetAllValues, ListStores | State store queries for materialized views |
 | InteractiveSessionService | RunProgram, GetProgramOutput | Interactive mode |
 
 ## Data Flow
@@ -108,54 +159,47 @@ Navigate to job detail page
 
 ### Database Sink Flow
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│ 1. Server auto-registers dev-postgres on startup (or user creates)  │
-│    → ConnectionService monitors health via JDBC                     │
-└─────────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ 2. Connected DBs appear in Graph Builder palette under "Database    │
-│    Sinks" → NodePalette fetches via gRPC (useConnections hook)     │
-└─────────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ 3. User drags connection to canvas, configures table name           │
-│    → DbSinkNode stores full connection config + tableName           │
-└─────────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ 4. On "Create Job":                                                 │
-│    a. graphSerializer uses connection config from node data         │
-│    b. Creates intermediate topic for TypeStream to write to         │
-│    c. Submits job to TypeStream server                             │
-│    d. Creates Kafka Connect JDBC Sink connector via REST API        │
-│       (connector reads from intermediate topic, writes to DB)       │
-└─────────────────────────────────────────────────────────────────────┘
+1. Server auto-registers dev-postgres on startup (or user creates)
+   → ConnectionService monitors health via JDBC
+                        ↓
+2. Connected DBs appear in Graph Builder palette under "Database Sinks"
+   → NodePalette fetches via gRPC (useConnections hook)
+                        ↓
+3. User drags connection to canvas, configures table name
+   → DbSinkNode stores connectionId + tableName + insertMode
+                        ↓
+4. On "Create Job":
+   a. graphSerializer creates intermediate topic for TypeStream to write to
+   b. Creates SinkNode pointing to intermediate topic
+   c. Creates DbSinkConfig with connectionId (no credentials)
+   d. Submits job + sink configs to TypeStream server
+   e. Server resolves credentials and creates Kafka Connect connector
 ```
-
-## Node Types
-
-| Node | Type | Description |
-|------|------|-------------|
-| Kafka Source | `kafkaSource` | Read from a Kafka topic |
-| Kafka Sink | `kafkaSink` | Write to a new Kafka topic |
-| GeoIP | `geoIp` | Enrich with country code from IP |
-| Inspector | `inspector` | Debug sink (view data in UI) |
-| Materialized View | `materializedView` | Aggregation (count/latest by key) |
-| JDBC Sink (legacy) | `jdbcSink` | Inline DB config (deprecated) |
-| Database Sink | `dbSink` | References a Connection profile |
-| Text Extractor | `textExtractor` | Extract text from file path field |
-| Embedding Generator | `embeddingGenerator` | Generate embeddings via OpenAI |
-| OpenAI Transformer | `openAiTransformer` | LLM enrichment via OpenAI |
 
 ## Code Generation
 
-Proto files in `../protos/` are compiled to TypeScript:
-- `*_pb.ts` - Message types
+Proto files in `../protos/` are compiled to TypeScript using `@bufbuild/protobuf`:
+- `*_pb.ts` - Message types with `toJson()` / `fromJson()` serialization
 - `*_connect.ts` - Service definitions
-- `*_connectquery.ts` - React Query hooks
+- `*_connectquery.ts` - React Query hooks for TanStack Query
 
 Run `buf generate` to regenerate after proto changes.
+
+## Integration Points
+
+### TypeStream Server (gRPC)
+- Transport configured in `transport.ts` pointing to `localhost:8080` (dev) or Envoy proxy (prod)
+- Uses Connect Protocol (gRPC-Web compatible) via `@connectrpc/connect-web`
+- All queries wrapped in TanStack React Query for caching and refetch
+
+### Kafka Connect (REST)
+- `connectApi.ts` provides `createConnector()` and `getConnectorStatus()` functions
+- Accessed via Envoy proxy at `/kafka-connect/` path prefix
+- Used for JDBC, Weaviate, and Elasticsearch sink connectors
+
+### Schema Registry
+- Indirect access through `FileSystemService.Ls` and `JobService.InferGraphSchemas`
+- Schema data flows back from server as `SchemaField[]` (name + type string)
 
 ## Key Files
 
@@ -163,11 +207,16 @@ Run `buf generate` to regenerate after proto changes.
 |------|---------|
 | `src/App.tsx` | Router setup |
 | `src/providers/QueryProvider.tsx` | Root provider chain |
-| `src/services/transport.ts` | gRPC transport config (localhost:8080) |
+| `src/providers/ServerConnectionProvider.tsx` | Server health monitoring |
+| `src/services/transport.ts` | gRPC transport config |
 | `src/services/connectApi.ts` | Kafka Connect REST API client |
 | `src/hooks/useCreateJob.ts` | Job creation mutation |
+| `src/hooks/useInferGraphSchemas.ts` | Real-time schema inference for graph builder |
 | `src/hooks/useConnections.ts` | Connection hooks (gRPC to ConnectionService) |
+| `src/hooks/usePreviewJob.ts` | Preview job streaming |
 | `src/components/graph-builder/GraphBuilder.tsx` | Main graph editor |
 | `src/components/graph-builder/NodePalette.tsx` | Draggable node list with dynamic connections |
-| `src/components/graph-builder/nodes/DbSinkNode.tsx` | Database sink node component |
-| `src/utils/graphSerializer.ts` | React Flow → Proto conversion |
+| `src/components/graph-builder/nodes/index.ts` | Node type registry and data interfaces |
+| `src/utils/graphSerializer.ts` | React Flow -> Proto conversion |
+| `src/utils/graphDeserializer.ts` | Proto -> React Flow conversion (for viewing existing jobs) |
+| `src/utils/pipelineFile.ts` | Pipeline file format utilities |

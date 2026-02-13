@@ -70,4 +70,19 @@ if [ "$BACKEND_CHANGED" = true ]; then
     echo "✅ Backend checks passed!"
 fi
 
+# Architecture doc staleness check (advisory only, does not block)
+ARCH_COMPONENTS=("server" "uiv2" "cli" "protos" "connectors/demo-data")
+for component in "${ARCH_COMPONENTS[@]}"; do
+    COMPONENT_CHANGED=false
+    ARCH_CHANGED=false
+    while IFS= read -r file; do
+        [[ "$file" == ${component}/* ]] && COMPONENT_CHANGED=true
+        [[ "$file" == "${component}/ARCHITECTURE.md" ]] && ARCH_CHANGED=true
+    done <<< "$MODIFIED_FILES"
+    if [ "$COMPONENT_CHANGED" = true ] && [ "$ARCH_CHANGED" = false ]; then
+        echo "NOTE: ${component}/ changed but ${component}/ARCHITECTURE.md was not updated."
+        echo "Consider running: /upsert-architecture-with-repomix ${component}"
+    fi
+done
+
 exit 0
