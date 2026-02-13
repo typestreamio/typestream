@@ -215,6 +215,7 @@ class PipelineService(
         request: Pipeline.PlanPipelinesRequest
     ): Pipeline.PlanPipelinesResponse = planPipelinesResponse {
         val requestedNames = mutableSetOf<String>()
+        val currentPipelines = managedPipelines.toMap()
 
         for (plan in request.pipelinesList) {
             val name = plan.metadata.name
@@ -224,7 +225,16 @@ class PipelineService(
             }
             requestedNames.add(name)
 
-            val existing = managedPipelines[name]
+            // Validate the graph compiles
+            val deterministicId = "typestream-pipeline-$name"
+            val validationError = try {
+                graphCompiler.compileFromGraph(plan.graph, deterministicId)
+                null
+            } catch (e: Exception) {
+                e.message ?: "Unknown validation error"
+            }
+
+            val existing = currentPipelines[name]
             results.add(pipelinePlanResult {
                 this.name = name
                 when {
@@ -233,7 +243,7 @@ class PipelineService(
                         newVersion = plan.metadata.version
                     }
                     existing.graph == plan.graph -> {
-                        action = Pipeline.PipelineAction.UNCHANGED_ACTION
+                        action = Pipeline.PipelineAction.NO_CHANGE
                         currentVersion = existing.metadata.version
                         newVersion = plan.metadata.version
                     }
@@ -244,10 +254,14 @@ class PipelineService(
                     }
                 }
             })
+
+            if (validationError != null) {
+                errors.add("Pipeline '$name': $validationError")
+            }
         }
 
         // Pipelines that exist but are not in the request → DELETE
-        for ((name, managed) in managedPipelines) {
+        for ((name, managed) in currentPipelines) {
             if (name !in requestedNames) {
                 results.add(pipelinePlanResult {
                     this.name = name

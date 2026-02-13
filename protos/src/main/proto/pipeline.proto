@@ -90,7 +90,7 @@ enum PipelineAction {
     PIPELINE_ACTION_UNSPECIFIED = 0;
     CREATE = 1;
     UPDATE = 2;
-    UNCHANGED_ACTION = 3;
+    NO_CHANGE = 3;
     DELETE = 4;
 }
 

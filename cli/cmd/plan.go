@@ -113,7 +113,7 @@ func formatAction(action pipeline_service.PipelineAction) string {
 		return "\033[32m+ create\033[0m"
 	case pipeline_service.PipelineAction_UPDATE:
 		return "\033[33m~ update\033[0m"
-	case pipeline_service.PipelineAction_UNCHANGED_ACTION:
+	case pipeline_service.PipelineAction_NO_CHANGE:
 		return "\033[2m  unchanged\033[0m"
 	case pipeline_service.PipelineAction_DELETE:
 		return "\033[31m- delete\033[0m"

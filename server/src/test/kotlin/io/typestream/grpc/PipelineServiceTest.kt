@@ -433,7 +433,7 @@ internal class PipelineServiceTest {
 
             val unchangedResult = response.resultsList.find { it.name == "unchanged-pipeline" }
             assertThat(unchangedResult).isNotNull()
-            assertThat(unchangedResult!!.action).isEqualTo(Pipeline.PipelineAction.UNCHANGED_ACTION)
+            assertThat(unchangedResult!!.action).isEqualTo(Pipeline.PipelineAction.NO_CHANGE)
         }
     }
 
