@@ -640,33 +640,8 @@
             <div class="code-block">
 <span class="token-punct">{</span>
   <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"search-sync"</span><span class="token-punct">,</span>
-  <span class="token-key">"version"</span><span class="token-punct">:</span> <span class="token-string">"1"</span><span class="token-punct">,</span>
-  <span class="token-key">"graph"</span><span class="token-punct">: {</span>
-    <span class="token-key">"nodes"</span><span class="token-punct">: [</span>
-      <span class="token-punct">{</span>
-        <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span>
-        <span class="token-key">"streamSource"</span><span class="token-punct">: {</span>
-          <span class="token-key">"dataStream"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/products"</span> <span class="token-punct">},</span>
-          <span class="token-key">"encoding"</span><span class="token-punct">:</span> <span class="token-string">"AVRO"</span><span class="token-punct">,</span>
-          <span class="token-key">"unwrapCdc"</span><span class="token-punct">:</span> <span class="token-string">true</span>
-        <span class="token-punct">}</span>
-      <span class="token-punct">},</span>
-      <span class="token-punct">{</span>
-        <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"extract-1"</span><span class="token-punct">,</span>
-        <span class="token-key">"textExtractor"</span><span class="token-punct">: {}</span>
-      <span class="token-punct">},</span>
-      <span class="token-punct">{</span>
-        <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span><span class="token-punct">,</span>
-        <span class="token-key">"sink"</span><span class="token-punct">: {</span>
-          <span class="token-key">"output"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/products_search"</span> <span class="token-punct">}</span>
-        <span class="token-punct">}</span>
-      <span class="token-punct">}</span>
-    <span class="token-punct">],</span>
-    <span class="token-key">"edges"</span><span class="token-punct">: [</span>
-      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"extract-1"</span> <span class="token-punct">},</span>
-      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"extract-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span> <span class="token-punct">}</span>
-    <span class="token-punct">]</span>
-  <span class="token-punct">}</span>
+  <span class="token-key">"source"</span><span class="token-punct">:</span> <span class="token-string">"kafka://local/topics/products"</span><span class="token-punct">,</span>
+  <span class="token-key">"pipeline"</span><span class="token-punct">: [</span><span class="token-string">"unwrap-cdc"</span><span class="token-punct">,</span> <span class="token-string">"text-extract"</span><span class="token-punct">,</span> <span class="token-string">"elasticsearch"</span><span class="token-punct">]</span>
 <span class="token-punct">}</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
