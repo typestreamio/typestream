@@ -6,15 +6,19 @@
 
 You draw pipelines visually, TypeStream handles the plumbing. Under the hood it uses Debezium (CDC), Kafka (events), Kafka Streams (transforms), and Kafka Connect (sinks). Your pipeline is also your API -- it computes results and serves them through auto-generated endpoints. No separate database, cache, or API server to maintain.
 
-# Architecture Deep Dives
+# Architecture
 
-For detailed architecture documentation, see:
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the system-wide architecture, pipeline lifecycle, node reference, and data flow diagrams.
 
-- **[server/ARCHITECTURE.md](server/ARCHITECTURE.md)** - Kotlin Server architecture including the node graph builder, job system, and compilation pipeline
-- **[uiv2/ARCHITECTURE.md](uiv2/ARCHITECTURE.md)** - React UI architecture with visual graph builder and job management
-- **[connectors/demo-data/ARCHITECTURE.md](connectors/demo-data/ARCHITECTURE.md)** - Demo data generators for Coinbase, Wikipedia, and synthetic web visits
-- cli/ - A Go program to start and stop docker compose containers etc
-- **[website/docs/video-encoding.md](website/docs/video-encoding.md)** - How to record, encode, and embed demo videos on the landing page
+Component-level docs:
+- [server/ARCHITECTURE.md](server/ARCHITECTURE.md) - Kotlin server internals (compiler, scheduler, gRPC services)
+- [uiv2/ARCHITECTURE.md](uiv2/ARCHITECTURE.md) - React UI (graph builder, job dashboard)
+- [cli/ARCHITECTURE.md](cli/ARCHITECTURE.md) - Go CLI (local dev, pipeline-as-code)
+- [protos/ARCHITECTURE.md](protos/ARCHITECTURE.md) - Protocol Buffer API contracts
+- [connectors/demo-data/ARCHITECTURE.md](connectors/demo-data/ARCHITECTURE.md) - Demo data generators
+
+Other docs:
+- [website/docs/video-encoding.md](website/docs/video-encoding.md) - How to record, encode, and embed demo videos on the landing page
 
 # Developing
 
