@@ -460,7 +460,7 @@
 
           <p class="text-lg lg:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto">
             TypeStream watches your Postgres or MySQL for changes and routes
-            them to where they need to go &mdash; Elasticsearch, Redis,
+            them to where they need to go -Elasticsearch, Redis,
             ClickHouse, Weaviate, and 200+ more destinations. Define your
             pipeline in a config file, preview changes before deploying, and
             never write another sync job.
@@ -543,7 +543,7 @@
               </h3>
               <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
                 Point TypeStream at your existing Postgres or MySQL. It reads
-                the change log &mdash; no triggers, no polling, no app code
+                the change log -no triggers, no polling, no app code
                 changes. Your application keeps writing to the database exactly
                 like it does today.
               </p>
@@ -559,7 +559,7 @@
               </h3>
               <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
                 Write a short config file that says where data goes and how to
-                transform it. Or pipe commands together in the CLI &mdash;
+                transform it. Or pipe commands together in the CLI -
                 it reads like Unix pipes.
               </p>
 
@@ -567,7 +567,7 @@
                 <span class="path">cat postgres:files</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
               </div>
               <p class="text-xs text-slate-400 dark:text-slate-500">
-                Or as a config file &mdash; version-controlled, CI/CD friendly, reviewable in a PR.
+                Or as a config file -version-controlled, CI/CD friendly, reviewable in a PR.
               </p>
             </div>
           </div>
@@ -581,7 +581,7 @@
               </h3>
               <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
                 Run <code class="text-indigo-600 dark:text-indigo-400 font-semibold">typestream plan</code>
-                to see exactly what will change &mdash; like terraform for data
+                to see exactly what will change -like terraform for data
                 pipelines. Review the diff, then apply.
               </p>
 
@@ -625,7 +625,7 @@
           <div class="flex border-b border-slate-200 dark:border-slate-700 mb-0" role="tablist">
             <button class="pipeline-tab active" data-tab="config" role="tab" aria-selected="true">
               Config file
-              <span class="text-xs ml-1 text-indigo-500">&mdash; primary</span>
+              <span class="text-xs ml-1 text-indigo-500">- primary</span>
             </button>
             <button class="pipeline-tab" data-tab="cli" role="tab" aria-selected="false">
               CLI
@@ -678,7 +678,7 @@
           <p class="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
             All three produce the same pipeline. Start in the visual builder to
             explore, export to a config file for production. Or write config from
-            day one &mdash; your call.
+            day one -your call.
           </p>
         </div>
       </div>
@@ -712,7 +712,7 @@
                 <div class="recipe-card-title">Keep search results fresh</div>
                 <p class="recipe-card-pain">
                   A product changes in your database. Your search results still
-                  show the old name, the old price, the old description &mdash;
+                  show the old name, the old price, the old description
                   until the next reindex runs.
                 </p>
                 <p class="recipe-card-solution">
@@ -747,7 +747,7 @@
                 </p>
                 <p class="recipe-card-solution">
                   TypeStream streams database changes directly into your analytics
-                  warehouse. ClickHouse, Snowflake, BigQuery &mdash; your
+                  warehouse. ClickHouse, Snowflake, BigQuery -your
                   dashboards update as fast as your data changes.
                 </p>
               </div>
@@ -787,7 +787,7 @@
                 </p>
                 <p class="recipe-card-solution">
                   TypeStream runs every record through an LLM in flight.
-                  Categorize, score, extract, summarize &mdash; then route the
+                  Categorize, score, extract, summarize -then route the
                   results to your warehouse or downstream system. Define the
                   prompt in your pipeline config.
                 </p>
@@ -798,7 +798,7 @@
                 <div class="recipe-card-title">Generate REST APIs from your data</div>
                 <p class="recipe-card-pain">
                   You need a fast endpoint that serves the current state of
-                  something &mdash; live prices, user profiles, inventory counts.
+                  something -live prices, user profiles, inventory counts.
                   So you build an API, a database query, a cache layer, and a
                   cache invalidation strategy.
                 </p>
@@ -838,7 +838,7 @@
                 <div class="recipe-card-title">Sync databases without custom code</div>
                 <p class="recipe-card-pain">
                   You need a subset of your Postgres data in another database
-                  &mdash; maybe MySQL for a legacy system, maybe a read replica
+                  -maybe MySQL for a legacy system, maybe a read replica
                   with different columns. So you write a sync script and pray it
                   doesn't break.
                 </p>
@@ -858,7 +858,7 @@
                   customer details. You enrich in batch jobs that run overnight.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream enriches records in flight &mdash; geo-locate IPs,
+                  TypeStream enriches records in flight -geo-locate IPs,
                   join with reference data, resolve IDs to names. Every record
                   arrives at its destination already enriched. No batch job, no
                   overnight wait.
@@ -883,7 +883,7 @@
           </h2>
           <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mb-2">
             TypeStream connects to your existing database. Your application
-            doesn't change &mdash; it keeps writing to Postgres or MySQL exactly
+            doesn't change -it keeps writing to Postgres or MySQL exactly
             like it does today. TypeStream watches the change log and handles
             everything downstream.
           </p>
@@ -981,9 +981,9 @@
           <div class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
               If you need &ldquo;when a Slack message arrives, create a Jira
-              ticket&rdquo; &mdash; use n8n. If you need &ldquo;when a row
+              ticket&rdquo; -use n8n. If you need &ldquo;when a row
               changes in Postgres, update Elasticsearch, bust the Redis cache,
-              and refresh the analytics warehouse&rdquo; &mdash; that's TypeStream.
+              and refresh the analytics warehouse&rdquo; -that's TypeStream.
             </p>
           </div>
         </div>
@@ -1017,7 +1017,7 @@
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Every change goes through <code class="text-indigo-600 dark:text-indigo-400">typestream plan</code>
               first. See exactly what pipelines will be created, updated, or
-              deleted &mdash; before anything runs. Like terraform for data
+              deleted -before anything runs. Like terraform for data
               pipelines. Review in CI, approve in a PR.
             </p>
           </div>
@@ -1052,7 +1052,7 @@
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Metrics, logs, and traces out of the box. Know how many events per
               second each pipeline processes, where bottlenecks are, and when
-              something fails &mdash; before your users notice.
+              something fails -before your users notice.
             </p>
           </div>
         </div>
@@ -1123,7 +1123,7 @@
           </h2>
           <p class="text-indigo-100 text-lg mb-10 leading-relaxed">
             Pick a pattern above and try it on your database. Or tell us what
-            you'd build &mdash; we'll help you get there.
+            you'd build -we'll help you get there.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
             <a
