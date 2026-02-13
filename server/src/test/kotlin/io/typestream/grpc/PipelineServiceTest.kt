@@ -342,4 +342,212 @@ internal class PipelineServiceTest {
             assertThat(response.error).contains("not found")
         }
     }
+
+    @Test
+    fun `plan shows create for new pipeline`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            testKafka.produceRecords(
+                topic,
+                "avro",
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = PipelineServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val planRequest = Pipeline.PlanPipelinesRequest.newBuilder()
+                .addPipelines(
+                    Pipeline.PipelinePlan.newBuilder()
+                        .setMetadata(buildMetadata("new-pipeline", "1"))
+                        .setGraph(graph)
+                )
+                .build()
+
+            val response = stub.planPipelines(planRequest)
+
+            val createResult = response.resultsList.find { it.name == "new-pipeline" }
+            assertThat(createResult).isNotNull()
+            assertThat(createResult!!.action).isEqualTo(Pipeline.PipelineAction.CREATE)
+            assertThat(createResult.newVersion).isEqualTo("1")
+        }
+    }
+
+    @Test
+    fun `plan shows unchanged for identical pipeline`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            testKafka.produceRecords(
+                topic,
+                "avro",
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = PipelineServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val metadata = buildMetadata("unchanged-pipeline", "1")
+
+            // Apply first
+            stub.applyPipeline(
+                Pipeline.ApplyPipelineRequest.newBuilder()
+                    .setMetadata(metadata)
+                    .setGraph(graph)
+                    .build()
+            )
+
+            // Plan with same graph
+            val planRequest = Pipeline.PlanPipelinesRequest.newBuilder()
+                .addPipelines(
+                    Pipeline.PipelinePlan.newBuilder()
+                        .setMetadata(metadata)
+                        .setGraph(graph)
+                )
+                .build()
+
+            val response = stub.planPipelines(planRequest)
+
+            val unchangedResult = response.resultsList.find { it.name == "unchanged-pipeline" }
+            assertThat(unchangedResult).isNotNull()
+            assertThat(unchangedResult!!.action).isEqualTo(Pipeline.PipelineAction.NO_CHANGE)
+        }
+    }
+
+    @Test
+    fun `plan shows update for modified pipeline`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            testKafka.produceRecords(
+                topic,
+                "avro",
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = PipelineServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+
+            // Apply first
+            stub.applyPipeline(
+                Pipeline.ApplyPipelineRequest.newBuilder()
+                    .setMetadata(buildMetadata("update-pipeline", "1"))
+                    .setGraph(graph)
+                    .build()
+            )
+
+            // Build a different graph (different predicate)
+            val modifiedFilterNode = Job.PipelineNode.newBuilder()
+                .setId("filter-1")
+                .setFilter(
+                    Job.FilterNode.newBuilder()
+                        .setByKey(false)
+                        .setPredicate(Job.PredicateProto.newBuilder().setExpr("Different"))
+                )
+                .build()
+            val modifiedGraph = Job.PipelineGraph.newBuilder()
+                .addNodes(graph.getNodes(0)) // same source
+                .addNodes(modifiedFilterNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source-1").setToId("filter-1"))
+                .build()
+
+            // Plan with modified graph
+            val planRequest = Pipeline.PlanPipelinesRequest.newBuilder()
+                .addPipelines(
+                    Pipeline.PipelinePlan.newBuilder()
+                        .setMetadata(buildMetadata("update-pipeline", "2"))
+                        .setGraph(modifiedGraph)
+                )
+                .build()
+
+            val response = stub.planPipelines(planRequest)
+
+            val updateResult = response.resultsList.find { it.name == "update-pipeline" }
+            assertThat(updateResult).isNotNull()
+            assertThat(updateResult!!.action).isEqualTo(Pipeline.PipelineAction.UPDATE)
+            assertThat(updateResult.currentVersion).isEqualTo("1")
+            assertThat(updateResult.newVersion).isEqualTo("2")
+        }
+    }
+
+    @Test
+    fun `plan shows delete for removed pipeline`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            testKafka.produceRecords(
+                topic,
+                "avro",
+                Book(title = "Station Eleven", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val stub = PipelineServiceGrpc.newBlockingStub(
+                grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
+            )
+
+            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+
+            // Apply a pipeline
+            stub.applyPipeline(
+                Pipeline.ApplyPipelineRequest.newBuilder()
+                    .setMetadata(buildMetadata("existing-pipeline", "1"))
+                    .setGraph(graph)
+                    .build()
+            )
+
+            // Plan with empty list (no pipelines desired)
+            val planRequest = Pipeline.PlanPipelinesRequest.newBuilder().build()
+
+            val response = stub.planPipelines(planRequest)
+
+            val deleteResult = response.resultsList.find { it.name == "existing-pipeline" }
+            assertThat(deleteResult).isNotNull()
+            assertThat(deleteResult!!.action).isEqualTo(Pipeline.PipelineAction.DELETE)
+            assertThat(deleteResult.currentVersion).isEqualTo("1")
+        }
+    }
 }

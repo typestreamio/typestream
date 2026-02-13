@@ -65,7 +65,7 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         subSystems.add(pipelineService)
         serverBuilder.addService(pipelineService)
         if (stateStore != null) {
-            launch(dispatcher) { pipelineService.recoverPipelines() }
+            pipelineService.recoverPipelines()
         }
         serverBuilder.addService(StateQueryService(vm))
 

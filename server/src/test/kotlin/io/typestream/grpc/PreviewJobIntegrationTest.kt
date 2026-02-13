@@ -657,7 +657,7 @@ internal class PreviewJobIntegrationTest {
                 .setId("source")
                 .setStreamSource(
                     Job.StreamSourceNode.newBuilder()
-                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/books"))
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
                         .setEncoding(Job.Encoding.AVRO)
                 )
                 .build()

@@ -13,6 +13,7 @@ service PipelineService {
     rpc ApplyPipeline(ApplyPipelineRequest) returns (ApplyPipelineResponse);
     rpc ListPipelines(ListPipelinesRequest) returns (ListPipelinesResponse);
     rpc DeletePipeline(DeletePipelineRequest) returns (DeletePipelineResponse);
+    rpc PlanPipelines(PlanPipelinesRequest) returns (PlanPipelinesResponse);
 }
 
 message PipelineMetadata {
@@ -74,4 +75,33 @@ message DeletePipelineRequest {
 message DeletePipelineResponse {
     bool success = 1;
     string error = 2;
+}
+
+message PipelinePlan {
+    PipelineMetadata metadata = 1;
+    PipelineGraph graph = 2;
+}
+
+message PlanPipelinesRequest {
+    repeated PipelinePlan pipelines = 1;
+}
+
+enum PipelineAction {
+    PIPELINE_ACTION_UNSPECIFIED = 0;
+    CREATE = 1;
+    UPDATE = 2;
+    NO_CHANGE = 3;
+    DELETE = 4;
+}
+
+message PipelinePlanResult {
+    string name = 1;
+    PipelineAction action = 2;
+    string current_version = 3;
+    string new_version = 4;
+}
+
+message PlanPipelinesResponse {
+    repeated PipelinePlanResult results = 1;
+    repeated string errors = 2;
 }

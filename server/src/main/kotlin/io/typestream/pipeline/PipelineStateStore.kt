@@ -22,6 +22,7 @@ import java.io.Closeable
 import java.time.Duration
 import java.util.Properties
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 data class PipelineRecord(
     val metadata: PipelineMetadata,
@@ -156,12 +157,12 @@ class PipelineStateStore(private val kafkaConfig: KafkaConfig) : Closeable {
 
     fun save(name: String, record: PipelineRecord) {
         val value = serialize(record)
-        producer.send(ProducerRecord(TOPIC_NAME, name, value)).get()
+        producer.send(ProducerRecord(TOPIC_NAME, name, value)).get(30, TimeUnit.SECONDS)
         logger.info { "Saved pipeline '$name' to state store" }
     }
 
     fun delete(name: String) {
-        producer.send(ProducerRecord(TOPIC_NAME, name, null)).get()
+        producer.send(ProducerRecord(TOPIC_NAME, name, null)).get(30, TimeUnit.SECONDS)
         logger.info { "Deleted pipeline '$name' from state store (tombstone)" }
     }
 
