@@ -42,6 +42,7 @@
         padding: 1.5rem;
         overflow-x: auto;
         border: 1px solid #1e293b;
+        white-space: pre;
       }
 
       .terminal-block .prompt { color: #6366f1; }
@@ -60,6 +61,7 @@
         padding: 1.25rem 1.5rem;
         overflow-x: auto;
         border: 1px solid #1e293b;
+        white-space: pre;
       }
 
       .cli-block .pipe { color: #6366f1; font-weight: 600; }
@@ -585,7 +587,7 @@
         <div class="max-w-4xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
           <div class="pain-card">
             <div class="pain-card-number">01</div>
-            <div class="pain-card-title">Every pipeline is a microservice</div>
+            <div class="pain-card-title">Stop building a microservice for every pipeline</div>
             <p class="pain-card-desc">
               A new repo, a new deployment, a new thing to monitor. The overhead
               kills small use cases before they start.
@@ -594,38 +596,37 @@
 
           <div class="pain-card">
             <div class="pain-card-number">02</div>
-            <div class="pain-card-title">Stream processing means writing Java</div>
+            <div class="pain-card-title">Stop managing schemas by hand</div>
             <p class="pain-card-desc">
-              Kafka Streams is powerful, but most teams don't have JVM expertise
-              on every squad.
+              You have Schema Registry but every consumer manually deserializes
+              each topic and hopes the schema hasn't changed.
             </p>
           </div>
 
           <div class="pain-card">
             <div class="pain-card-number">03</div>
-            <div class="pain-card-title">Schema management is manual</div>
+            <div class="pain-card-title">Stop deploying and hoping</div>
             <p class="pain-card-desc">
-              You have Schema Registry but every consumer has to wire up the
-              right serde for the right topic.
+              There's no dry-run for your consumer. You deploy and find out
+              in production whether it works.
             </p>
           </div>
 
           <div class="pain-card">
             <div class="pain-card-number">04</div>
-            <div class="pain-card-title">No preview before deploy</div>
+            <div class="pain-card-title">Stop writing integration code for every sink</div>
             <p class="pain-card-desc">
-              You deploy your topology and hope. There's no
-              <code class="text-indigo-600 dark:text-indigo-400">terraform plan</code>
-              for stream processing.
+              Elasticsearch, S3, ClickHouse -- every destination is custom code
+              with its own retry logic and failure modes.
             </p>
           </div>
 
           <div class="pain-card">
             <div class="pain-card-number">05</div>
-            <div class="pain-card-title">Sink config is its own specialization</div>
+            <div class="pain-card-title">Stop joining data through your database</div>
             <p class="pain-card-desc">
-              Kafka Connect can reach 200+ destinations. Configuring it
-              correctly is a different skill entirely.
+              Combining data from two topics means querying a database or
+              building state yourself. It shouldn't be this hard.
             </p>
           </div>
         </div>
@@ -656,63 +657,85 @@
           </h2>
         </div>
 
-        <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
+        <div class="max-w-4xl mx-auto space-y-16">
           <!-- Step 1 -->
-          <div class="text-center md:text-left">
-            <div class="step-number mx-auto md:mx-0 mb-4">1</div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
-              Define your pipeline
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-5">
-              Write a config file that says which topics to read, how to
-              transform the data, and where to send it. Or prototype with CLI
-              pipes that read like Unix.
-            </p>
-
-            <div class="cli-block mb-3 text-left">
-              <span class="path">cat /dev/kafka/local/topics/page_views</span> <span class="pipe">|</span> <span class="filter-expr">filter .country == "US"</span> <span class="pipe">|</span> <span class="filter-expr">&gt; /dev/kafka/local/topics/us_views</span>
+          <div class="grid md:grid-cols-2 gap-8 items-start">
+            <div>
+              <div class="flex items-center gap-4 mb-4">
+                <div class="step-number">1</div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  Define your pipeline
+                </h3>
+              </div>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Write a config file that says which topics to read, how to
+                transform the data, and where to send it. Or prototype with CLI
+                pipes that read like Unix.
+              </p>
             </div>
-            <p class="text-sm text-slate-400 dark:text-slate-500">
-              Or as a config file -- version-controlled, CI/CD friendly, reviewable in a PR.
-            </p>
+            <div>
+              <div class="cli-block mb-3">
+<span class="path">cat /dev/kafka/local/topics/page_views</span> \
+  <span class="pipe">|</span> <span class="filter-expr">filter .country == "US"</span> \
+  <span class="pipe">|</span> <span class="filter-expr">&gt; /dev/kafka/local/topics/us_views</span></div>
+              <p class="text-sm text-slate-400 dark:text-slate-500">
+                Or as a config file -- version-controlled, reviewable in a PR.
+              </p>
+            </div>
           </div>
 
           <!-- Step 2 -->
-          <div class="text-center md:text-left">
-            <div class="step-number mx-auto md:mx-0 mb-4">2</div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
-              Preview with <code class="text-indigo-600 dark:text-indigo-400">typestream plan</code>
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-5">
-              See exactly what will change before anything runs. Like terraform
-              for data pipelines.
-            </p>
-
-            <div class="terminal-block text-left">
+          <div class="grid md:grid-cols-2 gap-8 items-start">
+            <div>
+              <div class="flex items-center gap-4 mb-4">
+                <div class="step-number">2</div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  Preview with <code class="text-indigo-600 dark:text-indigo-400">typestream plan</code>
+                </h3>
+              </div>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                See exactly what will change before anything runs. Like
+                terraform for data pipelines.
+              </p>
+            </div>
+            <div>
+              <div class="terminal-block">
 <span class="prompt">$</span> <span class="cmd">typestream plan us-traffic.json</span>
 
 <span class="output">  us-traffic:</span>
 <span class="action-create">    + CREATE pipeline "us-traffic"</span>
-<span class="output">      source: /dev/kafka/local/topics/page_views</span>
-<span class="output">      steps:  filter(.country == "US") &rarr; us_views</span>
+<span class="output">      source:  page_views</span>
+<span class="output">      steps:   filter(.country == "US")</span>
+<span class="output">      sink:    us_views</span>
 
-<span class="action-count">  1 pipeline to create, 0 to update, 0 to delete.</span>
-
-<span class="output">  Run `typestream apply` to execute.</span>
+<span class="action-count">  1 to create, 0 to update, 0 to delete.</span>
+</div>
             </div>
           </div>
 
           <!-- Step 3 -->
-          <div class="text-center md:text-left">
-            <div class="step-number mx-auto md:mx-0 mb-4">3</div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
-              Apply and it runs
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              TypeStream compiles your config into a Kafka Streams topology,
-              reads schemas from your Schema Registry, and starts processing.
-              Change the config, plan again, apply again.
-            </p>
+          <div class="grid md:grid-cols-2 gap-8 items-start">
+            <div>
+              <div class="flex items-center gap-4 mb-4">
+                <div class="step-number">3</div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  Apply and it runs
+                </h3>
+              </div>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                TypeStream compiles your config into a Kafka Streams topology,
+                reads schemas from your Schema Registry, and starts processing.
+                Change the config, plan again, apply again.
+              </p>
+            </div>
+            <div>
+              <div class="terminal-block">
+<span class="prompt">$</span> <span class="cmd">typestream apply us-traffic.json</span>
+
+<span class="action-create">  ✓ Created pipeline "us-traffic"</span>
+<span class="output">    Running on your Kafka cluster.</span>
+</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1032,7 +1055,7 @@
                 <tr>
                   <td class="font-medium text-slate-700 dark:text-slate-300">Push to Elasticsearch, S3, etc.</td>
                   <td>Write the integration code yourself, handle retries and backpressure</td>
-                  <td>Declarative sink in the pipeline. 200+ Kafka Connect destinations.</td>
+                  <td>Declarative sink in the pipeline. 200+ Kafka-native plugins deployed through TypeStream.</td>
                 </tr>
                 <tr>
                   <td class="font-medium text-slate-700 dark:text-slate-300">Preview before deploying</td>
