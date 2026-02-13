@@ -9,7 +9,9 @@ import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.supervisorScope
+import java.io.Closeable
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -17,7 +19,7 @@ class KafkaClusterDirectory(
     name: String,
     private val kafkaConfig: KafkaConfig,
     private val dispatcher: CoroutineDispatcher,
-) : Directory(name) {
+) : Directory(name), Closeable {
     private val logger = KotlinLogging.logger {}
     private val brokersDir = Directory("brokers")
     private val consumerGroupsDir = Directory("consumer-groups")
@@ -27,6 +29,8 @@ class KafkaClusterDirectory(
     private val kafkaAdminClient = KafkaAdminClient(kafkaConfig)
 
     private val schemaRegistryClient = SchemaRegistryClient(kafkaConfig.schemaRegistry)
+
+    private var watchScope: CoroutineScope? = null
 
     init {
         setOf(brokersDir, consumerGroupsDir, topicsDir, schemaRegistryDir).forEach(::add)
@@ -57,6 +61,7 @@ class KafkaClusterDirectory(
         }
 
         val scope = CoroutineScope(dispatcher + handler)
+        watchScope = scope
 
         scope.tick(fsRefreshRate, networkExceptionHandler) {
             refreshConsumerGroupsDir()
@@ -73,6 +78,11 @@ class KafkaClusterDirectory(
         scope.tick(fsRefreshRate, networkExceptionHandler) {
             refreshSchemaRegistryDir()
         }
+    }
+
+    override fun close() {
+        logger.info { "closing kafka cluster directory: $name" }
+        watchScope?.cancel()
     }
 
     override fun refresh() {

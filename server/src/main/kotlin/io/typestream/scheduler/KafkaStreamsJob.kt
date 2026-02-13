@@ -230,7 +230,7 @@ class KafkaStreamsJob(
     override fun stop() {
         logger.info { "stopping ${program.id}" }
         running = false
-        kafkaStreams?.close()
+        kafkaStreams?.close(java.time.Duration.ofSeconds(2))
     }
 
     override fun remove() {
