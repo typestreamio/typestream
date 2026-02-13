@@ -19,6 +19,7 @@
     "@tailwindcss/forms": "^0.5.3",
     "autoprefixer": "^10.4.2",
     "daisyui": "^3.5.1",
+    "playwright": "^1.58.2",
     "postcss": "^8.4.14",
     "prettier": "^3.0.2",
     "sass": "^1.77.0",

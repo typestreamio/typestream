@@ -250,7 +250,7 @@
 
       .recipe-card-title {
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 1.125rem;
         color: #0f172a;
         margin-bottom: 0.75rem;
         line-height: 1.4;
@@ -259,18 +259,18 @@
       .dark .recipe-card-title { color: #f1f5f9; }
 
       .recipe-card-pain {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
         color: #64748b;
-        line-height: 1.6;
+        line-height: 1.7;
         margin-bottom: 0.75rem;
       }
 
       .dark .recipe-card-pain { color: #94a3b8; }
 
       .recipe-card-solution {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
         color: #334155;
-        line-height: 1.6;
+        line-height: 1.7;
         flex-grow: 1;
       }
 
@@ -281,7 +281,7 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        font-size: 0.875rem;
+        font-size: 1rem;
       }
 
       .compare-table th {
@@ -296,6 +296,10 @@
       }
 
       .compare-table th:first-child {
+        color: #64748b;
+      }
+
+      .compare-table th:nth-child(2) {
         color: #64748b;
       }
 
@@ -434,6 +438,44 @@
         border: none;
         border-radius: 0;
       }
+
+      /* ── Pain point cards ── */
+      .pain-card {
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+      }
+
+      .dark .pain-card {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      .pain-card-number {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 0.5rem;
+      }
+
+      .pain-card-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #0f172a;
+        margin-bottom: 0.375rem;
+      }
+
+      .dark .pain-card-title { color: #f1f5f9; }
+
+      .pain-card-desc {
+        font-size: 0.95rem;
+        color: #64748b;
+        line-height: 1.6;
+      }
+
+      .dark .pain-card-desc { color: #94a3b8; }
     </style>
 
     <!-- Privacy-friendly analytics by Plausible -->
@@ -444,7 +486,7 @@
     </script>
   </head>
 
-  <body class="font-nunito text-base text-black dark:text-white dark:bg-slate-900">
+  <body class="font-nunito text-lg text-black dark:text-white dark:bg-slate-900">
     {{> navbar/nav-center}}
 
     <!-- ============================================ -->
@@ -454,16 +496,15 @@
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center">
           <h1 class="text-4xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
-            A row changes in your database.<br>
-            <span class="text-indigo-600 dark:text-indigo-400">Everything else updates automatically.</span>
+            You already run Kafka.<br>
+            <span class="text-indigo-600 dark:text-indigo-400">Start building on it.</span>
           </h1>
 
-          <p class="text-lg lg:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto">
-            TypeStream watches your Postgres or MySQL for changes and routes
-            them to where they need to go -Elasticsearch, Redis,
-            ClickHouse, Weaviate, and 200+ more destinations. Define your
-            pipeline in a config file, preview changes before deploying, and
-            never write another sync job.
+          <p class="text-xl lg:text-2xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto">
+            TypeStream compiles pipeline configs into Kafka Streams topologies.
+            Filter, join, enrich, and route your topics -- defined in a config
+            file, previewed with <code class="text-indigo-600 dark:text-indigo-400 font-semibold">typestream plan</code>,
+            deployed in seconds. No Java. No new microservices.
           </p>
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
@@ -490,12 +531,12 @@
           </div>
         </div>
 
-        <!-- Simple animated flow diagram -->
+        <!-- Kafka-first animated flow diagram -->
         <div class="max-w-3xl mx-auto">
           <div class="hero-flow">
             <div class="hero-flow-node hero-flow-source">
-              Your Postgres
-              <small>changes stream out</small>
+              Your Kafka Topics
+              <small>already flowing</small>
             </div>
 
             <div class="hero-flow-connector"></div>
@@ -511,10 +552,92 @@
             </div>
 
             <div class="hero-flow-dest">
+              <div class="hero-flow-dest-item">Enriched Topics</div>
               <div class="hero-flow-dest-item">Elasticsearch</div>
-              <div class="hero-flow-dest-item">Redis</div>
               <div class="hero-flow-dest-item">ClickHouse</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Trust signal -->
+        <p class="text-center text-sm text-slate-500 dark:text-slate-400 mt-2">
+          Works with your existing Kafka cluster and Schema Registry. Or
+          <a href="#runs-alongside" class="text-indigo-600 dark:text-indigo-400 hover:underline">bundles everything</a>
+          for teams starting fresh.
+        </p>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ============================================ -->
+    <!-- 2. THE PROBLEM — Why Your Kafka Is Underused -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            Your Kafka topics are full of data.<br>
+            Getting value out shouldn't require a Java project.
+          </h2>
+        </div>
+
+        <div class="max-w-4xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+          <div class="pain-card">
+            <div class="pain-card-number">01</div>
+            <div class="pain-card-title">Every pipeline is a microservice</div>
+            <p class="pain-card-desc">
+              A new repo, a new deployment, a new thing to monitor. The overhead
+              kills small use cases before they start.
+            </p>
+          </div>
+
+          <div class="pain-card">
+            <div class="pain-card-number">02</div>
+            <div class="pain-card-title">Stream processing means writing Java</div>
+            <p class="pain-card-desc">
+              Kafka Streams is powerful, but most teams don't have JVM expertise
+              on every squad.
+            </p>
+          </div>
+
+          <div class="pain-card">
+            <div class="pain-card-number">03</div>
+            <div class="pain-card-title">Schema management is manual</div>
+            <p class="pain-card-desc">
+              You have Schema Registry but every consumer has to wire up the
+              right serde for the right topic.
+            </p>
+          </div>
+
+          <div class="pain-card">
+            <div class="pain-card-number">04</div>
+            <div class="pain-card-title">No preview before deploy</div>
+            <p class="pain-card-desc">
+              You deploy your topology and hope. There's no
+              <code class="text-indigo-600 dark:text-indigo-400">terraform plan</code>
+              for stream processing.
+            </p>
+          </div>
+
+          <div class="pain-card">
+            <div class="pain-card-number">05</div>
+            <div class="pain-card-title">Sink config is its own specialization</div>
+            <p class="pain-card-desc">
+              Kafka Connect can reach 200+ destinations. Configuring it
+              correctly is a different skill entirely.
+            </p>
+          </div>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+          <div class="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+            <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+              TypeStream addresses all five. Config replaces code. One engine
+              replaces N microservices. Schema Registry integration is automatic.
+              And <code class="text-indigo-600 dark:text-indigo-400 font-semibold">typestream plan</code>
+              shows you what will change before anything runs.
+            </p>
           </div>
         </div>
       </div>
@@ -523,81 +646,73 @@
     <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- 2. HOW IT WORKS — Three Steps -->
+    <!-- 3. HOW IT WORKS — Three Steps -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-16">
           <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Three steps. No infrastructure to learn.
+            Three steps. No Java required.
           </h2>
         </div>
 
-        <div class="max-w-4xl mx-auto space-y-16">
+        <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
           <!-- Step 1 -->
-          <div class="flex gap-6 items-start">
-            <div class="step-number mt-1">1</div>
-            <div class="flex-1">
-              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                Connect your database
-              </h3>
-              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Point TypeStream at your existing Postgres or MySQL. It reads
-                the change log -no triggers, no polling, no app code
-                changes. Your application keeps writing to the database exactly
-                like it does today.
-              </p>
+          <div class="text-center md:text-left">
+            <div class="step-number mx-auto md:mx-0 mb-4">1</div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+              Define your pipeline
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-5">
+              Write a config file that says which topics to read, how to
+              transform the data, and where to send it. Or prototype with CLI
+              pipes that read like Unix.
+            </p>
+
+            <div class="cli-block mb-3 text-left">
+              <span class="path">cat /dev/kafka/local/topics/page_views</span> <span class="pipe">|</span> <span class="filter-expr">filter .country == "US"</span> <span class="pipe">|</span> <span class="filter-expr">&gt; /dev/kafka/local/topics/us_views</span>
             </div>
+            <p class="text-sm text-slate-400 dark:text-slate-500">
+              Or as a config file -- version-controlled, CI/CD friendly, reviewable in a PR.
+            </p>
           </div>
 
           <!-- Step 2 -->
-          <div class="flex gap-6 items-start">
-            <div class="step-number mt-1">2</div>
-            <div class="flex-1">
-              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                Define your pipeline
-              </h3>
-              <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                Write a short config file that says where data goes and how to
-                transform it. Or pipe commands together in the CLI -
-                it reads like Unix pipes.
-              </p>
+          <div class="text-center md:text-left">
+            <div class="step-number mx-auto md:mx-0 mb-4">2</div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+              Preview with <code class="text-indigo-600 dark:text-indigo-400">typestream plan</code>
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-5">
+              See exactly what will change before anything runs. Like terraform
+              for data pipelines.
+            </p>
 
-              <div class="cli-block mb-3">
-                <span class="path">cat postgres:files</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
-              </div>
-              <p class="text-xs text-slate-400 dark:text-slate-500">
-                Or as a config file -version-controlled, CI/CD friendly, reviewable in a PR.
-              </p>
-            </div>
-          </div>
+            <div class="terminal-block text-left">
+<span class="prompt">$</span> <span class="cmd">typestream plan us-traffic.json</span>
 
-          <!-- Step 3 -->
-          <div class="flex gap-6 items-start">
-            <div class="step-number mt-1">3</div>
-            <div class="flex-1">
-              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                Preview and deploy
-              </h3>
-              <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                Run <code class="text-indigo-600 dark:text-indigo-400 font-semibold">typestream plan</code>
-                to see exactly what will change -like terraform for data
-                pipelines. Review the diff, then apply.
-              </p>
-
-              <div class="terminal-block">
-<span class="prompt">$</span> <span class="cmd">typestream plan search-sync.json</span>
-
-<span class="output">  search-sync:</span>
-<span class="action-create">    + CREATE pipeline "search-sync"</span>
-<span class="output">      source: postgres://mydb/products</span>
-<span class="output">      steps:  text-extract &rarr; elasticsearch</span>
+<span class="output">  us-traffic:</span>
+<span class="action-create">    + CREATE pipeline "us-traffic"</span>
+<span class="output">      source: /dev/kafka/local/topics/page_views</span>
+<span class="output">      steps:  filter(.country == "US") &rarr; us_views</span>
 
 <span class="action-count">  1 pipeline to create, 0 to update, 0 to delete.</span>
 
 <span class="output">  Run `typestream apply` to execute.</span>
-              </div>
             </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="text-center md:text-left">
+            <div class="step-number mx-auto md:mx-0 mb-4">3</div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+              Apply and it runs
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              TypeStream compiles your config into a Kafka Streams topology,
+              reads schemas from your Schema Registry, and starts processing.
+              Change the config, plan again, apply again.
+            </p>
           </div>
         </div>
       </div>
@@ -606,7 +721,7 @@
     <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- 3. DEFINE PIPELINES YOUR WAY -->
+    <!-- 4. DEFINE PIPELINES YOUR WAY -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
@@ -615,8 +730,7 @@
             Define pipelines your way
           </h2>
           <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Config file, CLI, or visual builder. All three produce the same
-            pipeline. Start wherever feels natural.
+            Config files for production. CLI for exploration. Visual builder for discovery.
           </p>
         </div>
 
@@ -639,26 +753,40 @@
           <div class="pipeline-panel active" data-panel="config">
             <div class="code-block">
 <span class="token-punct">{</span>
-  <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"search-sync"</span><span class="token-punct">,</span>
-  <span class="token-key">"pipeline"</span><span class="token-punct">: [</span>
-    <span class="token-punct">{</span> <span class="token-key">"postgres"</span><span class="token-punct">:</span> <span class="token-string">"files"</span> <span class="token-punct">},</span>
-    <span class="token-punct">{</span> <span class="token-key">"text_extract"</span><span class="token-punct">: {</span> <span class="token-key">"attribute_field"</span><span class="token-punct">:</span> <span class="token-string">"file_path"</span><span class="token-punct">,</span> <span class="token-key">"output_field"</span><span class="token-punct">:</span> <span class="token-string">"extracted_text"</span> <span class="token-punct">} },</span>
-    <span class="token-punct">{</span> <span class="token-key">"elastic_search"</span><span class="token-punct">: {</span> <span class="token-key">"attribute_field"</span><span class="token-punct">:</span> <span class="token-string">"extracted_text"</span> <span class="token-punct">} }</span>
-  <span class="token-punct">]</span>
+  <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"us-traffic"</span><span class="token-punct">,</span>
+  <span class="token-key">"version"</span><span class="token-punct">:</span> <span class="token-string">"1"</span><span class="token-punct">,</span>
+  <span class="token-key">"graph"</span><span class="token-punct">: {</span>
+    <span class="token-key">"nodes"</span><span class="token-punct">: [</span>
+      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"streamSource"</span><span class="token-punct">: {</span>
+          <span class="token-key">"dataStream"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/page_views"</span> <span class="token-punct">},</span>
+          <span class="token-key">"encoding"</span><span class="token-punct">:</span> <span class="token-string">"AVRO"</span>
+      <span class="token-punct">} },</span>
+      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"filter-1"</span><span class="token-punct">,</span> <span class="token-key">"filter"</span><span class="token-punct">: {</span>
+          <span class="token-key">"predicate"</span><span class="token-punct">: {</span> <span class="token-key">"expr"</span><span class="token-punct">:</span> <span class="token-string">".country == \"US\""</span> <span class="token-punct">}</span>
+      <span class="token-punct">} },</span>
+      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span><span class="token-punct">,</span> <span class="token-key">"sink"</span><span class="token-punct">: {</span>
+          <span class="token-key">"output"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/us_views"</span> <span class="token-punct">}</span>
+      <span class="token-punct">} }</span>
+    <span class="token-punct">],</span>
+    <span class="token-key">"edges"</span><span class="token-punct">: [</span>
+      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"filter-1"</span> <span class="token-punct">},</span>
+      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"filter-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span> <span class="token-punct">}</span>
+    <span class="token-punct">]</span>
+  <span class="token-punct">}</span>
 <span class="token-punct">}</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
-              Version-controlled. CI/CD friendly. Review in a PR.
+              Version-controlled. CI/CD friendly. Review in a PR. This is the real format -- what you see is what you deploy.
             </div>
           </div>
 
           <!-- CLI panel -->
           <div class="pipeline-panel" data-panel="cli">
             <div class="cli-block" style="padding: 2rem 1.5rem;">
-              <span class="path">cat postgres:files</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
+              <span class="path">cat /dev/kafka/local/topics/page_views</span> <span class="pipe">|</span> <span class="filter-expr">filter .country == "US"</span> <span class="pipe">|</span> <span class="filter-expr">&gt; /dev/kafka/local/topics/us_views</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
-              Pipe commands together. Great for prototyping and exploration.
+              Pipe commands together. Great for prototyping and exploration. Reads like Unix because it is.
             </div>
           </div>
 
@@ -676,9 +804,8 @@
           </div>
 
           <p class="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-            All three produce the same pipeline. Start in the visual builder to
-            explore, export to a config file for production. Or write config from
-            day one -your call.
+            All three produce the same compiled topology. Start wherever feels
+            natural -- export to config for production.
           </p>
         </div>
       </div>
@@ -687,181 +814,159 @@
     <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- 4. RECIPES — Common Patterns -->
+    <!-- 5. PATTERNS — What Teams Build on Their Kafka -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28 bg-slate-50 dark:bg-slate-800/30">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-12">
           <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Common patterns
+            What teams build on their Kafka
           </h2>
           <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-            Deploy in minutes, not quarters.
+            Each pattern is a config file. Not a microservice.
           </p>
         </div>
 
         <div class="max-w-6xl mx-auto space-y-10">
-          <!-- Row 1: Problems every developer has -->
+          <!-- Row 1: Stream Processing Basics -->
           <div>
             <span class="row-label bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 mb-4 block w-fit">
-              Every developer
+              Stream processing
             </span>
             <div class="grid md:grid-cols-3 gap-5">
-              <!-- Keep search results fresh -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Keep search results fresh</div>
+                <div class="recipe-card-title">Filter and route</div>
                 <p class="recipe-card-pain">
-                  A product changes in your database. Your search results still
-                  show the old name, the old price, the old description
-                  until the next reindex runs.
+                  Route events from one topic to many based on content. Region
+                  splits, priority routing, conditional fanout. Today this is a
+                  custom consumer or a Kafka Streams app.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream keeps Elasticsearch in sync with your database in
-                  real time. Every change is indexed within seconds. No cron job,
-                  no reindex script, no stale results.
+                  TypeStream: one config file. Define predicates, set output
+                  topics, deploy.
                 </p>
               </div>
 
-              <!-- Stop sensitive data from leaking -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Stop sensitive data from leaking</div>
+                <div class="recipe-card-title">Join two topics</div>
                 <p class="recipe-card-pain">
-                  Customer emails, credit card numbers, and SSNs flow through
-                  your pipeline into analytics warehouses where they shouldn't
-                  be. You find out during an audit.
+                  Combine data from two topics by key. Enrich orders with user
+                  data, match events with metadata. One of the hardest things in
+                  Kafka -- joins, windowed joins, serde alignment.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream scans every record in flight, detects PII patterns,
-                  and either redacts or blocks before the data reaches your
-                  warehouse. Compliance built into the pipeline, not bolted on after.
+                  TypeStream: one config file. Declare both sources, specify the
+                  join key, define the output.
                 </p>
               </div>
 
-              <!-- Real-time dashboards -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Real-time dashboards, not nightly batches</div>
+                <div class="recipe-card-title">Real-time aggregations</div>
                 <p class="recipe-card-pain">
-                  Your team makes decisions on dashboards that are 24 hours
-                  stale. By the time you see a spike, it already happened
-                  yesterday.
+                  Counts, windowed counts, grouped metrics from your event
+                  stream. Today that means writing a Kafka Streams app with state
+                  stores, KTables, serde config.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream streams database changes directly into your analytics
-                  warehouse. ClickHouse, Snowflake, BigQuery -your
-                  dashboards update as fast as your data changes.
+                  TypeStream: one config file. Group by a field, count, done.
+                  No state store boilerplate.
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Row 2: AI-ready stack -->
+          <!-- Row 2: Enrichment & AI -->
           <div>
             <span class="row-label bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 mb-4 block w-fit">
-              AI-ready stack
+              Enrichment & AI
             </span>
             <div class="grid md:grid-cols-3 gap-5">
-              <!-- Semantic search -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Add semantic search to any database</div>
+                <div class="recipe-card-title">Enrich with AI in-flight</div>
                 <p class="recipe-card-pain">
-                  Your users type natural language queries, but your database
-                  only does exact match or LIKE&nbsp;'%keyword%'. Building
-                  semantic search means standing up a vector database, writing an
-                  embedding pipeline, and keeping it in sync.
+                  Every event needs classification, sentiment scoring, or entity
+                  extraction. You're either doing it in batch or building a
+                  custom ML pipeline alongside your streams.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream generates embeddings from your database content and
-                  pushes them to Weaviate or any vector store. As your data
-                  changes, the embeddings update automatically. Semantic search
-                  without the plumbing.
+                  TypeStream: add an OpenAI node to your pipeline config. Every
+                  event flows through the LLM and lands enriched in the output
+                  topic.
                 </p>
               </div>
 
-              <!-- AI classification -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Classify and route with AI</div>
+                <div class="recipe-card-title">Add semantic search</div>
                 <p class="recipe-card-pain">
-                  Every support ticket needs to be categorized. Every document
-                  needs a sentiment score. You're either doing it manually or
-                  building a custom ML pipeline.
+                  Generate embeddings from your topic data and push to a vector
+                  store. Building this pipeline means standing up an embedding
+                  service, keeping it in sync, handling failures.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream runs every record through an LLM in flight.
-                  Categorize, score, extract, summarize -then route the
-                  results to your warehouse or downstream system. Define the
-                  prompt in your pipeline config.
+                  TypeStream: add an embedding node. Vectors flow to Weaviate or
+                  any vector store. As your data changes, embeddings update
+                  automatically.
                 </p>
               </div>
 
-              <!-- REST APIs -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Generate REST APIs from your data</div>
+                <div class="recipe-card-title">Geo-enrich your events</div>
                 <p class="recipe-card-pain">
-                  You need a fast endpoint that serves the current state of
-                  something -live prices, user profiles, inventory counts.
-                  So you build an API, a database query, a cache layer, and a
-                  cache invalidation strategy.
+                  IP addresses without locations. You need geo-tagged events for
+                  analytics, compliance, or routing -- but adding a GeoIP lookup
+                  to every consumer is tedious.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream materializes a live view from your data stream and
-                  serves it as an endpoint. No separate API server, no cache, no
-                  database query. The endpoint updates as fast as your data
-                  changes.
+                  TypeStream: add a GeoIP node. Every event arrives with country,
+                  city, and region. Feed it into aggregations for real-time
+                  analytics by geography.
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Row 3: Data infrastructure patterns -->
+          <!-- Row 3: Kafka Connect Made Easy -->
           <div>
             <span class="row-label bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 mb-4 block w-fit">
-              Data infrastructure
+              Kafka Connect made easy
             </span>
             <div class="grid md:grid-cols-3 gap-5">
-              <!-- Data warehouse replication -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Replicate to your data warehouse</div>
+                <div class="recipe-card-title">Sink to Elasticsearch</div>
                 <p class="recipe-card-pain">
-                  Getting data from your production database into your warehouse
-                  means setting up an ETL tool, scheduling jobs, handling
-                  failures, and hoping nothing drifts.
+                  Keep a search index in sync with your topic data. Extract
+                  text, filter what gets indexed, handle backpressure when ES is
+                  slow. Connector config alone is a project.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream streams changes from your production database
-                  directly into your warehouse. Every insert, update, and delete
-                  arrives in seconds. No ETL tool, no batch schedule, no drift.
+                  TypeStream: config file with transform nodes and an
+                  Elasticsearch sink. Schema-aware, backpressure built in.
                 </p>
               </div>
 
-              <!-- Cross-database sync -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Sync databases without custom code</div>
+                <div class="recipe-card-title">Replicate to your warehouse</div>
                 <p class="recipe-card-pain">
-                  You need a subset of your Postgres data in another database
-                  -maybe MySQL for a legacy system, maybe a read replica
-                  with different columns. So you write a sync script and pray it
-                  doesn't break.
+                  Stream topic data to ClickHouse, Snowflake, BigQuery, or S3.
+                  Setting up the connector, managing offsets, handling schema
+                  changes -- it's always more work than expected.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream replicates, filters, and transforms between databases
-                  in real time. Define what goes where in a config file. Change it
-                  when your needs change.
+                  TypeStream: config file with a warehouse sink. Every event
+                  arrives in seconds, not the next batch run.
                 </p>
               </div>
 
-              <!-- Enrich data -->
               <div class="recipe-card">
-                <div class="recipe-card-title">Enrich data as it flows</div>
+                <div class="recipe-card-title">Route CDC to anywhere</div>
                 <p class="recipe-card-pain">
-                  Your raw data is missing context. IP addresses without
-                  locations. Product IDs without names. Order records without
-                  customer details. You enrich in batch jobs that run overnight.
+                  You have Debezium CDC topics. You need to filter, transform,
+                  and route them to downstream systems. But the CDC topics are
+                  complex and connector config is its own job.
                 </p>
                 <p class="recipe-card-solution">
-                  TypeStream enriches records in flight -geo-locate IPs,
-                  join with reference data, resolve IDs to names. Every record
-                  arrives at its destination already enriched. No batch job, no
-                  overnight wait.
+                  TypeStream: CDC topics are just Kafka topics. Filter, enrich,
+                  and sink to any of 200+ Kafka Connect destinations.
                 </p>
               </div>
             </div>
@@ -873,131 +978,82 @@
     <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- 5. WORKS WITH WHAT YOU ALREADY HAVE -->
-    <!-- ============================================ -->
-    <section class="py-20 lg:py-28">
-      <div class="container relative">
-        <div class="max-w-3xl mx-auto text-center mb-10">
-          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            You don't rip out your stack. You extend it.
-          </h2>
-          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mb-2">
-            TypeStream connects to your existing database. Your application
-            doesn't change -it keeps writing to Postgres or MySQL exactly
-            like it does today. TypeStream watches the change log and handles
-            everything downstream.
-          </p>
-          <p class="text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Start with one pipeline. See it work. Add more when you're ready.
-            No big migration, no rewrite, no new dependencies in your application
-            code.
-          </p>
-        </div>
-
-        <!-- Integration logos -->
-        <div class="max-w-4xl mx-auto">
-          <div class="text-center mb-6">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Sources</span>
-          </div>
-          <div class="integration-logos mb-8">
-            <div class="integration-logo">
-              <svg class="w-5 h-5 text-[#336791]" viewBox="0 0 24 24" fill="currentColor"><path d="M17.128 0a10.134 10.134 0 0 0-2.755.403l-.063.02A10.922 10.922 0 0 0 12.6.258C11.422.238 10.41.524 9.594 1 8.79.721 7.122.24 5.364.336 4.14.403 2.804.775 1.814 1.82.827 2.86.305 4.482.415 6.682c.03.607.203 1.597.49 2.879s.69 2.783 1.193 4.152c.503 1.37 1.054 2.6 1.915 3.436.43.419.96.742 1.575.742.478 0 .903-.182 1.308-.47.405-.287.782-.678 1.15-1.12l.087-.12c.226-.066.47-.148.726-.258a7.153 7.153 0 0 0 .662.62 4.946 4.946 0 0 0 1.27.722c.11.045.222.084.337.12-.16.55-.237 1.13-.127 1.73.063.354.203.72.5 1.009.297.29.716.47 1.248.47a7.1 7.1 0 0 0 1.381-.152c.655-.137 1.398-.354 2.187-.71l.003-.001c.208-.093.397-.175.584-.28.17-.098.336-.212.479-.37.143-.157.236-.365.218-.594a.914.914 0 0 0-.09-.294 3.282 3.282 0 0 0-.106-.214l-.011-.019-.01-.016c-.36-.58-.464-1.27-.3-1.974.087-.376.244-.733.449-1.054.067-.104.14-.207.22-.31a5.48 5.48 0 0 0 .691.06c1.12 0 2.222-.37 3.087-1.035a4.74 4.74 0 0 0 1.51-2.028c.324-.833.436-1.768.316-2.76-.118-.983-.462-1.85-.942-2.528-.48-.678-1.078-1.17-1.676-1.513-.597-.344-1.172-.547-1.578-.612a2.19 2.19 0 0 0-.297-.03Z"/></svg>
-              PostgreSQL
-            </div>
-            <div class="integration-logo">
-              <svg class="w-5 h-5 text-[#4479A1]" viewBox="0 0 24 24" fill="currentColor"><path d="M16.405 5.501c-.115 0-.193.014-.274.033v.013h.014c.054.104.146.18.214.273.054.107.1.214.154.32l.014-.015c.094-.066.14-.172.14-.333-.04-.047-.046-.094-.08-.14-.04-.067-.126-.1-.18-.153zM5.77 18.695h-.033a2.083 2.083 0 0 0-.313-.013c-.12.013-.18.093-.193.24-.02.2.06.327.2.393.087.04.234.014.32-.04.133-.073.193-.2.193-.346 0-.1-.06-.173-.133-.233z"/><path d="M23.763 6.886c-.073-.033-.153-.013-.227.027-.04.027-.067.08-.1.12-.067.113-.127.153-.26.18l-.086.027a.269.269 0 0 0-.127.08c-.014.014-.04.04-.04.074.014 0 .027-.014.04-.014.054-.014.094-.04.153-.014.007 0 .04.02.054.02.054.014.127.034.18 0 .054-.027.08-.087.1-.147.014-.06.033-.1.073-.14.027-.027.087-.034.12-.067.007-.007.014-.02.027-.02.007-.014.007-.04.013-.054.02-.013.054-.02.06-.047 0-.04-.026-.06-.066-.06zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 1.96c5.535 0 10.04 4.505 10.04 10.04S17.535 22.04 12 22.04 1.96 17.535 1.96 12 6.465 1.96 12 1.96z"/></svg>
-              MySQL
-            </div>
-          </div>
-
-          <div class="text-center mb-6">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Transformations</span>
-          </div>
-          <div class="integration-logos mb-8">
-            <div class="integration-logo">GeoIP</div>
-            <div class="integration-logo">Text Extractor</div>
-            <div class="integration-logo">Embedding Generator</div>
-            <div class="integration-logo">OpenAI Transformer</div>
-            <div class="integration-logo">Filter</div>
-            <div class="integration-logo">Group</div>
-            <div class="integration-logo">Join</div>
-            <div class="integration-logo">Count</div>
-          </div>
-
-          <div class="text-center mb-6">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Destinations</span>
-          </div>
-          <div class="integration-logos mb-6">
-            <div class="integration-logo">Elasticsearch</div>
-            <div class="integration-logo">Redis</div>
-            <div class="integration-logo">ClickHouse</div>
-            <div class="integration-logo">Weaviate</div>
-            <div class="integration-logo">Snowflake</div>
-            <div class="integration-logo">S3</div>
-            <div class="integration-logo">BigQuery</div>
-          </div>
-          <div class="text-center">
-            <a href="integrations.html" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
-              See all 200+ integrations &rarr;
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <hr class="section-divider">
-
-    <!-- ============================================ -->
-    <!-- 6. NOT A WORKFLOW TOOL -->
+    <!-- 6. THE COMPARISON THAT MATTERS -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-12">
           <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Data infrastructure, not workflow automation.
+            Stop writing consumer microservices.
           </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            You have a service that consumes from a topic, does some processing,
+            and writes somewhere. You've written it a dozen times. Here's what
+            changes with TypeStream.
+          </p>
         </div>
 
-        <div class="max-w-3xl mx-auto">
+        <div class="max-w-4xl mx-auto">
           <div class="overflow-x-auto mb-8">
             <table class="compare-table">
               <thead>
                 <tr>
-                  <th>Workflow tools (n8n, Zapier)</th>
+                  <th></th>
+                  <th>Your consumer microservice</th>
                   <th>TypeStream</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Trigger: &ldquo;when X happens in App A, do Y in App B&rdquo;</td>
-                  <td>Trigger: every data change, continuously</td>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Build a pipeline</td>
+                  <td>Write a service in your language, handle offsets, wire up deserialization, deploy it</td>
+                  <td>Write a config file, deploy it</td>
                 </tr>
                 <tr>
-                  <td>Runs discrete jobs on events</td>
-                  <td>Runs continuous streaming pipelines</td>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Add another pipeline</td>
+                  <td>Another repo, another service, another deployment to monitor</td>
+                  <td>Another config file</td>
                 </tr>
                 <tr>
-                  <td>Connects SaaS apps via APIs</td>
-                  <td>Connects databases via change data capture</td>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Handle schemas</td>
+                  <td>Manually deserialize each topic, hope the schema hasn't changed</td>
+                  <td>Reads your Schema Registry automatically, catches schema errors before anything runs</td>
                 </tr>
                 <tr>
-                  <td>Best for: business process automation</td>
-                  <td>Best for: keeping data systems in sync</td>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Join two topics</td>
+                  <td>Query a database, or consume both and build state yourself</td>
+                  <td>Declare both sources and the join key in config</td>
                 </tr>
                 <tr>
-                  <td>Your data transits through a third party</td>
-                  <td>Self-hosted. Your data never leaves.</td>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Aggregate or count</td>
+                  <td>Write to a database, run queries against it later</td>
+                  <td>Built-in. Group, count, window -- all in config</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Push to Elasticsearch, S3, etc.</td>
+                  <td>Write the integration code yourself, handle retries and backpressure</td>
+                  <td>Declarative sink in the pipeline. 200+ Kafka Connect destinations.</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Preview before deploying</td>
+                  <td>Deploy and hope</td>
+                  <td><code class="text-indigo-600 dark:text-indigo-400">typestream plan</code> shows exactly what will change</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-slate-700 dark:text-slate-300">Consumer goes down</td>
+                  <td>Hope your offset management is right, debug at 2am</td>
+                  <td>Kafka Streams handles offsets, state, and recovery automatically</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
-              If you need &ldquo;when a Slack message arrives, create a Jira
-              ticket&rdquo; -use n8n. If you need &ldquo;when a row
-              changes in Postgres, update Elasticsearch, bust the Redis cache,
-              and refresh the analytics warehouse&rdquo; -that's TypeStream.
+          <div class="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              <strong class="text-slate-700 dark:text-slate-300">Under the hood, it's Kafka Streams.</strong>
+              TypeStream compiles your config into Kafka Streams topologies -- the
+              same technology powering stream processing at LinkedIn, Netflix, and
+              Uber. You get the reliability without learning the framework.
             </p>
           </div>
         </div>
@@ -1007,7 +1063,56 @@
     <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- 7. BUILT FOR PRODUCTION -->
+    <!-- 7. SCHEMA-AWARE PIPELINES -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28 bg-slate-50 dark:bg-slate-800/30">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-8">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            Your Schema Registry does more than you think.
+          </h2>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+            TypeStream reads your Schema Registry and propagates types through
+            every node in your pipeline. Source schemas are resolved
+            automatically. Each transform declares how it changes the schema --
+            filter passes through, join merges, enrichment adds a field.
+          </p>
+
+          <div class="grid sm:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <div class="text-2xl mb-2 text-indigo-600 dark:text-indigo-400 font-bold">&empty;</div>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">No serde config</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Schemas resolved automatically from your registry</p>
+            </div>
+            <div class="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <div class="text-2xl mb-2 text-indigo-600 dark:text-indigo-400 font-bold">&check;</div>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Compile-time checks</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Schema errors caught before any topology runs</p>
+            </div>
+            <div class="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <div class="text-2xl mb-2 text-indigo-600 dark:text-indigo-400 font-bold">&Delta;</div>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Schema evolution</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">When upstream schemas change, your pipeline knows</p>
+            </div>
+          </div>
+
+          <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
+            Every other stream processing approach -- including hand-written Kafka
+            Streams -- requires you to manage schemas manually. TypeStream doing
+            it automatically means no runtime surprises and no silent data
+            corruption.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ============================================ -->
+    <!-- 8. BUILT FOR PRODUCTION -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
@@ -1028,11 +1133,10 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Plan before you deploy
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
               Every change goes through <code class="text-indigo-600 dark:text-indigo-400">typestream plan</code>
               first. See exactly what pipelines will be created, updated, or
-              deleted -before anything runs. Like terraform for data
-              pipelines. Review in CI, approve in a PR.
+              deleted -- before anything runs. Review in CI, approve in a PR.
             </p>
           </div>
 
@@ -1046,10 +1150,10 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Backpressure and delivery guarantees
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              If Elasticsearch is slow or Redis is down, TypeStream queues and
-              retries automatically. No data loss, no duplicate processing.
-              Events are delivered exactly once.
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              If a sink is slow or down, TypeStream queues and retries
+              automatically. No data loss, no duplicate processing. Built on
+              Kafka Streams exactly-once semantics.
             </p>
           </div>
 
@@ -1063,10 +1167,10 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Observability included
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
               Metrics, logs, and traces out of the box. Know how many events per
               second each pipeline processes, where bottlenecks are, and when
-              something fails -before your users notice.
+              something fails.
             </p>
           </div>
         </div>
@@ -1076,31 +1180,48 @@
     <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- 8. RUNS IN YOUR INFRASTRUCTURE -->
+    <!-- 9. RUNS ALONGSIDE YOUR KAFKA -->
     <!-- ============================================ -->
-    <section class="py-20 lg:py-28">
+    <section id="runs-alongside" class="py-20 lg:py-28">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-12">
           <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Runs in your infrastructure. Your data never leaves.
+            Connects to your Kafka cluster. Doesn't replace it.
           </h2>
         </div>
 
-        <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-          <!-- Self-hosted -->
+        <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
+          <!-- Already have Kafka -->
           <div>
             <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center mb-4">
               <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Already have Kafka?
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Point TypeStream at your existing cluster and Schema Registry. It
+              reads your topics, reads your schemas, and runs pipelines on the
+              infrastructure you already operate. Nothing to migrate.
+            </p>
+          </div>
+
+          <!-- Starting fresh -->
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              Self-hosted
+              Starting fresh?
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Docker Compose for dev, Helm for production. Runs on your
-              infrastructure, your cloud, your rules. No SaaS dependency, no data
-              leaving your network.
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              TypeStream bundles Kafka, Schema Registry, and Kafka Connect in
+              a single <code class="text-indigo-600 dark:text-indigo-400">docker compose up</code>.
+              Get the full streaming stack without learning to operate it.
             </p>
           </div>
 
@@ -1114,7 +1235,7 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Source available (BSL)
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
               Read every line of code. Business Source License means no vendor
               lock-in. If TypeStream disappears tomorrow, you still have the code.
             </p>
@@ -1124,7 +1245,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 9. BOTTOM CTA -->
+    <!-- 10. BOTTOM CTA -->
     <!-- ============================================ -->
     <section
       class="py-20 lg:py-28"
@@ -1133,11 +1254,11 @@
       <div class="container relative">
         <div class="max-w-2xl mx-auto text-center">
           <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">
-            See it in action.
+            Your topics are already flowing.<br>Start building on them.
           </h2>
           <p class="text-indigo-100 text-lg mb-10 leading-relaxed">
-            Pick a pattern above and try it on your database. Or tell us what
-            you'd build -we'll help you get there.
+            Try the demo, explore the repo, or tell us about your Kafka setup.
+            We'll help you build your first pipeline.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
             <a
