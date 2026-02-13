@@ -564,7 +564,7 @@
               </p>
 
               <div class="cli-block mb-3">
-                <span class="path">cat postgres:orders</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
+                <span class="path">cat postgres:files</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
               </div>
               <p class="text-xs text-slate-400 dark:text-slate-500">
                 Or as a config file &mdash; version-controlled, CI/CD friendly, reviewable in a PR.
@@ -641,7 +641,7 @@
 <span class="token-punct">{</span>
   <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"search-sync"</span><span class="token-punct">,</span>
   <span class="token-key">"pipeline"</span><span class="token-punct">: [</span>
-    <span class="token-punct">{</span> <span class="token-key">"postgres"</span><span class="token-punct">:</span> <span class="token-string">"orders"</span> <span class="token-punct">},</span>
+    <span class="token-punct">{</span> <span class="token-key">"postgres"</span><span class="token-punct">:</span> <span class="token-string">"files"</span> <span class="token-punct">},</span>
     <span class="token-punct">{</span> <span class="token-key">"text_extract"</span><span class="token-punct">: {</span> <span class="token-key">"attribute_field"</span><span class="token-punct">:</span> <span class="token-string">"file_path"</span><span class="token-punct">,</span> <span class="token-key">"output_field"</span><span class="token-punct">:</span> <span class="token-string">"extracted_text"</span> <span class="token-punct">} },</span>
     <span class="token-punct">{</span> <span class="token-key">"elastic_search"</span><span class="token-punct">: {</span> <span class="token-key">"attribute_field"</span><span class="token-punct">:</span> <span class="token-string">"extracted_text"</span> <span class="token-punct">} }</span>
   <span class="token-punct">]</span>
@@ -655,7 +655,7 @@
           <!-- CLI panel -->
           <div class="pipeline-panel" data-panel="cli">
             <div class="cli-block" style="padding: 2rem 1.5rem;">
-              <span class="path">cat postgres:orders</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
+              <span class="path">cat postgres:files</span> <span class="pipe">|</span> <span class="filter-expr">text_extract file_path extracted_text</span> <span class="pipe">|</span> <span class="filter-expr">elastic_search extracted_text</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
               Pipe commands together. Great for prototyping and exploration.
