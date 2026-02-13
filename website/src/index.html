@@ -7,232 +7,338 @@
     <!-- Css -->
     {{> head-css}}
 
+    <!-- JetBrains Mono for code blocks -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
-      /* Architecture diagram */
-      .arch-diagram {
+      /* ── Code & Terminal blocks ── */
+      .code-block {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        line-height: 1.7;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        overflow-x: auto;
+        border: 1px solid #1e293b;
+      }
+
+      .code-block .token-key { color: #93c5fd; }
+      .code-block .token-string { color: #86efac; }
+      .code-block .token-punct { color: #64748b; }
+      .code-block .token-comment { color: #475569; font-style: italic; }
+
+      .terminal-block {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        line-height: 1.7;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        overflow-x: auto;
+        border: 1px solid #1e293b;
+      }
+
+      .terminal-block .prompt { color: #6366f1; }
+      .terminal-block .cmd { color: #f1f5f9; }
+      .terminal-block .output { color: #94a3b8; }
+      .terminal-block .action-create { color: #4ade80; }
+      .terminal-block .action-count { color: #facc15; }
+
+      .cli-block {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        overflow-x: auto;
+        border: 1px solid #1e293b;
+      }
+
+      .cli-block .pipe { color: #6366f1; font-weight: 600; }
+      .cli-block .path { color: #94a3b8; }
+      .cli-block .filter-expr { color: #86efac; }
+
+      /* ── Hero animated flow ── */
+      .hero-flow {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1.25rem;
-        font-size: 0.9rem;
+        gap: 0;
+        padding: 2rem 0;
+      }
+
+      .hero-flow-node {
+        padding: 0.875rem 1.5rem;
+        border-radius: 0.625rem;
         font-weight: 600;
-        color: #334155;
-      }
-
-      .dark .arch-diagram {
-        color: #cbd5e1;
-      }
-
-      .arch-diagram .arch-external {
-        padding: 1rem 1.5rem;
-        border-radius: 0.75rem;
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        text-align: center;
+        font-size: 0.875rem;
         white-space: nowrap;
-        flex-shrink: 0;
+        position: relative;
       }
 
-      .dark .arch-diagram .arch-external {
-        background: #1e293b;
-        border-color: #334155;
-      }
-
-      .arch-diagram .arch-external small {
+      .hero-flow-node small {
         display: block;
         font-weight: 400;
         font-size: 0.7rem;
         opacity: 0.7;
-        margin-top: 0.25rem;
-      }
-
-      .arch-diagram .arch-arrow {
-        color: #94a3b8;
-        font-size: 1.25rem;
-        flex-shrink: 0;
-      }
-
-      /* TypeStream bounding box */
-      .ts-box {
-        position: relative;
-        border: 2px solid #6366f1;
-        border-radius: 1rem;
-        padding: 3.5rem 1.5rem 1.5rem;
-        background: rgba(99, 102, 241, 0.03);
-        flex: 1;
-        min-width: 0;
-      }
-
-      .dark .ts-box {
-        background: rgba(99, 102, 241, 0.06);
-        border-color: #818cf8;
-      }
-
-      .ts-box-label {
-        position: absolute;
-        top: -0.8rem;
-        left: 1.25rem;
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: white;
-        padding: 0.25rem 1rem;
-        border-radius: 0.5rem;
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
-
-      /* GUI/Orchestration layer on top */
-      .ts-gui-layer {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        padding: 0.625rem 1rem;
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        border-radius: 0.625rem;
-        color: white;
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-      }
-
-      .ts-gui-layer svg {
-        flex-shrink: 0;
-      }
-
-      .ts-gui-layer small {
-        font-weight: 400;
-        opacity: 0.8;
-      }
-
-      /* Internal components row */
-      .ts-internals {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .ts-internals .ts-component {
-        padding: 0.625rem 1rem;
-        border-radius: 0.5rem;
-        background: white;
-        border: 1px solid #c7d2fe;
-        text-align: center;
-        font-size: 0.8rem;
-        white-space: nowrap;
-      }
-
-      .dark .ts-internals .ts-component {
-        background: #1e293b;
-        border-color: #4338ca;
-      }
-
-      .ts-internals .ts-component small {
-        display: block;
-        font-weight: 400;
-        font-size: 0.65rem;
-        opacity: 0.6;
         margin-top: 0.125rem;
       }
 
-      .ts-internals .ts-int-arrow {
-        color: #a5b4fc;
-        font-size: 1rem;
+      .hero-flow-source {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+      }
+
+      .dark .hero-flow-source {
+        background: #1e293b;
+        border-color: #334155;
+        color: #cbd5e1;
+      }
+
+      .hero-flow-ts {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        color: white;
+        padding: 1rem 2rem;
+        border: 2px solid #4338ca;
+      }
+
+      .hero-flow-dest {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+      }
+
+      .hero-flow-dest-item {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .dark .hero-flow-dest-item {
+        background: #1e293b;
+        border-color: #334155;
+        color: #cbd5e1;
+      }
+
+      /* Animated connectors */
+      .hero-flow-connector {
+        width: 3rem;
+        height: 2px;
+        position: relative;
         flex-shrink: 0;
       }
 
-      /* Responsive: stack on mobile */
+      .hero-flow-connector::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #6366f1, transparent);
+        animation: flow-pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes flow-pulse {
+        0%, 100% { opacity: 0.3; transform: scaleX(0.5); }
+        50% { opacity: 1; transform: scaleX(1); }
+      }
+
+      .hero-flow-connector-multi {
+        width: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.375rem;
+        flex-shrink: 0;
+      }
+
+      .hero-flow-connector-multi .line {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #6366f1, transparent);
+        animation: flow-pulse 2s ease-in-out infinite;
+      }
+
+      .hero-flow-connector-multi .line:nth-child(2) { animation-delay: 0.3s; }
+      .hero-flow-connector-multi .line:nth-child(3) { animation-delay: 0.6s; }
+
       @media (max-width: 768px) {
-        .arch-diagram {
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .arch-diagram .arch-arrow {
-          transform: rotate(90deg);
-        }
-
-        .ts-internals {
+        .hero-flow {
           flex-direction: column;
           gap: 0.5rem;
         }
-
-        .ts-internals .ts-int-arrow {
-          transform: rotate(90deg);
+        .hero-flow-connector {
+          width: 2px;
+          height: 2rem;
+        }
+        .hero-flow-connector::after {
+          background: linear-gradient(180deg, transparent, #6366f1, transparent);
+        }
+        .hero-flow-connector-multi {
+          width: auto;
+          height: 2rem;
+          flex-direction: row;
+        }
+        .hero-flow-connector-multi .line {
+          width: 2px;
+          height: 100%;
+          background: linear-gradient(180deg, transparent, #6366f1, transparent);
+        }
+        .hero-flow-dest {
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: center;
         }
       }
 
-      /* Node grid */
-      .node-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1rem;
+      /* ── Step numbers ── */
+      .step-number {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+        font-family: 'JetBrains Mono', monospace;
       }
 
-      .node-card {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-        padding: 1rem 1.25rem;
+      /* ── Recipe cards ── */
+      .recipe-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 0.75rem;
-        transition: border-color 0.2s ease;
+        padding: 1.5rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
       }
 
-      .node-card:hover {
+      .recipe-card:hover {
         border-color: #6366f1;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
       }
 
-      .dark .node-card {
+      .dark .recipe-card {
         background: #1e293b;
         border-color: #334155;
       }
 
-      .dark .node-card:hover {
+      .dark .recipe-card:hover {
         border-color: #6366f1;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
       }
 
-      .node-card .node-icon {
-        flex-shrink: 0;
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 0.5rem;
-        background: #eef2ff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-      }
-
-      .dark .node-card .node-icon {
-        background: #312e81;
-      }
-
-      .node-card .node-name {
-        font-weight: 600;
-        font-size: 0.9rem;
+      .recipe-card-title {
+        font-weight: 700;
+        font-size: 1rem;
         color: #0f172a;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
       }
 
-      .dark .node-card .node-name {
-        color: #f1f5f9;
-      }
+      .dark .recipe-card-title { color: #f1f5f9; }
 
-      .node-card .node-desc {
-        font-size: 0.8rem;
+      .recipe-card-pain {
+        font-size: 0.85rem;
         color: #64748b;
-        line-height: 1.5;
-        margin-top: 0.25rem;
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
       }
 
-      .dark .node-card .node-desc {
+      .dark .recipe-card-pain { color: #94a3b8; }
+
+      .recipe-card-solution {
+        font-size: 0.85rem;
+        color: #334155;
+        line-height: 1.6;
+        flex-grow: 1;
+      }
+
+      .dark .recipe-card-solution { color: #cbd5e1; }
+
+      /* ── Comparison table ── */
+      .compare-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.875rem;
+      }
+
+      .compare-table th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 700;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .dark .compare-table th {
+        border-bottom-color: #334155;
+      }
+
+      .compare-table th:first-child {
+        color: #64748b;
+      }
+
+      .compare-table th:last-child {
+        color: #4f46e5;
+      }
+
+      .dark .compare-table th:last-child {
+        color: #818cf8;
+      }
+
+      .compare-table td {
+        padding: 0.875rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #475569;
+      }
+
+      .dark .compare-table td {
+        border-bottom-color: #1e293b;
         color: #94a3b8;
       }
 
-      /* Section divider */
+      .compare-table td:last-child {
+        color: #1e293b;
+        font-weight: 500;
+      }
+
+      .dark .compare-table td:last-child {
+        color: #e2e8f0;
+      }
+
+      /* ── Row labels ── */
+      .row-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        display: inline-block;
+      }
+
+      /* ── Section divider ── */
       .section-divider {
         border: none;
         border-top: 1px solid #e2e8f0;
@@ -241,6 +347,91 @@
 
       .dark .section-divider {
         border-top-color: #1e293b;
+      }
+
+      /* ── Integration logos row ── */
+      .integration-logos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .integration-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #334155;
+        white-space: nowrap;
+      }
+
+      .dark .integration-logo {
+        background: #1e293b;
+        border-color: #334155;
+        color: #cbd5e1;
+      }
+
+      /* ── Tab system for "Define Pipelines" ── */
+      .pipeline-tab {
+        cursor: pointer;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+        border: 1px solid transparent;
+        border-bottom: none;
+        color: #64748b;
+        background: transparent;
+        transition: all 0.15s ease;
+      }
+
+      .pipeline-tab:hover {
+        color: #334155;
+      }
+
+      .dark .pipeline-tab:hover {
+        color: #e2e8f0;
+      }
+
+      .pipeline-tab.active {
+        color: #4f46e5;
+        background: #ffffff;
+        border-color: #e2e8f0;
+      }
+
+      .dark .pipeline-tab.active {
+        color: #818cf8;
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      .pipeline-panel {
+        display: none;
+        border: 1px solid #e2e8f0;
+        border-radius: 0 0.75rem 0.75rem 0.75rem;
+        overflow: hidden;
+      }
+
+      .dark .pipeline-panel {
+        border-color: #334155;
+      }
+
+      .pipeline-panel.active {
+        display: block;
+      }
+
+      /* code-block inside panel needs no outer border/radius */
+      .pipeline-panel .code-block,
+      .pipeline-panel .cli-block {
+        border: none;
+        border-radius: 0;
       }
     </style>
 
@@ -256,46 +447,39 @@
     {{> navbar/nav-center}}
 
     <!-- ============================================ -->
-    <!-- HERO -->
+    <!-- 1. HERO -->
     <!-- ============================================ -->
-    <section class="relative overflow-hidden pt-36 pb-20 lg:pt-44 lg:pb-28">
+    <section class="relative overflow-hidden pt-36 pb-16 lg:pt-44 lg:pb-24">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center">
-          <h1
-            class="text-4xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight"
-          >
-            Stop writing sync jobs,<br />
-            cache invalidation, and API glue.<br />
-            <span class="text-indigo-600 dark:text-indigo-400"
-              >Let your database do the work.</span
-            >
+          <h1 class="text-4xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
+            A row changes in your database.<br>
+            <span class="text-indigo-600 dark:text-indigo-400">Everything else updates automatically.</span>
           </h1>
 
-          <p
-            class="text-lg lg:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto"
-          >
-            Every time you update a row, your backend has to reindex search,
-            bust the cache, and notify downstream services. TypeStream
-            watches your Postgres or MySQL and keeps everything in sync
-            automatically. Your app just writes to the database &mdash;
-            it doesn't need to know the rest exists.
+          <p class="text-lg lg:text-xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto">
+            TypeStream watches your Postgres or MySQL for changes and routes
+            them to where they need to go &mdash; Elasticsearch, Redis,
+            ClickHouse, Weaviate, and 200+ more destinations. Define your
+            pipeline in a config file, preview changes before deploying, and
+            never write another sync job.
           </p>
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
             <a
-              href="mailto:hello@typestream.io"
+              href="https://demo.typestream.io/jobs/new"
               class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
             >
-              Let's talk
+              See it in action
             </a>
             <a
-              href="https://demo.typestream.io/jobs/new"
+              href="mailto:hello@typestream.io"
               class="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-600 dark:hover:border-indigo-600 transition-colors"
             >
-              Try the live demo
+              Talk to us
             </a>
           </div>
-          <div class="flex justify-center mb-10">
+          <div class="flex justify-center mb-8">
             <a
               href="https://github.com/typestreamio/typestream"
               class="text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
@@ -303,661 +487,114 @@
               or view on GitHub &rarr;
             </a>
           </div>
-
-          <video
-            autoplay
-            muted
-            loop
-            playsinline
-            class="w-full rounded-xl border border-slate-200 dark:border-slate-700"
-          >
-            <source src="assets/images/hero-demo.webm" type="video/webm" />
-            <source src="assets/images/hero-demo.mp4" type="video/mp4" />
-          </video>
-        </div>
-      </div>
-    </section>
-
-    <hr class="section-divider" />
-
-    <!-- ============================================ -->
-    <!-- HOW IT WORKS -->
-    <!-- ============================================ -->
-    <section class="py-20 lg:py-28">
-      <div class="container relative">
-        <div class="max-w-3xl mx-auto text-center mb-12">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-          >
-            You draw pipelines. We handle the plumbing.
-          </h2>
-          <p
-            class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto"
-          >
-            Today, every backend route that writes to your database also
-            calls the search reindex, invalidates the cache, and fires off
-            webhooks. Miss one call site and things drift out of sync.
-            With TypeStream, your app just writes to Postgres. Everything
-            else happens automatically.
-          </p>
         </div>
 
-        <!-- Architecture diagram -->
-        <div class="max-w-5xl mx-auto mb-10">
-          <div class="arch-diagram">
-            <!-- Your Database (external) -->
-            <div class="arch-external">
-              Your Database
-              <small>Postgres / MySQL</small>
-            </div>
-
-            <span class="arch-arrow">&rarr;</span>
-
-            <!-- TypeStream bounding box -->
-            <div class="ts-box">
-              <span class="ts-box-label">TypeStream</span>
-
-              <!-- GUI / Orchestration layer -->
-              <div class="ts-gui-layer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-                </svg>
-                Visual Pipeline Builder
-                <small>&mdash; you work here</small>
-              </div>
-
-              <!-- Internal components -->
-              <div class="ts-internals">
-                <div class="ts-component">
-                  Debezium
-                  <small>CDC capture</small>
-                </div>
-                <span class="ts-int-arrow">&rarr;</span>
-                <div class="ts-component">
-                  Kafka
-                  <small>event streaming</small>
-                </div>
-                <span class="ts-int-arrow">&rarr;</span>
-                <div class="ts-component">
-                  Kafka Streams
-                  <small>your transforms</small>
-                </div>
-                <span class="ts-int-arrow">&rarr;</span>
-                <div class="ts-component">
-                  Kafka Connect
-                  <small>sink connectors</small>
-                </div>
-              </div>
-            </div>
-
-            <span class="arch-arrow">&rarr;</span>
-
-            <!-- Your Destinations (external) -->
-            <div class="arch-external">
-              Your Destinations
-              <small>Postgres, ES, Weaviate&hellip;</small>
-            </div>
-          </div>
-        </div>
-
+        <!-- Simple animated flow diagram -->
         <div class="max-w-3xl mx-auto">
-          <p
-            class="text-center text-slate-600 dark:text-slate-400 leading-relaxed mb-8"
-          >
-            Under the hood, TypeStream uses the industry-standard streaming
-            stack &mdash; Debezium, Kafka, and Kafka Connect &mdash; so
-            you get battle-tested infrastructure without having to operate
-            it. You connect your database, build pipelines visually, and
-            deploy. No Kafka clusters to provision. No connectors to
-            configure. No infrastructure to learn.
-          </p>
+          <div class="hero-flow">
+            <div class="hero-flow-node hero-flow-source">
+              Your Postgres
+              <small>changes stream out</small>
+            </div>
 
-          <div class="grid sm:grid-cols-2 gap-6 text-sm text-slate-500 dark:text-slate-400">
-            <div>
-              <strong class="text-slate-700 dark:text-slate-300"
-                >Your database</strong
-              >
-              is already logging every change. TypeStream taps into that log
-              so your app code doesn't have to broadcast updates.
+            <div class="hero-flow-connector"></div>
+
+            <div class="hero-flow-node hero-flow-ts">
+              TypeStream
             </div>
-            <div>
-              <strong class="text-slate-700 dark:text-slate-300"
-                >Durable delivery</strong
-              >
-              means events are never lost, even if a destination goes down
-              temporarily. No retry logic for you to write.
+
+            <div class="hero-flow-connector-multi">
+              <div class="line"></div>
+              <div class="line"></div>
+              <div class="line"></div>
             </div>
-            <div>
-              <strong class="text-slate-700 dark:text-slate-300"
-                >200+ destinations</strong
-              >
-              are supported out of the box &mdash; Elasticsearch, Postgres,
-              Weaviate, ClickHouse, and more. No custom sync code.
-            </div>
-            <div>
-              <strong class="text-slate-700 dark:text-slate-300"
-                >Visual builder</strong
-              >
-              is where you work &mdash; draw the pipeline, add transforms,
-              and deploy. Your pipelines compile to efficient stream
-              processing under the hood.
+
+            <div class="hero-flow-dest">
+              <div class="hero-flow-dest-item">Elasticsearch</div>
+              <div class="hero-flow-dest-item">Redis</div>
+              <div class="hero-flow-dest-item">ClickHouse</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <hr class="section-divider" />
+    <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- ANCHOR EXAMPLE: SEARCH SYNC -->
-    <!-- ============================================ -->
-    <section class="py-20 lg:py-28">
-      <div class="container relative">
-        <div class="max-w-3xl mx-auto">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-6"
-          >
-            Keep your search index in sync &mdash; automatically
-          </h2>
-
-          <div class="mb-8">
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-2"
-            >
-              The problem
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              Your product data lives in Postgres. Your search lives in
-              Elasticsearch. Every API route that updates a product also has
-              to call the search reindex. A new engineer adds an update
-              endpoint and forgets the reindex call &mdash; now search is
-              stale and nobody notices for a week. Or someone builds a bulk
-              import that bypasses the API entirely. Every team with search
-              has this story.
-            </p>
-          </div>
-
-          <div class="mb-8">
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-2"
-            >
-              The pipeline
-            </h3>
-            <!-- ReactFlow Pipeline Diagram -->
-            <div id="flow-search-sync" class="mb-4" style="height: 160px;"></div>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
-            >
-              A row changes in Postgres &mdash; from any source, any route,
-              any bulk import. TypeStream picks it up, extracts the
-              searchable content, and updates Elasticsearch within seconds.
-              Always in sync. No reindex calls sprinkled through your
-              backend. No sync code to maintain.
-            </p>
-          </div>
-
-          <p
-            class="text-lg font-medium text-indigo-600 dark:text-indigo-400 border-l-4 border-indigo-600 dark:border-indigo-400 pl-4"
-          >
-            That's a three-node pipeline. Now watch what happens when you add
-            one more.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <hr class="section-divider" />
-
-    <!-- ============================================ -->
-    <!-- THE UPGRADE: ADD AI ENRICHMENT -->
-    <!-- ============================================ -->
-    <section class="py-20 lg:py-28">
-      <div class="container relative">
-        <div class="max-w-3xl mx-auto">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-6"
-          >
-            Now add semantic search &mdash; one more node
-          </h2>
-
-          <!-- ReactFlow Pipeline Diagram -->
-          <div id="flow-semantic-search" class="mb-6" style="height: 200px;"></div>
-
-          <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-            Same CDC source. Now feeding both keyword search and semantic
-            search. Both always in sync with production. The embedding node
-            generates vectors using your model of choice. The Weaviate sink
-            keeps your vector database current.
-          </p>
-
-          <div
-            class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700"
-          >
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
-            >
-              What this replaces
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              "Add search that understands what users mean" usually means:
-              pick an embedding model, provision a vector database, write a
-              service to generate and store embeddings on every change, and
-              keep it all in sync with production. That's a quarter of
-              engineering work. With TypeStream, you add one node to your
-              existing pipeline.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <hr class="section-divider" />
-
-    <!-- ============================================ -->
-    <!-- ANCHOR EXAMPLE: MATERIALIZED API -->
-    <!-- ============================================ -->
-    <section class="py-20 lg:py-28">
-      <div class="container relative">
-        <div class="max-w-3xl mx-auto">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-6"
-          >
-            Need a fast endpoint? Skip the database and cache layer.
-          </h2>
-
-          <div class="mb-8">
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-2"
-            >
-              The problem
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              You need an endpoint that always returns the latest state
-              &mdash; the current status of a job, the most recent price,
-              a customer's usage count. The usual answer: a Postgres table,
-              a Redis cache, an Express route, and invalidation logic to
-              keep them consistent. That's a lot of plumbing for what should
-              be simple: keep the latest value, serve it on demand.
-            </p>
-          </div>
-
-          <div class="mb-8">
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-2"
-            >
-              The pipeline
-            </h3>
-            <video
-              autoplay
-              muted
-              loop
-              playsinline
-              class="w-full rounded-xl border border-slate-200 dark:border-slate-700 mb-4"
-            >
-              <source src="assets/images/crypto-demo.webm" type="video/webm" />
-              <source src="assets/images/crypto-demo.mp4" type="video/mp4" />
-            </video>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mt-4"
-            >
-              In this example, crypto prices stream in from Coinbase. The
-              pipeline keeps the latest value per trading pair and serves it
-              through an auto-generated endpoint. No Postgres table. No
-              Redis cache. No Express route. The same pattern works for any
-              data that changes constantly &mdash; job statuses, inventory
-              counts, usage metrics &mdash; anything where you'd normally
-              build a database + cache + API stack just to serve the latest
-              value.
-            </p>
-          </div>
-
-          <div
-            class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700"
-          >
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
-            >
-              What this replaces
-            </h3>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              A Postgres table with upsert logic, an Express route to serve
-              it, Redis to make it fast, and invalidation code to keep them
-              all consistent. With TypeStream, the pipeline <em>is</em> the
-              API &mdash; it maintains the result and serves it directly.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <hr class="section-divider" />
-
-    <!-- ============================================ -->
-    <!-- WHAT ELSE YOU CAN BUILD -->
+    <!-- 2. HOW IT WORKS — Three Steps -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-16">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-          >
-            Your pipeline is also your API.
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            Three steps. No infrastructure to learn.
           </h2>
-          <p
-            class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto"
-          >
-            Most approaches push data to a database, then you build an API
-            on top and a cache to make it fast. TypeStream skips all of that
-            &mdash; your pipeline computes the result and serves it through
-            an auto-generated endpoint. No database. No cache. No API
-            server to maintain.
-          </p>
         </div>
 
-        <div class="max-w-4xl mx-auto space-y-20">
-          <!-- Live API from database changes -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Live API from database changes
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Your product catalog changes in Postgres. Normally you'd build
-              an Express route, a Redis cache, and invalidation logic to
-              keep them consistent. With TypeStream, the pipeline watches
-              your table and serves the latest state of every product
-              through an auto-generated endpoint. No API server to build.
-              No cache to invalidate.
-            </p>
-            <!-- ReactFlow Pipeline Diagram -->
-            <div id="flow-live-api" style="height: 160px;"></div>
-            <div
-              class="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700"
-            >
-              <h4
-                class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2"
-              >
-                Same pattern, different data
-              </h4>
+        <div class="max-w-4xl mx-auto space-y-16">
+          <!-- Step 1 -->
+          <div class="flex gap-6 items-start">
+            <div class="step-number mt-1">1</div>
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                Connect your database
+              </h3>
               <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Latest job status per project. Current inventory per SKU.
-                Most recent estimate per customer. Any time you'd normally
-                build a database + cache + API route just to serve the
-                latest value, it's a one-node pipeline instead.
+                Point TypeStream at your existing Postgres or MySQL. It reads
+                the change log &mdash; no triggers, no polling, no app code
+                changes. Your application keeps writing to the database exactly
+                like it does today.
               </p>
             </div>
           </div>
 
-          <!-- Quota / rate-limit tracking -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Quota tracking in real time
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Count API calls per customer in a sliding window. Query the
-              result with a single call: &ldquo;Has this customer exceeded
-              100 requests this minute?&rdquo; No rate-limiting middleware
-              to build. No Redis counters to manage. No INCR/EXPIRE logic.
-              The pipeline maintains the count and serves it directly.
-            </p>
-            <!-- ReactFlow Pipeline Diagram -->
-            <div id="flow-quota-tracking" style="height: 160px;"></div>
-          </div>
+          <!-- Step 2 -->
+          <div class="flex gap-6 items-start">
+            <div class="step-number mt-1">2</div>
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                Define your pipeline
+              </h3>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                Write a short config file that says where data goes and how to
+                transform it. Or pipe commands together in the CLI &mdash;
+                it reads like Unix pipes.
+              </p>
 
-          <!-- Visits by country -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Live visits by country
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Enrich page views with GeoIP, count them per country in a
-              rolling window, and query the result through the auto-generated
-              endpoint. You just built a real-time analytics backend without
-              a time-series database, a cron job, or a single line of
-              application code.
-            </p>
-            <!-- ReactFlow Pipeline Diagram -->
-            <div id="flow-visits-country" style="height: 160px;"></div>
-          </div>
-
-          <!-- Perfect database replicas -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              Perfect database replicas
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Replicate your data to 200+ destinations &mdash; Postgres,
-              MySQL, ClickHouse, and more. Filter and reshape it in flight.
-              No custom sync scripts. No ETL jobs. Changes flow through
-              with millisecond latency.
-            </p>
-            <!-- ReactFlow Pipeline Diagram -->
-            <div id="flow-database-replica" style="height: 160px;"></div>
-          </div>
-
-          <!-- AI classification in-flight -->
-          <div>
-            <h3
-              class="text-2xl font-bold text-slate-900 dark:text-white mb-4"
-            >
-              AI classification in-flight
-            </h3>
-            <p
-              class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6"
-            >
-              Classify every row with an OpenAI prompt as it flows through
-              your pipeline. Auto-tag support tickets by urgency, classify
-              inbound leads, categorize content, or extract entities. Your
-              data arrives enriched and ready &mdash; no background workers,
-              no batch jobs, no queue infrastructure to build.
-            </p>
-            <!-- ReactFlow Pipeline Diagram -->
-            <div id="flow-ai-classification" style="height: 160px;"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <hr class="section-divider" />
-
-    <!-- ============================================ -->
-    <!-- AVAILABLE NODES -->
-    <!-- ============================================ -->
-    <section class="py-20 lg:py-28 bg-slate-50 dark:bg-slate-800/30">
-      <div class="container relative">
-        <div class="max-w-3xl mx-auto text-center mb-12">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-          >
-            What's in the toolbox
-          </h2>
-        </div>
-
-        <div class="max-w-5xl mx-auto space-y-12">
-          <!-- Sources -->
-          <div>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Sources</h3>
-            <div class="node-grid">
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Kafka Topic</div>
-                  <div class="node-desc">
-                    Connect to any Kafka topic directly. Read typed events from your existing streams.
-                  </div>
-                </div>
+              <div class="cli-block mb-3">
+                <span class="path">cat /dev/kafka/local/topics/products</span> <span class="pipe">|</span> <span class="filter-expr">text-extract</span> <span class="pipe">|</span> <span class="filter-expr">elasticsearch</span>
               </div>
-
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Database Table</div>
-                  <div class="node-desc">
-                    Connect to your Postgres or MySQL via CDC. Unwraps Debezium change events into clean row data.
-                  </div>
-                </div>
-              </div>
+              <p class="text-xs text-slate-400 dark:text-slate-500">
+                Or as a config file &mdash; version-controlled, CI/CD friendly, reviewable in a PR.
+              </p>
             </div>
           </div>
 
-          <!-- Transforms -->
-          <div>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Transforms</h3>
-            <div class="node-grid">
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Filter</div>
-                  <div class="node-desc">
-                    Pass through only the events that match a condition on any string key.
-                  </div>
-                </div>
-              </div>
+          <!-- Step 3 -->
+          <div class="flex gap-6 items-start">
+            <div class="step-number mt-1">3</div>
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                Preview and deploy
+              </h3>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                Run <code class="text-indigo-600 dark:text-indigo-400 font-semibold">typestream plan</code>
+                to see exactly what will change &mdash; like terraform for data
+                pipelines. Review the diff, then apply.
+              </p>
 
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">OpenAI Transformer</div>
-                  <div class="node-desc">
-                    Classify, summarize, score, or extract with a prompt. Attach any OpenAI model to your stream.
-                  </div>
-                </div>
-              </div>
+              <div class="terminal-block">
+<span class="prompt">$</span> <span class="cmd">typestream plan search-sync.json</span>
 
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Embedding Generator</div>
-                  <div class="node-desc">
-                    Generate vector embeddings for any text field. Feed downstream vector databases.
-                  </div>
-                </div>
-              </div>
+<span class="output">  search-sync:</span>
+<span class="action-create">    + CREATE pipeline "search-sync"</span>
+<span class="output">      source: postgres://mydb/products</span>
+<span class="output">      steps:  text-extract &rarr; elasticsearch</span>
 
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Text Extractor</div>
-                  <div class="node-desc">
-                    Pull searchable text content from document fields. Prepare data for search indexing.
-                  </div>
-                </div>
-              </div>
+<span class="action-count">  1 pipeline to create, 0 to update, 0 to delete.</span>
 
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">GeoIP Node</div>
-                  <div class="node-desc">
-                    Convert IP addresses to country, city, and region. Every event arrives geo-tagged.
-                  </div>
-                </div>
-              </div>
-
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Count / WindowedCount / Group</div>
-                  <div class="node-desc">
-                    Compute real-time aggregations &mdash; events per minute, rolling counts, grouped metrics.
-                  </div>
-                </div>
-              </div>
-
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Materialized View</div>
-                  <div class="node-desc">
-                    Auto-generates a gRPC endpoint from windowed aggregations. Query your streaming data directly.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sinks -->
-          <div>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Sinks</h3>
-            <div class="node-grid">
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Database Sink</div>
-                  <div class="node-desc">
-                    Write to Postgres, MySQL, Elasticsearch, Weaviate, and 200+ other destinations via Kafka Connect.
-                  </div>
-                </div>
-              </div>
-
-              <div class="node-card">
-                <div class="node-icon">
-                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="node-name">Kafka Topic Sink</div>
-                  <div class="node-desc">
-                    Publish transformed events back to a Kafka topic for downstream consumers.
-                  </div>
-                </div>
+<span class="output">  Run `typestream apply` to execute.</span>
               </div>
             </div>
           </div>
@@ -965,128 +602,478 @@
       </div>
     </section>
 
+    <hr class="section-divider">
+
     <!-- ============================================ -->
-    <!-- PRODUCTION-READY -->
+    <!-- 3. DEFINE PIPELINES YOUR WAY -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-12">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-          >
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            Define pipelines your way
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            Config file, CLI, or visual builder. All three produce the same
+            pipeline. Start wherever feels natural.
+          </p>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+          <!-- Tabs -->
+          <div class="flex border-b border-slate-200 dark:border-slate-700 mb-0" role="tablist">
+            <button class="pipeline-tab active" data-tab="config" role="tab" aria-selected="true">
+              Config file
+              <span class="text-xs ml-1 text-indigo-500">&mdash; primary</span>
+            </button>
+            <button class="pipeline-tab" data-tab="cli" role="tab" aria-selected="false">
+              CLI
+            </button>
+            <button class="pipeline-tab" data-tab="visual" role="tab" aria-selected="false">
+              Visual builder
+            </button>
+          </div>
+
+          <!-- Config panel -->
+          <div class="pipeline-panel active" data-panel="config">
+            <div class="code-block">
+<span class="token-punct">{</span>
+  <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"search-sync"</span><span class="token-punct">,</span>
+  <span class="token-key">"version"</span><span class="token-punct">:</span> <span class="token-string">"1"</span><span class="token-punct">,</span>
+  <span class="token-key">"graph"</span><span class="token-punct">: {</span>
+    <span class="token-key">"nodes"</span><span class="token-punct">: [</span>
+      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"streamSource"</span><span class="token-punct">: {</span> <span class="token-key">"dataStream"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/products"</span> <span class="token-punct">},</span> <span class="token-key">"encoding"</span><span class="token-punct">:</span> <span class="token-string">"AVRO"</span><span class="token-punct">,</span> <span class="token-key">"unwrapCdc"</span><span class="token-punct">:</span> <span class="token-string">true</span> <span class="token-punct">} },</span>
+      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"extract-1"</span><span class="token-punct">,</span> <span class="token-key">"textExtractor"</span><span class="token-punct">: {} },</span>
+      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span><span class="token-punct">,</span> <span class="token-key">"sink"</span><span class="token-punct">: {</span> <span class="token-key">"output"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/products_search"</span> <span class="token-punct">} } }</span>
+    <span class="token-punct">],</span>
+    <span class="token-key">"edges"</span><span class="token-punct">: [</span>
+      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"extract-1"</span> <span class="token-punct">},</span>
+      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"extract-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span> <span class="token-punct">}</span>
+    <span class="token-punct">]</span>
+  <span class="token-punct">}</span>
+<span class="token-punct">}</span>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
+              Version-controlled. CI/CD friendly. Review in a PR.
+            </div>
+          </div>
+
+          <!-- CLI panel -->
+          <div class="pipeline-panel" data-panel="cli">
+            <div class="cli-block" style="padding: 2rem 1.5rem;">
+              <span class="path">cat /dev/kafka/local/topics/products</span> <span class="pipe">|</span> <span class="filter-expr">text-extract</span> <span class="pipe">|</span> <span class="filter-expr">elasticsearch</span>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
+              Pipe commands together. Great for prototyping and exploration.
+            </div>
+          </div>
+
+          <!-- Visual panel -->
+          <div class="pipeline-panel" data-panel="visual">
+            <div class="visual-builder-video">
+              <video autoplay loop muted playsinline class="w-full rounded-lg shadow-md">
+                <source src="/assets/images/hero-demo.webm" type="video/webm">
+                <source src="/assets/images/hero-demo.mp4" type="video/mp4">
+              </video>
+              <p class="text-sm text-slate-500 dark:text-slate-400 text-center mt-3">
+                Drag, drop, connect. Good for exploring what's possible.
+              </p>
+            </div>
+          </div>
+
+          <p class="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+            All three produce the same pipeline. Start in the visual builder to
+            explore, export to a config file for production. Or write config from
+            day one &mdash; your call.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ============================================ -->
+    <!-- 4. RECIPES — Common Patterns -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28 bg-slate-50 dark:bg-slate-800/30">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            Common patterns
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            Deploy in minutes, not quarters.
+          </p>
+        </div>
+
+        <div class="max-w-6xl mx-auto space-y-10">
+          <!-- Row 1: Problems every developer has -->
+          <div>
+            <span class="row-label bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 mb-4 block w-fit">
+              Every developer
+            </span>
+            <div class="grid md:grid-cols-3 gap-5">
+              <!-- Keep search results fresh -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Keep search results fresh</div>
+                <p class="recipe-card-pain">
+                  A product changes in your database. Your search results still
+                  show the old name, the old price, the old description &mdash;
+                  until the next reindex runs.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream keeps Elasticsearch in sync with your database in
+                  real time. Every change is indexed within seconds. No cron job,
+                  no reindex script, no stale results.
+                </p>
+              </div>
+
+              <!-- Stop sensitive data from leaking -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Stop sensitive data from leaking</div>
+                <p class="recipe-card-pain">
+                  Customer emails, credit card numbers, and SSNs flow through
+                  your pipeline into analytics warehouses where they shouldn't
+                  be. You find out during an audit.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream scans every record in flight, detects PII patterns,
+                  and either redacts or blocks before the data reaches your
+                  warehouse. Compliance built into the pipeline, not bolted on after.
+                </p>
+              </div>
+
+              <!-- Real-time dashboards -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Real-time dashboards, not nightly batches</div>
+                <p class="recipe-card-pain">
+                  Your team makes decisions on dashboards that are 24 hours
+                  stale. By the time you see a spike, it already happened
+                  yesterday.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream streams database changes directly into your analytics
+                  warehouse. ClickHouse, Snowflake, BigQuery &mdash; your
+                  dashboards update as fast as your data changes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: AI-ready stack -->
+          <div>
+            <span class="row-label bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 mb-4 block w-fit">
+              AI-ready stack
+            </span>
+            <div class="grid md:grid-cols-3 gap-5">
+              <!-- Semantic search -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Add semantic search to any database</div>
+                <p class="recipe-card-pain">
+                  Your users type natural language queries, but your database
+                  only does exact match or LIKE&nbsp;'%keyword%'. Building
+                  semantic search means standing up a vector database, writing an
+                  embedding pipeline, and keeping it in sync.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream generates embeddings from your database content and
+                  pushes them to Weaviate or any vector store. As your data
+                  changes, the embeddings update automatically. Semantic search
+                  without the plumbing.
+                </p>
+              </div>
+
+              <!-- AI classification -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Classify and route with AI</div>
+                <p class="recipe-card-pain">
+                  Every support ticket needs to be categorized. Every document
+                  needs a sentiment score. You're either doing it manually or
+                  building a custom ML pipeline.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream runs every record through an LLM in flight.
+                  Categorize, score, extract, summarize &mdash; then route the
+                  results to your warehouse or downstream system. Define the
+                  prompt in your pipeline config.
+                </p>
+              </div>
+
+              <!-- REST APIs -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Generate REST APIs from your data</div>
+                <p class="recipe-card-pain">
+                  You need a fast endpoint that serves the current state of
+                  something &mdash; live prices, user profiles, inventory counts.
+                  So you build an API, a database query, a cache layer, and a
+                  cache invalidation strategy.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream materializes a live view from your data stream and
+                  serves it as an endpoint. No separate API server, no cache, no
+                  database query. The endpoint updates as fast as your data
+                  changes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Data infrastructure patterns -->
+          <div>
+            <span class="row-label bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 mb-4 block w-fit">
+              Data infrastructure
+            </span>
+            <div class="grid md:grid-cols-3 gap-5">
+              <!-- Data warehouse replication -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Replicate to your data warehouse</div>
+                <p class="recipe-card-pain">
+                  Getting data from your production database into your warehouse
+                  means setting up an ETL tool, scheduling jobs, handling
+                  failures, and hoping nothing drifts.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream streams changes from your production database
+                  directly into your warehouse. Every insert, update, and delete
+                  arrives in seconds. No ETL tool, no batch schedule, no drift.
+                </p>
+              </div>
+
+              <!-- Cross-database sync -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Sync databases without custom code</div>
+                <p class="recipe-card-pain">
+                  You need a subset of your Postgres data in another database
+                  &mdash; maybe MySQL for a legacy system, maybe a read replica
+                  with different columns. So you write a sync script and pray it
+                  doesn't break.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream replicates, filters, and transforms between databases
+                  in real time. Define what goes where in a config file. Change it
+                  when your needs change.
+                </p>
+              </div>
+
+              <!-- Enrich data -->
+              <div class="recipe-card">
+                <div class="recipe-card-title">Enrich data as it flows</div>
+                <p class="recipe-card-pain">
+                  Your raw data is missing context. IP addresses without
+                  locations. Product IDs without names. Order records without
+                  customer details. You enrich in batch jobs that run overnight.
+                </p>
+                <p class="recipe-card-solution">
+                  TypeStream enriches records in flight &mdash; geo-locate IPs,
+                  join with reference data, resolve IDs to names. Every record
+                  arrives at its destination already enriched. No batch job, no
+                  overnight wait.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ============================================ -->
+    <!-- 5. WORKS WITH WHAT YOU ALREADY HAVE -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-10">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            You don't rip out your stack. You extend it.
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mb-2">
+            TypeStream connects to your existing database. Your application
+            doesn't change &mdash; it keeps writing to Postgres or MySQL exactly
+            like it does today. TypeStream watches the change log and handles
+            everything downstream.
+          </p>
+          <p class="text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            Start with one pipeline. See it work. Add more when you're ready.
+            No big migration, no rewrite, no new dependencies in your application
+            code.
+          </p>
+        </div>
+
+        <!-- Integration logos -->
+        <div class="max-w-4xl mx-auto">
+          <div class="text-center mb-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Sources</span>
+          </div>
+          <div class="integration-logos mb-8">
+            <div class="integration-logo">
+              <svg class="w-5 h-5 text-[#336791]" viewBox="0 0 24 24" fill="currentColor"><path d="M17.128 0a10.134 10.134 0 0 0-2.755.403l-.063.02A10.922 10.922 0 0 0 12.6.258C11.422.238 10.41.524 9.594 1 8.79.721 7.122.24 5.364.336 4.14.403 2.804.775 1.814 1.82.827 2.86.305 4.482.415 6.682c.03.607.203 1.597.49 2.879s.69 2.783 1.193 4.152c.503 1.37 1.054 2.6 1.915 3.436.43.419.96.742 1.575.742.478 0 .903-.182 1.308-.47.405-.287.782-.678 1.15-1.12l.087-.12c.226-.066.47-.148.726-.258a7.153 7.153 0 0 0 .662.62 4.946 4.946 0 0 0 1.27.722c.11.045.222.084.337.12-.16.55-.237 1.13-.127 1.73.063.354.203.72.5 1.009.297.29.716.47 1.248.47a7.1 7.1 0 0 0 1.381-.152c.655-.137 1.398-.354 2.187-.71l.003-.001c.208-.093.397-.175.584-.28.17-.098.336-.212.479-.37.143-.157.236-.365.218-.594a.914.914 0 0 0-.09-.294 3.282 3.282 0 0 0-.106-.214l-.011-.019-.01-.016c-.36-.58-.464-1.27-.3-1.974.087-.376.244-.733.449-1.054.067-.104.14-.207.22-.31a5.48 5.48 0 0 0 .691.06c1.12 0 2.222-.37 3.087-1.035a4.74 4.74 0 0 0 1.51-2.028c.324-.833.436-1.768.316-2.76-.118-.983-.462-1.85-.942-2.528-.48-.678-1.078-1.17-1.676-1.513-.597-.344-1.172-.547-1.578-.612a2.19 2.19 0 0 0-.297-.03Z"/></svg>
+              PostgreSQL
+            </div>
+            <div class="integration-logo">
+              <svg class="w-5 h-5 text-[#4479A1]" viewBox="0 0 24 24" fill="currentColor"><path d="M16.405 5.501c-.115 0-.193.014-.274.033v.013h.014c.054.104.146.18.214.273.054.107.1.214.154.32l.014-.015c.094-.066.14-.172.14-.333-.04-.047-.046-.094-.08-.14-.04-.067-.126-.1-.18-.153zM5.77 18.695h-.033a2.083 2.083 0 0 0-.313-.013c-.12.013-.18.093-.193.24-.02.2.06.327.2.393.087.04.234.014.32-.04.133-.073.193-.2.193-.346 0-.1-.06-.173-.133-.233z"/><path d="M23.763 6.886c-.073-.033-.153-.013-.227.027-.04.027-.067.08-.1.12-.067.113-.127.153-.26.18l-.086.027a.269.269 0 0 0-.127.08c-.014.014-.04.04-.04.074.014 0 .027-.014.04-.014.054-.014.094-.04.153-.014.007 0 .04.02.054.02.054.014.127.034.18 0 .054-.027.08-.087.1-.147.014-.06.033-.1.073-.14.027-.027.087-.034.12-.067.007-.007.014-.02.027-.02.007-.014.007-.04.013-.054.02-.013.054-.02.06-.047 0-.04-.026-.06-.066-.06zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 1.96c5.535 0 10.04 4.505 10.04 10.04S17.535 22.04 12 22.04 1.96 17.535 1.96 12 6.465 1.96 12 1.96z"/></svg>
+              MySQL
+            </div>
+          </div>
+
+          <div class="text-center mb-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Destinations</span>
+          </div>
+          <div class="integration-logos mb-6">
+            <div class="integration-logo">Elasticsearch</div>
+            <div class="integration-logo">Redis</div>
+            <div class="integration-logo">ClickHouse</div>
+            <div class="integration-logo">Weaviate</div>
+            <div class="integration-logo">Snowflake</div>
+            <div class="integration-logo">S3</div>
+            <div class="integration-logo">BigQuery</div>
+          </div>
+          <div class="text-center">
+            <a href="integrations.html" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+              See all 200+ integrations &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ============================================ -->
+    <!-- 6. NOT A WORKFLOW TOOL -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            Data infrastructure, not workflow automation.
+          </h2>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+          <div class="overflow-x-auto mb-8">
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th>Workflow tools (n8n, Zapier)</th>
+                  <th>TypeStream</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Trigger: &ldquo;when X happens in App A, do Y in App B&rdquo;</td>
+                  <td>Trigger: every data change, continuously</td>
+                </tr>
+                <tr>
+                  <td>Runs discrete jobs on events</td>
+                  <td>Runs continuous streaming pipelines</td>
+                </tr>
+                <tr>
+                  <td>Connects SaaS apps via APIs</td>
+                  <td>Connects databases via change data capture</td>
+                </tr>
+                <tr>
+                  <td>Best for: business process automation</td>
+                  <td>Best for: keeping data systems in sync</td>
+                </tr>
+                <tr>
+                  <td>Your data transits through a third party</td>
+                  <td>Self-hosted. Your data never leaves.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+              If you need &ldquo;when a Slack message arrives, create a Jira
+              ticket&rdquo; &mdash; use n8n. If you need &ldquo;when a row
+              changes in Postgres, update Elasticsearch, bust the Redis cache,
+              and refresh the analytics warehouse&rdquo; &mdash; that's TypeStream.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ============================================ -->
+    <!-- 7. BUILT FOR PRODUCTION -->
+    <!-- ============================================ -->
+    <section class="py-20 lg:py-28">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-12">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
             Built for production, not just demos
           </h2>
         </div>
 
         <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
-          <!-- Backpressure and retries -->
+          <!-- Plan before you deploy -->
           <div>
-            <div
-              class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4"
-            >
-              <svg
-                class="w-6 h-6 text-indigo-600 dark:text-indigo-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
             </div>
-            <h3
-              class="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            >
-              Backpressure and retries
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Plan before you deploy
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              OpenAI returns a 429. Elasticsearch is temporarily down.
-              TypeStream handles rate limiting, retries, and queueing
-              automatically. No try/catch logic to write. No dead letter
-              queues to build. Your pipeline adapts and you don't get paged.
+              Every change goes through <code class="text-indigo-600 dark:text-indigo-400">typestream plan</code>
+              first. See exactly what pipelines will be created, updated, or
+              deleted &mdash; before anything runs. Like terraform for data
+              pipelines. Review in CI, approve in a PR.
             </p>
           </div>
 
-          <!-- Pipelines are code -->
+          <!-- Delivery guarantees -->
           <div>
-            <div
-              class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4"
-            >
-              <svg
-                class="w-6 h-6 text-indigo-600 dark:text-indigo-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                />
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
               </svg>
             </div>
-            <h3
-              class="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            >
-              Pipelines are code
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Backpressure and delivery guarantees
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Your pipelines are stored as code. Version control them. Review
-              changes in pull requests. Deploy through your CI/CD pipeline. No
-              clicking through a UI in production.
+              If Elasticsearch is slow or Redis is down, TypeStream queues and
+              retries automatically. No data loss, no duplicate processing.
+              Events are delivered exactly once.
             </p>
           </div>
 
-          <!-- Observability included -->
+          <!-- Observability -->
           <div>
-            <div
-              class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4"
-            >
-              <svg
-                class="w-6 h-6 text-indigo-600 dark:text-indigo-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
               </svg>
             </div>
-            <h3
-              class="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            >
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Observability included
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              See what's flowing, what's stuck, and why. Metrics, logs, and
-              traces are built in. When something goes wrong, you know where to
-              look.
+              Metrics, logs, and traces out of the box. Know how many events per
+              second each pipeline processes, where bottlenecks are, and when
+              something fails &mdash; before your users notice.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <hr class="section-divider" />
+    <hr class="section-divider">
 
     <!-- ============================================ -->
-    <!-- SELF-HOSTED -->
+    <!-- 8. RUNS IN YOUR INFRASTRUCTURE -->
     <!-- ============================================ -->
     <section class="py-20 lg:py-28">
       <div class="container relative">
         <div class="max-w-3xl mx-auto text-center mb-12">
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4"
-          >
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
             Runs in your infrastructure. Your data never leaves.
           </h2>
         </div>
@@ -1094,65 +1081,34 @@
         <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
           <!-- Self-hosted -->
           <div>
-            <div
-              class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center mb-4"
-            >
-              <svg
-                class="w-6 h-6 text-green-600 dark:text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                />
+            <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
               </svg>
             </div>
-            <h3
-              class="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            >
-              Self-hosted, your data stays put
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Self-hosted
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Deploy with a single <code>docker compose up</code> or a Helm
-              chart to your Kubernetes cluster. Your data never leaves your
-              environment. No third-party processing. Meet compliance
-              requirements by default.
+              Docker Compose for dev, Helm for production. Runs on your
+              infrastructure, your cloud, your rules. No SaaS dependency, no data
+              leaving your network.
             </p>
           </div>
 
           <!-- Source available -->
           <div>
-            <div
-              class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center mb-4"
-            >
-              <svg
-                class="w-6 h-6 text-purple-600 dark:text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                />
+            <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
               </svg>
             </div>
-            <h3
-              class="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-            >
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Source available (BSL)
             </h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Inspect every line of code. No black boxes. The Business Source
-              License lets you use TypeStream freely for internal use &mdash;
-              and converts to full open source after each release. No vendor
-              lock-in.
+              Read every line of code. Business Source License means no vendor
+              lock-in. If TypeStream disappears tomorrow, you still have the code.
             </p>
           </div>
         </div>
@@ -1160,7 +1116,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- BOTTOM CTA -->
+    <!-- 9. BOTTOM CTA -->
     <!-- ============================================ -->
     <section
       class="py-20 lg:py-28"
@@ -1169,25 +1125,24 @@
       <div class="container relative">
         <div class="max-w-2xl mx-auto text-center">
           <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">
-            See it in action. Tell us what you'd build.
+            See it in action.
           </h2>
           <p class="text-indigo-100 text-lg mb-10 leading-relaxed">
-            Try the live demo, explore the repo, or tell us about your use
-            case. We're building TypeStream for teams like yours and your
-            feedback shapes what we build next.
+            Pick a pattern above and try it on your database. Or tell us what
+            you'd build &mdash; we'll help you get there.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
             <a
-              href="mailto:hello@typestream.io"
+              href="https://demo.typestream.io/jobs/new"
               class="px-8 py-4 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors"
             >
-              Talk to us
+              Try the live demo
             </a>
             <a
-              href="https://demo.typestream.io/jobs/new"
+              href="mailto:hello@typestream.io"
               class="px-8 py-4 bg-indigo-400/30 text-white font-semibold rounded-xl border border-white/20 hover:bg-indigo-400/50 transition-colors"
             >
-              Try the live demo
+              Talk to us
             </a>
           </div>
           <a
@@ -1204,230 +1159,26 @@
 
     {{> script-file}}
 
-    <!-- React & ReactFlow via CDN -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js" crossorigin></script>
-    <link href="https://unpkg.com/reactflow@11.11.4/dist/style.css" rel="stylesheet" />
-
-    <!-- ReactFlow Pipeline Components -->
+    <!-- Pipeline tab switching -->
     <script>
-      // ReactFlow v11 UMD exposes on window.ReactFlow
-      const { ReactFlow, Background, useNodesState, useEdgesState, Handle, Position } = window.ReactFlowModule || window.reactflow || window.ReactFlow || {};
-
-      // Custom Node Component for pipeline nodes
-      function PipelineNode({ data }) {
-        const nodeStyle = {
-          background: data.error ? 'white' : 'white',
-          border: data.error ? '2px solid #ef4444' : '1px solid #e2e8f0',
-          borderRadius: '12px',
-          padding: '14px 20px',
-          minWidth: '160px',
-          boxShadow: data.error ? '0 0 12px rgba(239, 68, 68, 0.3)' : '0 4px 12px rgba(0,0,0,0.1)',
-        };
-
-        const headerStyle = {
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          marginBottom: '4px',
-        };
-
-        const iconStyle = {
-          width: '24px',
-          height: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '16px',
-        };
-
-        const titleStyle = {
-          fontWeight: '600',
-          fontSize: '14px',
-          color: data.error ? '#ef4444' : '#1e293b',
-        };
-
-        const descStyle = {
-          fontSize: '11px',
-          color: '#64748b',
-          marginTop: '4px',
-        };
-
-        const handleColor = data.error ? '#ef4444' : '#6366f1';
-
-        return React.createElement('div', { style: nodeStyle },
-          React.createElement(Handle, {
-            type: 'target',
-            position: Position.Left,
-            style: { background: handleColor, width: 8, height: 8 }
-          }),
-          React.createElement('div', { style: headerStyle },
-            React.createElement('span', { style: iconStyle }, data.icon || '📦'),
-            React.createElement('span', { style: titleStyle }, data.label)
-          ),
-          data.description && React.createElement('div', { style: descStyle }, data.description),
-          React.createElement(Handle, {
-            type: 'source',
-            position: Position.Right,
-            style: { background: handleColor, width: 8, height: 8 }
-          })
-        );
-      }
-
-      const nodeTypes = {
-        pipeline: PipelineNode,
-      };
-
-      // Pipeline Flow Component
-      function PipelineFlow({ nodes: initialNodes, edges: initialEdges, height = 180 }) {
-        const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-        const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-        return React.createElement('div', { style: { height: height + 'px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' } },
-          React.createElement(ReactFlow, {
-            nodes: nodes,
-            edges: edges,
-            onNodesChange: onNodesChange,
-            onEdgesChange: onEdgesChange,
-            nodeTypes: nodeTypes,
-            fitView: true,
-            fitViewOptions: { padding: 0.2 },
-            proOptions: { hideAttribution: true },
-            nodesDraggable: false,
-            nodesConnectable: false,
-            elementsSelectable: false,
-            panOnDrag: false,
-            zoomOnScroll: false,
-            zoomOnPinch: false,
-            zoomOnDoubleClick: false,
-            defaultEdgeOptions: { type: 'smoothstep', animated: true },
-          },
-            React.createElement(Background, { variant: 'dots', gap: 16, size: 1, color: '#cbd5e1' })
-          )
-        );
-      }
-
-      // Define pipeline configurations (no group boxes, just nodes)
-      const pipelines = {
-        // Search Sync: Postgres CDC → Text Extraction → Elasticsearch
-        'search-sync': {
-          height: 160,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🐘', label: 'Postgres CDC', description: 'Products table' } },
-            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '📝', label: 'Text Extract', description: 'Pull content' } },
-            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '🔍', label: 'Elasticsearch', description: 'Always in sync' } },
-          ],
-          edges: [
-            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-          ]
-        },
-
-        // Semantic Search: CDC → Text + Embedding branches
-        'semantic-search': {
-          height: 200,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 55 }, data: { icon: '🐘', label: 'Postgres CDC', description: 'Products table' } },
-            { id: '2a', type: 'pipeline', position: { x: 220, y: 0 }, data: { icon: '📝', label: 'Text Extract', description: 'Keywords' } },
-            { id: '2b', type: 'pipeline', position: { x: 220, y: 110 }, data: { icon: '🔮', label: 'Embedding', description: 'Vectors' } },
-            { id: '3a', type: 'pipeline', position: { x: 440, y: 0 }, data: { icon: '🔍', label: 'Elasticsearch', description: 'Keyword search' } },
-            { id: '3b', type: 'pipeline', position: { x: 440, y: 110 }, data: { icon: '🧠', label: 'Weaviate', description: 'Semantic search' } },
-          ],
-          edges: [
-            { id: 'e1-2a', source: '1', target: '2a', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e1-2b', source: '1', target: '2b', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2a-3a', source: '2a', target: '3a', type: 'smoothstep', animated: true, style: { stroke: '#eab308', strokeWidth: 2 } },
-            { id: 'e2b-3b', source: '2b', target: '3b', type: 'smoothstep', animated: true, style: { stroke: '#8b5cf6', strokeWidth: 2 } },
-          ]
-        },
-
-        // Live API: CDC → Materialized View → gRPC
-        'live-api': {
-          height: 160,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🐘', label: 'Postgres CDC', description: 'Products table' } },
-            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '💾', label: 'Materialize', description: 'key: product_id' } },
-            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '🌐', label: 'gRPC Endpoint', description: '/products/{id}' } },
-          ],
-          edges: [
-            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-          ]
-        },
-
-        // Quota Tracking: Kafka → Windowed Count → gRPC
-        'quota-tracking': {
-          height: 160,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '📊', label: 'API Events', description: 'Kafka topic' } },
-            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '⏱️', label: 'Windowed Count', description: '60s window' } },
-            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '🌐', label: 'gRPC Endpoint', description: '/quota/{customer}' } },
-          ],
-          edges: [
-            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#f59e0b', strokeWidth: 2 } },
-          ]
-        },
-
-        // Visits by Country: Page Views → GeoIP → Count → gRPC
-        'visits-country': {
-          height: 160,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '👁️', label: 'Page Views', description: 'Kafka topic' } },
-            { id: '2a', type: 'pipeline', position: { x: 180, y: 40 }, data: { icon: '🌍', label: 'GeoIP', description: 'ip → country' } },
-            { id: '2b', type: 'pipeline', position: { x: 360, y: 40 }, data: { icon: '📊', label: 'Count', description: 'by country' } },
-            { id: '3', type: 'pipeline', position: { x: 540, y: 40 }, data: { icon: '🌐', label: 'gRPC', description: '/visits' } },
-          ],
-          edges: [
-            { id: 'e1-2a', source: '1', target: '2a', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2a-2b', source: '2a', target: '2b', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2b-3', source: '2b', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#06b6d4', strokeWidth: 2 } },
-          ]
-        },
-
-        // Database Replica: Postgres → Filter → Destination
-        'database-replica': {
-          height: 160,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🐘', label: 'Postgres', description: 'CDC stream' } },
-            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '🔍', label: 'Filter', description: 'status = active' } },
-            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '📊', label: 'ClickHouse', description: 'Analytics' } },
-          ],
-          edges: [
-            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#22c55e', strokeWidth: 2 } },
-          ]
-        },
-
-        // AI Classification: CDC → OpenAI → Destination
-        'ai-classification': {
-          height: 160,
-          nodes: [
-            { id: '1', type: 'pipeline', position: { x: 0, y: 40 }, data: { icon: '🎫', label: 'Tickets', description: 'CDC stream' } },
-            { id: '2', type: 'pipeline', position: { x: 220, y: 40 }, data: { icon: '🤖', label: 'OpenAI', description: 'Classify urgency' } },
-            { id: '3', type: 'pipeline', position: { x: 440, y: 40 }, data: { icon: '📊', label: 'Warehouse', description: 'Pre-tagged' } },
-          ],
-          edges: [
-            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
-            { id: 'e2-3', source: '2', target: '3', type: 'smoothstep', animated: true, style: { stroke: '#ec4899', strokeWidth: 2 } },
-          ]
-        },
-      };
-
-      // Mount ReactFlow components after DOM loads
       document.addEventListener('DOMContentLoaded', function() {
-        Object.keys(pipelines).forEach(id => {
-          const container = document.getElementById('flow-' + id);
-          if (container) {
-            const config = pipelines[id];
-            const root = ReactDOM.createRoot(container);
-            root.render(React.createElement(PipelineFlow, {
-              nodes: config.nodes,
-              edges: config.edges,
-              height: config.height || 200,
-            }));
-          }
+        var tabs = document.querySelectorAll('.pipeline-tab');
+        var panels = document.querySelectorAll('.pipeline-panel');
+
+        tabs.forEach(function(tab) {
+          tab.addEventListener('click', function() {
+            var target = this.getAttribute('data-tab');
+
+            tabs.forEach(function(t) {
+              t.classList.remove('active');
+              t.setAttribute('aria-selected', 'false');
+            });
+            panels.forEach(function(p) { p.classList.remove('active'); });
+
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            document.querySelector('[data-panel="' + target + '"]').classList.add('active');
+          });
         });
       });
     </script>
