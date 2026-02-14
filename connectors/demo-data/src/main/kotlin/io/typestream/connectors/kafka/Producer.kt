@@ -14,7 +14,6 @@ import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.StringSerializer
 import java.util.concurrent.TimeUnit
 
 class Producer(private val config: Config) : MessageSender {
@@ -26,7 +25,7 @@ class Producer(private val config: Config) : MessageSender {
     init {
         val producerProps = mapOf(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to config.bootstrapServers,
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java.name,
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java.name,
             ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java.name,
             KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG to config.schemaRegistryUrl,
             ProducerConfig.ACKS_CONFIG to "all",
