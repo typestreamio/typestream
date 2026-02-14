@@ -49,57 +49,57 @@ internal class NodeContractTest {
 
         @JvmStatic
         fun allNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("Count", Node.Count("count-1")),
-            Arguments.of("WindowedCount", Node.WindowedCount("wc-1", 60)),
-            Arguments.of("Filter", Node.Filter("filter-1", false, Predicate.matches(".*"))),
-            Arguments.of("Group", Node.Group("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
-            Arguments.of("Join", Node.Join("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
-            Arguments.of("Map", Node.Map("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
-            Arguments.of("NoOp", Node.NoOp("noop-1")),
-            Arguments.of("ShellSource", Node.ShellSource("shell-1", listOf(sampleDataStream))),
-            Arguments.of("StreamSource", Node.StreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
-            Arguments.of("Each", Node.Each("each-1") { _ -> }),
-            Arguments.of("Sink", Node.Sink("sink-1", sampleDataStream, Encoding.AVRO)),
-            Arguments.of("GeoIp", Node.GeoIp("geoip-1", "ip_address", "country_code")),
-            Arguments.of("Inspector", Node.Inspector("inspector-1", "test-label")),
-            Arguments.of("ReduceLatest", Node.ReduceLatest("reduce-1")),
-            Arguments.of("TextExtractor", Node.TextExtractor("text-1", "file_path", "extracted_text")),
-            Arguments.of("EmbeddingGenerator", Node.EmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
-            Arguments.of("OpenAiTransformer", Node.OpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
+            Arguments.of("NodeCount", NodeCount("count-1")),
+            Arguments.of("NodeWindowedCount", NodeWindowedCount("wc-1", 60)),
+            Arguments.of("NodeFilter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
+            Arguments.of("NodeGroup", NodeGroup("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
+            Arguments.of("NodeJoin", NodeJoin("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
+            Arguments.of("NodeMap", NodeMap("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
+            Arguments.of("NodeNoOp", NodeNoOp("noop-1")),
+            Arguments.of("NodeShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
+            Arguments.of("NodeStreamSource", NodeStreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
+            Arguments.of("NodeEach", NodeEach("each-1") { _ -> }),
+            Arguments.of("NodeSink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
+            Arguments.of("NodeGeoIp", NodeGeoIp("geoip-1", "ip_address", "country_code")),
+            Arguments.of("NodeInspector", NodeInspector("inspector-1", "test-label")),
+            Arguments.of("NodeReduceLatest", NodeReduceLatest("reduce-1")),
+            Arguments.of("NodeTextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
+            Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
+            Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
         )
 
         @JvmStatic
         fun transformNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("Count", Node.Count("count-1")),
-            Arguments.of("WindowedCount", Node.WindowedCount("wc-1", 60)),
-            Arguments.of("Filter", Node.Filter("filter-1", false, Predicate.matches(".*"))),
-            Arguments.of("Group", Node.Group("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
-            Arguments.of("Join", Node.Join("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
-            Arguments.of("Map", Node.Map("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
-            Arguments.of("Each", Node.Each("each-1") { _ -> }),
-            Arguments.of("GeoIp", Node.GeoIp("geoip-1", "ip_address", "country_code")),
-            Arguments.of("Inspector", Node.Inspector("inspector-1", "test-label")),
-            Arguments.of("ReduceLatest", Node.ReduceLatest("reduce-1")),
-            Arguments.of("TextExtractor", Node.TextExtractor("text-1", "file_path", "extracted_text")),
-            Arguments.of("EmbeddingGenerator", Node.EmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
-            Arguments.of("OpenAiTransformer", Node.OpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
-            Arguments.of("Sink", Node.Sink("sink-1", sampleDataStream, Encoding.AVRO)),
+            Arguments.of("NodeCount", NodeCount("count-1")),
+            Arguments.of("NodeWindowedCount", NodeWindowedCount("wc-1", 60)),
+            Arguments.of("NodeFilter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
+            Arguments.of("NodeGroup", NodeGroup("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
+            Arguments.of("NodeJoin", NodeJoin("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
+            Arguments.of("NodeMap", NodeMap("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
+            Arguments.of("NodeEach", NodeEach("each-1") { _ -> }),
+            Arguments.of("NodeGeoIp", NodeGeoIp("geoip-1", "ip_address", "country_code")),
+            Arguments.of("NodeInspector", NodeInspector("inspector-1", "test-label")),
+            Arguments.of("NodeReduceLatest", NodeReduceLatest("reduce-1")),
+            Arguments.of("NodeTextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
+            Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
+            Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
+            Arguments.of("NodeSink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
         )
 
         @JvmStatic
         fun sourceNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("ShellSource", Node.ShellSource("shell-1", listOf(sampleDataStream))),
-            Arguments.of("StreamSource", Node.StreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
+            Arguments.of("NodeShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
+            Arguments.of("NodeStreamSource", NodeStreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
         )
 
         @JvmStatic
         fun shellExecutableNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("Filter", Node.Filter("filter-1", false, Predicate.matches(".*"))),
-            Arguments.of("Map", Node.Map("map-1") { kv -> kv }),
-            Arguments.of("Each", Node.Each("each-1") { _ -> }),
-            Arguments.of("NoOp", Node.NoOp("noop-1")),
-            Arguments.of("ShellSource", Node.ShellSource("shell-1", listOf(sampleDataStream))),
-            Arguments.of("Inspector", Node.Inspector("inspector-1", "test-label")),
+            Arguments.of("NodeFilter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
+            Arguments.of("NodeMap", NodeMap("map-1") { kv -> kv }),
+            Arguments.of("NodeEach", NodeEach("each-1") { _ -> }),
+            Arguments.of("NodeNoOp", NodeNoOp("noop-1")),
+            Arguments.of("NodeShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
+            Arguments.of("NodeInspector", NodeInspector("inspector-1", "test-label")),
         )
     }
 
@@ -165,9 +165,9 @@ internal class NodeContractTest {
 
     @Test
     fun `Filter round-trips predicate expression`() {
-        val original = Node.Filter("f1", true, Predicate.matches("hello"))
+        val original = NodeFilter("f1", true, Predicate.matches("hello"))
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.Filter
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeFilter
 
         assertThat(roundTripped.byKey).isEqualTo(original.byKey)
         // Predicate round-trips through expression string
@@ -176,7 +176,7 @@ internal class NodeContractTest {
 
     @Test
     fun `StreamSource round-trips encoding and unwrapCdc`() {
-        val original = Node.StreamSource("s1", sampleDataStream, Encoding.JSON, true)
+        val original = NodeStreamSource("s1", sampleDataStream, Encoding.JSON, true)
         val proto = original.toProto()
 
         assertThat(proto.streamSource.unwrapCdc).isTrue()
@@ -185,18 +185,18 @@ internal class NodeContractTest {
 
     @Test
     fun `WindowedCount round-trips window size`() {
-        val original = Node.WindowedCount("wc1", 300)
+        val original = NodeWindowedCount("wc1", 300)
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.WindowedCount
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeWindowedCount
 
         assertThat(roundTripped.windowSizeSeconds).isEqualTo(300)
     }
 
     @Test
     fun `GeoIp round-trips field configuration`() {
-        val original = Node.GeoIp("g1", "user_ip", "country")
+        val original = NodeGeoIp("g1", "user_ip", "country")
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.GeoIp
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeGeoIp
 
         assertThat(roundTripped.ipField).isEqualTo("user_ip")
         assertThat(roundTripped.outputField).isEqualTo("country")
@@ -204,9 +204,9 @@ internal class NodeContractTest {
 
     @Test
     fun `EmbeddingGenerator round-trips model and fields`() {
-        val original = Node.EmbeddingGenerator("e1", "description", "vector", "text-embedding-3-small")
+        val original = NodeEmbeddingGenerator("e1", "description", "vector", "text-embedding-3-small")
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.EmbeddingGenerator
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeEmbeddingGenerator
 
         assertThat(roundTripped.textField).isEqualTo("description")
         assertThat(roundTripped.outputField).isEqualTo("vector")
@@ -215,9 +215,9 @@ internal class NodeContractTest {
 
     @Test
     fun `OpenAiTransformer round-trips prompt and model`() {
-        val original = Node.OpenAiTransformer("o1", "Summarize", "summary", "gpt-4o-mini")
+        val original = NodeOpenAiTransformer("o1", "Summarize", "summary", "gpt-4o-mini")
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.OpenAiTransformer
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeOpenAiTransformer
 
         assertThat(roundTripped.prompt).isEqualTo("Summarize")
         assertThat(roundTripped.outputField).isEqualTo("summary")
@@ -226,18 +226,18 @@ internal class NodeContractTest {
 
     @Test
     fun `Group round-trips keyMapperExpr`() {
-        val original = Node.Group("g1", ".user_id") { kv -> kv.value.select(listOf("user_id")) }
+        val original = NodeGroup("g1", ".user_id") { kv -> kv.value.select(listOf("user_id")) }
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.Group
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeGroup
 
         assertThat(roundTripped.keyMapperExpr).isEqualTo(".user_id")
     }
 
     @Test
     fun `Map round-trips mapperExpr`() {
-        val original = Node.Map("m1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }
+        val original = NodeMap("m1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }
         val proto = original.toProto()
-        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as Node.Map
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeMap
 
         assertThat(roundTripped.mapperExpr).isEqualTo("select .id .name")
     }
@@ -253,7 +253,7 @@ internal class NodeContractTest {
             )
             .build()
 
-        val node = Node.fromProto(proto, mockFromProtoContext) as Node.EmbeddingGenerator
+        val node = Node.fromProto(proto, mockFromProtoContext) as NodeEmbeddingGenerator
         assertThat(node.outputField).isEqualTo("embedding")
         assertThat(node.model).isEqualTo("text-embedding-3-small")
     }
@@ -269,7 +269,7 @@ internal class NodeContractTest {
             )
             .build()
 
-        val node = Node.fromProto(proto, mockFromProtoContext) as Node.OpenAiTransformer
+        val node = Node.fromProto(proto, mockFromProtoContext) as NodeOpenAiTransformer
         assertThat(node.outputField).isEqualTo("ai_response")
         assertThat(node.model).isEqualTo("gpt-4o-mini")
     }
@@ -285,7 +285,7 @@ internal class NodeContractTest {
             )
             .build()
 
-        val node = Node.fromProto(proto, mockFromProtoContext) as Node.TextExtractor
+        val node = Node.fromProto(proto, mockFromProtoContext) as NodeTextExtractor
         assertThat(node.outputField).isEqualTo("text")
     }
 

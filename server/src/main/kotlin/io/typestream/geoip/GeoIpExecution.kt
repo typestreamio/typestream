@@ -1,6 +1,6 @@
 package io.typestream.geoip
 
-import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeGeoIp
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import org.apache.kafka.streams.kstream.KStream
@@ -22,7 +22,7 @@ object GeoIpExecution {
      * @return Transformed data streams with country code field added
      */
     fun applyToShell(
-        node: Node.GeoIp,
+        node: NodeGeoIp,
         dataStreams: List<DataStream>,
         geoIpService: GeoIpService
     ): List<DataStream> {
@@ -42,7 +42,7 @@ object GeoIpExecution {
      * @return Transformed stream with country code field added to each record
      */
     fun applyToKafka(
-        node: Node.GeoIp,
+        node: NodeGeoIp,
         stream: KStream<DataStream, DataStream>,
         geoIpService: GeoIpService
     ): KStream<DataStream, DataStream> {

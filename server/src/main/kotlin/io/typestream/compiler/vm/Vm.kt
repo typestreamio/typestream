@@ -6,6 +6,7 @@ import io.typestream.compiler.RuntimeType.KAFKA
 import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.ExecutionContext
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeShellSource
 import io.typestream.compiler.types.DataStream
 import io.typestream.embedding.EmbeddingGeneratorService
 import io.typestream.filesystem.FileSystem
@@ -88,7 +89,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
     }
 
     fun eval(graph: Graph<Node>): List<DataStream> = graph.children.flatMap { shellNode ->
-        require(shellNode.ref is Node.ShellSource) { "expected shell node" }
+        require(shellNode.ref is NodeShellSource) { "expected shell node" }
 
         var dataStreams = shellNode.ref.data
         shellNode.walk { node ->

@@ -1,6 +1,6 @@
 package io.typestream.textextractor
 
-import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import org.apache.kafka.streams.kstream.KStream
@@ -19,7 +19,7 @@ object TextExtractorExecution {
      * @return Transformed data streams with extracted text field added
      */
     fun applyToShell(
-        node: Node.TextExtractor,
+        node: NodeTextExtractor,
         dataStreams: List<DataStream>,
         textExtractorService: TextExtractorService
     ): List<DataStream> {
@@ -39,7 +39,7 @@ object TextExtractorExecution {
      * @return Transformed stream with extracted text field added to each record
      */
     fun applyToKafka(
-        node: Node.TextExtractor,
+        node: NodeTextExtractor,
         stream: KStream<DataStream, DataStream>,
         textExtractorService: TextExtractorService
     ): KStream<DataStream, DataStream> {

@@ -3,6 +3,10 @@ package io.typestream.compiler
 import io.typestream.compiler.RuntimeType.KAFKA
 import io.typestream.compiler.node.JoinType
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeJoin
+import io.typestream.compiler.node.NodeNoOp
+import io.typestream.compiler.node.NodeShellSource
+import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.graph.Graph
@@ -13,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 internal class ProgramTest {
     private fun buildProgram(vararg node: Graph<Node>): Program {
-        val root: Graph<Node> = Graph(Node.NoOp("no-op"))
+        val root: Graph<Node> = Graph(NodeNoOp("no-op"))
         node.forEach { root.addChild(it) }
         return Program("42", root)
     }
@@ -24,7 +28,7 @@ internal class ProgramTest {
         fun `raises when detection is not possible`() {
             val program = buildProgram(
                 Graph(
-                    Node.StreamSource(
+                    NodeStreamSource(
                         "cat",
                         DataStream.fromString("/dev/pulsar/local/topics/books", ""),
                         Encoding.AVRO
@@ -41,7 +45,7 @@ internal class ProgramTest {
         fun `detects kafka runtime name`() {
             val program = buildProgram(
                 Graph(
-                    Node.StreamSource(
+                    NodeStreamSource(
                         "cat",
                         DataStream.fromString("/dev/kafka/local/topics/books", ""),
                         Encoding.AVRO
@@ -56,14 +60,14 @@ internal class ProgramTest {
         fun `detects multiple runtime`() {
             val program = buildProgram(
                 Graph(
-                    Node.StreamSource(
+                    NodeStreamSource(
                         "cat",
                         DataStream.fromString("/dev/kafka/local/topics/books", ""),
                         Encoding.AVRO
                     )
                 ),
                 Graph(
-                    Node.StreamSource(
+                    NodeStreamSource(
                         "cat",
                         DataStream.fromString("/dev/kafka/remote/topics/ratings", ""),
                         Encoding.AVRO
@@ -78,7 +82,7 @@ internal class ProgramTest {
         @Test
         fun `detects runtime in pipe commands`() {
             val cat: Graph<Node> = Graph(
-                Node.StreamSource(
+                NodeStreamSource(
                     "cat",
                     DataStream.fromString("/dev/kafka/local/topics/books", ""),
                     Encoding.AVRO
@@ -86,7 +90,7 @@ internal class ProgramTest {
             )
 
             val join: Graph<Node> = Graph(
-                Node.Join(
+                NodeJoin(
                     "join",
                     DataStream.fromString("/dev/kafka/local/topics/ratings", ""),
                     JoinType()
@@ -103,7 +107,7 @@ internal class ProgramTest {
         @Test
         fun `detects shell runtime`() {
             val program = buildProgram(
-                Graph(Node.ShellSource("ls", listOf(DataStream.fromString("/dev/ls", "dev"))))
+                Graph(NodeShellSource("ls", listOf(DataStream.fromString("/dev/ls", "dev"))))
             )
 
             assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", RuntimeType.SHELL)
@@ -111,7 +115,7 @@ internal class ProgramTest {
 
         @Test
         fun `detects shell runtime for empty graphs`() {
-            val program = buildProgram(Graph(Node.NoOp("no-op")))
+            val program = buildProgram(Graph(NodeNoOp("no-op")))
 
             assertThat(program.runtime()).extracting("name", "type").containsExactly("shell", RuntimeType.SHELL)
         }

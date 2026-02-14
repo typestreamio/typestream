@@ -3,6 +3,10 @@ package io.typestream.compiler
 import io.typestream.compiler.ast.Predicate
 import io.typestream.compiler.ast.PredicateParser
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeFilter
+import io.typestream.compiler.node.NodeSink
+import io.typestream.compiler.node.NodeStreamSource
+import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.datastream.fromAvroSchema
@@ -58,13 +62,13 @@ internal class GraphCompilerTest {
         val program = compiler.compile(request)
 
         val streamGraph = program.graph.children.single()
-        val stream = streamGraph.ref as Node.StreamSource
+        val stream = streamGraph.ref as NodeStreamSource
         assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
         assertThat(stream.dataStream).isEqualTo(
             DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
         )
 
-        val filter = streamGraph.children.single().ref as Node.Filter
+        val filter = streamGraph.children.single().ref as NodeFilter
         assertThat(filter.byKey).isFalse()
         assertThat(filter.predicate).isEqualTo(Predicate.matches("Station Eleven"))
     }
@@ -90,7 +94,7 @@ internal class GraphCompilerTest {
         val program = compiler.compile(request)
 
         val streamGraph = program.graph.children.single()
-        val filter = streamGraph.children.single().ref as Node.Filter
+        val filter = streamGraph.children.single().ref as NodeFilter
         assertThat(filter.byKey).isFalse()
         // Verify the predicate is a parsed Equals predicate, not a regex Matches
         assertThat(filter.predicate).isEqualTo(Predicate.equals("title", Schema.String("Station Eleven")))
@@ -117,7 +121,7 @@ internal class GraphCompilerTest {
         val program = compiler.compile(request)
 
         val streamGraph = program.graph.children.single()
-        val filter = streamGraph.children.single().ref as Node.Filter
+        val filter = streamGraph.children.single().ref as NodeFilter
         // Verify the predicate is a parsed GreaterThan predicate
         assertThat(filter.predicate).isEqualTo(Predicate.greaterThan("word_count", Schema.Long(250)))
     }
@@ -239,10 +243,10 @@ internal class GraphCompilerTest {
         val program = compiler.compile(request)
 
         val streamGraph = program.graph.children.single()
-        val stream = streamGraph.ref as Node.StreamSource
+        val stream = streamGraph.ref as NodeStreamSource
         assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
 
-        val textExtractor = streamGraph.children.single().ref as Node.TextExtractor
+        val textExtractor = streamGraph.children.single().ref as NodeTextExtractor
         assertThat(textExtractor.filePathField).isEqualTo("title")
         assertThat(textExtractor.outputField).isEqualTo("extracted_text")
     }
@@ -657,11 +661,11 @@ internal class GraphCompilerTest {
         val program = compiler.compile(request)
 
         val streamGraph = program.graph.children.single()
-        val stream = streamGraph.ref as Node.StreamSource
+        val stream = streamGraph.ref as NodeStreamSource
         assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
         assertThat(stream.dataStream.path).isEqualTo("/dev/kafka/local/topics/$sourceTopic")
 
-        val sink = streamGraph.children.single().ref as Node.Sink
+        val sink = streamGraph.children.single().ref as NodeSink
         assertThat(sink.output.path).isEqualTo("/dev/kafka/local/topics/$intermediateTopic")
     }
 

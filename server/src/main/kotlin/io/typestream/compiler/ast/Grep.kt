@@ -1,6 +1,8 @@
 package io.typestream.compiler.ast
 
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeFilter
+import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.graph.Graph
 import io.typestream.option.Option
 import io.typestream.option.parseOptions
@@ -30,15 +32,15 @@ data class Grep(override val expressions: List<Expr>) : DataCommand() {
         }
 
         return when (dataStreams.size) {
-            0 -> Graph(Node.Filter(toString(), options.byKey, predicate))
+            0 -> Graph(NodeFilter(toString(), options.byKey, predicate))
 
             1 -> {
                 Graph<Node>(
-                    Node.StreamSource(
+                    NodeStreamSource(
                         toString(), dataStreams.first(),
                         encoding ?: error("cannot resolve grep command: unbound encoding")
                     )
-                ).also { it.addChild(Graph(Node.Filter(toString(), options.byKey, predicate))) }
+                ).also { it.addChild(Graph(NodeFilter(toString(), options.byKey, predicate))) }
             }
 
             else -> throw IllegalArgumentException("cat does not support multiple data streams")

@@ -36,7 +36,7 @@ internal class NodeInferenceTest {
     inner class FilterNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.Filter("filter-1", byKey = false, predicate = Predicate.matches(".*"))
+            val node = NodeFilter("filter-1", byKey = false, predicate = Predicate.matches(".*"))
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -46,7 +46,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves JSON encoding`() {
-            val node = Node.Filter("filter-1", byKey = false, predicate = Predicate.matches(".*"))
+            val node = NodeFilter("filter-1", byKey = false, predicate = Predicate.matches(".*"))
             val result = node.inferOutputSchema(sampleDataStream, Encoding.JSON, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.JSON)
@@ -54,7 +54,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `throws error when input is missing`() {
-            val node = Node.Filter("filter-1", byKey = false, predicate = Predicate.matches(".*"))
+            val node = NodeFilter("filter-1", byKey = false, predicate = Predicate.matches(".*"))
 
             assertThatThrownBy {
                 node.inferOutputSchema(null, null, mockContext)
@@ -66,7 +66,7 @@ internal class NodeInferenceTest {
     inner class MapNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.Map("map-1") { kv -> kv }
+            val node = NodeMap("map-1") { kv -> kv }
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -79,7 +79,7 @@ internal class NodeInferenceTest {
     inner class GroupNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.Group("group-1") { kv -> kv.value }
+            val node = NodeGroup("group-1") { kv -> kv.value }
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -91,7 +91,7 @@ internal class NodeInferenceTest {
     inner class CountNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.Count("count-1")
+            val node = NodeCount("count-1")
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -103,7 +103,7 @@ internal class NodeInferenceTest {
     inner class WindowedCountNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 60)
+            val node = NodeWindowedCount("windowed-count-1", windowSizeSeconds = 60)
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -113,7 +113,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves JSON encoding`() {
-            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 60)
+            val node = NodeWindowedCount("windowed-count-1", windowSizeSeconds = 60)
             val result = node.inferOutputSchema(sampleDataStream, Encoding.JSON, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.JSON)
@@ -121,7 +121,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `throws error when input is missing`() {
-            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 60)
+            val node = NodeWindowedCount("windowed-count-1", windowSizeSeconds = 60)
 
             assertThatThrownBy {
                 node.inferOutputSchema(null, null, mockContext)
@@ -130,7 +130,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `accepts different window sizes`() {
-            val node = Node.WindowedCount("windowed-count-1", windowSizeSeconds = 300)
+            val node = NodeWindowedCount("windowed-count-1", windowSizeSeconds = 300)
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -141,7 +141,7 @@ internal class NodeInferenceTest {
     inner class ReduceLatestNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.ReduceLatest("reduce-1")
+            val node = NodeReduceLatest("reduce-1")
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -153,7 +153,7 @@ internal class NodeInferenceTest {
     inner class EachNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.Each("each-1") { _ -> }
+            val node = NodeEach("each-1") { _ -> }
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -165,7 +165,7 @@ internal class NodeInferenceTest {
     inner class NoOpNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.NoOp("noop-1")
+            val node = NodeNoOp("noop-1")
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -174,7 +174,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `handles null input for root node`() {
-            val node = Node.NoOp("root")
+            val node = NodeNoOp("root")
             val result = node.inferOutputSchema(null, null, mockContext)
 
             // NoOp as root returns a placeholder DataStream
@@ -187,7 +187,7 @@ internal class NodeInferenceTest {
     inner class InspectorNodeTests {
         @Test
         fun `passes through input schema unchanged`() {
-            val node = Node.Inspector("inspector-1", "test-label")
+            val node = NodeInspector("inspector-1", "test-label")
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -202,7 +202,7 @@ internal class NodeInferenceTest {
         @Test
         fun `returns pre-resolved dataStream and encoding`() {
             val sourceDataStream = DataStream("/dev/kafka/local/topics/test", sampleStructSchema)
-            val node = Node.StreamSource("source-1", sourceDataStream, Encoding.AVRO)
+            val node = NodeStreamSource("source-1", sourceDataStream, Encoding.AVRO)
             val result = node.inferOutputSchema(null, null, mockContext)
 
             assertThat(result.dataStream).isEqualTo(sourceDataStream)
@@ -212,7 +212,7 @@ internal class NodeInferenceTest {
         @Test
         fun `preserves PROTOBUF encoding`() {
             val sourceDataStream = DataStream("/dev/kafka/local/topics/test", sampleStructSchema)
-            val node = Node.StreamSource("source-1", sourceDataStream, Encoding.PROTOBUF)
+            val node = NodeStreamSource("source-1", sourceDataStream, Encoding.PROTOBUF)
             val result = node.inferOutputSchema(null, null, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.PROTOBUF)
@@ -227,7 +227,7 @@ internal class NodeInferenceTest {
                 DataStream("/shell/first", sampleStructSchema),
                 DataStream("/shell/second", Schema.Struct(listOf()))
             )
-            val node = Node.ShellSource("shell-1", dataStreams)
+            val node = NodeShellSource("shell-1", dataStreams)
             val result = node.inferOutputSchema(null, null, mockContext)
 
             assertThat(result.dataStream.path).isEqualTo("/shell/first")
@@ -237,7 +237,7 @@ internal class NodeInferenceTest {
         @Test
         fun `returns JSON encoding`() {
             val dataStreams = listOf(DataStream("/shell/first", sampleStructSchema))
-            val node = Node.ShellSource("shell-1", dataStreams)
+            val node = NodeShellSource("shell-1", dataStreams)
             val result = node.inferOutputSchema(null, null, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.JSON)
@@ -245,7 +245,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `throws error when no data streams`() {
-            val node = Node.ShellSource("shell-1", emptyList())
+            val node = NodeShellSource("shell-1", emptyList())
 
             assertThatThrownBy {
                 node.inferOutputSchema(null, null, mockContext)
@@ -260,7 +260,7 @@ internal class NodeInferenceTest {
         @Test
         fun `copies input schema with target path`() {
             val targetDataStream = DataStream("/dev/kafka/local/topics/output", Schema.String.zeroValue)
-            val node = Node.Sink("sink-1", targetDataStream, Encoding.AVRO)
+            val node = NodeSink("sink-1", targetDataStream, Encoding.AVRO)
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
@@ -270,7 +270,7 @@ internal class NodeInferenceTest {
         @Test
         fun `preserves input encoding`() {
             val targetDataStream = DataStream("/dev/kafka/local/topics/output", Schema.String.zeroValue)
-            val node = Node.Sink("sink-1", targetDataStream, Encoding.JSON)
+            val node = NodeSink("sink-1", targetDataStream, Encoding.JSON)
             val result = node.inferOutputSchema(sampleDataStream, Encoding.JSON, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.JSON)
@@ -279,7 +279,7 @@ internal class NodeInferenceTest {
         @Test
         fun `throws error when input is missing`() {
             val targetDataStream = DataStream("/dev/kafka/local/topics/output", Schema.String.zeroValue)
-            val node = Node.Sink("sink-1", targetDataStream, Encoding.AVRO)
+            val node = NodeSink("sink-1", targetDataStream, Encoding.AVRO)
 
             assertThatThrownBy {
                 node.inferOutputSchema(null, null, mockContext)
@@ -301,7 +301,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `merges left and right schemas`() {
-            val node = Node.Join("join-1", rightDataStream, JoinType(byKey = true, isLookup = false))
+            val node = NodeJoin("join-1", rightDataStream, JoinType(byKey = true, isLookup = false))
             val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -315,7 +315,7 @@ internal class NodeInferenceTest {
         @Test
         fun `clears originalAvroSchema after join`() {
             val inputWithAvro = sampleDataStream.copy(originalAvroSchema = """{"type": "null"}""")
-            val node = Node.Join("join-1", rightDataStream, JoinType(byKey = true, isLookup = false))
+            val node = NodeJoin("join-1", rightDataStream, JoinType(byKey = true, isLookup = false))
             val result = node.inferOutputSchema(inputWithAvro, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.originalAvroSchema).isNull()
@@ -323,7 +323,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves encoding through join`() {
-            val node = Node.Join("join-1", rightDataStream, JoinType(byKey = true, isLookup = false))
+            val node = NodeJoin("join-1", rightDataStream, JoinType(byKey = true, isLookup = false))
             val result = node.inferOutputSchema(sampleDataStream, Encoding.PROTOBUF, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.PROTOBUF)
@@ -347,7 +347,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `adds country code field to output schema`() {
-            val node = Node.GeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -357,7 +357,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `new field has String type with zero value`() {
-            val node = Node.GeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -367,7 +367,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original fields`() {
-            val node = Node.GeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -382,7 +382,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original path`() {
-            val node = Node.GeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.path).isEqualTo("/test/topic")
@@ -390,7 +390,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `uses custom output field name`() {
-            val node = Node.GeoIp("geoip-1", ipField = "ip_address", outputField = "geo_country")
+            val node = NodeGeoIp("geoip-1", ipField = "ip_address", outputField = "geo_country")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -401,7 +401,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `throws error when IP field does not exist`() {
-            val node = Node.GeoIp("geoip-1", ipField = "nonexistent_field", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "nonexistent_field", outputField = "country_code")
 
             assertThatThrownBy {
                 node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
@@ -413,7 +413,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `error message lists available fields`() {
-            val node = Node.GeoIp("geoip-1", ipField = "nonexistent_field", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "nonexistent_field", outputField = "country_code")
 
             assertThatThrownBy {
                 node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
@@ -427,7 +427,7 @@ internal class NodeInferenceTest {
         fun `throws error for non-struct schema`() {
             val stringSchema = Schema.String("test")
             val nonStructDataStream = DataStream("/test/topic", stringSchema)
-            val node = Node.GeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
+            val node = NodeGeoIp("geoip-1", ipField = "ip_address", outputField = "country_code")
 
             assertThatThrownBy {
                 node.inferOutputSchema(nonStructDataStream, Encoding.AVRO, mockContext)
@@ -444,7 +444,7 @@ internal class NodeInferenceTest {
                 )
             )
             val dataStream = DataStream("/test/topic", schemaWithDifferentIpField)
-            val node = Node.GeoIp("geoip-1", ipField = "user_ip", outputField = "country")
+            val node = NodeGeoIp("geoip-1", ipField = "user_ip", outputField = "country")
 
             val result = node.inferOutputSchema(dataStream, Encoding.AVRO, mockContext)
 
@@ -469,7 +469,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `adds text field to output schema`() {
-            val node = Node.TextExtractor("text-1", filePathField = "file_path", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "file_path", outputField = "text")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -479,7 +479,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `new field has String type with zero value`() {
-            val node = Node.TextExtractor("text-1", filePathField = "file_path", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "file_path", outputField = "text")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -489,7 +489,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original fields`() {
-            val node = Node.TextExtractor("text-1", filePathField = "file_path", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "file_path", outputField = "text")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -504,7 +504,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original path`() {
-            val node = Node.TextExtractor("text-1", filePathField = "file_path", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "file_path", outputField = "text")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.path).isEqualTo("/test/topic")
@@ -512,7 +512,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `uses custom output field name`() {
-            val node = Node.TextExtractor("text-1", filePathField = "file_path", outputField = "extracted_content")
+            val node = NodeTextExtractor("text-1", filePathField = "file_path", outputField = "extracted_content")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -523,7 +523,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `throws error when file path field does not exist`() {
-            val node = Node.TextExtractor("text-1", filePathField = "nonexistent_field", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "nonexistent_field", outputField = "text")
 
             assertThatThrownBy {
                 node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
@@ -535,7 +535,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `error message lists available fields`() {
-            val node = Node.TextExtractor("text-1", filePathField = "nonexistent_field", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "nonexistent_field", outputField = "text")
 
             assertThatThrownBy {
                 node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
@@ -549,7 +549,7 @@ internal class NodeInferenceTest {
         fun `throws error for non-struct schema`() {
             val stringSchema = Schema.String("test")
             val nonStructDataStream = DataStream("/test/topic", stringSchema)
-            val node = Node.TextExtractor("text-1", filePathField = "file_path", outputField = "text")
+            val node = NodeTextExtractor("text-1", filePathField = "file_path", outputField = "text")
 
             assertThatThrownBy {
                 node.inferOutputSchema(nonStructDataStream, Encoding.AVRO, mockContext)
@@ -566,7 +566,7 @@ internal class NodeInferenceTest {
                 )
             )
             val dataStream = DataStream("/test/topic", schemaWithDifferentPathField)
-            val node = Node.TextExtractor("text-1", filePathField = "document_path", outputField = "content")
+            val node = NodeTextExtractor("text-1", filePathField = "document_path", outputField = "content")
 
             val result = node.inferOutputSchema(dataStream, Encoding.AVRO, mockContext)
 
@@ -591,7 +591,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `adds embedding field to output schema`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -601,7 +601,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `new field has List of Float type`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -613,7 +613,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original fields`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -628,7 +628,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original path`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             assertThat(result.dataStream.path).isEqualTo("/test/topic")
@@ -636,7 +636,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `uses custom output field name`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "text_content", outputField = "vector", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "text_content", outputField = "vector", model = "text-embedding-ada-002")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -647,7 +647,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `throws error when text field does not exist`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "nonexistent_field", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "nonexistent_field", outputField = "embedding", model = "text-embedding-ada-002")
 
             assertThatThrownBy {
                 node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
@@ -659,7 +659,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `error message lists available fields`() {
-            val node = Node.EmbeddingGenerator("embed-1", textField = "nonexistent_field", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "nonexistent_field", outputField = "embedding", model = "text-embedding-ada-002")
 
             assertThatThrownBy {
                 node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
@@ -673,7 +673,7 @@ internal class NodeInferenceTest {
         fun `throws error for non-struct schema`() {
             val stringSchema = Schema.String("test")
             val nonStructDataStream = DataStream("/test/topic", stringSchema)
-            val node = Node.EmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "text_content", outputField = "embedding", model = "text-embedding-ada-002")
 
             assertThatThrownBy {
                 node.inferOutputSchema(nonStructDataStream, Encoding.AVRO, mockContext)
@@ -690,7 +690,7 @@ internal class NodeInferenceTest {
                 )
             )
             val dataStream = DataStream("/test/topic", schemaWithDifferentTextField)
-            val node = Node.EmbeddingGenerator("embed-1", textField = "description", outputField = "desc_embedding", model = "text-embedding-ada-002")
+            val node = NodeEmbeddingGenerator("embed-1", textField = "description", outputField = "desc_embedding", model = "text-embedding-ada-002")
 
             val result = node.inferOutputSchema(dataStream, Encoding.AVRO, mockContext)
 
@@ -715,7 +715,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `adds AI response field to output schema`() {
-            val node = Node.OpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
+            val node = NodeOpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -725,7 +725,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `new field has String type with zero value`() {
-            val node = Node.OpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
+            val node = NodeOpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -735,7 +735,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves original fields`() {
-            val node = Node.OpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
+            val node = NodeOpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -750,7 +750,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `uses custom output field name`() {
-            val node = Node.OpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "summary", model = "gpt-4")
+            val node = NodeOpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "summary", model = "gpt-4")
             val result = node.inferOutputSchema(inputDataStream, Encoding.AVRO, mockContext)
 
             val outputSchema = result.dataStream.schema as Schema.Struct
@@ -763,7 +763,7 @@ internal class NodeInferenceTest {
         fun `throws error for non-struct schema`() {
             val stringSchema = Schema.String("test")
             val nonStructDataStream = DataStream("/test/topic", stringSchema)
-            val node = Node.OpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
+            val node = NodeOpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
 
             assertThatThrownBy {
                 node.inferOutputSchema(nonStructDataStream, Encoding.AVRO, mockContext)
@@ -774,7 +774,7 @@ internal class NodeInferenceTest {
 
         @Test
         fun `preserves encoding`() {
-            val node = Node.OpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
+            val node = NodeOpenAiTransformer("ai-1", prompt = "Summarize this", outputField = "ai_response", model = "gpt-4")
             val result = node.inferOutputSchema(inputDataStream, Encoding.JSON, mockContext)
 
             assertThat(result.encoding).isEqualTo(Encoding.JSON)

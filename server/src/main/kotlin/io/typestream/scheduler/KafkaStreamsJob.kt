@@ -4,6 +4,23 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.Program
 import io.typestream.compiler.kafka.KafkaStreamSource
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeCount
+import io.typestream.compiler.node.NodeEach
+import io.typestream.compiler.node.NodeEmbeddingGenerator
+import io.typestream.compiler.node.NodeFilter
+import io.typestream.compiler.node.NodeGeoIp
+import io.typestream.compiler.node.NodeGroup
+import io.typestream.compiler.node.NodeInspector
+import io.typestream.compiler.node.NodeJoin
+import io.typestream.compiler.node.NodeMap
+import io.typestream.compiler.node.NodeNoOp
+import io.typestream.compiler.node.NodeOpenAiTransformer
+import io.typestream.compiler.node.NodeReduceLatest
+import io.typestream.compiler.node.NodeShellSource
+import io.typestream.compiler.node.NodeSink
+import io.typestream.compiler.node.NodeStreamSource
+import io.typestream.compiler.node.NodeTextExtractor
+import io.typestream.compiler.node.NodeWindowedCount
 import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
 import io.typestream.embedding.EmbeddingGeneratorService
@@ -83,45 +100,45 @@ class KafkaStreamsJob(
 
         program.graph.children.forEach { sourceNode ->
             val source = sourceNode.ref
-            require(source is Node.StreamSource) { "source node must be a StreamSource" }
+            require(source is NodeStreamSource) { "source node must be a StreamSource" }
 
             val kafkaStreamSource = KafkaStreamSource(source, streamsBuilder, geoIpService, textExtractorService, embeddingGeneratorService, openAiService)
 
             sourceNode.walk { currentNode ->
                 when (currentNode.ref) {
-                    is Node.Count -> {
+                    is NodeCount -> {
                         val storeName = "${program.id}-count-store-$countStoreIndex"
                         countStoreIndex++
                         kafkaStreamSource.count(storeName)
                         kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
                     }
-                    is Node.WindowedCount -> {
+                    is NodeWindowedCount -> {
                         val storeName = "${program.id}-windowed-count-store-$countStoreIndex"
                         countStoreIndex++
                         val windowSize = java.time.Duration.ofSeconds(currentNode.ref.windowSizeSeconds)
                         kafkaStreamSource.windowedCount(storeName, windowSize)
                         kafkaStreamSource.getCountStoreName()?.let { stateStoreNames.add(it) }
                     }
-                    is Node.ReduceLatest -> {
+                    is NodeReduceLatest -> {
                         val storeName = "${program.id}-reduce-store-$reduceStoreIndex"
                         reduceStoreIndex++
                         kafkaStreamSource.reduceLatest(storeName)
                         stateStoreNames.add(storeName)
                     }
-                    is Node.Filter -> kafkaStreamSource.filter(currentNode.ref)
-                    is Node.Group -> kafkaStreamSource.group(currentNode.ref)
-                    is Node.Join -> kafkaStreamSource.join(currentNode.ref)
-                    is Node.Map -> kafkaStreamSource.map(currentNode.ref)
-                    is Node.Each -> kafkaStreamSource.each(currentNode.ref)
-                    is Node.GeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
-                    is Node.TextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
-                    is Node.EmbeddingGenerator -> kafkaStreamSource.embeddingGenerate(currentNode.ref)
-                    is Node.OpenAiTransformer -> kafkaStreamSource.openAiTransform(currentNode.ref)
-                    is Node.NoOp -> {}
-                    is Node.StreamSource -> {}
-                    is Node.Sink -> kafkaStreamSource.to(currentNode.ref)
-                    is Node.Inspector -> kafkaStreamSource.toInspector(currentNode.ref, program.id)
-                    is Node.ShellSource -> error("cannot resolve ShellSource node")
+                    is NodeFilter -> kafkaStreamSource.filter(currentNode.ref)
+                    is NodeGroup -> kafkaStreamSource.group(currentNode.ref)
+                    is NodeJoin -> kafkaStreamSource.join(currentNode.ref)
+                    is NodeMap -> kafkaStreamSource.map(currentNode.ref)
+                    is NodeEach -> kafkaStreamSource.each(currentNode.ref)
+                    is NodeGeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
+                    is NodeTextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
+                    is NodeEmbeddingGenerator -> kafkaStreamSource.embeddingGenerate(currentNode.ref)
+                    is NodeOpenAiTransformer -> kafkaStreamSource.openAiTransform(currentNode.ref)
+                    is NodeNoOp -> {}
+                    is NodeStreamSource -> {}
+                    is NodeSink -> kafkaStreamSource.to(currentNode.ref)
+                    is NodeInspector -> kafkaStreamSource.toInspector(currentNode.ref, program.id)
+                    is NodeShellSource -> error("cannot resolve ShellSource node")
                 }
             }
         }

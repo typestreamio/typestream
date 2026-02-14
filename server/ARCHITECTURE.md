@@ -89,7 +89,7 @@ Proto Path: PipelineGraph proto → [GraphCompiler] → Graph<Node>
 ### Schema Inference
 
 Each `Node` type encapsulates its own schema transformation via `inferOutputSchema()`:
-- Schema inference is co-located with node definitions in `Node.kt`
+- Schema inference is co-located with node definitions in individual `Node*.kt` files (e.g., `NodeFilter.kt`, `NodeMap.kt`)
 - Adding a new node type only requires implementing `inferOutputSchema()` in one place
 - The `InferenceContext` interface provides access to the filesystem catalog for external lookups
 - Validates schema compatibility at compile time
@@ -328,7 +328,7 @@ fun `compiles stream source with your node`() {
 | `GraphCompiler.kt` | Proto -> Graph compilation |
 | `PipelineGraphEmitter.kt` | DSL -> PipelineGraph proto conversion |
 | `Interpreter.kt` | AST traversal, type binding |
-| `Node.kt` | Node types with schema inference |
+| `Node.kt` + `Node*.kt` | Sealed interface + individual node types with schema inference |
 | `KafkaStreamsJob.kt` | Topology builder, job execution |
 | `Scheduler.kt` | Job queue and lifecycle |
 | `Vm.kt` | Execution routing (KAFKA vs SHELL) |

@@ -1,6 +1,7 @@
 package io.typestream.compiler.ast
 
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.graph.Graph
 import kotlinx.serialization.Serializable
 
@@ -10,7 +11,7 @@ data class Cat(override val expressions: List<Expr>) : DataCommand() {
         require(dataStreams.isNotEmpty()) { "cannot resolve cat command: unbound data streams" }
 
         return Graph(
-            Node.StreamSource(
+            NodeStreamSource(
                 toString(),
                 dataStreams.first(),
                 encoding ?: error("cannot resolve cat command: unbound encoding")

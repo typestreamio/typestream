@@ -2,6 +2,8 @@ package io.typestream.compiler.ast
 
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeCount
+import io.typestream.compiler.node.NodeGroup
 import io.typestream.graph.Graph
 import io.typestream.option.Option
 import io.typestream.option.parseOptions
@@ -22,9 +24,9 @@ data class Wc(override val expressions: List<Expr>) : DataCommand() {
             { keyValue: KeyValue -> keyValue.value.select(listOf(options.by)) }
         }
 
-        val groupNode: Graph<Node> = Graph(Node.Group(toString(), keyMapper = mapper))
+        val groupNode: Graph<Node> = Graph(NodeGroup(toString(), keyMapper = mapper))
 
-        groupNode.addChild(Graph(Node.Count(toString())))
+        groupNode.addChild(Graph(NodeCount(toString())))
 
         return groupNode
     }
