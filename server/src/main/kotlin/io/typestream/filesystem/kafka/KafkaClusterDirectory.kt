@@ -6,9 +6,6 @@ import io.typestream.coroutine.tick
 import io.typestream.filesystem.Directory
 import io.typestream.kafka.KafkaAdminClient
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.supervisorScope
 import kotlin.time.Duration.Companion.seconds
 
@@ -16,7 +13,6 @@ import kotlin.time.Duration.Companion.seconds
 class KafkaClusterDirectory(
     name: String,
     private val kafkaConfig: KafkaConfig,
-    private val dispatcher: CoroutineDispatcher,
 ) : Directory(name) {
     private val logger = KotlinLogging.logger {}
     private val brokersDir = Directory("brokers")
@@ -45,34 +41,17 @@ class KafkaClusterDirectory(
         val fsRefreshRate = kafkaConfig.fsRefreshRate.seconds
         logger.info { "launching kafka watchers (rate: $fsRefreshRate seconds)" }
 
-        val handler = CoroutineExceptionHandler { _, exception ->
-            logger.error(exception) { "kafka cluster directory watcher failed" }
-        }
-
-        val networkExceptionHandler: (Throwable) -> Unit = { exception ->
+        val exceptionHandler: (Throwable) -> Unit = { exception ->
             when (exception) {
                 is java.net.ConnectException -> logger.debug(exception) { "kafka cluster directory watcher failed" }
-                else -> throw exception
+                else -> logger.error(exception) { "kafka cluster directory watcher failed" }
             }
         }
 
-        val scope = CoroutineScope(dispatcher + handler)
-
-        scope.tick(fsRefreshRate, networkExceptionHandler) {
-            refreshConsumerGroupsDir()
-        }
-
-        scope.tick(fsRefreshRate, networkExceptionHandler) {
-            refreshBrokersDir()
-        }
-
-        scope.tick(fsRefreshRate, networkExceptionHandler) {
-            refreshTopicsDir()
-        }
-
-        scope.tick(fsRefreshRate, networkExceptionHandler) {
-            refreshSchemaRegistryDir()
-        }
+        tick(fsRefreshRate, exceptionHandler) { refreshConsumerGroupsDir() }
+        tick(fsRefreshRate, exceptionHandler) { refreshBrokersDir() }
+        tick(fsRefreshRate, exceptionHandler) { refreshTopicsDir() }
+        tick(fsRefreshRate, exceptionHandler) { refreshSchemaRegistryDir() }
     }
 
     override fun refresh() {
