@@ -166,7 +166,7 @@ services:
       - "5173:5173"
     networks:
       - typestream_network
-    command: sh -c "corepack enable && pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
+    command: sh -c "corepack enable && pnpm install --no-frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
     depends_on:
       - envoy
     environment:
