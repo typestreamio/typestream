@@ -777,25 +777,12 @@
             <div class="code-block">
 <span class="token-punct">{</span>
   <span class="token-key">"name"</span><span class="token-punct">:</span> <span class="token-string">"us-traffic"</span><span class="token-punct">,</span>
-  <span class="token-key">"version"</span><span class="token-punct">:</span> <span class="token-string">"1"</span><span class="token-punct">,</span>
-  <span class="token-key">"graph"</span><span class="token-punct">: {</span>
-    <span class="token-key">"nodes"</span><span class="token-punct">: [</span>
-      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"streamSource"</span><span class="token-punct">: {</span>
-          <span class="token-key">"dataStream"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/page_views"</span> <span class="token-punct">},</span>
-          <span class="token-key">"encoding"</span><span class="token-punct">:</span> <span class="token-string">"AVRO"</span>
-      <span class="token-punct">} },</span>
-      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"filter-1"</span><span class="token-punct">,</span> <span class="token-key">"filter"</span><span class="token-punct">: {</span>
-          <span class="token-key">"predicate"</span><span class="token-punct">: {</span> <span class="token-key">"expr"</span><span class="token-punct">:</span> <span class="token-string">".country == \"US\""</span> <span class="token-punct">}</span>
-      <span class="token-punct">} },</span>
-      <span class="token-punct">{</span> <span class="token-key">"id"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span><span class="token-punct">,</span> <span class="token-key">"sink"</span><span class="token-punct">: {</span>
-          <span class="token-key">"output"</span><span class="token-punct">: {</span> <span class="token-key">"path"</span><span class="token-punct">:</span> <span class="token-string">"/dev/kafka/local/topics/us_views"</span> <span class="token-punct">}</span>
-      <span class="token-punct">} }</span>
-    <span class="token-punct">],</span>
-    <span class="token-key">"edges"</span><span class="token-punct">: [</span>
-      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"source-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"filter-1"</span> <span class="token-punct">},</span>
-      <span class="token-punct">{</span> <span class="token-key">"fromId"</span><span class="token-punct">:</span> <span class="token-string">"filter-1"</span><span class="token-punct">,</span> <span class="token-key">"toId"</span><span class="token-punct">:</span> <span class="token-string">"sink-1"</span> <span class="token-punct">}</span>
-    <span class="token-punct">]</span>
-  <span class="token-punct">}</span>
+  <span class="token-key">"source"</span><span class="token-punct">:</span> <span class="token-string">"page_views"</span><span class="token-punct">,</span>
+  <span class="token-key">"encoding"</span><span class="token-punct">:</span> <span class="token-string">"AVRO"</span><span class="token-punct">,</span>
+  <span class="token-key">"steps"</span><span class="token-punct">: [</span>
+    <span class="token-punct">{</span> <span class="token-key">"filter"</span><span class="token-punct">:</span> <span class="token-string">".country == \"US\""</span> <span class="token-punct">}</span>
+  <span class="token-punct">],</span>
+  <span class="token-key">"sink"</span><span class="token-punct">:</span> <span class="token-string">"us_views"</span>
 <span class="token-punct">}</span>
             </div>
             <div class="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400">
@@ -1123,10 +1110,10 @@
           </div>
 
           <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
-            Every other stream processing approach -- including hand-written Kafka
-            Streams -- requires you to manage schemas manually. TypeStream doing
-            it automatically means no runtime surprises and no silent data
-            corruption.
+            TypeStream propagates schemas through every node in your pipeline.
+            Source schemas resolve automatically, transforms declare their output
+            shape, and schema errors are caught at plan time -- before any
+            topology runs.
           </p>
         </div>
       </div>

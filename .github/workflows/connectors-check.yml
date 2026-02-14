@@ -15,7 +15,6 @@ on:
       - 'flake.lock'
       - '.github/workflows/connectors-check.yml'
   pull_request:
-    branches: [main]
     paths:
       - 'connectors/**'
       - 'buildSrc/**'

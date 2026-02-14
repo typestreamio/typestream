@@ -10,7 +10,6 @@ on:
       - 'flake.lock'
       - '.github/workflows/cli-lint.yml'
   pull_request:
-    branches: [main]
     paths:
       - 'cli/**'
       - 'protos/**'
