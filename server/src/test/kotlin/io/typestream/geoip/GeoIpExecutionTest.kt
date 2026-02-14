@@ -1,6 +1,6 @@
 package io.typestream.geoip
 
-import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeGeoIp
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import org.assertj.core.api.Assertions.assertThat
@@ -25,7 +25,7 @@ internal class GeoIpExecutionTest {
         @Test
         fun `adds country code field to datastream`() {
             val geoIpService = TestGeoIpService(mapOf("8.8.8.8" to "US"))
-            val node = Node.GeoIp("geoip-1", "ip_address", "country_code")
+            val node = NodeGeoIp("geoip-1", "ip_address", "country_code")
 
             val result = GeoIpExecution.applyToShell(node, listOf(testDataStream), geoIpService)
 
@@ -38,7 +38,7 @@ internal class GeoIpExecutionTest {
         @Test
         fun `sets country code value from lookup`() {
             val geoIpService = TestGeoIpService(mapOf("8.8.8.8" to "US"))
-            val node = Node.GeoIp("geoip-1", "ip_address", "country_code")
+            val node = NodeGeoIp("geoip-1", "ip_address", "country_code")
 
             val result = GeoIpExecution.applyToShell(node, listOf(testDataStream), geoIpService)
 
@@ -50,7 +50,7 @@ internal class GeoIpExecutionTest {
         @Test
         fun `sets UNKNOWN when lookup returns null`() {
             val geoIpService = TestGeoIpService(emptyMap())
-            val node = Node.GeoIp("geoip-1", "ip_address", "country_code")
+            val node = NodeGeoIp("geoip-1", "ip_address", "country_code")
 
             val result = GeoIpExecution.applyToShell(node, listOf(testDataStream), geoIpService)
 
@@ -69,7 +69,7 @@ internal class GeoIpExecutionTest {
             )
             val emptyIpDataStream = DataStream("/test/topic", emptyIpSchema)
             val geoIpService = TestGeoIpService(emptyMap())
-            val node = Node.GeoIp("geoip-1", "ip_address", "country_code")
+            val node = NodeGeoIp("geoip-1", "ip_address", "country_code")
 
             val result = GeoIpExecution.applyToShell(node, listOf(emptyIpDataStream), geoIpService)
 
@@ -89,7 +89,7 @@ internal class GeoIpExecutionTest {
                 "/test/topic",
                 Schema.Struct(listOf(Schema.Field("ip_address", Schema.String("1.1.1.1"))))
             )
-            val node = Node.GeoIp("geoip-1", "ip_address", "country")
+            val node = NodeGeoIp("geoip-1", "ip_address", "country")
 
             val result = GeoIpExecution.applyToShell(node, listOf(stream1, stream2), geoIpService)
 
@@ -103,7 +103,7 @@ internal class GeoIpExecutionTest {
         @Test
         fun `uses custom output field name`() {
             val geoIpService = TestGeoIpService(mapOf("8.8.8.8" to "US"))
-            val node = Node.GeoIp("geoip-1", "ip_address", "geo_country")
+            val node = NodeGeoIp("geoip-1", "ip_address", "geo_country")
 
             val result = GeoIpExecution.applyToShell(node, listOf(testDataStream), geoIpService)
 

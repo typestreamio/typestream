@@ -2,6 +2,9 @@ package io.typestream.compiler
 
 import io.typestream.compiler.ast.PredicateParser
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeFilter
+import io.typestream.compiler.node.NodeSink
+import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.parser.Parser
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.vm.Env
@@ -284,8 +287,8 @@ internal class PipelineGraphEmitterTest {
             assertThat(result.program.graph.children).hasSize(1)
 
             val streamNode = result.program.graph.children.first().ref
-            assertThat(streamNode).isInstanceOf(Node.StreamSource::class.java)
-            assertThat((streamNode as Node.StreamSource).encoding).isEqualTo(Encoding.AVRO)
+            assertThat(streamNode).isInstanceOf(NodeStreamSource::class.java)
+            assertThat((streamNode as NodeStreamSource).encoding).isEqualTo(Encoding.AVRO)
 
             // Verify the PipelineGraph is stored on the program
             assertThat(result.program.pipelineGraph).isNotNull
@@ -308,10 +311,10 @@ internal class PipelineGraphEmitterTest {
 
             assertThat(result.errors).isEmpty()
             val streamGraph = result.program.graph.children.first()
-            assertThat(streamGraph.ref).isInstanceOf(Node.StreamSource::class.java)
+            assertThat(streamGraph.ref).isInstanceOf(NodeStreamSource::class.java)
 
             val filterGraph = streamGraph.children.first()
-            assertThat(filterGraph.ref).isInstanceOf(Node.Filter::class.java)
+            assertThat(filterGraph.ref).isInstanceOf(NodeFilter::class.java)
         }
 
         @Test
@@ -333,14 +336,14 @@ internal class PipelineGraphEmitterTest {
 
             // Should have source → filter → sink (no auto-sink since there's a redirection)
             val streamGraph = result.program.graph.children.first()
-            assertThat(streamGraph.ref).isInstanceOf(Node.StreamSource::class.java)
+            assertThat(streamGraph.ref).isInstanceOf(NodeStreamSource::class.java)
 
             val filterGraph = streamGraph.children.first()
-            assertThat(filterGraph.ref).isInstanceOf(Node.Filter::class.java)
+            assertThat(filterGraph.ref).isInstanceOf(NodeFilter::class.java)
 
             val sinkGraph = filterGraph.children.first()
-            assertThat(sinkGraph.ref).isInstanceOf(Node.Sink::class.java)
-            assertThat((sinkGraph.ref as Node.Sink).output.path).isEqualTo("/dev/kafka/local/topics/output")
+            assertThat(sinkGraph.ref).isInstanceOf(NodeSink::class.java)
+            assertThat((sinkGraph.ref as NodeSink).output.path).isEqualTo("/dev/kafka/local/topics/output")
         }
     }
 }

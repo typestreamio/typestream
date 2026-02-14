@@ -1,7 +1,18 @@
 package io.typestream.compiler.kafka
 
 import io.typestream.compiler.node.KeyValue
-import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeEach
+import io.typestream.compiler.node.NodeEmbeddingGenerator
+import io.typestream.compiler.node.NodeFilter
+import io.typestream.compiler.node.NodeGeoIp
+import io.typestream.compiler.node.NodeGroup
+import io.typestream.compiler.node.NodeInspector
+import io.typestream.compiler.node.NodeJoin
+import io.typestream.compiler.node.NodeMap
+import io.typestream.compiler.node.NodeOpenAiTransformer
+import io.typestream.compiler.node.NodeSink
+import io.typestream.compiler.node.NodeStreamSource
+import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
@@ -43,7 +54,7 @@ import org.apache.kafka.streams.state.WindowStore
 import java.time.Duration
 
 data class KafkaStreamSource(
-    val node: Node.StreamSource,
+    val node: NodeStreamSource,
     private val streamsBuilder: StreamsBuilderWrapper,
     private val geoIpService: GeoIpService,
     private val textExtractorService: TextExtractorService,
@@ -148,7 +159,7 @@ data class KafkaStreamSource(
         }
     }
 
-    fun to(node: Node.Sink) {
+    fun to(node: NodeSink) {
         val config = streamsBuilder.config.toMutableMap()
 
         when (node.encoding) {
@@ -180,18 +191,18 @@ data class KafkaStreamSource(
         }
     }
 
-    fun map(map: Node.Map) {
+    fun map(map: NodeMap) {
         stream = stream.map { k, v ->
             val newVal = map.mapper(KeyValue(k, v))
             pair(newVal.key, newVal.value)
         }
     }
 
-    fun each(each: Node.Each) {
+    fun each(each: NodeEach) {
         stream.foreach { k, v -> each.fn(KeyValue(k, v)) }
     }
 
-    fun join(join: Node.Join) {
+    fun join(join: NodeJoin) {
         val windowSize = Duration.ofMinutes(5)
         val advance = Duration.ofMinutes(1)
         val window = JoinWindows.ofTimeDifferenceAndGrace(windowSize, advance)
@@ -200,7 +211,7 @@ data class KafkaStreamSource(
         stream = stream.join(with, { left, right -> left.join(right) }, window)
     }
 
-    fun filter(filter: Node.Filter) {
+    fun filter(filter: NodeFilter) {
         stream = if (filter.byKey) {
             stream.filter { k, _ -> filter.predicate.matches(k) }
         } else {
@@ -208,7 +219,7 @@ data class KafkaStreamSource(
         }
     }
 
-    fun group(group: Node.Group) {
+    fun group(group: NodeGroup) {
         groupedStream = stream.groupBy { k, v -> group.keyMapper(KeyValue(k, v)) }
     }
 
@@ -247,19 +258,19 @@ data class KafkaStreamSource(
         ).toStream()
     }
 
-    fun geoIp(geoIp: Node.GeoIp) {
+    fun geoIp(geoIp: NodeGeoIp) {
         stream = GeoIpExecution.applyToKafka(geoIp, stream, geoIpService)
     }
 
-    fun textExtract(textExtractor: Node.TextExtractor) {
+    fun textExtract(textExtractor: NodeTextExtractor) {
         stream = TextExtractorExecution.applyToKafka(textExtractor, stream, textExtractorService)
     }
 
-    fun embeddingGenerate(embeddingGenerator: Node.EmbeddingGenerator) {
+    fun embeddingGenerate(embeddingGenerator: NodeEmbeddingGenerator) {
         stream = EmbeddingGeneratorExecution.applyToKafka(embeddingGenerator, stream, embeddingGeneratorService)
     }
 
-    fun openAiTransform(openAiTransformer: Node.OpenAiTransformer) {
+    fun openAiTransform(openAiTransformer: NodeOpenAiTransformer) {
         stream = OpenAiTransformerExecution.applyToKafka(openAiTransformer, stream, openAiService)
     }
 
@@ -269,7 +280,7 @@ data class KafkaStreamSource(
      * The topic is consumed by [KafkaStreamsJob.output] via a real KafkaConsumer,
      * and streamed to the UI via [JobService.streamPreview].
      */
-    fun toInspector(inspector: Node.Inspector, programId: String) {
+    fun toInspector(inspector: NodeInspector, programId: String) {
         val inspectTopic = "$programId-inspect-${inspector.id}"
         stream.to(inspectTopic)
     }

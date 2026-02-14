@@ -1,6 +1,6 @@
 package io.typestream.openai
 
-import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeOpenAiTransformer
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import org.apache.kafka.streams.kstream.KStream
@@ -19,7 +19,7 @@ object OpenAiTransformerExecution {
      * @return Transformed data streams with AI response field added
      */
     fun applyToShell(
-        node: Node.OpenAiTransformer,
+        node: NodeOpenAiTransformer,
         dataStreams: List<DataStream>,
         openAiService: OpenAiService
     ): List<DataStream> {
@@ -39,7 +39,7 @@ object OpenAiTransformerExecution {
      * @return Transformed stream with AI response field added to each record
      */
     fun applyToKafka(
-        node: Node.OpenAiTransformer,
+        node: NodeOpenAiTransformer,
         stream: KStream<DataStream, DataStream>,
         openAiService: OpenAiService
     ): KStream<DataStream, DataStream> {

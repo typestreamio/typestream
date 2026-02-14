@@ -10,6 +10,9 @@ import io.typestream.compiler.ast.VarDeclaration
 import io.typestream.compiler.lexer.CursorPosition
 import io.typestream.compiler.lexer.TokenType
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeNoOp
+import io.typestream.compiler.node.NodeShellSource
+import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.parser.Parser
 import io.typestream.compiler.shellcommand.names
 import io.typestream.compiler.types.DataStream
@@ -21,7 +24,7 @@ import io.typestream.graph.Graph
 import java.util.UUID
 
 class Compiler(private val session: Session) : Statement.Visitor<Unit> {
-    private val root: Graph<Node> = Graph(Node.NoOp("root"))
+    private val root: Graph<Node> = Graph(NodeNoOp("root"))
     private var currentNode: Graph<Node> = root
     private val errors = mutableListOf<String>()
 
@@ -75,7 +78,7 @@ class Compiler(private val session: Session) : Statement.Visitor<Unit> {
     private fun addAutoSinkIfNeeded(program: Program, id: String) {
         if (!program.hasRedirections() && program.hasStreamSources()) {
             val sinkNode: Graph<Node> = Graph(
-                Node.Sink(
+                NodeSink(
                     "$id-stdout", DataStream.fromString(
                         "${FileSystem.KAFKA_CLUSTERS_PREFIX}/${program.runtime().name}/topics/$id-stdout", ""
                     ), Encoding.JSON
@@ -95,7 +98,7 @@ class Compiler(private val session: Session) : Statement.Visitor<Unit> {
 
         if (!program.hasRedirections() && program.hasStreamSources()) {
             val sinkNode: Graph<Node> = Graph(
-                Node.Sink(
+                NodeSink(
                     "$id-stdout", DataStream.fromString(
                         "${FileSystem.KAFKA_CLUSTERS_PREFIX}/${program.runtime().name}/topics/$id-stdout", ""
                     ), Encoding.JSON
@@ -112,7 +115,7 @@ class Compiler(private val session: Session) : Statement.Visitor<Unit> {
     override fun visitVarDeclaration(varDeclaration: VarDeclaration) {}
 
     override fun visitShellCommand(shellCommand: ShellCommand) {
-        val node: Graph<Node> = Graph(Node.ShellSource(shellCommand.toString(), shellCommand.dataStreams))
+        val node: Graph<Node> = Graph(NodeShellSource(shellCommand.toString(), shellCommand.dataStreams))
 
         currentNode.addChild(node)
         currentNode = node
@@ -136,7 +139,7 @@ class Compiler(private val session: Session) : Statement.Visitor<Unit> {
             requireNotNull(dataStream) { "cannot add redirection node: $redirection, unresolved data stream" }
             requireNotNull(encoding) { "cannot add redirection node: $redirection, unresolved encoding" }
 
-            currentNode.addChild(Graph(Node.Sink(lastCommand.toString(), dataStream, encoding)))
+            currentNode.addChild(Graph(NodeSink(lastCommand.toString(), dataStream, encoding)))
         }
     }
 

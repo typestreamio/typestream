@@ -3,6 +3,9 @@ package io.typestream.compiler
 import io.typestream.compiler.RuntimeType.KAFKA
 import io.typestream.compiler.RuntimeType.SHELL
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeShellSource
+import io.typestream.compiler.node.NodeSink
+import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.types.DataStream
 import io.typestream.filesystem.FileSystem
 import io.typestream.graph.Graph
@@ -51,17 +54,17 @@ data class Program(
     fun hasStreamSources() = findStreamSourceNodes().isNotEmpty()
 
     fun hasMoreOutput() =
-        graph.findChildren { it.ref is Node.Sink && it.ref.output.path.endsWith("-stdout") }.isNotEmpty()
+        graph.findChildren { it.ref is NodeSink && it.ref.output.path.endsWith("-stdout") }.isNotEmpty()
 
-    fun hasRedirections() = graph.findChildren { it.ref is Node.Sink }.isNotEmpty()
+    fun hasRedirections() = graph.findChildren { it.ref is NodeSink }.isNotEmpty()
 
-    private fun findStreamSourceNodes(): Set<Node.StreamSource> = graph
-        .findChildren { it.ref is Node.StreamSource }
-        .map { it.ref as Node.StreamSource }
+    private fun findStreamSourceNodes(): Set<NodeStreamSource> = graph
+        .findChildren { it.ref is NodeStreamSource }
+        .map { it.ref as NodeStreamSource }
         .toSet()
 
-    private fun findShellSourceNodes(): Set<Node.ShellSource> = graph
-        .findChildren { it.ref is Node.ShellSource }
-        .map { it.ref as Node.ShellSource }
+    private fun findShellSourceNodes(): Set<NodeShellSource> = graph
+        .findChildren { it.ref is NodeShellSource }
+        .map { it.ref as NodeShellSource }
         .toSet()
 }

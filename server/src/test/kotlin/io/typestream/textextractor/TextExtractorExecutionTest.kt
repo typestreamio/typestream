@@ -1,6 +1,6 @@
 package io.typestream.textextractor
 
-import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.schema.Schema
 import org.assertj.core.api.Assertions.assertThat
@@ -32,7 +32,7 @@ internal class TextExtractorExecutionTest {
         @Test
         fun `adds text field to datastream`() {
             val textExtractorService = TestTextExtractorService(mapOf("/path/to/document.pdf" to "Extracted content"))
-            val node = Node.TextExtractor("extractor-1", "file_path", "text")
+            val node = NodeTextExtractor("extractor-1", "file_path", "text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(testDataStream), textExtractorService)
 
@@ -45,7 +45,7 @@ internal class TextExtractorExecutionTest {
         @Test
         fun `sets text value from extraction`() {
             val textExtractorService = TestTextExtractorService(mapOf("/path/to/document.pdf" to "Hello, World!"))
-            val node = Node.TextExtractor("extractor-1", "file_path", "text")
+            val node = NodeTextExtractor("extractor-1", "file_path", "text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(testDataStream), textExtractorService)
 
@@ -57,7 +57,7 @@ internal class TextExtractorExecutionTest {
         @Test
         fun `sets empty string when extraction returns null`() {
             val textExtractorService = TestTextExtractorService(emptyMap())
-            val node = Node.TextExtractor("extractor-1", "file_path", "text")
+            val node = NodeTextExtractor("extractor-1", "file_path", "text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(testDataStream), textExtractorService)
 
@@ -76,7 +76,7 @@ internal class TextExtractorExecutionTest {
             )
             val emptyPathDataStream = DataStream("/test/topic", emptyPathSchema)
             val textExtractorService = TestTextExtractorService(emptyMap())
-            val node = Node.TextExtractor("extractor-1", "file_path", "text")
+            val node = NodeTextExtractor("extractor-1", "file_path", "text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(emptyPathDataStream), textExtractorService)
 
@@ -101,7 +101,7 @@ internal class TextExtractorExecutionTest {
                 "/test/topic",
                 Schema.Struct(listOf(Schema.Field("file_path", Schema.String("/path/to/doc2.pdf"))))
             )
-            val node = Node.TextExtractor("extractor-1", "file_path", "extracted_text")
+            val node = NodeTextExtractor("extractor-1", "file_path", "extracted_text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(stream1, stream2), textExtractorService)
 
@@ -115,7 +115,7 @@ internal class TextExtractorExecutionTest {
         @Test
         fun `uses custom output field name`() {
             val textExtractorService = TestTextExtractorService(mapOf("/path/to/document.pdf" to "Content"))
-            val node = Node.TextExtractor("extractor-1", "file_path", "document_content")
+            val node = NodeTextExtractor("extractor-1", "file_path", "document_content")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(testDataStream), textExtractorService)
 
@@ -128,7 +128,7 @@ internal class TextExtractorExecutionTest {
         @Test
         fun `preserves existing fields from input`() {
             val textExtractorService = TestTextExtractorService(mapOf("/path/to/document.pdf" to "Content"))
-            val node = Node.TextExtractor("extractor-1", "file_path", "text")
+            val node = NodeTextExtractor("extractor-1", "file_path", "text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(testDataStream), textExtractorService)
 
@@ -192,7 +192,7 @@ internal class TextExtractorIntegrationTest {
                 )
             )
             val dataStream = DataStream("/test/topic", schema)
-            val node = Node.TextExtractor("extractor", "file_path", "extracted_text")
+            val node = NodeTextExtractor("extractor", "file_path", "extracted_text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(dataStream), service)
 
@@ -222,7 +222,7 @@ internal class TextExtractorIntegrationTest {
                 "/test/topic",
                 Schema.Struct(listOf(Schema.Field("path", Schema.String(file2.toString()))))
             )
-            val node = Node.TextExtractor("extractor", "path", "text")
+            val node = NodeTextExtractor("extractor", "path", "text")
 
             val result = TextExtractorExecution.applyToShell(node, listOf(stream1, stream2), service)
 

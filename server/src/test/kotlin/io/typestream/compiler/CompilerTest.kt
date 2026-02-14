@@ -3,6 +3,8 @@ package io.typestream.compiler
 import io.typestream.compiler.ast.Predicate
 import io.typestream.compiler.lexer.CursorPosition
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeFilter
+import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.datastream.fromAvroSchema
 import io.typestream.compiler.types.schema.Schema
@@ -133,7 +135,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children).hasSize(1)
             val streamSourceNode = program.graph.children.first().ref
-            require(streamSourceNode is Node.StreamSource)
+            require(streamSourceNode is NodeStreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
                 DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
@@ -141,7 +143,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children.first().children).hasSize(1)
             val grepNode = program.graph.children.first().children.first().ref
-            require(grepNode is Node.Filter)
+            require(grepNode is NodeFilter)
 
             assertThat(grepNode.predicate).isEqualTo(Predicate.matches("Station Eleven"))
         }
@@ -159,7 +161,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children).hasSize(1)
             val streamSourceNode = program.graph.children.first().ref
-            require(streamSourceNode is Node.StreamSource)
+            require(streamSourceNode is NodeStreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
                 DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
@@ -167,7 +169,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children.first().children).hasSize(1)
             val grepNode = program.graph.children.first().children.first().ref
-            require(grepNode is Node.Filter)
+            require(grepNode is NodeFilter)
 
             assertThat(grepNode.predicate).isEqualTo(Predicate.matches("Station Eleven").not())
         }
@@ -185,7 +187,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children).hasSize(1)
             val streamSourceNode = program.graph.children.first().ref
-            require(streamSourceNode is Node.StreamSource)
+            require(streamSourceNode is NodeStreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
                 DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
@@ -193,7 +195,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children.first().children).hasSize(1)
             val grepNode = program.graph.children.first().children.first().ref
-            require(grepNode is Node.Filter)
+            require(grepNode is NodeFilter)
 
             assertThat(grepNode.predicate).isEqualTo(Predicate.matches("Station Eleven"))
             assertThat(grepNode.byKey).isTrue
@@ -212,7 +214,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children).hasSize(1)
             val streamSourceNode = program.graph.children.first().ref
-            require(streamSourceNode is Node.StreamSource)
+            require(streamSourceNode is NodeStreamSource)
 
             assertThat(streamSourceNode.dataStream).isEqualTo(
                 DataStream.fromAvroSchema("/dev/kafka/local/topics/$topic", AvroBook.getClassSchema())
@@ -220,7 +222,7 @@ internal class CompilerTest {
 
             assertThat(program.graph.children.first().children).hasSize(1)
             val grepNode = program.graph.children.first().children.first().ref
-            require(grepNode is Node.Filter)
+            require(grepNode is NodeFilter)
 
             assertThat(grepNode.predicate).isEqualTo(Predicate.almostEquals("title", Schema.String("the")))
         }

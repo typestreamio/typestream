@@ -1,6 +1,7 @@
 package io.typestream.compiler
 
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeFilter
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.InferenceContext
@@ -30,7 +31,7 @@ object Infer {
         val ref = node.ref
 
         // Special handling for Filter to validate predicate type checking
-        if (ref is Node.Filter && input != null) {
+        if (ref is NodeFilter && input != null) {
             val errors = ref.predicate.typeCheck(input)
             require(errors.isEmpty()) { errors.joinToString("\n") }
         }

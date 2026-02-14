@@ -41,7 +41,7 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     val fromProtoContext = FromProtoContext(inferredSchemas, inferredEncodings, ::findDataStreamOrError)
     val rootGraphs = sources.map { buildGraph(it, nodesById, adjList, fromProtoContext) }
     val programGraph = if (rootGraphs.size == 1) rootGraphs.first() else error("Multi-source not supported yet")
-    val root: Graph<Node> = Graph(Node.NoOp("root"))
+    val root: Graph<Node> = Graph(NodeNoOp("root"))
     root.addChild(programGraph)
     Infer.infer(root)  // Validation still works!
     val id = programId ?: UUID.randomUUID().toString()
@@ -167,56 +167,56 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         val ds = context.lookupDataStream(path)
         val enc = context.lookupEncoding(path)
         // CDC unwrapping is handled in StreamSource.inferOutputSchema
-        Node.StreamSource(nodeId, ds, enc, proto.streamSource.unwrapCdc)
+        NodeStreamSource(nodeId, ds, enc, proto.streamSource.unwrapCdc)
       }
       proto.hasShellSource() -> {
         val dataStreams = proto.shellSource.dataList.map { dsProto ->
           context.lookupDataStream(dsProto.path)
         }
-        Node.ShellSource(nodeId, dataStreams)
+        NodeShellSource(nodeId, dataStreams)
       }
       proto.hasFilter() -> {
         val f = proto.filter
-        Node.Filter(nodeId, f.byKey, PredicateParser.parse(f.predicate.expr))
+        NodeFilter(nodeId, f.byKey, PredicateParser.parse(f.predicate.expr))
       }
-      proto.hasMap() -> Node.Map(nodeId) { kv -> kv }
+      proto.hasMap() -> NodeMap(nodeId) { kv -> kv }
       proto.hasJoin() -> {
         val withPath = proto.join.with.path
         val withStream = context.lookupDataStream(withPath)
-        Node.Join(nodeId, withStream, JoinType(proto.join.joinType.byKey, proto.join.joinType.isLookup))
+        NodeJoin(nodeId, withStream, JoinType(proto.join.joinType.byKey, proto.join.joinType.isLookup))
       }
       proto.hasGroup() -> {
         val fieldPath = proto.group.keyMapperExpr
         val fields = fieldPath.trimStart('.').split('.').filter { it.isNotBlank() }
-        Node.Group(nodeId) { kv -> kv.value.select(fields) }
+        NodeGroup(nodeId) { kv -> kv.value.select(fields) }
       }
-      proto.hasCount() -> Node.Count(nodeId)
-      proto.hasWindowedCount() -> Node.WindowedCount(nodeId, proto.windowedCount.windowSizeSeconds)
-      proto.hasEach() -> Node.Each(nodeId) { _ -> }
+      proto.hasCount() -> NodeCount(nodeId)
+      proto.hasWindowedCount() -> NodeWindowedCount(nodeId, proto.windowedCount.windowSizeSeconds)
+      proto.hasEach() -> NodeEach(nodeId) { _ -> }
       proto.hasSink() -> {
         // Sink needs a placeholder output DataStream with the target path
         val targetPath = proto.sink.output.path
         val placeholderOutput = DataStream(targetPath, Schema.String.zeroValue)
-        Node.Sink(nodeId, placeholderOutput, inputEncoding ?: Encoding.AVRO)
+        NodeSink(nodeId, placeholderOutput, inputEncoding ?: Encoding.AVRO)
       }
-      proto.hasNoop() -> Node.NoOp(nodeId)
+      proto.hasNoop() -> NodeNoOp(nodeId)
       proto.hasGeoIp() -> {
         val g = proto.geoIp
-        Node.GeoIp(nodeId, g.ipField, g.outputField)
+        NodeGeoIp(nodeId, g.ipField, g.outputField)
       }
-      proto.hasInspector() -> Node.Inspector(nodeId, proto.inspector.label)
-      proto.hasReduceLatest() -> Node.ReduceLatest(nodeId)
+      proto.hasInspector() -> NodeInspector(nodeId, proto.inspector.label)
+      proto.hasReduceLatest() -> NodeReduceLatest(nodeId)
       proto.hasTextExtractor() -> {
         val t = proto.textExtractor
-        Node.TextExtractor(nodeId, t.filePathField, t.outputField.ifBlank { "text" })
+        NodeTextExtractor(nodeId, t.filePathField, t.outputField.ifBlank { "text" })
       }
       proto.hasEmbeddingGenerator() -> {
         val e = proto.embeddingGenerator
-        Node.EmbeddingGenerator(nodeId, e.textField, e.outputField.ifBlank { "embedding" }, e.model)
+        NodeEmbeddingGenerator(nodeId, e.textField, e.outputField.ifBlank { "embedding" }, e.model)
       }
       proto.hasOpenAiTransformer() -> {
         val o = proto.openAiTransformer
-        Node.OpenAiTransformer(nodeId, o.prompt, o.outputField.ifBlank { "ai_response" }, o.model)
+        NodeOpenAiTransformer(nodeId, o.prompt, o.outputField.ifBlank { "ai_response" }, o.model)
       }
       else -> error("Unknown node type: $nodeId")
     }

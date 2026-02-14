@@ -2,6 +2,7 @@ package io.typestream.compiler.ast
 
 import io.typestream.compiler.node.KeyValue
 import io.typestream.compiler.node.Node
+import io.typestream.compiler.node.NodeEach
 import io.typestream.compiler.types.Value
 import io.typestream.graph.Graph
 import kotlinx.serialization.Serializable
@@ -14,7 +15,7 @@ data class Each(override val expressions: List<Expr>) : DataCommand() {
         val boundBlock = block
         requireNotNull(boundBlock) { "cannot resolve each node: unbound block" }
 
-        return Graph(Node.Each(toString()) { keyValue ->
+        return Graph(NodeEach(toString()) { keyValue ->
             KeyValue(keyValue.key, boundBlock.value.invoke(keyValue.value))
         })
     }
