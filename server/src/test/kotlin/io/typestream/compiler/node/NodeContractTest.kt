@@ -49,57 +49,57 @@ internal class NodeContractTest {
 
         @JvmStatic
         fun allNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("Count", NodeCount("count-1")),
-            Arguments.of("WindowedCount", NodeWindowedCount("wc-1", 60)),
-            Arguments.of("Filter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
-            Arguments.of("Group", NodeGroup("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
-            Arguments.of("Join", NodeJoin("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
-            Arguments.of("Map", NodeMap("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
-            Arguments.of("NoOp", NodeNoOp("noop-1")),
-            Arguments.of("ShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
-            Arguments.of("StreamSource", NodeStreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
-            Arguments.of("Each", NodeEach("each-1") { _ -> }),
-            Arguments.of("Sink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
-            Arguments.of("GeoIp", NodeGeoIp("geoip-1", "ip_address", "country_code")),
-            Arguments.of("Inspector", NodeInspector("inspector-1", "test-label")),
-            Arguments.of("ReduceLatest", NodeReduceLatest("reduce-1")),
-            Arguments.of("TextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
-            Arguments.of("EmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
-            Arguments.of("OpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
+            Arguments.of("NodeCount", NodeCount("count-1")),
+            Arguments.of("NodeWindowedCount", NodeWindowedCount("wc-1", 60)),
+            Arguments.of("NodeFilter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
+            Arguments.of("NodeGroup", NodeGroup("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
+            Arguments.of("NodeJoin", NodeJoin("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
+            Arguments.of("NodeMap", NodeMap("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
+            Arguments.of("NodeNoOp", NodeNoOp("noop-1")),
+            Arguments.of("NodeShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
+            Arguments.of("NodeStreamSource", NodeStreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
+            Arguments.of("NodeEach", NodeEach("each-1") { _ -> }),
+            Arguments.of("NodeSink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
+            Arguments.of("NodeGeoIp", NodeGeoIp("geoip-1", "ip_address", "country_code")),
+            Arguments.of("NodeInspector", NodeInspector("inspector-1", "test-label")),
+            Arguments.of("NodeReduceLatest", NodeReduceLatest("reduce-1")),
+            Arguments.of("NodeTextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
+            Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
+            Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
         )
 
         @JvmStatic
         fun transformNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("Count", NodeCount("count-1")),
-            Arguments.of("WindowedCount", NodeWindowedCount("wc-1", 60)),
-            Arguments.of("Filter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
-            Arguments.of("Group", NodeGroup("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
-            Arguments.of("Join", NodeJoin("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
-            Arguments.of("Map", NodeMap("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
-            Arguments.of("Each", NodeEach("each-1") { _ -> }),
-            Arguments.of("GeoIp", NodeGeoIp("geoip-1", "ip_address", "country_code")),
-            Arguments.of("Inspector", NodeInspector("inspector-1", "test-label")),
-            Arguments.of("ReduceLatest", NodeReduceLatest("reduce-1")),
-            Arguments.of("TextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
-            Arguments.of("EmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
-            Arguments.of("OpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
-            Arguments.of("Sink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
+            Arguments.of("NodeCount", NodeCount("count-1")),
+            Arguments.of("NodeWindowedCount", NodeWindowedCount("wc-1", 60)),
+            Arguments.of("NodeFilter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
+            Arguments.of("NodeGroup", NodeGroup("group-1", ".name") { kv -> kv.value.select(listOf("name")) }),
+            Arguments.of("NodeJoin", NodeJoin("join-1", sampleDataStream, JoinType(byKey = true, isLookup = false))),
+            Arguments.of("NodeMap", NodeMap("map-1", "select .id .name") { kv -> KeyValue(kv.key, kv.value.select(listOf("id", "name"))) }),
+            Arguments.of("NodeEach", NodeEach("each-1") { _ -> }),
+            Arguments.of("NodeGeoIp", NodeGeoIp("geoip-1", "ip_address", "country_code")),
+            Arguments.of("NodeInspector", NodeInspector("inspector-1", "test-label")),
+            Arguments.of("NodeReduceLatest", NodeReduceLatest("reduce-1")),
+            Arguments.of("NodeTextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
+            Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
+            Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
+            Arguments.of("NodeSink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
         )
 
         @JvmStatic
         fun sourceNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("ShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
-            Arguments.of("StreamSource", NodeStreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
+            Arguments.of("NodeShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
+            Arguments.of("NodeStreamSource", NodeStreamSource("source-1", sampleDataStream, Encoding.AVRO, false)),
         )
 
         @JvmStatic
         fun shellExecutableNodes(): Stream<Arguments> = Stream.of(
-            Arguments.of("Filter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
-            Arguments.of("Map", NodeMap("map-1") { kv -> kv }),
-            Arguments.of("Each", NodeEach("each-1") { _ -> }),
-            Arguments.of("NoOp", NodeNoOp("noop-1")),
-            Arguments.of("ShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
-            Arguments.of("Inspector", NodeInspector("inspector-1", "test-label")),
+            Arguments.of("NodeFilter", NodeFilter("filter-1", false, Predicate.matches(".*"))),
+            Arguments.of("NodeMap", NodeMap("map-1") { kv -> kv }),
+            Arguments.of("NodeEach", NodeEach("each-1") { _ -> }),
+            Arguments.of("NodeNoOp", NodeNoOp("noop-1")),
+            Arguments.of("NodeShellSource", NodeShellSource("shell-1", listOf(sampleDataStream))),
+            Arguments.of("NodeInspector", NodeInspector("inspector-1", "test-label")),
         )
     }
 
