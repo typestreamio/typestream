@@ -15,7 +15,7 @@ import java.sql.DriverManager
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Timeout(60, unit = TimeUnit.SECONDS)
 internal class FileUploadsConnectorTest {
 
