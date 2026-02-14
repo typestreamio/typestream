@@ -268,11 +268,5 @@ class PipelineGraphEmitter : Statement.Visitor<Unit> {
     }
 }
 
-private fun io.typestream.compiler.types.Encoding?.toProtoEncoding(): Job.Encoding = when (this) {
-    io.typestream.compiler.types.Encoding.STRING -> Job.Encoding.STRING
-    io.typestream.compiler.types.Encoding.NUMBER -> Job.Encoding.NUMBER
-    io.typestream.compiler.types.Encoding.JSON -> Job.Encoding.JSON
-    io.typestream.compiler.types.Encoding.AVRO -> Job.Encoding.AVRO
-    io.typestream.compiler.types.Encoding.PROTOBUF -> Job.Encoding.PROTOBUF
-    null -> Job.Encoding.AVRO
-}
+private fun io.typestream.compiler.types.Encoding?.toProtoEncoding(): Job.Encoding =
+    this?.toProtoEncoding() ?: Job.Encoding.AVRO
