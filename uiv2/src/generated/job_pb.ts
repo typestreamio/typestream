@@ -2352,3 +2352,597 @@ export class ListOpenAIModelsResponse extends Message<ListOpenAIModelsResponse> 
   }
 }
 
+/**
+ * @generated from message io.typestream.grpc.KafkaSourceNode
+ */
+export class KafkaSourceNode extends Message<KafkaSourceNode> {
+  /**
+   * @generated from field: string topic_path = 1;
+   */
+  topicPath = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.Encoding encoding = 2;
+   */
+  encoding = Encoding.STRING;
+
+  /**
+   * @generated from field: bool unwrap_cdc = 3;
+   */
+  unwrapCdc = false;
+
+  constructor(data?: PartialMessage<KafkaSourceNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.KafkaSourceNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "topic_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "encoding", kind: "enum", T: proto3.getEnumType(Encoding) },
+    { no: 3, name: "unwrap_cdc", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): KafkaSourceNode {
+    return new KafkaSourceNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): KafkaSourceNode {
+    return new KafkaSourceNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): KafkaSourceNode {
+    return new KafkaSourceNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: KafkaSourceNode | PlainMessage<KafkaSourceNode> | undefined, b: KafkaSourceNode | PlainMessage<KafkaSourceNode> | undefined): boolean {
+    return proto3.util.equals(KafkaSourceNode, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.PostgresSourceNode
+ */
+export class PostgresSourceNode extends Message<PostgresSourceNode> {
+  /**
+   * @generated from field: string topic_path = 1;
+   */
+  topicPath = "";
+
+  constructor(data?: PartialMessage<PostgresSourceNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.PostgresSourceNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "topic_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PostgresSourceNode {
+    return new PostgresSourceNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PostgresSourceNode {
+    return new PostgresSourceNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PostgresSourceNode {
+    return new PostgresSourceNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PostgresSourceNode | PlainMessage<PostgresSourceNode> | undefined, b: PostgresSourceNode | PlainMessage<PostgresSourceNode> | undefined): boolean {
+    return proto3.util.equals(PostgresSourceNode, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.UserFilterNode
+ */
+export class UserFilterNode extends Message<UserFilterNode> {
+  /**
+   * @generated from field: string expression = 1;
+   */
+  expression = "";
+
+  constructor(data?: PartialMessage<UserFilterNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.UserFilterNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "expression", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UserFilterNode {
+    return new UserFilterNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UserFilterNode {
+    return new UserFilterNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UserFilterNode {
+    return new UserFilterNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UserFilterNode | PlainMessage<UserFilterNode> | undefined, b: UserFilterNode | PlainMessage<UserFilterNode> | undefined): boolean {
+    return proto3.util.equals(UserFilterNode, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.KafkaSinkNode
+ */
+export class KafkaSinkNode extends Message<KafkaSinkNode> {
+  /**
+   * @generated from field: string topic_name = 1;
+   */
+  topicName = "";
+
+  constructor(data?: PartialMessage<KafkaSinkNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.KafkaSinkNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "topic_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): KafkaSinkNode {
+    return new KafkaSinkNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): KafkaSinkNode {
+    return new KafkaSinkNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): KafkaSinkNode {
+    return new KafkaSinkNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: KafkaSinkNode | PlainMessage<KafkaSinkNode> | undefined, b: KafkaSinkNode | PlainMessage<KafkaSinkNode> | undefined): boolean {
+    return proto3.util.equals(KafkaSinkNode, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.MaterializedViewNode
+ */
+export class MaterializedViewNode extends Message<MaterializedViewNode> {
+  /**
+   * @generated from field: string group_by_field = 1;
+   */
+  groupByField = "";
+
+  /**
+   * "count" or "latest"
+   *
+   * @generated from field: string aggregation_type = 2;
+   */
+  aggregationType = "";
+
+  /**
+   * @generated from field: bool enable_windowing = 3;
+   */
+  enableWindowing = false;
+
+  /**
+   * @generated from field: int64 window_size_seconds = 4;
+   */
+  windowSizeSeconds = protoInt64.zero;
+
+  constructor(data?: PartialMessage<MaterializedViewNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.MaterializedViewNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "group_by_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "aggregation_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "enable_windowing", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "window_size_seconds", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MaterializedViewNode {
+    return new MaterializedViewNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MaterializedViewNode {
+    return new MaterializedViewNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MaterializedViewNode {
+    return new MaterializedViewNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MaterializedViewNode | PlainMessage<MaterializedViewNode> | undefined, b: MaterializedViewNode | PlainMessage<MaterializedViewNode> | undefined): boolean {
+    return proto3.util.equals(MaterializedViewNode, a, b);
+  }
+}
+
+/**
+ * User-facing DB sink (mirrors DbSinkConfig without node_id/intermediate_topic)
+ *
+ * @generated from message io.typestream.grpc.DbSinkNode
+ */
+export class DbSinkNode extends Message<DbSinkNode> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string table_name = 2;
+   */
+  tableName = "";
+
+  /**
+   * @generated from field: string insert_mode = 3;
+   */
+  insertMode = "";
+
+  /**
+   * @generated from field: string primary_key_fields = 4;
+   */
+  primaryKeyFields = "";
+
+  constructor(data?: PartialMessage<DbSinkNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.DbSinkNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "table_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "insert_mode", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "primary_key_fields", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DbSinkNode {
+    return new DbSinkNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DbSinkNode {
+    return new DbSinkNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DbSinkNode {
+    return new DbSinkNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DbSinkNode | PlainMessage<DbSinkNode> | undefined, b: DbSinkNode | PlainMessage<DbSinkNode> | undefined): boolean {
+    return proto3.util.equals(DbSinkNode, a, b);
+  }
+}
+
+/**
+ * User-facing Weaviate sink (mirrors WeaviateSinkConfig without node_id/intermediate_topic)
+ *
+ * @generated from message io.typestream.grpc.WeaviateSinkNode
+ */
+export class WeaviateSinkNode extends Message<WeaviateSinkNode> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string collection_name = 2;
+   */
+  collectionName = "";
+
+  /**
+   * @generated from field: string document_id_strategy = 3;
+   */
+  documentIdStrategy = "";
+
+  /**
+   * @generated from field: string document_id_field = 4;
+   */
+  documentIdField = "";
+
+  /**
+   * @generated from field: string vector_strategy = 5;
+   */
+  vectorStrategy = "";
+
+  /**
+   * @generated from field: string vector_field = 6;
+   */
+  vectorField = "";
+
+  /**
+   * @generated from field: string timestamp_field = 7;
+   */
+  timestampField = "";
+
+  constructor(data?: PartialMessage<WeaviateSinkNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.WeaviateSinkNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document_id_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "document_id_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "vector_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "vector_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "timestamp_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeaviateSinkNode {
+    return new WeaviateSinkNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeaviateSinkNode {
+    return new WeaviateSinkNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeaviateSinkNode {
+    return new WeaviateSinkNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WeaviateSinkNode | PlainMessage<WeaviateSinkNode> | undefined, b: WeaviateSinkNode | PlainMessage<WeaviateSinkNode> | undefined): boolean {
+    return proto3.util.equals(WeaviateSinkNode, a, b);
+  }
+}
+
+/**
+ * User-facing Elasticsearch sink (mirrors ElasticsearchSinkConfig without node_id/intermediate_topic)
+ *
+ * @generated from message io.typestream.grpc.ElasticsearchSinkNode
+ */
+export class ElasticsearchSinkNode extends Message<ElasticsearchSinkNode> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * @generated from field: string index_name = 2;
+   */
+  indexName = "";
+
+  /**
+   * @generated from field: string document_id_strategy = 3;
+   */
+  documentIdStrategy = "";
+
+  /**
+   * @generated from field: string write_method = 4;
+   */
+  writeMethod = "";
+
+  /**
+   * @generated from field: string behavior_on_null_values = 5;
+   */
+  behaviorOnNullValues = "";
+
+  constructor(data?: PartialMessage<ElasticsearchSinkNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.ElasticsearchSinkNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "index_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document_id_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "write_method", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "behavior_on_null_values", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ElasticsearchSinkNode {
+    return new ElasticsearchSinkNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ElasticsearchSinkNode {
+    return new ElasticsearchSinkNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ElasticsearchSinkNode {
+    return new ElasticsearchSinkNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ElasticsearchSinkNode | PlainMessage<ElasticsearchSinkNode> | undefined, b: ElasticsearchSinkNode | PlainMessage<ElasticsearchSinkNode> | undefined): boolean {
+    return proto3.util.equals(ElasticsearchSinkNode, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.UserPipelineNode
+ */
+export class UserPipelineNode extends Message<UserPipelineNode> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from oneof io.typestream.grpc.UserPipelineNode.node_type
+   */
+  nodeType: {
+    /**
+     * Sources
+     *
+     * @generated from field: io.typestream.grpc.KafkaSourceNode kafka_source = 2;
+     */
+    value: KafkaSourceNode;
+    case: "kafkaSource";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.PostgresSourceNode postgres_source = 3;
+     */
+    value: PostgresSourceNode;
+    case: "postgresSource";
+  } | {
+    /**
+     * Transforms
+     *
+     * @generated from field: io.typestream.grpc.UserFilterNode filter = 4;
+     */
+    value: UserFilterNode;
+    case: "filter";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.GeoIpNode geo_ip = 5;
+     */
+    value: GeoIpNode;
+    case: "geoIp";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.TextExtractorNode text_extractor = 6;
+     */
+    value: TextExtractorNode;
+    case: "textExtractor";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.EmbeddingGeneratorNode embedding_generator = 7;
+     */
+    value: EmbeddingGeneratorNode;
+    case: "embeddingGenerator";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.OpenAiTransformerNode open_ai_transformer = 8;
+     */
+    value: OpenAiTransformerNode;
+    case: "openAiTransformer";
+  } | {
+    /**
+     * Sinks
+     *
+     * @generated from field: io.typestream.grpc.KafkaSinkNode kafka_sink = 9;
+     */
+    value: KafkaSinkNode;
+    case: "kafkaSink";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.InspectorNode inspector = 10;
+     */
+    value: InspectorNode;
+    case: "inspector";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.MaterializedViewNode materialized_view = 11;
+     */
+    value: MaterializedViewNode;
+    case: "materializedView";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.DbSinkNode db_sink = 12;
+     */
+    value: DbSinkNode;
+    case: "dbSink";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.WeaviateSinkNode weaviate_sink = 13;
+     */
+    value: WeaviateSinkNode;
+    case: "weaviateSink";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.ElasticsearchSinkNode elasticsearch_sink = 14;
+     */
+    value: ElasticsearchSinkNode;
+    case: "elasticsearchSink";
+  } | { case: undefined; value?: undefined } = { case: undefined };
+
+  constructor(data?: PartialMessage<UserPipelineNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.UserPipelineNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "kafka_source", kind: "message", T: KafkaSourceNode, oneof: "node_type" },
+    { no: 3, name: "postgres_source", kind: "message", T: PostgresSourceNode, oneof: "node_type" },
+    { no: 4, name: "filter", kind: "message", T: UserFilterNode, oneof: "node_type" },
+    { no: 5, name: "geo_ip", kind: "message", T: GeoIpNode, oneof: "node_type" },
+    { no: 6, name: "text_extractor", kind: "message", T: TextExtractorNode, oneof: "node_type" },
+    { no: 7, name: "embedding_generator", kind: "message", T: EmbeddingGeneratorNode, oneof: "node_type" },
+    { no: 8, name: "open_ai_transformer", kind: "message", T: OpenAiTransformerNode, oneof: "node_type" },
+    { no: 9, name: "kafka_sink", kind: "message", T: KafkaSinkNode, oneof: "node_type" },
+    { no: 10, name: "inspector", kind: "message", T: InspectorNode, oneof: "node_type" },
+    { no: 11, name: "materialized_view", kind: "message", T: MaterializedViewNode, oneof: "node_type" },
+    { no: 12, name: "db_sink", kind: "message", T: DbSinkNode, oneof: "node_type" },
+    { no: 13, name: "weaviate_sink", kind: "message", T: WeaviateSinkNode, oneof: "node_type" },
+    { no: 14, name: "elasticsearch_sink", kind: "message", T: ElasticsearchSinkNode, oneof: "node_type" },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UserPipelineNode {
+    return new UserPipelineNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UserPipelineNode {
+    return new UserPipelineNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UserPipelineNode {
+    return new UserPipelineNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UserPipelineNode | PlainMessage<UserPipelineNode> | undefined, b: UserPipelineNode | PlainMessage<UserPipelineNode> | undefined): boolean {
+    return proto3.util.equals(UserPipelineNode, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.UserPipelineGraph
+ */
+export class UserPipelineGraph extends Message<UserPipelineGraph> {
+  /**
+   * @generated from field: repeated io.typestream.grpc.UserPipelineNode nodes = 1;
+   */
+  nodes: UserPipelineNode[] = [];
+
+  /**
+   * @generated from field: repeated io.typestream.grpc.PipelineEdge edges = 2;
+   */
+  edges: PipelineEdge[] = [];
+
+  constructor(data?: PartialMessage<UserPipelineGraph>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.UserPipelineGraph";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "nodes", kind: "message", T: UserPipelineNode, repeated: true },
+    { no: 2, name: "edges", kind: "message", T: PipelineEdge, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UserPipelineGraph {
+    return new UserPipelineGraph().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UserPipelineGraph {
+    return new UserPipelineGraph().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UserPipelineGraph {
+    return new UserPipelineGraph().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UserPipelineGraph | PlainMessage<UserPipelineGraph> | undefined, b: UserPipelineGraph | PlainMessage<UserPipelineGraph> | undefined): boolean {
+    return proto3.util.equals(UserPipelineGraph, a, b);
+  }
+}
+

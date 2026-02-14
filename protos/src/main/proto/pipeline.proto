@@ -24,7 +24,7 @@ message PipelineMetadata {
 
 message ValidatePipelineRequest {
     PipelineMetadata metadata = 1;
-    PipelineGraph graph = 2;
+    UserPipelineGraph graph = 2;
 }
 
 message ValidatePipelineResponse {
@@ -35,7 +35,7 @@ message ValidatePipelineResponse {
 
 message ApplyPipelineRequest {
     PipelineMetadata metadata = 1;
-    PipelineGraph graph = 2;
+    UserPipelineGraph graph = 2;
 }
 
 message ApplyPipelineResponse {
@@ -62,6 +62,7 @@ message PipelineInfo {
     JobState job_state = 5;
     int64 applied_at = 6;
     PipelineGraph graph = 7;
+    UserPipelineGraph user_graph = 8;
 }
 
 message ListPipelinesResponse {
@@ -79,7 +80,7 @@ message DeletePipelineResponse {
 
 message PipelinePlan {
     PipelineMetadata metadata = 1;
-    PipelineGraph graph = 2;
+    UserPipelineGraph graph = 2;
 }
 
 message PlanPipelinesRequest {

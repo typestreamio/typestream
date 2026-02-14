@@ -63,7 +63,7 @@ func init() {
 }
 
 // parsePipelineFile parses a .typestream.json file into metadata and graph.
-func parsePipelineFile(content []byte) (*pipeline_service.PipelineMetadata, *job_service.PipelineGraph, error) {
+func parsePipelineFile(content []byte) (*pipeline_service.PipelineMetadata, *job_service.UserPipelineGraph, error) {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(content, &raw); err != nil {
 		return nil, nil, fmt.Errorf("invalid JSON: %w", err)
@@ -97,7 +97,7 @@ func parsePipelineFile(content []byte) (*pipeline_service.PipelineMetadata, *job
 		return nil, nil, fmt.Errorf("missing 'graph' field")
 	}
 
-	graph := &job_service.PipelineGraph{}
+	graph := &job_service.UserPipelineGraph{}
 	if err := protojson.Unmarshal(graphRaw, graph); err != nil {
 		return nil, nil, fmt.Errorf("invalid 'graph': %w", err)
 	}

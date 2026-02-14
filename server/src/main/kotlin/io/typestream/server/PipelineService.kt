@@ -2,6 +2,7 @@ package io.typestream.server
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.GraphCompiler
+import io.typestream.compiler.PipelineDesugarer
 import io.typestream.compiler.vm.Env
 import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 data class ManagedPipeline(
     val metadata: Pipeline.PipelineMetadata,
+    val userGraph: ProtoJob.UserPipelineGraph,
     val graph: ProtoJob.PipelineGraph,
     val jobId: String,
     val appliedAt: Long = System.currentTimeMillis()
@@ -46,6 +48,7 @@ class PipelineService(
                 val deterministicId = "typestream-pipeline-$name"
                 managedPipelines[name] = ManagedPipeline(
                     metadata = record.metadata,
+                    userGraph = record.userGraph,
                     graph = record.graph,
                     jobId = deterministicId,
                     appliedAt = record.appliedAt
@@ -82,8 +85,9 @@ class PipelineService(
                 return@validatePipelineResponse
             }
 
-            // Dry-run compile to check for errors
-            graphCompiler.compileFromGraph(request.graph, "typestream-pipeline-$name")
+            // Desugar then dry-run compile to check for errors
+            val desugared = PipelineDesugarer.desugar(request.graph)
+            graphCompiler.compileFromGraph(desugared.graph, "typestream-pipeline-$name")
 
             valid = true
         } catch (e: Exception) {
@@ -105,11 +109,10 @@ class PipelineService(
 
             val deterministicId = "typestream-pipeline-$name"
 
-            // Check if pipeline already exists
+            // Check if pipeline already exists — compare user graphs
             val existing = managedPipelines[name]
             if (existing != null) {
-                // Check if graph is the same
-                if (existing.graph == request.graph) {
+                if (existing.userGraph == request.graph) {
                     success = true
                     jobId = existing.jobId
                     state = Pipeline.PipelineState.UNCHANGED
@@ -125,14 +128,16 @@ class PipelineService(
                 }
             }
 
-            // Compile and start new job
-            val program = graphCompiler.compileFromGraph(request.graph, deterministicId)
+            // Desugar, compile, and start new job
+            val desugared = PipelineDesugarer.desugar(request.graph)
+            val program = graphCompiler.compileFromGraph(desugared.graph, deterministicId)
             vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
 
             val now = System.currentTimeMillis()
             managedPipelines[name] = ManagedPipeline(
                 metadata = request.metadata,
-                graph = request.graph,
+                userGraph = request.graph,
+                graph = desugared.graph,
                 jobId = program.id,
                 appliedAt = now
             )
@@ -140,7 +145,8 @@ class PipelineService(
             // Persist to state store
             stateStore?.save(name, PipelineRecord(
                 metadata = request.metadata,
-                graph = request.graph,
+                userGraph = request.graph,
+                graph = desugared.graph,
                 appliedAt = now
             ))
 
@@ -182,6 +188,7 @@ class PipelineService(
                 this.jobState = jobState
                 this.appliedAt = managed.appliedAt
                 this.graph = managed.graph
+                this.userGraph = managed.userGraph
             })
         }
     }
@@ -225,10 +232,11 @@ class PipelineService(
             }
             requestedNames.add(name)
 
-            // Validate the graph compiles
+            // Desugar and validate the graph compiles
             val deterministicId = "typestream-pipeline-$name"
             val validationError = try {
-                graphCompiler.compileFromGraph(plan.graph, deterministicId)
+                val desugared = PipelineDesugarer.desugar(plan.graph)
+                graphCompiler.compileFromGraph(desugared.graph, deterministicId)
                 null
             } catch (e: Exception) {
                 e.message ?: "Unknown validation error"
@@ -242,7 +250,7 @@ class PipelineService(
                         action = Pipeline.PipelineAction.CREATE
                         newVersion = plan.metadata.version
                     }
-                    existing.graph == plan.graph -> {
+                    existing.userGraph == plan.graph -> {
                         action = Pipeline.PipelineAction.NO_CHANGE
                         currentVersion = existing.metadata.version
                         newVersion = plan.metadata.version

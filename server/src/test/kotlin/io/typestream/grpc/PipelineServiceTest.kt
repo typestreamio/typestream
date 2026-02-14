@@ -40,26 +40,25 @@ internal class PipelineServiceTest {
         app = Server(testConfig(testKafka), dispatcher)
     }
 
-    private fun buildSimpleGraph(topicPath: String): Job.PipelineGraph {
-        val sourceNode = Job.PipelineNode.newBuilder()
+    private fun buildSimpleUserGraph(topicPath: String): Job.UserPipelineGraph {
+        val sourceNode = Job.UserPipelineNode.newBuilder()
             .setId("source-1")
-            .setStreamSource(
-                Job.StreamSourceNode.newBuilder()
-                    .setDataStream(Job.DataStreamProto.newBuilder().setPath(topicPath))
+            .setKafkaSource(
+                Job.KafkaSourceNode.newBuilder()
+                    .setTopicPath(topicPath)
                     .setEncoding(Job.Encoding.AVRO)
             )
             .build()
 
-        val filterNode = Job.PipelineNode.newBuilder()
+        val filterNode = Job.UserPipelineNode.newBuilder()
             .setId("filter-1")
             .setFilter(
-                Job.FilterNode.newBuilder()
-                    .setByKey(false)
-                    .setPredicate(Job.PredicateProto.newBuilder().setExpr("Station"))
+                Job.UserFilterNode.newBuilder()
+                    .setExpression("Station")
             )
             .build()
 
-        return Job.PipelineGraph.newBuilder()
+        return Job.UserPipelineGraph.newBuilder()
             .addNodes(sourceNode)
             .addNodes(filterNode)
             .addEdges(Job.PipelineEdge.newBuilder().setFromId("source-1").setToId("filter-1"))
@@ -102,7 +101,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val request = Pipeline.ValidatePipelineRequest.newBuilder()
                 .setMetadata(buildMetadata("test-pipeline"))
                 .setGraph(graph)
@@ -133,7 +132,7 @@ internal class PipelineServiceTest {
 
             val request = Pipeline.ValidatePipelineRequest.newBuilder()
                 .setMetadata(buildMetadata(""))
-                .setGraph(Job.PipelineGraph.getDefaultInstance())
+                .setGraph(Job.UserPipelineGraph.getDefaultInstance())
                 .build()
 
             val response = stub.validatePipeline(request)
@@ -167,7 +166,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val request = Pipeline.ApplyPipelineRequest.newBuilder()
                 .setMetadata(buildMetadata("my-pipeline", "1", "Test pipeline"))
                 .setGraph(graph)
@@ -205,7 +204,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val metadata = buildMetadata("idempotent-pipeline")
 
             // First apply
@@ -250,7 +249,7 @@ internal class PipelineServiceTest {
             )
 
             // Apply a pipeline first
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val applyRequest = Pipeline.ApplyPipelineRequest.newBuilder()
                 .setMetadata(buildMetadata("listed-pipeline", "2", "A listed pipeline"))
                 .setGraph(graph)
@@ -295,7 +294,7 @@ internal class PipelineServiceTest {
             )
 
             // Apply a pipeline
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val applyRequest = Pipeline.ApplyPipelineRequest.newBuilder()
                 .setMetadata(buildMetadata("deletable-pipeline"))
                 .setGraph(graph)
@@ -367,7 +366,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val planRequest = Pipeline.PlanPipelinesRequest.newBuilder()
                 .addPipelines(
                     Pipeline.PipelinePlan.newBuilder()
@@ -409,7 +408,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
             val metadata = buildMetadata("unchanged-pipeline", "1")
 
             // Apply first
@@ -461,7 +460,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
 
             // Apply first
             stub.applyPipeline(
@@ -471,16 +470,15 @@ internal class PipelineServiceTest {
                     .build()
             )
 
-            // Build a different graph (different predicate)
-            val modifiedFilterNode = Job.PipelineNode.newBuilder()
+            // Build a different user graph (different expression)
+            val modifiedFilterNode = Job.UserPipelineNode.newBuilder()
                 .setId("filter-1")
                 .setFilter(
-                    Job.FilterNode.newBuilder()
-                        .setByKey(false)
-                        .setPredicate(Job.PredicateProto.newBuilder().setExpr("Different"))
+                    Job.UserFilterNode.newBuilder()
+                        .setExpression("Different")
                 )
                 .build()
-            val modifiedGraph = Job.PipelineGraph.newBuilder()
+            val modifiedGraph = Job.UserPipelineGraph.newBuilder()
                 .addNodes(graph.getNodes(0)) // same source
                 .addNodes(modifiedFilterNode)
                 .addEdges(Job.PipelineEdge.newBuilder().setFromId("source-1").setToId("filter-1"))
@@ -529,7 +527,7 @@ internal class PipelineServiceTest {
                 grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build())
             )
 
-            val graph = buildSimpleGraph("/dev/kafka/local/topics/$topic")
+            val graph = buildSimpleUserGraph("/dev/kafka/local/topics/$topic")
 
             // Apply a pipeline
             stub.applyPipeline(
