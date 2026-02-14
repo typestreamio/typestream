@@ -17,6 +17,18 @@ fun DataStream.toBytes(): Bytes = Bytes.wrap(schema.value.toString().toByteArray
 
 private val keySchemaCache = ConcurrentHashMap<Int, AvroSchema>()
 
+private fun avroFieldToDataStream(path: String, fieldSchema: AvroSchema, value: Any?): DataStream {
+    return when (fieldSchema.type) {
+        AvroSchema.Type.INT -> DataStream(path, Schema.Int(value as Int))
+        AvroSchema.Type.LONG -> DataStream(path, Schema.Long(value as Long))
+        AvroSchema.Type.STRING -> DataStream(path, Schema.String(value.toString()))
+        AvroSchema.Type.FLOAT -> DataStream(path, Schema.Float(value as Float))
+        AvroSchema.Type.DOUBLE -> DataStream(path, Schema.Double(value as Double))
+        AvroSchema.Type.BOOLEAN -> DataStream(path, Schema.Boolean(value as Boolean))
+        else -> DataStream(path, Schema.String(value.toString()))
+    }
+}
+
 fun DataStream.Companion.fromKeyBytes(path: String, value: Bytes, schemaRegistryClient: SchemaRegistryClient?): DataStream {
     val raw = value.get()
     // Check for Avro wire format: magic byte 0x00 + 4-byte schema ID
@@ -46,7 +58,14 @@ fun DataStream.Companion.fromKeyBytes(path: String, value: Bytes, schemaRegistry
         AvroSchema.Type.RECORD -> {
             val reader = GenericDatumReader<GenericRecord>(avroSchema)
             val record = reader.read(null, decoder)
-            DataStream.fromAvroGenericRecord(path, record)
+            // Flatten single-field key records (e.g. Debezium {"id": 1} -> 1)
+            if (avroSchema.fields.size == 1) {
+                val field = avroSchema.fields[0]
+                val fieldValue = record.get(0)
+                avroFieldToDataStream(path, field.schema(), fieldValue)
+            } else {
+                DataStream.fromAvroGenericRecord(path, record)
+            }
         }
         else -> fromBytes(path, value)
     }
