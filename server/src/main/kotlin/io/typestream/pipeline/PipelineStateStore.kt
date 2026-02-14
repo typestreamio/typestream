@@ -4,6 +4,7 @@ import com.google.protobuf.util.JsonFormat
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.config.KafkaConfig
 import io.typestream.grpc.job_service.Job.PipelineGraph
+import io.typestream.grpc.job_service.Job.UserPipelineGraph
 import io.typestream.grpc.pipeline_service.Pipeline.PipelineMetadata
 import kotlinx.serialization.json.Json
 import org.apache.kafka.clients.admin.Admin
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit
 
 data class PipelineRecord(
     val metadata: PipelineMetadata,
+    val userGraph: UserPipelineGraph,
     val graph: PipelineGraph,
     val appliedAt: Long
 )
@@ -168,8 +170,9 @@ class PipelineStateStore(private val kafkaConfig: KafkaConfig) : Closeable {
 
     private fun serialize(record: PipelineRecord): String {
         val metadataJson = protoJsonPrinter.print(record.metadata)
+        val userGraphJson = protoJsonPrinter.print(record.userGraph)
         val graphJson = protoJsonPrinter.print(record.graph)
-        return """{"metadata":$metadataJson,"graph":$graphJson,"appliedAt":${record.appliedAt}}"""
+        return """{"metadata":$metadataJson,"userGraph":$userGraphJson,"graph":$graphJson,"appliedAt":${record.appliedAt}}"""
     }
 
     private fun deserialize(value: String): PipelineRecord {
@@ -178,6 +181,12 @@ class PipelineStateStore(private val kafkaConfig: KafkaConfig) : Closeable {
         val metadataJson = root["metadata"].toString()
         val metadataBuilder = PipelineMetadata.newBuilder()
         protoJsonParser.merge(metadataJson, metadataBuilder)
+
+        val userGraphBuilder = UserPipelineGraph.newBuilder()
+        val userGraphRaw = root["userGraph"]
+        if (userGraphRaw != null) {
+            protoJsonParser.merge(userGraphRaw.toString(), userGraphBuilder)
+        }
 
         val graphJson = root["graph"].toString()
         val graphBuilder = PipelineGraph.newBuilder()
@@ -189,6 +198,7 @@ class PipelineStateStore(private val kafkaConfig: KafkaConfig) : Closeable {
 
         return PipelineRecord(
             metadata = metadataBuilder.build(),
+            userGraph = userGraphBuilder.build(),
             graph = graphBuilder.build(),
             appliedAt = appliedAt
         )

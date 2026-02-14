@@ -5,7 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, protoInt64 } from "@bufbuild/protobuf";
-import { JobState, PipelineGraph } from "./job_pb.js";
+import { JobState, PipelineGraph, UserPipelineGraph } from "./job_pb.js";
 
 /**
  * @generated from enum io.typestream.grpc.PipelineState
@@ -136,9 +136,9 @@ export class ValidatePipelineRequest extends Message<ValidatePipelineRequest> {
   metadata?: PipelineMetadata;
 
   /**
-   * @generated from field: io.typestream.grpc.PipelineGraph graph = 2;
+   * @generated from field: io.typestream.grpc.UserPipelineGraph graph = 2;
    */
-  graph?: PipelineGraph;
+  graph?: UserPipelineGraph;
 
   constructor(data?: PartialMessage<ValidatePipelineRequest>) {
     super();
@@ -149,7 +149,7 @@ export class ValidatePipelineRequest extends Message<ValidatePipelineRequest> {
   static readonly typeName = "io.typestream.grpc.ValidatePipelineRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "metadata", kind: "message", T: PipelineMetadata },
-    { no: 2, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 2, name: "graph", kind: "message", T: UserPipelineGraph },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ValidatePipelineRequest {
@@ -228,9 +228,9 @@ export class ApplyPipelineRequest extends Message<ApplyPipelineRequest> {
   metadata?: PipelineMetadata;
 
   /**
-   * @generated from field: io.typestream.grpc.PipelineGraph graph = 2;
+   * @generated from field: io.typestream.grpc.UserPipelineGraph graph = 2;
    */
-  graph?: PipelineGraph;
+  graph?: UserPipelineGraph;
 
   constructor(data?: PartialMessage<ApplyPipelineRequest>) {
     super();
@@ -241,7 +241,7 @@ export class ApplyPipelineRequest extends Message<ApplyPipelineRequest> {
   static readonly typeName = "io.typestream.grpc.ApplyPipelineRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "metadata", kind: "message", T: PipelineMetadata },
-    { no: 2, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 2, name: "graph", kind: "message", T: UserPipelineGraph },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplyPipelineRequest {
@@ -386,6 +386,11 @@ export class PipelineInfo extends Message<PipelineInfo> {
    */
   graph?: PipelineGraph;
 
+  /**
+   * @generated from field: io.typestream.grpc.UserPipelineGraph user_graph = 8;
+   */
+  userGraph?: UserPipelineGraph;
+
   constructor(data?: PartialMessage<PipelineInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -401,6 +406,7 @@ export class PipelineInfo extends Message<PipelineInfo> {
     { no: 5, name: "job_state", kind: "enum", T: proto3.getEnumType(JobState) },
     { no: 6, name: "applied_at", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 7, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 8, name: "user_graph", kind: "message", T: UserPipelineGraph },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineInfo {
@@ -547,9 +553,9 @@ export class PipelinePlan extends Message<PipelinePlan> {
   metadata?: PipelineMetadata;
 
   /**
-   * @generated from field: io.typestream.grpc.PipelineGraph graph = 2;
+   * @generated from field: io.typestream.grpc.UserPipelineGraph graph = 2;
    */
-  graph?: PipelineGraph;
+  graph?: UserPipelineGraph;
 
   constructor(data?: PartialMessage<PipelinePlan>) {
     super();
@@ -560,7 +566,7 @@ export class PipelinePlan extends Message<PipelinePlan> {
   static readonly typeName = "io.typestream.grpc.PipelinePlan";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "metadata", kind: "message", T: PipelineMetadata },
-    { no: 2, name: "graph", kind: "message", T: PipelineGraph },
+    { no: 2, name: "graph", kind: "message", T: UserPipelineGraph },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelinePlan {

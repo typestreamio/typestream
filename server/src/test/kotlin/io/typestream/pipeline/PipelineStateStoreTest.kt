@@ -37,6 +37,31 @@ internal class PipelineStateStoreTest {
             .build()
     }
 
+    private fun buildSimpleUserGraph(): Job.UserPipelineGraph {
+        val sourceNode = Job.UserPipelineNode.newBuilder()
+            .setId("source-1")
+            .setKafkaSource(
+                Job.KafkaSourceNode.newBuilder()
+                    .setTopicPath("/dev/kafka/local/topics/test")
+                    .setEncoding(Job.Encoding.AVRO)
+            )
+            .build()
+
+        val filterNode = Job.UserPipelineNode.newBuilder()
+            .setId("filter-1")
+            .setFilter(
+                Job.UserFilterNode.newBuilder()
+                    .setExpression("test")
+            )
+            .build()
+
+        return Job.UserPipelineGraph.newBuilder()
+            .addNodes(sourceNode)
+            .addNodes(filterNode)
+            .addEdges(Job.PipelineEdge.newBuilder().setFromId("source-1").setToId("filter-1"))
+            .build()
+    }
+
     private fun buildSimpleGraph(): Job.PipelineGraph {
         val sourceNode = Job.PipelineNode.newBuilder()
             .setId("source-1")
@@ -68,6 +93,7 @@ internal class PipelineStateStoreTest {
         val name = "test-roundtrip-${System.nanoTime()}"
         val record = PipelineRecord(
             metadata = buildMetadata(name, "1", "Test pipeline"),
+            userGraph = buildSimpleUserGraph(),
             graph = buildSimpleGraph(),
             appliedAt = System.currentTimeMillis()
         )
@@ -79,6 +105,7 @@ internal class PipelineStateStoreTest {
         assertThat(loaded[name]!!.metadata.name).isEqualTo(name)
         assertThat(loaded[name]!!.metadata.version).isEqualTo("1")
         assertThat(loaded[name]!!.metadata.description).isEqualTo("Test pipeline")
+        assertThat(loaded[name]!!.userGraph).isEqualTo(record.userGraph)
         assertThat(loaded[name]!!.graph).isEqualTo(record.graph)
     }
 
@@ -87,6 +114,7 @@ internal class PipelineStateStoreTest {
         val name = "test-delete-${System.nanoTime()}"
         val record = PipelineRecord(
             metadata = buildMetadata(name),
+            userGraph = buildSimpleUserGraph(),
             graph = buildSimpleGraph(),
             appliedAt = System.currentTimeMillis()
         )
@@ -106,11 +134,13 @@ internal class PipelineStateStoreTest {
 
         stateStore.save(name1, PipelineRecord(
             metadata = buildMetadata(name1, "1"),
+            userGraph = buildSimpleUserGraph(),
             graph = buildSimpleGraph(),
             appliedAt = System.currentTimeMillis()
         ))
         stateStore.save(name2, PipelineRecord(
             metadata = buildMetadata(name2, "2"),
+            userGraph = buildSimpleUserGraph(),
             graph = buildSimpleGraph(),
             appliedAt = System.currentTimeMillis()
         ))
@@ -128,11 +158,13 @@ internal class PipelineStateStoreTest {
 
         stateStore.save(name, PipelineRecord(
             metadata = buildMetadata(name, "1"),
+            userGraph = buildSimpleUserGraph(),
             graph = buildSimpleGraph(),
             appliedAt = 1000L
         ))
         stateStore.save(name, PipelineRecord(
             metadata = buildMetadata(name, "2"),
+            userGraph = buildSimpleUserGraph(),
             graph = buildSimpleGraph(),
             appliedAt = 2000L
         ))
