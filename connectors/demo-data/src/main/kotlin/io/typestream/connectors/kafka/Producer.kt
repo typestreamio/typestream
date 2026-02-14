@@ -14,7 +14,6 @@ import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-
 import java.util.concurrent.TimeUnit
 
 class Producer(private val config: Config) : MessageSender {

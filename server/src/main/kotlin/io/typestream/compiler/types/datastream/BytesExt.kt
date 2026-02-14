@@ -36,37 +36,41 @@ fun DataStream.Companion.fromKeyBytes(path: String, value: Bytes, schemaRegistry
         return fromBytes(path, value)
     }
 
-    val buffer = ByteBuffer.wrap(raw)
-    buffer.get() // skip magic byte
-    val schemaId = buffer.int
+    return try {
+        val buffer = ByteBuffer.wrap(raw)
+        buffer.get() // skip magic byte
+        val schemaId = buffer.int
 
-    val avroSchema = keySchemaCache.getOrPut(schemaId) {
-        AvroSchema.Parser().parse(schemaRegistryClient.schema(schemaId))
-    }
-
-    val start = buffer.position() + buffer.arrayOffset()
-    val length = buffer.remaining()
-    val decoder = DecoderFactory.get().binaryDecoder(raw, start, length, null)
-
-    return when (avroSchema.type) {
-        AvroSchema.Type.INT -> DataStream(path, Schema.Int(decoder.readInt()))
-        AvroSchema.Type.LONG -> DataStream(path, Schema.Long(decoder.readLong()))
-        AvroSchema.Type.STRING -> DataStream(path, Schema.String(decoder.readString()))
-        AvroSchema.Type.FLOAT -> DataStream(path, Schema.Float(decoder.readFloat()))
-        AvroSchema.Type.DOUBLE -> DataStream(path, Schema.Double(decoder.readDouble()))
-        AvroSchema.Type.BOOLEAN -> DataStream(path, Schema.Boolean(decoder.readBoolean()))
-        AvroSchema.Type.RECORD -> {
-            val reader = GenericDatumReader<GenericRecord>(avroSchema)
-            val record = reader.read(null, decoder)
-            // Flatten single-field key records (e.g. Debezium {"id": 1} -> 1)
-            if (avroSchema.fields.size == 1) {
-                val field = avroSchema.fields[0]
-                val fieldValue = record.get(0)
-                avroFieldToDataStream(path, field.schema(), fieldValue)
-            } else {
-                DataStream.fromAvroGenericRecord(path, record)
-            }
+        val avroSchema = keySchemaCache.getOrPut(schemaId) {
+            AvroSchema.Parser().parse(schemaRegistryClient.schema(schemaId))
         }
-        else -> fromBytes(path, value)
+
+        val start = buffer.position() + buffer.arrayOffset()
+        val length = buffer.remaining()
+        val decoder = DecoderFactory.get().binaryDecoder(raw, start, length, null)
+
+        when (avroSchema.type) {
+            AvroSchema.Type.INT -> DataStream(path, Schema.Int(decoder.readInt()))
+            AvroSchema.Type.LONG -> DataStream(path, Schema.Long(decoder.readLong()))
+            AvroSchema.Type.STRING -> DataStream(path, Schema.String(decoder.readString()))
+            AvroSchema.Type.FLOAT -> DataStream(path, Schema.Float(decoder.readFloat()))
+            AvroSchema.Type.DOUBLE -> DataStream(path, Schema.Double(decoder.readDouble()))
+            AvroSchema.Type.BOOLEAN -> DataStream(path, Schema.Boolean(decoder.readBoolean()))
+            AvroSchema.Type.RECORD -> {
+                val reader = GenericDatumReader<GenericRecord>(avroSchema)
+                val record = reader.read(null, decoder)
+                // Flatten single-field key records (e.g. Debezium {"id": 1} -> 1)
+                if (avroSchema.fields.size == 1) {
+                    val field = avroSchema.fields[0]
+                    val fieldValue = record.get(0)
+                    avroFieldToDataStream(path, field.schema(), fieldValue)
+                } else {
+                    DataStream.fromAvroGenericRecord(path, record)
+                }
+            }
+            else -> fromBytes(path, value)
+        }
+    } catch (_: Exception) {
+        fromBytes(path, value)
     }
 }
