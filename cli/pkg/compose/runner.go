@@ -69,7 +69,7 @@ func (runner *Runner) RunCommand(arg ...string) error {
 	args := []string{"-p", "typestream", "-f", composePath}
 	args = append(args, arg...)
 
-	cmd := exec.Command("docker-compose", args...)
+	cmd := exec.Command("docker", append([]string{"compose"}, args...)...)
 	cmd.Dir = runner.composeDir
 	cmd.Env = append(os.Environ(), runner.projectEnv...)
 

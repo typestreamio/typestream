@@ -19,10 +19,9 @@ type DevRunner struct {
 }
 
 // getProjectRoot returns the absolute path to the typestream project root
+// This is the same as getComposeDir() since docker-compose.yml lives at the project root
 func getProjectRoot() string {
-	composeDir := getComposeDir()
-	// composeDir is <project>/cli/pkg/compose, so go up 3 levels
-	return filepath.Dir(filepath.Dir(filepath.Dir(composeDir)))
+	return getComposeDir()
 }
 
 func NewDevRunner() *DevRunner {
@@ -44,13 +43,13 @@ func (runner *DevRunner) RunCommand(arg ...string) error {
 
 	// Use both base compose and dev overlay
 	args := []string{
-		"-p", "typestream-dev",
+		"-p", "typestream",
 		"-f", composePath,
 		"-f", composeDevPath,
 	}
 	args = append(args, arg...)
 
-	cmd := exec.Command("docker-compose", args...)
+	cmd := exec.Command("docker", append([]string{"compose"}, args...)...)
 	cmd.Dir = runner.composeDir
 	cmd.Env = append(os.Environ(), runner.projectEnv...)
 

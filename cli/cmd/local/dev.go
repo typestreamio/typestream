@@ -9,11 +9,11 @@ import (
 	"github.com/typestreamio/typestream/cli/pkg/compose"
 )
 
-var devBuilding = regexp.MustCompile(`typestream-dev-(.*)\s+Building`)
-var devBuilt = regexp.MustCompile(`typestream-dev-(.*)\s+Built`)
-var devCreating = regexp.MustCompile(`Container typestream-dev-(.*)-1  Creating`)
-var devStarted = regexp.MustCompile(`Container typestream-dev-(.*)-1  Started`)
-var devHealthy = regexp.MustCompile(`Container typestream-dev-(.*)-1  Healthy`)
+var devBuilding = regexp.MustCompile(`typestream-(.*)\s+Building`)
+var devBuilt = regexp.MustCompile(`typestream-(.*)\s+Built`)
+var devCreating = regexp.MustCompile(`Container typestream-(.*)-1  Creating`)
+var devStarted = regexp.MustCompile(`Container typestream-(.*)-1  Started`)
+var devHealthy = regexp.MustCompile(`Container typestream-(.*)-1  Healthy`)
 
 var devStopCmd = &cobra.Command{
 	Use:   "stop",
