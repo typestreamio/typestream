@@ -4,17 +4,13 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.Compiler
 import io.typestream.compiler.RuntimeType.KAFKA
 import io.typestream.compiler.RuntimeType.SHELL
-import io.typestream.compiler.node.KeyValue
+import io.typestream.compiler.node.ExecutionContext
 import io.typestream.compiler.node.Node
 import io.typestream.compiler.types.DataStream
-import io.typestream.embedding.EmbeddingGeneratorExecution
 import io.typestream.embedding.EmbeddingGeneratorService
 import io.typestream.filesystem.FileSystem
-import io.typestream.geoip.GeoIpExecution
 import io.typestream.geoip.GeoIpService
 import io.typestream.openai.OpenAiService
-import io.typestream.openai.OpenAiTransformerExecution
-import io.typestream.textextractor.TextExtractorExecution
 import io.typestream.textextractor.TextExtractorService
 import io.typestream.graph.Graph
 import io.typestream.scheduler.KafkaStreamsJob
@@ -26,6 +22,13 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
     private val textExtractorService = TextExtractorService()
     private val embeddingGeneratorService = EmbeddingGeneratorService()
     private val openAiService = OpenAiService()
+
+    private val executionContext = ExecutionContext(
+        geoIpService = geoIpService,
+        textExtractorService = textExtractorService,
+        embeddingGeneratorService = embeddingGeneratorService,
+        openAiService = openAiService
+    )
 
     fun exec(source: String, env: Env) {
         val (program, errors) = Compiler(Session(fileSystem, scheduler, env)).compile(source)
@@ -89,24 +92,7 @@ class Vm(val fileSystem: FileSystem, val scheduler: Scheduler) {
 
         var dataStreams = shellNode.ref.data
         shellNode.walk { node ->
-            dataStreams = when (node.ref) {
-                is Node.Count -> TODO("count node not implemented")
-                is Node.Group -> TODO("group node not implemented")
-                is Node.Filter -> dataStreams.filter { node.ref.predicate.matches(it) }
-                is Node.Map -> dataStreams.map { node.ref.mapper(KeyValue(it, it)).value }
-                is Node.Each -> {
-                    dataStreams.forEach { node.ref.fn(KeyValue(it, it)) }
-                    dataStreams
-                }
-
-                is Node.GeoIp -> GeoIpExecution.applyToShell(node.ref, dataStreams, geoIpService)
-                is Node.TextExtractor -> TextExtractorExecution.applyToShell(node.ref, dataStreams, textExtractorService)
-                is Node.EmbeddingGenerator -> EmbeddingGeneratorExecution.applyToShell(node.ref, dataStreams, embeddingGeneratorService)
-                is Node.OpenAiTransformer -> OpenAiTransformerExecution.applyToShell(node.ref, dataStreams, openAiService)
-
-                is Node.ShellSource -> dataStreams
-                else -> error("unexpected node type: ${node.ref}")
-            }
+            dataStreams = node.ref.applyToShell(dataStreams, executionContext)
         }
 
         dataStreams

@@ -1,6 +1,5 @@
 package io.typestream.compiler
 
-import io.typestream.compiler.ast.Predicate
 import io.typestream.compiler.ast.PredicateParser
 import io.typestream.compiler.node.*
 import io.typestream.compiler.types.DataStream
@@ -10,10 +9,6 @@ import io.typestream.compiler.types.InferenceContext
 import io.typestream.compiler.types.InferenceResult
 import io.typestream.compiler.types.schema.Schema
 import io.typestream.filesystem.FileSystem
-import io.typestream.embedding.EmbeddingGeneratorNodeHandler
-import io.typestream.geoip.GeoIpNodeHandler
-import io.typestream.openai.OpenAiTransformerNodeHandler
-import io.typestream.textextractor.TextExtractorNodeHandler
 import io.typestream.graph.Graph
 import io.typestream.grpc.job_service.Job
 import java.util.ArrayDeque
@@ -43,7 +38,8 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     val sources = nodesById.keys - adjList.values.flatten().toSet()
     validateAcyclic(nodesById.keys, adjList)
     validateNoSelfLoop(graphProto)
-    val rootGraphs = sources.map { buildGraph(it, nodesById, adjList, inferredSchemas, inferredEncodings) }
+    val fromProtoContext = FromProtoContext(inferredSchemas, inferredEncodings, ::findDataStreamOrError)
+    val rootGraphs = sources.map { buildGraph(it, nodesById, adjList, fromProtoContext) }
     val programGraph = if (rootGraphs.size == 1) rootGraphs.first() else error("Multi-source not supported yet")
     val root: Graph<Node> = Graph(Node.NoOp("root"))
     root.addChild(programGraph)
@@ -56,86 +52,12 @@ class GraphCompiler(private val fileSystem: FileSystem) {
     id: String,
     nodesById: Map<String, Job.PipelineNode>,
     adjList: MutableMap<String, MutableList<String>>,
-    inferredSchemas: Map<String, DataStream>,
-    inferredEncodings: Map<String, Encoding>
+    fromProtoContext: FromProtoContext
   ): Graph<Node> {
     val protoNode = nodesById[id] ?: error("Missing node $id")
-    val node = mapPipelineNode(protoNode, inferredSchemas, inferredEncodings)
-    val children = adjList[id]?.map { buildGraph(it, nodesById, adjList, inferredSchemas, inferredEncodings) }?.toSet() ?: emptySet()
+    val node = Node.fromProto(protoNode, fromProtoContext)
+    val children = adjList[id]?.map { buildGraph(it, nodesById, adjList, fromProtoContext) }?.toSet() ?: emptySet()
     return Graph(node, children.toMutableSet())
-  }
-
-  private fun mapPipelineNode(
-    proto: Job.PipelineNode,
-    inferredSchemas: Map<String, DataStream>,
-    inferredEncodings: Map<String, Encoding>
-  ): Node = when {
-    proto.hasCount() -> Node.Count(proto.id)
-    proto.hasWindowedCount() -> Node.WindowedCount(proto.id, proto.windowedCount.windowSizeSeconds)
-    proto.hasFilter() -> {
-      val f = proto.filter
-      Node.Filter(proto.id, f.byKey, PredicateParser.parse(f.predicate.expr))
-    }
-    proto.hasGroup() -> {
-      val fieldPath = proto.group.keyMapperExpr  // e.g., ".user" or ".product_id"
-      val fields = fieldPath.trimStart('.').split('.').filter { it.isNotBlank() }
-      if (fields.isEmpty()) {
-        Node.Group(proto.id) { kv -> kv.key }
-      } else {
-        Node.Group(proto.id) { kv -> kv.value.select(fields) }
-      }
-    }
-    proto.hasJoin() -> {
-      val j = proto.join
-      val path = j.with.path
-      val with = findDataStreamOrError(path)
-      Node.Join(proto.id, with, JoinType(j.joinType.byKey, j.joinType.isLookup))
-    }
-    proto.hasMap() -> {
-      val expr = proto.map.mapperExpr
-      if (expr.startsWith("select ")) {
-        val fields = expr.removePrefix("select ").trim().split(" ").map { it.trimStart('.') }
-        Node.Map(proto.id) { kv -> KeyValue(kv.key, kv.value.select(fields)) }
-      } else {
-        Node.Map(proto.id) { kv -> kv }
-      }
-    }
-    proto.hasNoop() -> Node.NoOp(proto.id)
-    proto.hasShellSource() -> {
-      val data = proto.shellSource.dataList.map { dsProto ->
-        findDataStreamOrError(dsProto.path)
-      }
-      Node.ShellSource(proto.id, data)
-    }
-    proto.hasStreamSource() -> {
-      val ss = proto.streamSource
-      val path = ss.dataStream.path
-      val ds = findDataStreamOrError(path)
-      // Use inferred encoding from Phase 1 (from catalog)
-      val encoding = inferredEncodings[proto.id]
-        ?: error("No inferred encoding for stream source ${proto.id}")
-      Node.StreamSource(proto.id, ds, encoding, ss.unwrapCdc)
-    }
-    proto.hasEach() -> Node.Each(proto.id) { _ -> }
-    proto.hasSink() -> {
-      val s = proto.sink
-      // Use inferred schema from input stream
-      val out = inferredSchemas[proto.id]
-        ?: error("No inferred schema for sink ${proto.id}")
-      // Use inferred encoding from input stream (not proto, not catalog)
-      val encoding = inferredEncodings[proto.id]
-        ?: error("No inferred encoding for sink ${proto.id}")
-      Node.Sink(proto.id, out, encoding)
-    }
-    proto.hasGeoIp() -> GeoIpNodeHandler.fromProto(proto)
-    proto.hasInspector() -> {
-      Node.Inspector(proto.id, proto.inspector.label)
-    }
-    proto.hasReduceLatest() -> Node.ReduceLatest(proto.id)
-    proto.hasTextExtractor() -> TextExtractorNodeHandler.fromProto(proto)
-    proto.hasEmbeddingGenerator() -> EmbeddingGeneratorNodeHandler.fromProto(proto)
-    proto.hasOpenAiTransformer() -> OpenAiTransformerNodeHandler.fromProto(proto)
-    else -> error("Unknown node type: $proto")
   }
 
   /**
@@ -370,4 +292,12 @@ fun Job.Encoding.toEncoding() = when (this) {
   Job.Encoding.AVRO -> Encoding.AVRO
   Job.Encoding.PROTOBUF -> Encoding.PROTOBUF
   else -> error("Unknown encoding")
+}
+
+fun Encoding.toProtoEncoding(): Job.Encoding = when (this) {
+  Encoding.STRING -> Job.Encoding.STRING
+  Encoding.NUMBER -> Job.Encoding.NUMBER
+  Encoding.JSON -> Job.Encoding.JSON
+  Encoding.AVRO -> Job.Encoding.AVRO
+  Encoding.PROTOBUF -> Job.Encoding.PROTOBUF
 }

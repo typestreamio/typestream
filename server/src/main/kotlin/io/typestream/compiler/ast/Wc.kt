@@ -22,7 +22,7 @@ data class Wc(override val expressions: List<Expr>) : DataCommand() {
             { keyValue: KeyValue -> keyValue.value.select(listOf(options.by)) }
         }
 
-        val groupNode: Graph<Node> = Graph(Node.Group(toString(), mapper))
+        val groupNode: Graph<Node> = Graph(Node.Group(toString(), keyMapper = mapper))
 
         groupNode.addChild(Graph(Node.Count(toString())))
 
