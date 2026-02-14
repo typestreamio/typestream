@@ -127,7 +127,7 @@ Inspector nodes tap the stream without altering data flow. The UI uses `CreatePr
 
 ## Node Reference
 
-The server implements 18 node types as a Kotlin sealed interface (`Node.kt`). Each node encapsulates its own schema transformation via `inferOutputSchema()`.
+The server implements 18 node types as a Kotlin sealed interface (`Node.kt`) with each type in its own file (`NodeFilter.kt`, `NodeMap.kt`, etc.). Each node encapsulates its own schema transformation via `inferOutputSchema()`.
 
 ### Source Nodes
 
