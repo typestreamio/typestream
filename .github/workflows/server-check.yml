@@ -55,7 +55,7 @@ jobs:
           - test-group: grpc
             tests: "--tests 'io.typestream.grpc.*'"
           - test-group: other
-            tests: "--tests 'io.typestream.filesystem.*' --tests 'io.typestream.kafka.*' --tests 'io.typestream.geoip.*' --tests 'io.typestream.textextractor.*' --tests 'io.typestream.embedding.*'"
+            tests: "--tests 'io.typestream.filesystem.*' --tests 'io.typestream.kafka.*' --tests 'io.typestream.geoip.*' --tests 'io.typestream.textextractor.*' --tests 'io.typestream.embedding.*' --tests 'io.typestream.pipeline.*' --tests 'io.typestream.server.*' --tests 'io.typestream.helpers.*'"
 
     steps:
       - uses: actions/checkout@v4
