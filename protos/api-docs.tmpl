@@ -1,0 +1,82 @@
+{{/* Custom protoc-gen-doc template: service-first, user-centric API docs */}}
+{{/* Internal types excluded from docs — these are compiler/graph types not meant for API consumers */}}
+{{- $internal := list "CountNode" "WindowedCountNode" "FilterNode" "GroupNode" "JoinNode" "MapNode" "NoOpNode" "ShellSourceNode" "StreamSourceNode" "EachNode" "SinkNode" "ReduceLatestNode" "PipelineNode" "PipelineEdge" "PipelineGraph" "DataStreamProto" "PredicateProto" "JoinTypeProto" -}}
+# TypeStream gRPC API Reference
+
+## Overview
+
+TypeStream exposes its functionality through six gRPC services.
+
+| Service | Description |
+| ------- | ----------- |
+{{- range .Files}}
+{{- range .Services}}
+| [{{.Name}}](#{{.FullName | anchor}}) | {{nobr .Description}} |
+{{- end}}
+{{- end}}
+
+## Services
+{{- range .Files}}
+{{- range .Services}}
+
+### {{.Name}}
+
+{{.Description}}
+
+#### Methods
+
+| Method | Request | Response | Description |
+| ------ | ------- | -------- | ----------- |
+{{- range .Methods}}
+| {{.Name}} | [{{.RequestLongType}}](#{{.RequestFullType | anchor}}){{if .RequestStreaming}} stream{{end}} | [{{.ResponseLongType}}](#{{.ResponseFullType | anchor}}){{if .ResponseStreaming}} stream{{end}} | {{nobr .Description}} |
+{{- end}}
+
+{{- end}}
+{{- end}}
+
+## Messages
+{{- range .Files}}
+{{- range .Messages}}
+{{- if not (has .LongName $internal)}}
+
+### {{.LongName}}
+
+{{.Description}}
+
+{{- if .HasFields}}
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+{{- range .Fields}}
+| {{.Name}} | [{{.LongType}}](#{{.FullType | anchor}}) | {{.Label}} | {{nobr .Description}}{{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
+{{- end}}
+{{- end}}
+
+{{- end}}
+{{- end}}
+{{- end}}
+
+## Enums
+{{- range .Files}}
+{{- range .Enums}}
+
+### {{.LongName}}
+
+{{.Description}}
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+{{- range .Values}}
+| {{.Name}} | {{.Number}} | {{nobr .Description}} |
+{{- end}}
+
+{{- end}}
+{{- end}}
+
+## Scalar Value Types
+
+| .proto Type | Notes | C++ | Java | Python | Go | C# | PHP | Ruby |
+| ----------- | ----- | --- | ---- | ------ | -- | -- | --- | ---- |
+{{- range .Scalars}}
+| {{.ProtoType}} | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} | {{.GoType}} | {{.CSharp}} | {{.PhpType}} | {{.RubyType}} |
+{{- end}}

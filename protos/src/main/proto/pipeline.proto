@@ -8,101 +8,165 @@ option java_package = "io.typestream.grpc.pipeline_service";
 
 option go_package = "github.com/typestreamio/typestream/cli/pkg/pipeline_service";
 
+// PipelineService manages declarative pipeline definitions using a GitOps-style
+// workflow. Validate pipeline graphs before deploying, apply them to create or
+// update running jobs, list active pipelines, delete them, and plan changes
+// (dry-run diff) before applying.
 service PipelineService {
+    // Validate a pipeline definition without deploying it.
+    // Returns validation errors and warnings.
     rpc ValidatePipeline(ValidatePipelineRequest) returns (ValidatePipelineResponse);
+
+    // Apply a pipeline definition — creates a new job or updates an existing one.
+    // Returns the job ID and whether the pipeline was created, updated, or unchanged.
     rpc ApplyPipeline(ApplyPipelineRequest) returns (ApplyPipelineResponse);
+
+    // List all currently registered pipelines and their job status.
     rpc ListPipelines(ListPipelinesRequest) returns (ListPipelinesResponse);
+
+    // Delete a pipeline by name, stopping its underlying job.
     rpc DeletePipeline(DeletePipelineRequest) returns (DeletePipelineResponse);
+
+    // Dry-run a set of pipeline definitions against the current state.
+    // Returns a plan showing which pipelines would be created, updated, deleted, or unchanged.
     rpc PlanPipelines(PlanPipelinesRequest) returns (PlanPipelinesResponse);
 }
 
+// Metadata describing a pipeline definition.
 message PipelineMetadata {
+    // Unique name identifying this pipeline.
     string name = 1;
+    // Version string for tracking changes (e.g., "v1", "2024-01-15").
     string version = 2;
+    // Human-readable description of what this pipeline does.
     string description = 3;
 }
 
 message ValidatePipelineRequest {
+    // Pipeline metadata (name, version, description).
     PipelineMetadata metadata = 1;
+    // The pipeline graph to validate.
     UserPipelineGraph graph = 2;
 }
 
 message ValidatePipelineResponse {
+    // Whether the pipeline is valid.
     bool valid = 1;
+    // Validation errors (pipeline cannot be applied).
     repeated string errors = 2;
+    // Validation warnings (pipeline can be applied but may have issues).
     repeated string warnings = 3;
 }
 
 message ApplyPipelineRequest {
+    // Pipeline metadata (name, version, description).
     PipelineMetadata metadata = 1;
+    // The pipeline graph to deploy.
     UserPipelineGraph graph = 2;
 }
 
 message ApplyPipelineResponse {
+    // Whether the apply operation succeeded.
     bool success = 1;
+    // ID of the created or updated job.
     string job_id = 2;
+    // Error message if the apply failed.
     string error = 3;
+    // Whether the pipeline was created, updated, or unchanged.
     PipelineState state = 4;
 }
 
+// Result state after applying a pipeline.
 enum PipelineState {
     PIPELINE_STATE_UNSPECIFIED = 0;
+    // Pipeline was newly created.
     CREATED = 1;
+    // Pipeline was updated with new configuration.
     UPDATED = 2;
+    // Pipeline configuration has not changed.
     UNCHANGED = 3;
 }
 
 message ListPipelinesRequest {}
 
+// Information about a registered pipeline and its running job.
 message PipelineInfo {
+    // Pipeline name.
     string name = 1;
+    // Pipeline version.
     string version = 2;
+    // Pipeline description.
     string description = 3;
+    // ID of the underlying job.
     string job_id = 4;
+    // Current state of the underlying job.
     JobState job_state = 5;
+    // Unix timestamp (milliseconds) when this pipeline was last applied.
     int64 applied_at = 6;
+    // Internal pipeline graph (compiler representation).
     PipelineGraph graph = 7;
+    // User-facing pipeline graph as originally submitted.
     UserPipelineGraph user_graph = 8;
 }
 
 message ListPipelinesResponse {
+    // All registered pipelines.
     repeated PipelineInfo pipelines = 1;
 }
 
 message DeletePipelineRequest {
+    // Name of the pipeline to delete.
     string name = 1;
 }
 
 message DeletePipelineResponse {
+    // Whether the delete operation succeeded.
     bool success = 1;
+    // Error message if the delete failed.
     string error = 2;
 }
 
+// A pipeline definition included in a plan request.
 message PipelinePlan {
+    // Pipeline metadata (name, version, description).
     PipelineMetadata metadata = 1;
+    // The pipeline graph to plan.
     UserPipelineGraph graph = 2;
 }
 
 message PlanPipelinesRequest {
+    // Pipeline definitions to plan against current state.
     repeated PipelinePlan pipelines = 1;
 }
 
+// Action that would be taken for a pipeline in a plan.
 enum PipelineAction {
     PIPELINE_ACTION_UNSPECIFIED = 0;
+    // Pipeline does not exist and would be created.
     CREATE = 1;
+    // Pipeline exists and would be updated.
     UPDATE = 2;
+    // Pipeline exists and has not changed.
     NO_CHANGE = 3;
+    // Pipeline exists on server but is not in the plan, so it would be deleted.
     DELETE = 4;
 }
 
+// Result for a single pipeline in a plan response.
 message PipelinePlanResult {
+    // Pipeline name.
     string name = 1;
+    // Action that would be taken.
     PipelineAction action = 2;
+    // Current version on the server (empty if pipeline is new).
     string current_version = 3;
+    // New version from the plan (empty if pipeline would be deleted).
     string new_version = 4;
 }
 
 message PlanPipelinesResponse {
+    // Plan results for each pipeline.
     repeated PipelinePlanResult results = 1;
+    // Errors encountered during planning.
     repeated string errors = 2;
 }

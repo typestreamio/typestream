@@ -8,54 +8,84 @@ option java_package = "io.typestream.grpc.filesystem_service";
 
 option go_package = "github.com/typestreamio/typestream/cli/pkg/filesystem_service";
 
+// FileSystemService provides a virtual filesystem abstraction over Kafka topics
+// and connected data sources. Use it to mount external data sources, browse
+// available topics, and retrieve topic schemas.
 service FileSystemService {
+    // Mount a data source (e.g., a Kafka cluster or database) into the virtual filesystem.
+    // Once mounted, its topics become browsable via Ls and their schemas via GetSchema.
     rpc Mount(MountRequest) returns (MountResponse) {}
+
+    // Remove a previously mounted data source from the virtual filesystem.
     rpc Unmount(UnmountRequest) returns (UnmountResponse) {}
+
+    // List topics and directories at the given path in the virtual filesystem.
     rpc Ls(LsRequest) returns (LsResponse) {}
+
+    // Retrieve the schema (field names) for a topic at the given path.
     rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse) {}
 }
 
 message MountRequest {
+    // Identifier for the user session.
     string user_id = 1;
+    // Configuration string for the data source to mount (e.g., connection details).
     string config = 2;
 }
 
 message MountResponse {
+    // Whether the mount operation succeeded.
     bool success = 1;
+    // Error message if the mount failed.
     string error = 3;
 }
 
 message UnmountRequest {
+    // Identifier for the user session.
     string user_id = 1;
+    // The endpoint path of the mounted data source to remove.
     string endpoint = 2;
 }
 
 message UnmountResponse {
+    // Whether the unmount operation succeeded.
     bool success = 1;
+    // Error message if the unmount failed.
     string error = 3;
 }
 
 message LsRequest {
+    // Identifier for the user session.
     string user_id = 1;
+    // Virtual filesystem path to list (e.g., "/local/topics").
     string path = 2;
 }
 
+// Metadata about a single entry in the virtual filesystem.
 message FileInfo {
+    // Name of the file or directory.
     string name = 1;
+    // Data encoding of the topic (only set for topic entries).
     Encoding encoding = 2;
 }
 
 message LsResponse {
+    // List of entries at the requested path.
     repeated FileInfo files = 1;
+    // Error message if the listing failed.
     string error = 2;
 }
 
 message GetSchemaRequest {
+    // Identifier for the user session.
     string user_id = 1;
-    string path = 2;  // Topic path
+    // Virtual filesystem path to the topic (e.g., "/local/topics/my-topic").
+    string path = 2;
 }
 
 message GetSchemaResponse {
+    // Field names in the topic's schema.
     repeated string fields = 1;
+    // Error message if schema retrieval failed.
     string error = 2;
 }

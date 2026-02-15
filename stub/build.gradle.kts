@@ -63,7 +63,7 @@ project.protobuf {
                 id("grpc")
                 id("grpckt")
                 id("doc") {
-                    option("markdown,api.md")
+                    option("${projectDir}/../protos/api-docs.tmpl,api.md")
                 }
             }
             it.builtins {
@@ -87,16 +87,12 @@ tasks.register<Copy>("copyApiDocs") {
         val dest = file("${rootProject.projectDir}/docs/docs/reference/api.md")
         var content = dest.readText()
 
-        // Decode HTML entities that protoc-gen-doc emits (break MDX/URL parsing)
+        // Decode HTML entities that protoc-gen-doc emits
         content = content.replace("&#34;", "\"")
         content = content.replace("&#39;", "'")
         // Escape curly braces so MDX doesn't treat them as JSX expressions
         content = content.replace("{", "\\{")
         content = content.replace("}", "\\}")
-        // Replace raw <a name="..."> anchors with markdown-compatible ids
-        content = content.replace(Regex("""<a name="([^"]+)"></a>"""), "")
-        // Replace <p> tags
-        content = content.replace(Regex("""<p align="right"><a href="#top">Top</a></p>"""), "[Top](#top)")
 
         val frontmatter = """---
 sidebar_label: API Reference
