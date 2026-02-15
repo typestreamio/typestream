@@ -30,30 +30,28 @@ cat /dev/kafka/local/topics/web_visits | wc
 
 ```json
 {
-  "name": "visits-by-country",
+  "name": "visits-by-status",
   "version": "1",
-  "description": "Count web visits grouped by country",
+  "description": "Count web visits grouped by status code",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
       {
-        "id": "group-1",
-        "group": { "keyMapperExpr": ".country" }
-      },
-      {
-        "id": "count-1",
-        "count": {}
+        "id": "mv-1",
+        "materializedView": {
+          "groupByField": "status_code",
+          "aggregationType": "count"
+        }
       }
     ],
     "edges": [
-      { "fromId": "source-1", "toId": "group-1" },
-      { "fromId": "group-1", "toId": "count-1" }
+      { "fromId": "source-1", "toId": "mv-1" }
     ]
   }
 }
@@ -64,7 +62,7 @@ cat /dev/kafka/local/topics/web_visits | wc
 
 1. Drag a **Kafka Source** and select the `web_visits` topic
 2. Drag a **Materialized View** node and connect it
-3. Set the `groupByField` to `country` and the aggregation type to `count`
+3. Set the `groupByField` to `status_code` and the aggregation type to `count`
 4. Click **Create Job**
 
   </TabItem>

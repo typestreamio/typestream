@@ -8,7 +8,7 @@ This guide shows how to capture changes from a PostgreSQL database and process t
 
 ## Prerequisites
 
-- TypeStream [installed](../installation.mdx) and running with `typestream local dev start`
+- TypeStream [installed](../installation.mdx) and running with `typestream local dev`
 - The local stack includes a pre-configured PostgreSQL instance with logical replication enabled
 
 ## How it works
@@ -18,7 +18,7 @@ TypeStream uses [Debezium](https://debezium.io/) via Kafka Connect to capture ro
 1. PostgreSQL is configured with `wal_level = logical` for change data capture
 2. On startup, TypeStream auto-registers a Debezium connector for the local PostgreSQL instance
 3. Debezium streams INSERT/UPDATE/DELETE events into Kafka topics
-4. Topics appear in TypeStream's virtual filesystem as `/dev/kafka/local/topics/demo.public.<table>`
+4. Topics appear in TypeStream's virtual filesystem as `/dev/kafka/local/topics/dbserver.public.<table>`
 
 ## Verify CDC topics
 
@@ -37,9 +37,9 @@ echo 'ls /dev/kafka/local/topics' | typestream
 You should see topics like:
 
 ```
-demo.public.orders
-demo.public.users
-demo.public.file_uploads
+dbserver.public.orders
+dbserver.public.users
+dbserver.public.file_uploads
 ```
 
 ## Read CDC records
@@ -53,7 +53,7 @@ import TabItem from "@theme/TabItem";
   <TabItem value="cli" label="CLI DSL" default>
 
 ```sh
-cat /dev/kafka/local/topics/demo.public.orders
+cat /dev/kafka/local/topics/dbserver.public.orders
 ```
 
   </TabItem>
@@ -68,16 +68,14 @@ cat /dev/kafka/local/topics/demo.public.orders
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/demo.public.orders" },
-          "encoding": "AVRO",
-          "unwrapCdc": true
+        "postgresSource": {
+          "topicPath": "/local/topics/dbserver.public.orders"
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/orders_clean" }
+        "kafkaSink": {
+          "topicName": "orders_clean"
         }
       }
     ],
@@ -92,7 +90,7 @@ cat /dev/kafka/local/topics/demo.public.orders
   <TabItem value="gui" label="GUI">
 
 1. Drag a **Postgres Source** node onto the canvas
-2. Select the `demo.public.orders` topic -- CDC unwrapping is enabled automatically for Postgres sources
+2. Select the `dbserver.public.orders` topic -- CDC unwrapping is enabled automatically for Postgres sources
 3. Add downstream nodes as needed
 
   </TabItem>
@@ -102,42 +100,13 @@ cat /dev/kafka/local/topics/demo.public.orders
 
 A common pattern is joining CDC data from related tables. For example, enriching orders with user information:
 
-```json
-{
-  "name": "orders-with-users",
-  "version": "1",
-  "description": "Join orders with user data from CDC",
-  "graph": {
-    "nodes": [
-      {
-        "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/demo.public.orders" },
-          "encoding": "AVRO",
-          "unwrapCdc": true
-        }
-      },
-      {
-        "id": "join-1",
-        "join": {
-          "with": { "path": "/dev/kafka/local/topics/demo.public.users" },
-          "joinType": { "byKey": true }
-        }
-      },
-      {
-        "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/orders_enriched" }
-        }
-      }
-    ],
-    "edges": [
-      { "fromId": "source-1", "toId": "join-1" },
-      { "fromId": "join-1", "toId": "sink-1" }
-    ]
-  }
-}
+```sh
+cat /dev/kafka/local/topics/dbserver.public.orders | join /dev/kafka/local/topics/dbserver.public.users > /dev/kafka/local/topics/orders_enriched
 ```
+
+:::note
+Joins are currently available in the CLI DSL only. Config-as-code support for joins is planned.
+:::
 
 ## Topic naming convention
 
@@ -145,11 +114,11 @@ Debezium uses the format `<server>.<schema>.<table>` for topic names:
 
 | PostgreSQL | Kafka Topic |
 |-----------|-------------|
-| `public.orders` | `demo.public.orders` |
-| `public.users` | `demo.public.users` |
-| `public.file_uploads` | `demo.public.file_uploads` |
+| `public.orders` | `dbserver.public.orders` |
+| `public.users` | `dbserver.public.users` |
+| `public.file_uploads` | `dbserver.public.file_uploads` |
 
-The `demo` prefix comes from the Debezium connector's server name configuration.
+The `dbserver` prefix comes from the Debezium connector's `topic.prefix` configuration.
 
 ## See also
 

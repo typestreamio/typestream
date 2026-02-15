@@ -45,8 +45,8 @@ The CLI DSL uses the `enrich` operator with a block expression for HTTP-based en
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
@@ -59,9 +59,8 @@ The CLI DSL uses the `enrich` operator with a block expression for HTTP-based en
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/web_visits_enriched" },
-          "encoding": "AVRO"
+        "kafkaSink": {
+          "topicName": "web_visits_enriched"
         }
       }
     ],
@@ -103,7 +102,7 @@ For example, you can chain a filter after enrichment:
 {
   "id": "filter-1",
   "filter": {
-    "predicate": { "expr": ".country_code == \"US\"" }
+    "expression": ".country_code == \"US\""
   }
 }
 ```

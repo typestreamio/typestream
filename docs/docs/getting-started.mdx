@@ -14,7 +14,7 @@ Install the CLI and start the local environment:
 
 ```bash
 brew install typestreamio/tap/typestream
-typestream local dev start
+typestream local dev
 ```
 
 Then seed sample data:
@@ -70,21 +70,21 @@ Create a file called `filter-books.typestream.json`:
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/books" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/books",
           "encoding": "AVRO"
         }
       },
       {
         "id": "filter-1",
         "filter": {
-          "predicate": { "expr": ".title ~= \"Station Eleven\"" }
+          "expression": ".title ~= \"Station Eleven\""
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/station_eleven" }
+        "kafkaSink": {
+          "topicName": "station_eleven"
         }
       }
     ],

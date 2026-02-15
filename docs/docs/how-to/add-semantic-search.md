@@ -50,8 +50,8 @@ import TabItem from "@theme/TabItem";
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/books" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/books",
           "encoding": "AVRO"
         }
       },
@@ -65,8 +65,8 @@ import TabItem from "@theme/TabItem";
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/books_embeddings" }
+        "kafkaSink": {
+          "topicName": "books_embeddings"
         }
       }
     ],

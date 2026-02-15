@@ -43,21 +43,21 @@ grep /dev/kafka/local/topics/books station
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/books" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/books",
           "encoding": "AVRO"
         }
       },
       {
         "id": "filter-1",
         "filter": {
-          "predicate": { "expr": ".title ~= \"Station\"" }
+          "expression": ".title ~= \"Station\""
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/station_books" }
+        "kafkaSink": {
+          "topicName": "station_books"
         }
       }
     ],

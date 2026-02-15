@@ -49,7 +49,7 @@ Selects records that match a predicate expression.
 
 **Schema behavior**: Pass-through (schema unchanged).
 
-**DSL equivalent**: `grep [pattern]` or `grep *(.field == "value")`
+**DSL equivalent**: `grep [pattern]` or `grep [.field == "value"]`
 
 **Supported in**: CLI DSL, config-as-code, GUI
 
@@ -90,7 +90,7 @@ Joins two data streams by key.
 
 **Schema behavior**: Merges left and right schemas into a combined struct. The output contains all fields from both streams.
 
-**DSL equivalent**: `join /dev/kafka/local/topics/other_topic`
+**DSL equivalent**: `cat /dev/kafka/local/topics/topic1 | join /dev/kafka/local/topics/topic2`
 
 **Supported in**: CLI DSL, config-as-code
 

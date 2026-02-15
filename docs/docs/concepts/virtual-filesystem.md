@@ -6,16 +6,16 @@ TypeStream provides a UNIX-like virtual filesystem that maps Kafka infrastructur
 
 ```
 /dev/kafka/local
-├── apps              # Running Kafka Streams applications
 ├── brokers           # Kafka broker information
 ├── consumer-groups   # Consumer group metadata
+├── schemas           # Schema Registry schemas
 └── topics            # Kafka topics (this is where your data lives)
     ├── books
     ├── authors
     ├── ratings
     ├── users
-    ├── demo.public.orders      # CDC topics from Debezium
-    └── demo.public.users
+    ├── dbserver.public.orders      # CDC topics from Debezium
+    └── dbserver.public.users
 ```
 
 ## Navigating the filesystem

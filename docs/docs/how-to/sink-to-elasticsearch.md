@@ -47,15 +47,19 @@ import TabItem from "@theme/TabItem";
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/books" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/books",
           "encoding": "AVRO"
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/books_es_intermediate" }
+        "elasticsearchSink": {
+          "connectionId": "my-elasticsearch",
+          "indexName": "books",
+          "documentIdStrategy": "RECORD_KEY",
+          "writeMethod": "UPSERT",
+          "behaviorOnNullValues": "IGNORE"
         }
       }
     ],
@@ -67,7 +71,7 @@ import TabItem from "@theme/TabItem";
 ```
 
 :::note
-In config-as-code, the Elasticsearch sink connector is created separately via the `ConnectionService` gRPC API. The pipeline writes to an intermediate Kafka topic, and a Kafka Connect sink connector forwards records to Elasticsearch.
+Under the hood, the Elasticsearch sink writes to an intermediate Kafka topic, and a Kafka Connect sink connector forwards records to Elasticsearch. You must register the Elasticsearch connection via the GUI or the `ConnectionService` gRPC API before applying the pipeline.
 :::
 
   </TabItem>

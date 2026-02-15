@@ -9,7 +9,7 @@ This guide shows how to join records from two related Kafka topics into a single
 ## Prerequisites
 
 - TypeStream [installed](../installation.mdx) and running
-- Two topics with related data (the demo CDC topics `demo.public.orders` and `demo.public.users` work well)
+- Two topics with related data (the demo CDC topics `dbserver.public.orders` and `dbserver.public.users` work well)
 
 ## Key-based join
 
@@ -22,48 +22,15 @@ import TabItem from "@theme/TabItem";
   <TabItem value="cli" label="CLI DSL" default>
 
 ```sh
-join /dev/kafka/local/topics/demo.public.orders /dev/kafka/local/topics/demo.public.users > /dev/kafka/local/topics/orders_enriched
+cat /dev/kafka/local/topics/dbserver.public.orders | join /dev/kafka/local/topics/dbserver.public.users > /dev/kafka/local/topics/orders_enriched
 ```
 
   </TabItem>
   <TabItem value="config" label="Config-as-Code">
 
-```json
-{
-  "name": "orders-with-users",
-  "version": "1",
-  "description": "Join orders with user data from CDC",
-  "graph": {
-    "nodes": [
-      {
-        "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/demo.public.orders" },
-          "encoding": "AVRO",
-          "unwrapCdc": true
-        }
-      },
-      {
-        "id": "join-1",
-        "join": {
-          "with": { "path": "/dev/kafka/local/topics/demo.public.users" },
-          "joinType": { "byKey": true }
-        }
-      },
-      {
-        "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/orders_enriched" }
-        }
-      }
-    ],
-    "edges": [
-      { "fromId": "source-1", "toId": "join-1" },
-      { "fromId": "join-1", "toId": "sink-1" }
-    ]
-  }
-}
-```
+:::note
+Joins are currently available in the CLI DSL only. Config-as-code support for joins is planned.
+:::
 
   </TabItem>
   <TabItem value="gui" label="GUI">

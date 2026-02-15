@@ -39,21 +39,35 @@ Each edge connects two nodes by their `id`.
 
 Each node has an `id` (string) and exactly one node type field. See the [Node Reference](node-reference.md) for full details on each node type.
 
-#### StreamSource
+#### KafkaSource
 
 ```json
 {
   "id": "source-1",
-  "streamSource": {
-    "dataStream": { "path": "/dev/kafka/local/topics/my_topic" },
+  "kafkaSource": {
+    "topicPath": "/local/topics/my_topic",
     "encoding": "AVRO",
     "unwrapCdc": false
   }
 }
 ```
 
+- `topicPath`: Path to the Kafka topic (e.g. `/local/topics/my_topic`)
 - `encoding`: `"AVRO"` | `"JSON"`
 - `unwrapCdc`: `true` to extract the `after` payload from Debezium CDC envelopes
+
+#### PostgresSource
+
+```json
+{
+  "id": "source-1",
+  "postgresSource": {
+    "topicPath": "/local/topics/dbserver.public.orders"
+  }
+}
+```
+
+- `topicPath`: Path to the Debezium CDC topic (CDC unwrapping is enabled automatically)
 
 #### Filter
 
@@ -61,59 +75,12 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
 {
   "id": "filter-1",
   "filter": {
-    "predicate": { "expr": ".field == \"value\"" },
-    "byKey": false
+    "expression": ".field == \"value\""
   }
 }
 ```
 
-#### Group
-
-```json
-{
-  "id": "group-1",
-  "group": { "keyMapperExpr": ".country" }
-}
-```
-
-#### Count
-
-```json
-{
-  "id": "count-1",
-  "count": {}
-}
-```
-
-#### WindowedCount
-
-```json
-{
-  "id": "wcount-1",
-  "windowedCount": { "windowSizeSeconds": 60 }
-}
-```
-
-#### ReduceLatest
-
-```json
-{
-  "id": "reduce-1",
-  "reduceLatest": {}
-}
-```
-
-#### Join
-
-```json
-{
-  "id": "join-1",
-  "join": {
-    "with": { "path": "/dev/kafka/local/topics/other_topic" },
-    "joinType": { "byKey": true }
-  }
-}
-```
+- `expression`: A predicate expression (e.g. `.status_code == 200`, `.title ~= "Station"`)
 
 #### GeoIp
 
@@ -165,32 +132,91 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
 }
 ```
 
-#### Map
+#### MaterializedView
 
 ```json
 {
-  "id": "map-1",
-  "map": { "mapperExpr": ".title" }
+  "id": "mv-1",
+  "materializedView": {
+    "groupByField": "status_code",
+    "aggregationType": "count",
+    "enableWindowing": false,
+    "windowSizeSeconds": 0
+  }
 }
 ```
 
-#### Each
+- `groupByField`: Field to group by
+- `aggregationType`: `"count"` for counting, or `"latest"` for keeping the latest value per key
+- `enableWindowing`: `true` to use tumbling time windows (only with `"count"` aggregation)
+- `windowSizeSeconds`: Window size in seconds (when `enableWindowing` is `true`)
 
-```json
-{
-  "id": "each-1",
-  "each": { "fnExpr": "record -> http post https://example.com ${record.id}" }
-}
-```
-
-#### Sink
+#### KafkaSink
 
 ```json
 {
   "id": "sink-1",
-  "sink": {
-    "output": { "path": "/dev/kafka/local/topics/output_topic" },
-    "encoding": "AVRO"
+  "kafkaSink": {
+    "topicName": "output_topic"
+  }
+}
+```
+
+- `topicName`: Name of the output Kafka topic
+
+#### ElasticsearchSink
+
+```json
+{
+  "id": "sink-1",
+  "elasticsearchSink": {
+    "connectionId": "my-elasticsearch",
+    "indexName": "documents",
+    "documentIdStrategy": "RECORD_KEY",
+    "writeMethod": "UPSERT",
+    "behaviorOnNullValues": "IGNORE"
+  }
+}
+```
+
+#### WeaviateSink
+
+```json
+{
+  "id": "sink-1",
+  "weaviateSink": {
+    "connectionId": "my-weaviate",
+    "collectionName": "documents",
+    "documentIdStrategy": "FieldIdStrategy",
+    "documentIdField": "doc_id",
+    "vectorStrategy": "FieldVectorStrategy",
+    "vectorField": "embedding",
+    "timestampField": "created_at"
+  }
+}
+```
+
+#### DbSink
+
+```json
+{
+  "id": "sink-1",
+  "dbSink": {
+    "connectionId": "my-postgres",
+    "tableName": "events",
+    "insertMode": "upsert",
+    "primaryKeyFields": "event_id"
+  }
+}
+```
+
+#### Inspector
+
+```json
+{
+  "id": "inspector-1",
+  "inspector": {
+    "label": "debug tap"
   }
 }
 ```
@@ -206,8 +232,8 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
@@ -221,14 +247,13 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
       {
         "id": "filter-1",
         "filter": {
-          "predicate": { "expr": ".country_code == \"US\"" }
+          "expression": ".country_code == \"US\""
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/us_visits_enriched" },
-          "encoding": "AVRO"
+        "kafkaSink": {
+          "topicName": "us_visits_enriched"
         }
       }
     ],

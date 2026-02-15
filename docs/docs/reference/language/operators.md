@@ -48,6 +48,21 @@ Here's an example of using `each` to make a HTTP request for each record in a da
 cat /dev/kafka/local/topics/books | each { book -> http post https://example.com/new_books "{\"book_id\": #{$book.id}}" }
 ```
 
+## Echo
+
+### Synopsis
+
+`echo <expression>`
+
+### Description
+
+The `echo` data operator outputs a literal value or expression result. It can be used to output strings, variables, or field selections.
+
+```sh
+echo "hello world"
+echo $v.title
+```
+
 ## Enrich
 
 ### Synopsis
@@ -112,14 +127,14 @@ See the [filter and route](/how-to/filter-and-route) how-to guide for examples.
 
 ### Synopsis
 
-`join <path1> <path2>`
+`join <path>`
 
 ### Description
 
-The `join` operator joins two data streams by key. Records with matching keys from both streams are merged into a single output record containing fields from both sides.
+The `join` operator joins two data streams by key. The first stream comes from the pipe, and the second stream is specified as the argument. Records with matching keys from both streams are merged into a single output record containing fields from both sides.
 
 ```sh
-join /dev/kafka/local/topics/orders /dev/kafka/local/topics/users > /dev/kafka/local/topics/orders_enriched
+cat /dev/kafka/local/topics/orders | join /dev/kafka/local/topics/users > /dev/kafka/local/topics/orders_enriched
 ```
 
 The output encoding defaults to JSON since the schema differs from either input.
@@ -128,12 +143,17 @@ The output encoding defaults to JSON since the schema differs from either input.
 
 ### Synopsis
 
-`wc`
+`wc [-b <field>]`
 
 ### Description
 
 The `wc` (word count) operator counts records per key. It is typically used as the last operator in a pipeline to produce aggregation counts.
 
+The following options are supported:
+
+- `-b` `--by` - counts by the specified field instead of the record key
+
 ```sh
 cat /dev/kafka/local/topics/web_visits | wc
+cat /dev/kafka/local/topics/web_visits | wc -b .status_code
 ```

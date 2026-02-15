@@ -32,9 +32,9 @@ A pipeline file is a JSON document with four fields:
 | `name` | yes | Unique identifier for the pipeline |
 | `version` | yes | Version string (for tracking changes) |
 | `description` | no | Human-readable description |
-| `graph` | yes | A `PipelineGraph` containing nodes and edges |
+| `graph` | yes | A `UserPipelineGraph` containing nodes and edges |
 
-The `graph` field defines the pipeline as a directed acyclic graph. Each node has an `id` and exactly one node type field (e.g. `streamSource`, `filter`, `sink`). Edges connect nodes by their IDs.
+The `graph` field defines the pipeline as a directed acyclic graph. Each node has an `id` and exactly one node type field (e.g. `kafkaSource`, `filter`, `kafkaSink`). Edges connect nodes by their IDs.
 
 See the [Node Reference](../reference/node-reference.md) for all available node types and their configuration fields.
 
@@ -107,28 +107,28 @@ typestream pipelines delete my-pipeline
 
 ```json
 {
-  "name": "webvisits-us",
+  "name": "webvisits-ok",
   "version": "1",
-  "description": "Filter web visits to US traffic",
+  "description": "Filter web visits to successful requests",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
       {
         "id": "filter-1",
         "filter": {
-          "predicate": { "expr": ".country == \"US\"" }
+          "expression": ".status_code == 200"
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/web_visits_us" }
+        "kafkaSink": {
+          "topicName": "web_visits_ok"
         }
       }
     ],
@@ -144,30 +144,28 @@ typestream pipelines delete my-pipeline
 
 ```json
 {
-  "name": "visits-by-country",
+  "name": "visits-by-status",
   "version": "1",
-  "description": "Count web visits grouped by country",
+  "description": "Count web visits grouped by status code",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
       {
-        "id": "group-1",
-        "group": { "keyMapperExpr": ".country" }
-      },
-      {
-        "id": "count-1",
-        "count": {}
+        "id": "mv-1",
+        "materializedView": {
+          "groupByField": "status_code",
+          "aggregationType": "count"
+        }
       }
     ],
     "edges": [
-      { "fromId": "source-1", "toId": "group-1" },
-      { "fromId": "group-1", "toId": "count-1" }
+      { "fromId": "source-1", "toId": "mv-1" }
     ]
   }
 }

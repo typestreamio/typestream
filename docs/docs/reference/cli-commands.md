@@ -105,12 +105,12 @@ Stop the full stack.
 typestream local stop
 ```
 
-### typestream local dev start
+### typestream local dev
 
 Start infrastructure only (server runs on host for hot reload).
 
 ```bash
-typestream local dev start
+typestream local dev
 ```
 
 ### typestream local dev stop
