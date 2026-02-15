@@ -51,7 +51,7 @@ import TabItem from "@theme/TabItem";
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/wikipedia_changes",
+          "topicPath": "/dev/kafka/local/topics/wikipedia_changes",
           "encoding": "AVRO"
         }
       },

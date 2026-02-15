@@ -38,7 +38,7 @@ cat /dev/kafka/local/topics/web_visits | wc
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/web_visits",
+          "topicPath": "/dev/kafka/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
@@ -70,25 +70,33 @@ cat /dev/kafka/local/topics/web_visits | wc
 
 ## Windowed count
 
-Count records within a tumbling time window (e.g., visits per country per minute):
+Count records within a tumbling time window (e.g., visits per status code per minute):
 
 ```json
 {
-  "id": "windowed-count-1",
-  "windowedCount": { "windowSizeSeconds": 60 }
+  "id": "mv-1",
+  "materializedView": {
+    "groupByField": "status_code",
+    "aggregationType": "count",
+    "enableWindowing": true,
+    "windowSizeSeconds": 60
+  }
 }
 ```
 
-Replace the `count` node with `windowedCount` in the pipeline above. Each window produces a separate count that closes after the specified duration.
+Replace the `materializedView` node in the pipeline above with this windowed variant. Each window produces a separate count that closes after the specified duration.
 
 ## Keep latest value per key
 
-Use `reduceLatest` to build a lookup table that always holds the most recent value for each key:
+Use `aggregationType: "latest"` to build a lookup table that always holds the most recent value for each key:
 
 ```json
 {
-  "id": "reduce-1",
-  "reduceLatest": {}
+  "id": "mv-1",
+  "materializedView": {
+    "groupByField": "status_code",
+    "aggregationType": "latest"
+  }
 }
 ```
 

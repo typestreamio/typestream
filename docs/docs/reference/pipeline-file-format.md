@@ -45,14 +45,14 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
 {
   "id": "source-1",
   "kafkaSource": {
-    "topicPath": "/local/topics/my_topic",
+    "topicPath": "/dev/kafka/local/topics/my_topic",
     "encoding": "AVRO",
     "unwrapCdc": false
   }
 }
 ```
 
-- `topicPath`: Path to the Kafka topic (e.g. `/local/topics/my_topic`)
+- `topicPath`: Virtual filesystem path to the Kafka topic (e.g. `/dev/kafka/local/topics/my_topic`)
 - `encoding`: `"AVRO"` | `"JSON"`
 - `unwrapCdc`: `true` to extract the `after` payload from Debezium CDC envelopes
 
@@ -62,12 +62,12 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
 {
   "id": "source-1",
   "postgresSource": {
-    "topicPath": "/local/topics/dbserver.public.orders"
+    "topicPath": "/dev/kafka/local/topics/dbserver.public.orders"
   }
 }
 ```
 
-- `topicPath`: Path to the Debezium CDC topic (CDC unwrapping is enabled automatically)
+- `topicPath`: Virtual filesystem path to the Debezium CDC topic (CDC unwrapping is enabled automatically)
 
 #### Filter
 
@@ -233,7 +233,7 @@ Each node has an `id` (string) and exactly one node type field. See the [Node Re
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/web_visits",
+          "topicPath": "/dev/kafka/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },

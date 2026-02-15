@@ -63,7 +63,7 @@ cat /dev/kafka/local/topics/dbserver.public.orders
       {
         "id": "source-1",
         "postgresSource": {
-          "topicPath": "/local/topics/dbserver.public.orders"
+          "topicPath": "/dev/kafka/local/topics/dbserver.public.orders"
         }
       },
       {

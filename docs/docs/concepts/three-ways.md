@@ -51,7 +51,7 @@ Define pipelines as `.typestream.json` files and manage them with `apply`, `plan
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/web_visits",
+          "topicPath": "/dev/kafka/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },

@@ -44,7 +44,7 @@ grep /dev/kafka/local/topics/web_visits products
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/web_visits",
+          "topicPath": "/dev/kafka/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },

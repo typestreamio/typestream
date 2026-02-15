@@ -46,7 +46,7 @@ The CLI DSL uses the `enrich` operator with a block expression for HTTP-based en
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/web_visits",
+          "topicPath": "/dev/kafka/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
