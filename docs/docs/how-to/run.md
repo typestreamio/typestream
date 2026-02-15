@@ -21,4 +21,4 @@ This is how the `run` command looks like in action:
 
 This will create a job that will run in the background. You can check the status
 using the `ps` command and stop it using the `kill` command. For a full list of
-supported commands, see the [shell](/reference/language/shell.md) reference.
+supported commands, see the [shell](/reference/language/shell) reference.

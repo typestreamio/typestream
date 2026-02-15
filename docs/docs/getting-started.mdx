@@ -2,143 +2,123 @@
 slug: /
 ---
 
-# Getting started
+# Getting Started
 
-:::info
+TypeStream is a streaming data platform that compiles pipeline definitions into Kafka Streams topologies. You can build pipelines three ways: an **interactive CLI** with Unix-style syntax, **config-as-code** with `.typestream.json` files, or a **visual GUI** with drag-and-drop.
 
-At the moment, `TypeStream` can only operate on streaming data via Kafka topics.
-Check out the [roadmap](roadmap.md) for more information about upcoming plans.
+All three converge on the same execution engine -- pick the one that fits your workflow.
 
-:::
+## Quick setup
 
-## What is TypeStream?
+Install the CLI and start the local environment:
 
-`TypeStream` is an abstraction layer on top of Kafka that allows you to write
-and run _typed_ data pipelines with a minimal, familiar syntax. It borrows its
-core ideas from the UNIX philosophy where everything is a file. In `TypeStream`,
-everything is a typed data stream.
+```bash
+brew install typestreamio/tap/typestream
+typestream local dev start
+```
 
-In these few sentences, there's a lot to unpack so we'll take it slow and go
-over each concept one at the time. By the end of this tutorial, you will know:
-
-- How `TypeStream` can achieve so much with such a minimal syntax.
-- How to interact with it you so you can start writing your own pipelines.
-
-:::info
-
-If you want to follow along, make sure you [install](tutorial/installation.mdx)
-`TypeStream` locally.
-
-:::
-
-## Run TypeStream locally
-
-To help you get started, we created a few `local` commands to help you run a
-local (surprise 😄) `TypeStream` server.
-
-import LocalStart from "./tutorial/_local_start.mdx";
-
-<LocalStart />
-
-## Create your first pipeline
-
-We created a small dataset that you can use to play around with `TypeStream`.
-You can seed your cluster with it by running:
+Then seed sample data:
 
 ```bash
 typestream local seed
 ```
 
-You should see something like this:
+For detailed setup instructions, see the [installation](installation.mdx) page.
+
+## Your first pipeline: filter a stream
+
+Let's filter a books topic to find a specific title. Here's the same pipeline built three ways.
+
+### CLI (interactive shell)
+
+Start the TypeStream shell:
 
 ```bash
-2023/06/27 10:19:42 INFO 📥 pulling image
-2023/06/27 10:19:42 INFO ⏳ this may take a while...
-2023/06/27 10:19:43 INFO ⛽ starting seeding process
-2023/06/27 10:19:49 INFO 🎉 seeding successful
-2023/06/27 10:19:49 INFO 🗑️  deleting container
-2023/06/27 10:19:49 INFO ✅ done
+typestream
 ```
 
-This will create a few topics in your Kafka cluster and populate them with some
-data.
+Then run:
 
-You should be ready to write your first pipeline but first let's make sure that
-your cluster is correctly set up:
+```sh
+grep /dev/kafka/local/topics/books "Station Eleven"
+```
+
+Output:
+
+```json
+{"id":"b1fb542c-...","title":"Station Eleven","word_count":"300","author_id":"386428f9-..."}
+```
+
+Press `Ctrl+C` to stop (streaming pipelines run until cancelled).
+
+To write the filtered results to a new topic:
+
+```sh
+grep /dev/kafka/local/topics/books "Station Eleven" > /dev/kafka/local/topics/station_eleven
+```
+
+### Config-as-code
+
+Create a file called `filter-books.typestream.json`:
+
+```json
+{
+  "name": "filter-books",
+  "version": "1",
+  "description": "Filter books by title",
+  "graph": {
+    "nodes": [
+      {
+        "id": "source-1",
+        "streamSource": {
+          "dataStream": { "path": "/dev/kafka/local/topics/books" },
+          "encoding": "AVRO"
+        }
+      },
+      {
+        "id": "filter-1",
+        "filter": {
+          "predicate": { "expr": ".title ~= \"Station Eleven\"" }
+        }
+      },
+      {
+        "id": "sink-1",
+        "sink": {
+          "output": { "path": "/dev/kafka/local/topics/station_eleven" }
+        }
+      }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "filter-1" },
+      { "fromId": "filter-1", "toId": "sink-1" }
+    ]
+  }
+}
+```
+
+Preview what will happen:
 
 ```bash
-echo 'ls /dev/kafka/local/topics' | typestream
+typestream plan filter-books.typestream.json
 ```
 
-If you see something like this:
+Apply the pipeline:
 
 ```bash
-_schema
-authors
-books
-ratings
-users
+typestream apply filter-books.typestream.json
 ```
 
-then you're all set. You're now ready to start writing your first pipeline 🚀🚀
+### Visual GUI
 
-## Hello, streams
+Open the TypeStream UI at `http://localhost:5173`, navigate to the graph builder, and:
 
-Imagine you have a local Kafka cluster which contains a few topics about a books
-social network you've been working on.
+1. Drag a **Kafka Source** node onto the canvas and select the `books` topic
+2. Drag a **Filter** node and connect it to the source, then set the predicate to `.title ~= "Station Eleven"`
+3. Drag a **Kafka Sink** node and connect it to the filter, then set the output topic
+4. Click **Create Job**
 
-Let's fire up a `TypeStream` shell:
+## Where to go from here
 
-```sh
-$ typestream
->
-```
-
-If you see that `>` then your `TypeStream` shell is ready to run your commands.
-
-Paste the following one liner to check if the book "Station eleven" is in the
-books topic:
-
-```sh
-grep /dev/kafka/local/topics/books "Station eleven"
-```
-
-You should see something like:
-
-```text
-{"id":"b1fb542c-2e02-4db8-bcb9-e12b9dff21fd","title":"Station Eleven","word_count":"300" "author_id":"386428f9-8ad2-4011-8199-b2674d671f87"}
-```
-
-Since data pipelines are unbound, the command will run indefinitely (or until you stop it with `Ctrl+C`).
-
-Here's a recorded example of what we've just done:
-
-![grep](../../assets/vhs/grep.gif)
-
-## What did we learn?
-
-These two short examples tell us a lot about `TypeStream`:
-
-- The syntax is familiar to UNIX users. At first sight, it looks a bit like
-  bash.
-- `TypeStream` data pipelines are _typed_. In the second example, you can see
-  that the output is a structured JSON object derived from the original Avro
-  encoded "books" topic.
-- You build data pipelines by chaining commands with pipes.
-
-In the examples we've seen so far, `TypeStream` outputted the data to the
-standard output which may come handy with small topics or in debugging
-scenarios. However, in most cases, you will want to output the results of your
-data pipelines to a new topic. The syntax is as familiar as it can get:
-
-```sh
-grep /dev/kafka/local/topics/ratings "386428f9-8ad2-4011-8199-b2674d671f87"  > /dev/kafka/local/topics/mandel_ratings
-```
-
-## Where to go from here?
-
-- Check out our [guides](how-to) to learn how to accomplish common tasks.
-- If you wish to install `TypeStream`, check out the
-  [installation](tutorial/installation.mdx) page.
-- If you're curious about the internals of `TypeStream`, check out the
-  [components](concepts/components.md) page.
+- [Three Ways to Build](concepts/three-ways.md) -- understand the CLI, config-as-code, and GUI approaches in depth
+- [Node Reference](reference/node-reference.md) -- all 18 node types with config fields and schema behavior
+- [How-to Guides](how-to) -- step-by-step recipes for common tasks

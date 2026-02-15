@@ -1,0 +1,113 @@
+# Installation
+
+This guide covers installing the TypeStream CLI and starting a local development environment.
+
+## Install the CLI
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+<Tabs>
+  <TabItem value="brew" label="Homebrew" default>
+
+```bash
+brew install typestreamio/tap/typestream
+```
+
+  </TabItem>
+</Tabs>
+
+Verify the installation:
+
+```bash
+typestream --version
+```
+
+## Prerequisites
+
+You need [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed to run TypeStream locally.
+
+## Start the local environment
+
+TypeStream ships with a `local` command group that manages a full Docker Compose stack: Redpanda (Kafka-compatible broker), Schema Registry, Envoy proxy, and the TypeStream server.
+
+### Production mode
+
+Run the full stack (server inside Docker):
+
+```bash
+typestream local start
+```
+
+You should see:
+
+```
+INFO 🚀 starting TypeStream server
+INFO 🛫 starting server
+INFO 🛫 starting redpanda
+INFO ✨ redpanda started
+INFO ✨ server started
+INFO ✅ server healthy
+INFO ✅ redpanda healthy
+INFO 🎉 TypeStream server started
+```
+
+### Development mode
+
+If you're developing on the server itself, use dev mode. This starts only the infrastructure services -- you run the server on your host for hot reload:
+
+```bash
+typestream local dev start
+```
+
+Then start the server separately:
+
+```bash
+./scripts/dev/server.sh
+```
+
+## Seed test data
+
+Load sample data (books, authors, ratings, users) into your Kafka cluster:
+
+```bash
+typestream local seed
+```
+
+Verify the topics are available:
+
+```bash
+echo 'ls /dev/kafka/local/topics' | typestream
+```
+
+You should see topics like `books`, `authors`, `ratings`, `users`, and `_schema`.
+
+## Stop the environment
+
+```bash
+typestream local stop
+```
+
+To stop and remove all volumes (clean slate):
+
+```bash
+typestream local dev clean
+```
+
+## Configuration
+
+TypeStream is configured via a `typestream.toml` file. At startup, the server looks for this file using the `TYPESTREAM_CONFIG_PATH` environment variable, then falls back to the current directory and `/etc/typestream`.
+
+Default configuration:
+
+```toml
+[grpc]
+port = 4242
+
+[sources.kafka.local]
+bootstrapServers = "localhost:9092"
+schemaRegistry.url = "http://localhost:8081"
+fsRefreshRate = 60
+```
+
+See the [configuration reference](reference/configuration.md) for all options.

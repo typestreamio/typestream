@@ -1,18 +1,30 @@
-# Shell commands
+# Shell Commands
 
-Since `TypeStream` is heavily inspired by the Unix philosophy, it's only natural
-that it supports many shell commands.
+Since TypeStream is heavily inspired by the Unix philosophy, it supports many shell commands for navigating the virtual filesystem and managing jobs.
 
 :::note
 
-Feature parity with Unix shells is a non-goal of `TypeStream` so do not expect
+Feature parity with Unix shells is a non-goal of TypeStream so do not expect
 commands to be exactly the same as their Unix counterparts.
 
-`TypeStream` also supports a few commands that are not available in Unix shells.
+TypeStream also supports a few commands that are not available in Unix shells.
 
 :::
 
 ## Cd
+
+### Synopsis
+
+`cd [<path>]`
+
+### Description
+
+The `cd` command changes the current working directory in the virtual filesystem. Without arguments, it returns to the root directory.
+
+```sh
+cd /dev/kafka/local/topics
+cat books  # equivalent to cat /dev/kafka/local/topics/books
+```
 
 ## History
 
@@ -49,6 +61,43 @@ parse the response as JSON.
 
 ## Ls
 
-## Pwd
+### Synopsis
+
+`ls [<path>]`
+
+### Description
+
+The `ls` command lists the contents of a directory in the virtual filesystem. Without arguments, it lists the current directory.
+
+```sh
+ls /dev/kafka/local/topics
+```
 
 ## Ps
+
+### Synopsis
+
+`ps`
+
+### Description
+
+The `ps` command lists all running jobs with their ID and status. Use this to monitor active pipelines.
+
+```sh
+ps
+```
+
+## Pwd
+
+### Synopsis
+
+`pwd`
+
+### Description
+
+The `pwd` command prints the current working directory in the virtual filesystem.
+
+```sh
+pwd
+/dev/kafka/local/topics
+```

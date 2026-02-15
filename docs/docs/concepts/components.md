@@ -10,7 +10,7 @@ for you. In order to that, it needs a few components:
 - A [gRPC server](#grpc-server). It's how you compile and run programs with
   `TypeStream`.
 - A `virtual filesystem`. It's how TypeStream allows you to address data sources
-  with a familiar path-like syntax. The [FileSystem](filesystem.md) document
+  with a familiar path-like syntax. The [FileSystem](virtual-filesystem.md) document
   explains in more details how it works.
 - A `data catalog` that makes sense of the data schemas. It's how `TypeStream`
   type checks your programs.
@@ -143,7 +143,7 @@ The semantic analyser primary job is to make sense of the data streams types
 involved in the data pipeline. There are two reasons why this is important:
 
 - To correctly infer the sink nodes types (the redirections).
-- To apply [encoding rules](catalog.md#encoding-rules) for each sink node.
+- To apply [encoding rules](schema-propagation.md#encoding-rules) for each sink node.
 
 Take the following statement from the previous example:
 
@@ -162,7 +162,7 @@ cat $books | cut $title > book_titles
 ```
 
 In this case, the semantic analyser assigns the type Struct[title: String] to
-the output topic with a JSON encoding (following the [encoding rules](catalog.md#encoding-rules)).
+the output topic with a JSON encoding (following the [encoding rules](schema-propagation.md#encoding-rules)).
 
 There is one more detail to consider which concerns variables. Consider this
 statement one more time:
@@ -181,7 +181,7 @@ With these details in mind, let's recap what the semantic analyser does:
 - It binds variables.
 - It infers the resulting type of the sink nodes (the redirections) from the
   pipeline.
-- It applies [encoding rules](./catalog.md#encoding-rules) to the sink nodes.
+- It applies [encoding rules](schema-propagation.md#encoding-rules) to the sink nodes.
 
 ## Scheduler
 
@@ -196,14 +196,14 @@ address data sources filesystem's like paths, it's only natural that the data
 catalog uses the same approach to storing metadata information about the data
 sources.
 
-For more information about the data catalog, see the [catalog](catalog.md)
+For more information about the data catalog, see the [catalog](schema-propagation.md)
 
 ## Filesystem
 
 The Filesystem component is responsible for managing the data catalog and for
 maintaining a structured view of the data sources where each data source is
 addressed with a filesystem like path. For more information about the
-filesystem, see the [filesystem](filesystem.md) document.
+filesystem, see the [filesystem](virtual-filesystem.md) document.
 
 ### Watchers
 
