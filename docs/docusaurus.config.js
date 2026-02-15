@@ -53,9 +53,9 @@ const config = {
           },
           {
             type: "doc",
-            docId: "/tutorial",
+            docId: "/concepts",
             position: "right",
-            label: "Tutorials",
+            label: "Concepts",
           },
           {
             type: "doc",
@@ -68,12 +68,6 @@ const config = {
             docId: "/reference",
             position: "right",
             label: "Reference",
-          },
-          {
-            type: "doc",
-            docId: "/concepts",
-            position: "right",
-            label: "Concepts",
           },
         ],
       },

@@ -4,21 +4,24 @@
 const sidebars = {
   sidebar: [
     { type: "doc", id: "getting-started" },
+    { type: "doc", id: "installation" },
     {
       type: "category",
-      label: "Tutorials",
+      label: "Concepts",
       link: {
         type: "generated-index",
-        title: "Tutorials",
-        description:
-          "Learn about the most important TypeStream via a series of steps to complete a project!",
-        slug: "/tutorial",
-        keywords: ["tutorials"],
+        title: "Concepts",
+        description: "Understand how TypeStream works under the hood.",
+        slug: "/concepts",
+        keywords: ["concepts"],
       },
       items: [
-        "tutorial/installation",
-        "tutorial/configuration",
-        "tutorial/deployment",
+        "concepts/how-typestream-works",
+        "concepts/three-ways",
+        "concepts/virtual-filesystem",
+        "concepts/schema-propagation",
+        "concepts/cdc-and-debezium",
+        "concepts/components",
       ],
     },
     {
@@ -27,13 +30,20 @@ const sidebars = {
       link: {
         type: "generated-index",
         title: "How-to Guides",
-        description:
-          "Practical step-by-step guides to help you achieve a specific goa",
+        description: "Step-by-step recipes for common tasks.",
         slug: "/how-to",
         keywords: ["how to"],
       },
       items: [
-        "how-to/filtering",
+        "how-to/filter-and-route",
+        "how-to/geo-enrich-events",
+        "how-to/setup-postgres-cdc",
+        "how-to/join-two-topics",
+        "how-to/real-time-aggregations",
+        "how-to/pipeline-as-code",
+        "how-to/enrich-with-ai",
+        "how-to/add-semantic-search",
+        "how-to/sink-to-elasticsearch",
         "how-to/enriching",
         "how-to/export",
         "how-to/run",
@@ -45,33 +55,21 @@ const sidebars = {
       link: {
         type: "generated-index",
         title: "Reference",
-        description: "In-depth technical descriptions of how TypeStream works",
+        description: "Detailed specifications and API docs.",
         slug: "/reference",
         keywords: ["reference"],
       },
       items: [
-        "reference/glossary",
+        "reference/node-reference",
+        "reference/cli-commands",
+        "reference/pipeline-file-format",
+        "reference/configuration",
         "reference/api",
-        "reference/language/spec",
+        "reference/glossary",
         "reference/language/operators",
         "reference/language/shell",
-        "reference/language/experiments",
       ],
     },
-    {
-      type: "category",
-      label: "Concepts",
-      link: {
-        type: "generated-index",
-        title: "Concepts",
-        description: "Learn about the most important TypeStream concepts!",
-        slug: "/concepts",
-        keywords: ["concepts"],
-      },
-      items: ["concepts/components", "concepts/filesystem"],
-    },
-    { type: "doc", id: "roadmap" },
-    { type: "doc", id: "changelog" },
   ],
 };
 
