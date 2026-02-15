@@ -22,13 +22,7 @@ TypeStream uses [Debezium](https://debezium.io/) via Kafka Connect to capture ro
 
 ## Verify CDC topics
 
-After starting the local environment, seed the database:
-
-```bash
-typestream local seed
-```
-
-Then check for CDC topics:
+The demo data generators write to PostgreSQL automatically. After starting the local environment, check for CDC topics:
 
 ```bash
 echo 'ls /dev/kafka/local/topics' | typestream

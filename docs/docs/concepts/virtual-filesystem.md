@@ -10,12 +10,11 @@ TypeStream provides a UNIX-like virtual filesystem that maps Kafka infrastructur
 ├── consumer-groups   # Consumer group metadata
 ├── schemas           # Schema Registry schemas
 └── topics            # Kafka topics (this is where your data lives)
-    ├── books
-    ├── authors
-    ├── ratings
-    ├── users
-    ├── dbserver.public.orders      # CDC topics from Debezium
-    └── dbserver.public.users
+    ├── web_visits
+    ├── crypto_tickers
+    ├── wikipedia_changes
+    ├── dbserver.public.file_uploads   # CDC topics from Debezium
+    └── dbserver.public.orders
 ```
 
 ## Navigating the filesystem
@@ -30,17 +29,17 @@ ls /dev/kafka/local/topics
 cd /dev/kafka/local/topics
 
 # Read from a topic
-cat books
+cat web_visits
 ```
 
 ## Schema Registry integration
 
 When you reference a topic path, TypeStream looks up its schema from Schema Registry automatically. This is how the system knows the field names and types for each topic -- enabling typed pipelines, schema validation, and field-based filtering.
 
-For example, `/dev/kafka/local/topics/books` might resolve to:
+For example, `/dev/kafka/local/topics/web_visits` might resolve to:
 
 ```
-Struct[id: String, title: String, word_count: Int, author_id: String]
+Struct[ip_address: String, url_path: String, status_code: Int, http_method: String, ...]
 ```
 
 This schema information flows through the entire pipeline via [schema propagation](schema-propagation.md).
@@ -49,8 +48,8 @@ This schema information flows through the entire pipeline via [schema propagatio
 
 The virtual filesystem is the common abstraction across all interfaces:
 
-- **CLI DSL**: Topic paths are used directly in commands (`grep /dev/kafka/local/topics/books "Station"`)
-- **Config-as-code**: The `dataStream.path` field in pipeline JSON files references filesystem paths
+- **CLI DSL**: Topic paths are used directly in commands (`grep /dev/kafka/local/topics/web_visits [.status_code == 200]`)
+- **Config-as-code**: The `topicPath` field in pipeline JSON files references filesystem paths
 - **GUI**: The source node dropdown is populated by calling `FileSystemService.Ls` over gRPC
 
 ## Topic discovery

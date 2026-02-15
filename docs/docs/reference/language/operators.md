@@ -13,7 +13,7 @@ Data operators transform, filter, and process records flowing through a TypeStre
 The `cat` operator reads records from a data stream and outputs them. It is typically the first operator in a pipeline.
 
 ```sh
-cat /dev/kafka/local/topics/books
+cat /dev/kafka/local/topics/web_visits
 ```
 
 ## Cut
@@ -27,7 +27,7 @@ cat /dev/kafka/local/topics/books
 The `cut` operator selects specific fields from each record, producing a new record with only the named fields.
 
 ```sh
-cat /dev/kafka/local/topics/books | cut .title .author_id
+cat /dev/kafka/local/topics/web_visits | cut .url_path .status_code
 ```
 
 ## Each
@@ -45,7 +45,7 @@ The `each` data operator is used to execute a block expression for each record i
 Here's an example of using `each` to make a HTTP request for each record in a data stream:
 
 ```sh
-cat /dev/kafka/local/topics/books | each { book -> http post https://example.com/new_books "{\"book_id\": #{$book.id}}" }
+cat /dev/kafka/local/topics/web_visits | each { visit -> http post https://example.com/visits "{\"path\": #{$visit.url_path}}" }
 ```
 
 ## Echo

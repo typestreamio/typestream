@@ -23,22 +23,22 @@ import TabItem from "@theme/TabItem";
 
 ```json
 {
-  "name": "books-with-summary",
+  "name": "wikipedia-with-summary",
   "version": "1",
-  "description": "Generate AI summaries for books",
+  "description": "Generate AI summaries for Wikipedia changes",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/books",
+          "topicPath": "/local/topics/wikipedia_changes",
           "encoding": "AVRO"
         }
       },
       {
         "id": "ai-1",
         "openAiTransformer": {
-          "prompt": "Write a one-sentence summary for the book titled: ${title}",
+          "prompt": "Write a one-sentence summary of this Wikipedia edit to the article: ${title}",
           "outputField": "ai_summary",
           "model": "gpt-4o-mini"
         }
@@ -46,7 +46,7 @@ import TabItem from "@theme/TabItem";
       {
         "id": "sink-1",
         "kafkaSink": {
-          "topicName": "books_with_summaries"
+          "topicName": "wikipedia_with_summaries"
         }
       }
     ],

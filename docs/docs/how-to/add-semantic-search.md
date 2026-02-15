@@ -30,7 +30,7 @@ import TabItem from "@theme/TabItem";
 
 1. Drag a **Kafka Source** and select your topic
 2. Drag an **Embedding Generator** node and connect it
-   - Set `textField` to the field containing your text (e.g. `title`)
+   - Set `textField` to the field containing your text (e.g. `title` from `wikipedia_changes`)
    - Set `outputField` to `embedding`
    - Choose a model (e.g. `text-embedding-3-small`)
 3. Drag a **Weaviate Sink** from the palette (appears under Vector Sinks after registering a connection)
@@ -43,15 +43,15 @@ import TabItem from "@theme/TabItem";
 
 ```json
 {
-  "name": "books-semantic-search",
+  "name": "wikipedia-semantic-search",
   "version": "1",
-  "description": "Generate embeddings for books and index in Weaviate",
+  "description": "Generate embeddings for Wikipedia changes and index in Weaviate",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/books",
+          "topicPath": "/local/topics/wikipedia_changes",
           "encoding": "AVRO"
         }
       },
@@ -66,7 +66,7 @@ import TabItem from "@theme/TabItem";
       {
         "id": "sink-1",
         "kafkaSink": {
-          "topicName": "books_embeddings"
+          "topicName": "wikipedia_embeddings"
         }
       }
     ],

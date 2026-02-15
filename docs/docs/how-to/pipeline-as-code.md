@@ -9,7 +9,7 @@ This guide covers how to define TypeStream pipelines as `.typestream.json` files
 ## Prerequisites
 
 - TypeStream [installed](../installation.mdx) and running
-- Sample data seeded (`typestream local seed`)
+- Demo data generators running (started automatically with `typestream local dev`)
 
 ## File format
 

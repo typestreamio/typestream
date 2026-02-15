@@ -17,17 +17,13 @@ brew install typestreamio/tap/typestream
 typestream local dev
 ```
 
-Then seed sample data:
-
-```bash
-typestream local seed
-```
+Demo data generators start automatically with the local environment -- topics like `web_visits`, `crypto_tickers`, and `wikipedia_changes` will appear within a few seconds.
 
 For detailed setup instructions, see the [installation](installation.mdx) page.
 
 ## Your first pipeline: filter a stream
 
-Let's filter a books topic to find a specific title. Here's the same pipeline built three ways.
+Let's filter the `web_visits` stream to find successful requests. Here's the same pipeline built three ways.
 
 ### CLI (interactive shell)
 
@@ -40,13 +36,13 @@ typestream
 Then run:
 
 ```sh
-grep /dev/kafka/local/topics/books "Station Eleven"
+grep /dev/kafka/local/topics/web_visits [.status_code == 200]
 ```
 
 Output:
 
 ```json
-{"id":"b1fb542c-...","title":"Station Eleven","word_count":"300","author_id":"386428f9-..."}
+{"ip_address":"203.0.113.42","url_path":"/products","status_code":200,"http_method":"GET",...}
 ```
 
 Press `Ctrl+C` to stop (streaming pipelines run until cancelled).
@@ -54,37 +50,37 @@ Press `Ctrl+C` to stop (streaming pipelines run until cancelled).
 To write the filtered results to a new topic:
 
 ```sh
-grep /dev/kafka/local/topics/books "Station Eleven" > /dev/kafka/local/topics/station_eleven
+grep /dev/kafka/local/topics/web_visits [.status_code == 200] > /dev/kafka/local/topics/web_visits_ok
 ```
 
 ### Config-as-code
 
-Create a file called `filter-books.typestream.json`:
+Create a file called `filter-visits.typestream.json`:
 
 ```json
 {
-  "name": "filter-books",
+  "name": "filter-visits",
   "version": "1",
-  "description": "Filter books by title",
+  "description": "Filter web visits to successful requests",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/books",
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
       {
         "id": "filter-1",
         "filter": {
-          "expression": ".title ~= \"Station Eleven\""
+          "expression": ".status_code == 200"
         }
       },
       {
         "id": "sink-1",
         "kafkaSink": {
-          "topicName": "station_eleven"
+          "topicName": "web_visits_ok"
         }
       }
     ],
@@ -99,21 +95,21 @@ Create a file called `filter-books.typestream.json`:
 Preview what will happen:
 
 ```bash
-typestream plan filter-books.typestream.json
+typestream plan filter-visits.typestream.json
 ```
 
 Apply the pipeline:
 
 ```bash
-typestream apply filter-books.typestream.json
+typestream apply filter-visits.typestream.json
 ```
 
 ### Visual GUI
 
 Open the TypeStream UI at `http://localhost:5173`, navigate to the graph builder, and:
 
-1. Drag a **Kafka Source** node onto the canvas and select the `books` topic
-2. Drag a **Filter** node and connect it to the source, then set the predicate to `.title ~= "Station Eleven"`
+1. Drag a **Kafka Source** node onto the canvas and select the `web_visits` topic
+2. Drag a **Filter** node and connect it to the source, then set the expression to `.status_code == 200`
 3. Drag a **Kafka Sink** node and connect it to the filter, then set the output topic
 4. Click **Create Job**
 

@@ -23,7 +23,7 @@ The `cd` command changes the current working directory in the virtual filesystem
 
 ```sh
 cd /dev/kafka/local/topics
-cat books  # equivalent to cat /dev/kafka/local/topics/books
+cat web_visits  # equivalent to cat /dev/kafka/local/topics/web_visits
 ```
 
 ## Env
@@ -51,7 +51,7 @@ env
 The `file` command displays type information about a path in the virtual filesystem.
 
 ```sh
-file /dev/kafka/local/topics/books
+file /dev/kafka/local/topics/web_visits
 ```
 
 ## History
@@ -169,5 +169,5 @@ pwd
 The `stat` command displays detailed information about a path in the virtual filesystem.
 
 ```sh
-stat /dev/kafka/local/topics/books
+stat /dev/kafka/local/topics/web_visits
 ```

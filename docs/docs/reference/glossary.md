@@ -44,7 +44,7 @@ A data platform that TypeStream reads from. Currently limited to Kafka clusters.
 
 ## Stream
 
-A filesystem-addressable source of data. In TypeStream, Kafka topics are represented as streams in the virtual filesystem (e.g. `/dev/kafka/local/topics/books`).
+A filesystem-addressable source of data. In TypeStream, Kafka topics are represented as streams in the virtual filesystem (e.g. `/dev/kafka/local/topics/web_visits`).
 
 ## Topology
 

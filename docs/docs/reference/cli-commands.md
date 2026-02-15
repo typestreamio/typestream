@@ -28,7 +28,7 @@ echo 'ls /dev/kafka/local/topics' | typestream
 Create a streaming job from a DSL expression or file.
 
 ```bash
-typestream run 'grep /dev/kafka/local/topics/books "Station" > /dev/kafka/local/topics/filtered'
+typestream run 'grep /dev/kafka/local/topics/web_visits [.status_code == 200] > /dev/kafka/local/topics/ok_visits'
 typestream run pipeline.ts
 ```
 
@@ -131,7 +131,7 @@ typestream local dev clean
 
 ### typestream local seed
 
-Pull and run the seeder container to populate sample data.
+Pull and run the seeder container to populate additional sample data (books, authors, ratings, users). This is optional -- demo data generators start automatically with `typestream local dev`.
 
 ```bash
 typestream local seed

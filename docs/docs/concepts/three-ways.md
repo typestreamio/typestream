@@ -26,13 +26,13 @@ grep /dev/kafka/local/topics/web_visits "US"
 grep /dev/kafka/local/topics/web_visits "US" > /dev/kafka/local/topics/us_visits
 
 # Chain operators
-cat /dev/kafka/local/topics/books | grep "Station" | wc
+cat /dev/kafka/local/topics/web_visits | grep [.status_code > 399] | wc
 ```
 
 **When to use it**: Exploring data, quick ad-hoc queries, debugging. The shell gives you instant feedback -- type a pipeline, see results immediately. You can also run one-shot commands by piping into the CLI:
 
 ```bash
-echo 'grep /dev/kafka/local/topics/books "Station"' | typestream
+echo 'grep /dev/kafka/local/topics/web_visits [.status_code == 200]' | typestream
 ```
 
 **How it works**: The DSL goes through `Lexer -> Parser -> Interpreter -> Graph<Node>`. The Interpreter also emits a `PipelineGraph` proto via `PipelineGraphEmitter` when the pipeline is serializable.
@@ -43,28 +43,28 @@ Define pipelines as `.typestream.json` files and manage them with `apply`, `plan
 
 ```json
 {
-  "name": "webvisits-us",
+  "name": "webvisits-ok",
   "version": "1",
-  "description": "Filter web visits to US traffic",
+  "description": "Filter web visits to successful requests",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
-        "streamSource": {
-          "dataStream": { "path": "/dev/kafka/local/topics/web_visits" },
+        "kafkaSource": {
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
       {
         "id": "filter-1",
         "filter": {
-          "predicate": { "expr": ".country == \"US\"" }
+          "expression": ".status_code == 200"
         }
       },
       {
         "id": "sink-1",
-        "sink": {
-          "output": { "path": "/dev/kafka/local/topics/web_visits_us" }
+        "kafkaSink": {
+          "topicName": "web_visits_ok"
         }
       }
     ],

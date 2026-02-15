@@ -9,7 +9,7 @@ This guide shows how to filter records from a Kafka topic and route matching res
 ## Prerequisites
 
 - TypeStream [installed](../installation.mdx) and running
-- Sample data seeded (`typestream local seed`)
+- Demo data generators running (started automatically with `typestream local dev`)
 
 ## Filter by content
 
@@ -22,13 +22,13 @@ import TabItem from "@theme/TabItem";
   <TabItem value="cli" label="CLI DSL" default>
 
 ```sh
-grep /dev/kafka/local/topics/books "Station"
+grep /dev/kafka/local/topics/web_visits "/products"
 ```
 
 Bare words work too (case-insensitive):
 
 ```sh
-grep /dev/kafka/local/topics/books station
+grep /dev/kafka/local/topics/web_visits products
 ```
 
   </TabItem>
@@ -36,28 +36,28 @@ grep /dev/kafka/local/topics/books station
 
 ```json
 {
-  "name": "filter-station",
+  "name": "filter-products",
   "version": "1",
-  "description": "Filter books containing Station",
+  "description": "Filter web visits to product pages",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/books",
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
       {
         "id": "filter-1",
         "filter": {
-          "expression": ".title ~= \"Station\""
+          "expression": ".url_path ~= \"/products\""
         }
       },
       {
         "id": "sink-1",
         "kafkaSink": {
-          "topicName": "station_books"
+          "topicName": "product_visits"
         }
       }
     ],
@@ -72,8 +72,8 @@ grep /dev/kafka/local/topics/books station
   </TabItem>
   <TabItem value="gui" label="GUI">
 
-1. Drag a **Kafka Source** and select the `books` topic
-2. Drag a **Filter** node, connect it, and set the predicate to `.title ~= "Station"`
+1. Drag a **Kafka Source** and select the `web_visits` topic
+2. Drag a **Filter** node, connect it, and set the expression to `.url_path ~= "/products"`
 3. Drag a **Kafka Sink** and set the output topic
 4. Click **Create Job**
 
@@ -85,13 +85,13 @@ grep /dev/kafka/local/topics/books station
 Use predicate expressions for field-based filtering:
 
 ```sh
-grep /dev/kafka/local/topics/books [.word_count > 250]
+grep /dev/kafka/local/topics/web_visits [.status_code > 399]
 ```
 
 Combine conditions with `&&` and `||`:
 
 ```sh
-grep /dev/kafka/local/topics/books [ .word_count == 300 || .title ~= 'the' ]
+grep /dev/kafka/local/topics/web_visits [ .status_code == 200 || .url_path ~= '/products' ]
 ```
 
 ### Predicate operators
@@ -108,7 +108,7 @@ grep /dev/kafka/local/topics/books [ .word_count == 300 || .title ~= 'the' ]
 Use `-v` to select records that do **not** match:
 
 ```sh
-grep -v /dev/kafka/local/topics/books "Station"
+grep -v /dev/kafka/local/topics/web_visits "/health"
 ```
 
 ### Filter by key
@@ -116,7 +116,7 @@ grep -v /dev/kafka/local/topics/books "Station"
 Use `-k` to match against the record key instead of the value:
 
 ```sh
-grep -k /dev/kafka/local/topics/books "some-key"
+grep -k /dev/kafka/local/topics/web_visits "some-key"
 ```
 
 ## Route to an output topic
@@ -124,7 +124,7 @@ grep -k /dev/kafka/local/topics/books "some-key"
 Use `>` to write filtered results to a new Kafka topic:
 
 ```sh
-grep /dev/kafka/local/topics/books [.word_count > 250] > /dev/kafka/local/topics/long_books
+grep /dev/kafka/local/topics/web_visits [.status_code > 399] > /dev/kafka/local/topics/error_visits
 ```
 
 The output topic is created automatically. Encoding follows the input: if the source is Avro, the output will also be Avro (since the schema is unchanged by filtering).

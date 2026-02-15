@@ -25,7 +25,7 @@ graph TD
 
 You define a pipeline through one of three entry points:
 
-- **CLI DSL**: Text like `grep /dev/kafka/local/topics/books "Station" > /dev/kafka/local/topics/filtered`
+- **CLI DSL**: Text like `grep /dev/kafka/local/topics/web_visits [.status_code == 200] > /dev/kafka/local/topics/ok_visits`
 - **Config-as-code**: A `.typestream.json` file with a graph of nodes and edges
 - **GUI**: A visual graph built by dragging nodes on a canvas
 

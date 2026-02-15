@@ -40,15 +40,15 @@ import TabItem from "@theme/TabItem";
 
 ```json
 {
-  "name": "books-to-elasticsearch",
+  "name": "web-visits-to-elasticsearch",
   "version": "1",
-  "description": "Index books into Elasticsearch",
+  "description": "Index web visits into Elasticsearch",
   "graph": {
     "nodes": [
       {
         "id": "source-1",
         "kafkaSource": {
-          "topicPath": "/local/topics/books",
+          "topicPath": "/local/topics/web_visits",
           "encoding": "AVRO"
         }
       },
@@ -56,7 +56,7 @@ import TabItem from "@theme/TabItem";
         "id": "sink-1",
         "elasticsearchSink": {
           "connectionId": "my-elasticsearch",
-          "indexName": "books",
+          "indexName": "web_visits",
           "documentIdStrategy": "RECORD_KEY",
           "writeMethod": "UPSERT",
           "behaviorOnNullValues": "IGNORE"

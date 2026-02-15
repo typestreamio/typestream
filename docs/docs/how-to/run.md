@@ -11,7 +11,7 @@ terminal session and allow you to quickly iterate on your data pipelines.
 Once you're ready to run a pipeline in production, you want to use the `run` command:
 
 ```bash
-$ typestream run 'cat /dev/kafka/local/topics/books | cut .title > /dev/kafka/local/topics/book_titles'
+$ typestream run 'cat /dev/kafka/local/topics/web_visits | cut .url_path .status_code > /dev/kafka/local/topics/visit_paths'
 🚀 job created: typestream-app-e800fb40-de6b-42b9-a055-06565ec2d3be
 ```
 
