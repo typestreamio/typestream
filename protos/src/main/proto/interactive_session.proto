@@ -6,61 +6,96 @@ option java_package = "io.typestream.grpc.interactive_session_service";
 
 option go_package = "github.com/typestreamio/typestream/cli/pkg/interactive_session_service";
 
+// InteractiveSessionService provides a REPL-like interface for executing
+// TypeStream DSL programs. Start a session, run programs, stream their output,
+// get tab completions, and stop sessions when done.
 service InteractiveSessionService {
+  // Start a new interactive session for the given user.
+  // Returns a session ID used to identify the session in subsequent calls.
   rpc StartSession(StartSessionRequest) returns (StartSessionResponse);
+
+  // Execute a TypeStream DSL program within an existing session.
+  // Returns the initial output; use GetProgramOutput to stream additional results.
   rpc RunProgram(RunProgramRequest) returns (RunProgramResponse);
+
+  // Stream additional output from a running program.
+  // Use this after RunProgram when hasMoreOutput is true.
   rpc GetProgramOutput(GetProgramOutputRequest) returns (stream GetProgramOutputResponse);
+
+  // Get tab-completion suggestions for a partial program at the given cursor position.
   rpc CompleteProgram(CompleteProgramRequest) returns (CompleteProgramResponse);
+
+  // Stop an interactive session and release its resources.
   rpc StopSession(StopSessionRequest) returns (StopSessionResponse);
 }
 
 message StartSessionRequest {
+  // Identifier for the user starting the session.
   string user_id = 1;
 }
 
 message StartSessionResponse {
+  // Unique identifier for the created session.
   string session_id = 1;
 }
 
 
 message RunProgramRequest {
+  // Session to run the program in.
   string session_id = 1;
+  // TypeStream DSL program source code to execute.
   string source = 2;
 }
 
 message RunProgramResponse {
+  // Identifier for the running program instance.
   string id = 1;
+  // Environment variables set by the program (e.g., topic assignments).
   map<string, string> env = 2;
+  // Initial standard output from the program.
   string stdOut = 3;
+  // Standard error output from the program.
   string stdErr = 4;
+  // If true, more output is available via GetProgramOutput.
   bool hasMoreOutput = 5;
 }
 
 message GetProgramOutputRequest {
+  // Session containing the program.
   string session_id = 1;
+  // Identifier of the running program (from RunProgramResponse.id).
   string id = 2;
 }
 
 message GetProgramOutputResponse {
+  // Standard output chunk from the running program.
   string stdOut = 1;
+  // Standard error chunk from the running program.
   string stdErr = 2;
 }
 
 message CompleteProgramRequest {
+  // Session to get completions for.
   string session_id = 1;
+  // Partial TypeStream DSL source code.
   string source = 2;
+  // Cursor position (character offset) within the source for completion.
   int32 cursor = 3;
 }
 
 message CompleteProgramResponse {
+  // List of completion suggestions.
   repeated string value = 1;
 }
 
 message StopSessionRequest {
+  // Session to stop.
   string session_id = 1;
 }
 
 message StopSessionResponse {
+  // Any remaining standard output from the session.
   string stdOut = 1;
+  // Any remaining standard error from the session.
   string stdErr = 2;
 }

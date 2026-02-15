@@ -6,29 +6,56 @@ option java_package = "io.typestream.grpc.job_service";
 
 option go_package = "github.com/typestreamio/typestream/cli/pkg/job_service";
 
+// JobService manages streaming jobs — the core execution units of TypeStream.
+// Create jobs from DSL source code or visual pipeline graphs, list running jobs,
+// run preview jobs for live data inspection, infer schemas across a pipeline,
+// and list available OpenAI models for AI-powered transforms.
 service JobService {
+    // Create a streaming job from TypeStream DSL source code.
     rpc CreateJob(CreateJobRequest) returns (CreateJobResponse) {}
+
+    // Create a streaming job from a visual pipeline graph with optional sink configurations.
     rpc CreateJobFromGraph(CreateJobFromGraphRequest) returns (CreateJobResponse) {}
+
+    // List all running and recently stopped jobs.
     rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
+
+    // Create a short-lived preview job for inspecting live data flowing through a pipeline.
     rpc CreatePreviewJob(CreatePreviewJobRequest) returns (CreatePreviewJobResponse) {}
+
+    // Stop a running preview job.
     rpc StopPreviewJob(StopPreviewJobRequest) returns (StopPreviewJobResponse) {}
+
+    // Stream live preview data from a running preview job.
     rpc StreamPreview(StreamPreviewRequest) returns (stream StreamPreviewResponse) {}
+
+    // Infer the output schema for each node in a pipeline graph.
+    // Useful for showing field types in the UI before running a job.
     rpc InferGraphSchemas(InferGraphSchemasRequest) returns (InferGraphSchemasResponse) {}
+
+    // List available OpenAI models for use with AI-powered transform nodes.
     rpc ListOpenAIModels(ListOpenAIModelsRequest) returns (ListOpenAIModelsResponse) {}
 }
 
 message CreateJobRequest {
+    // Identifier for the user creating the job.
     string user_id = 1;
+    // TypeStream DSL source code defining the pipeline.
     string source = 2;
 }
 
 message CreateJobResponse {
+    // Whether the job was created successfully.
     bool success = 1;
+    // Unique identifier for the created job.
     string job_id = 2;
+    // Error message if job creation failed.
     string error = 3;
-    repeated string created_connectors = 4;  // Connector names created for DB sinks
+    // Names of Kafka Connect connectors created for DB sinks.
+    repeated string created_connectors = 4;
 }
 
+// Data encoding format for Kafka topics.
 enum Encoding {
   STRING = 0;
   NUMBER = 1;
@@ -37,92 +64,124 @@ enum Encoding {
   PROTOBUF = 4;
 }
 
+/** @exclude */
 message JoinTypeProto {
   bool by_key = 1;
   bool is_lookup = 2;
 }
 
+/** @exclude */
 message DataStreamProto {
   string path = 1;
 }
 
+/** @exclude */
 message PredicateProto {
   string expr = 1;
 }
 
+/** @exclude */
 message CountNode {}
 
+/** @exclude */
 message WindowedCountNode {
-  int64 window_size_seconds = 1;  // e.g., 60 for 1-minute windows
+  int64 window_size_seconds = 1;
 }
 
+/** @exclude */
 message FilterNode {
   bool by_key = 1;
   PredicateProto predicate = 2;
 }
 
+/** @exclude */
 message GroupNode {
   string key_mapper_expr = 1;
 }
 
+/** @exclude */
 message JoinNode {
   DataStreamProto with = 1;
   JoinTypeProto join_type = 2;
 }
 
+/** @exclude */
 message MapNode {
   string mapper_expr = 1;
 }
 
+/** @exclude */
 message NoOpNode {}
 
+/** @exclude */
 message ShellSourceNode {
   repeated DataStreamProto data = 1;
 }
 
+/** @exclude */
 message StreamSourceNode {
   DataStreamProto data_stream = 1;
   Encoding encoding = 2;
-  bool unwrap_cdc = 3;  // Extract 'after' payload from CDC envelope
+  bool unwrap_cdc = 3;
 }
 
+/** @exclude */
 message EachNode {
   string fn_expr = 1;
 }
 
+/** @exclude */
 message SinkNode {
   DataStreamProto output = 1;
   Encoding encoding = 2;
 }
 
+// GeoIP enrichment — resolves an IP address to a country code.
 message GeoIpNode {
-  string ip_field = 1;      // Field containing IP address
-  string output_field = 2;  // Output field name (default: country_code)
+  // Field containing the IP address to look up.
+  string ip_field = 1;
+  // Output field name for the country code (default: "country_code").
+  string output_field = 2;
 }
 
+// Inspector — taps into the data stream for live preview.
 message InspectorNode {
-  string label = 1;  // Optional label for the inspector
+  // Optional label for the inspector tap point.
+  string label = 1;
 }
 
+/** @exclude */
 message ReduceLatestNode {}
 
+// Text extractor — extracts text content from files referenced in records.
 message TextExtractorNode {
-  string file_path_field = 1;  // Field containing the file path
-  string output_field = 2;     // Output field name (default: text)
+  // Field containing the file path to extract text from.
+  string file_path_field = 1;
+  // Output field name for the extracted text (default: "text").
+  string output_field = 2;
 }
 
+// Embedding generator — generates vector embeddings from text using OpenAI.
 message EmbeddingGeneratorNode {
-  string text_field = 1;     // Field containing text to embed
-  string output_field = 2;   // Output field name (default: embedding)
-  string model = 3;          // OpenAI model (default: text-embedding-3-small)
+  // Field containing the text to embed.
+  string text_field = 1;
+  // Output field name for the embedding vector (default: "embedding").
+  string output_field = 2;
+  // OpenAI model to use (default: "text-embedding-3-small").
+  string model = 3;
 }
 
+// OpenAI transformer — enriches records using an OpenAI language model.
 message OpenAiTransformerNode {
-  string prompt = 1;         // User's instruction prompt
-  string output_field = 2;   // Output field name (default: ai_response)
-  string model = 3;          // OpenAI model ID (default: gpt-4o-mini)
+  // Instruction prompt describing the transformation.
+  string prompt = 1;
+  // Output field name for the AI response (default: "ai_response").
+  string output_field = 2;
+  // OpenAI model ID to use (default: "gpt-4o-mini").
+  string model = 3;
 }
 
+/** @exclude */
 message PipelineNode {
   string id = 1;
   oneof node_type {
@@ -146,62 +205,94 @@ message PipelineNode {
   }
 }
 
+/** @exclude */
 message PipelineEdge {
   string from_id = 1;
   string to_id = 2;
 }
 
+/** @exclude */
 message PipelineGraph {
   repeated PipelineNode nodes = 1;
   repeated PipelineEdge edges = 2;
 }
 
-// Configuration for DB sink connectors (credentials resolved server-side)
+// Configuration for a database sink connector. Credentials are resolved
+// server-side from the connection ID.
 message DbSinkConfig {
+  // ID of the node this sink config belongs to.
   string node_id = 1;
-  string connection_id = 2;        // Server resolves credentials from this
+  // Registered connection ID (server resolves credentials).
+  string connection_id = 2;
+  // Target database table name.
   string table_name = 3;
+  // Write mode: "insert", "upsert", or "update".
   string insert_mode = 4;
+  // Comma-separated primary key fields (for upsert/update mode).
   string primary_key_fields = 5;
-  string intermediate_topic = 6;   // Optional - server auto-generates if empty
+  // Intermediate Kafka topic (auto-generated if empty).
+  string intermediate_topic = 6;
 }
 
-// Configuration for Weaviate sink connectors
+// Configuration for a Weaviate vector database sink connector.
 message WeaviateSinkConfig {
+  // ID of the node this sink config belongs to.
   string node_id = 1;
+  // Registered Weaviate connection ID.
   string connection_id = 2;
+  // Intermediate Kafka topic for the connector.
   string intermediate_topic = 3;
+  // Target Weaviate collection name.
   string collection_name = 4;
+  // Document ID strategy: "NoIdStrategy", "KafkaIdStrategy", or "FieldIdStrategy".
   string document_id_strategy = 5;
+  // Field to use as document ID (when using FieldIdStrategy).
   string document_id_field = 6;
+  // Vector strategy: "NoVectorStrategy" or "FieldVectorStrategy".
   string vector_strategy = 7;
+  // Field containing the vector.
   string vector_field = 8;
-  string timestamp_field = 9;       // Optional: field name for timestamp conversion (empty = no transform)
+  // Optional: field name for timestamp conversion (empty = no transform).
+  string timestamp_field = 9;
 }
 
-// Configuration for Elasticsearch sink connectors
+// Configuration for an Elasticsearch sink connector.
 message ElasticsearchSinkConfig {
+  // ID of the node this sink config belongs to.
   string node_id = 1;
+  // Registered Elasticsearch connection ID.
   string connection_id = 2;
+  // Intermediate Kafka topic for the connector.
   string intermediate_topic = 3;
+  // Target Elasticsearch index name.
   string index_name = 4;
-  string document_id_strategy = 5;    // RECORD_KEY, TOPIC_PARTITION_OFFSET
-  string write_method = 6;            // INSERT, UPSERT
-  string behavior_on_null_values = 7; // IGNORE, DELETE, FAIL
+  // Document ID strategy: "RECORD_KEY" or "TOPIC_PARTITION_OFFSET".
+  string document_id_strategy = 5;
+  // Write method: "INSERT" or "UPSERT".
+  string write_method = 6;
+  // Behavior on null values: "IGNORE", "DELETE", or "FAIL".
+  string behavior_on_null_values = 7;
 }
 
 message CreateJobFromGraphRequest {
-  string user_id = 1;
-  PipelineGraph graph = 2;
-  repeated DbSinkConfig db_sink_configs = 3;  // DB sink configurations
-  repeated WeaviateSinkConfig weaviate_sink_configs = 4;  // Weaviate sink configurations
-  repeated ElasticsearchSinkConfig elasticsearch_sink_configs = 5;  // Elasticsearch sink configurations
+    // Identifier for the user creating the job.
+    string user_id = 1;
+    // Pipeline graph defining the job topology.
+    PipelineGraph graph = 2;
+    // Database sink configurations for DB sink nodes.
+    repeated DbSinkConfig db_sink_configs = 3;
+    // Weaviate sink configurations for Weaviate sink nodes.
+    repeated WeaviateSinkConfig weaviate_sink_configs = 4;
+    // Elasticsearch sink configurations for Elasticsearch sink nodes.
+    repeated ElasticsearchSinkConfig elasticsearch_sink_configs = 5;
 }
 
 message ListJobsRequest {
-  string user_id = 1;
+    // Identifier for the user listing jobs.
+    string user_id = 1;
 }
 
+// Lifecycle state of a streaming job.
 enum JobState {
   JOB_STATE_UNSPECIFIED = 0;
   STARTING = 1;
@@ -212,41 +303,61 @@ enum JobState {
   UNKNOWN = 6;
 }
 
+// Throughput metrics for a running job.
 message JobThroughput {
-  double messages_per_second = 1;  // Current processing rate (messages/sec)
-  int64 total_messages = 2;        // Total messages processed since job start
-  double bytes_per_second = 3;     // Current bandwidth consumption (bytes/sec)
-  int64 total_bytes = 4;           // Total bytes processed since job start
+  // Current processing rate (messages/sec).
+  double messages_per_second = 1;
+  // Total messages processed since job start.
+  int64 total_messages = 2;
+  // Current bandwidth consumption (bytes/sec).
+  double bytes_per_second = 3;
+  // Total bytes processed since job start.
+  int64 total_bytes = 4;
 }
 
+// Information about a streaming job.
 message JobInfo {
+  // Unique job identifier.
   string job_id = 1;
+  // Current lifecycle state.
   JobState state = 2;
-  int64 start_time = 3;  // Unix timestamp in milliseconds
-  PipelineGraph graph = 4;  // Optional: the job's pipeline graph
-  JobThroughput throughput = 5;  // Throughput metrics
-  repeated WeaviateSinkConfig weaviate_sinks = 6;  // Weaviate sink configs for this job
-  repeated ElasticsearchSinkConfig elasticsearch_sinks = 7;  // Elasticsearch sink configs for this job
+  // Unix timestamp in milliseconds when the job started.
+  int64 start_time = 3;
+  // The job's pipeline graph.
+  PipelineGraph graph = 4;
+  // Throughput metrics.
+  JobThroughput throughput = 5;
+  // Weaviate sink configs for this job.
+  repeated WeaviateSinkConfig weaviate_sinks = 6;
+  // Elasticsearch sink configs for this job.
+  repeated ElasticsearchSinkConfig elasticsearch_sinks = 7;
 }
 
 message ListJobsResponse {
+  // All known jobs.
   repeated JobInfo jobs = 1;
 }
 
-// Preview job messages
+// Preview job messages — used for live data inspection in the UI.
+
 message CreatePreviewJobRequest {
+  // Pipeline graph to run as a preview.
   PipelineGraph graph = 1;
-  string inspector_node_id = 2;  // Which inspector node triggered this
+  // ID of the inspector node that triggered this preview.
+  string inspector_node_id = 2;
 }
 
 message CreatePreviewJobResponse {
   bool success = 1;
+  // ID of the created preview job.
   string job_id = 2;
-  string inspect_topic = 3;  // Topic to consume for preview data
+  // Kafka topic to consume for live preview data.
+  string inspect_topic = 3;
   string error = 4;
 }
 
 message StopPreviewJobRequest {
+  // ID of the preview job to stop.
   string job_id = 1;
 }
 
@@ -256,106 +367,161 @@ message StopPreviewJobResponse {
 }
 
 message StreamPreviewRequest {
+  // ID of the preview job to stream from.
   string job_id = 1;
 }
 
+// A single record from the preview stream.
 message StreamPreviewResponse {
+  // Record key.
   string key = 1;
+  // Record value (JSON string).
   string value = 2;
+  // Record timestamp (Unix milliseconds).
   int64 timestamp = 3;
 }
 
-// Schema inference messages
+// Schema inference messages — used for showing field types in the UI.
+
 message InferGraphSchemasRequest {
+  // Pipeline graph to infer schemas for.
   PipelineGraph graph = 1;
 }
 
 message InferGraphSchemasResponse {
+  // Map of node ID to its inferred schema.
   map<string, NodeSchemaResult> schemas = 1;
 }
 
+// A single field in a schema.
 message SchemaField {
+  // Field name.
   string name = 1;
+  // Field type (e.g., "STRING", "INT64", "STRUCT").
   string type = 2;
 }
 
+// Inferred schema for a single pipeline node.
 message NodeSchemaResult {
+  // Field names (simplified view).
   repeated string fields = 1;
+  // Fields with type information.
   repeated SchemaField typed_fields = 2;
+  // Data encoding of the node's output.
   string encoding = 3;
+  // Error if schema inference failed for this node.
   string error = 4;
 }
 
-// OpenAI models listing
+// OpenAI model listing — used by AI transform node configuration.
+
 message ListOpenAIModelsRequest {}
 
+// An available OpenAI model.
 message OpenAIModel {
-  string id = 1;    // e.g. "gpt-4o-mini"
-  string name = 2;  // Display name
+  // Model ID (e.g., "gpt-4o-mini").
+  string id = 1;
+  // Human-readable display name.
+  string name = 2;
 }
 
 message ListOpenAIModelsResponse {
+  // Available OpenAI models.
   repeated OpenAIModel models = 1;
 }
 
 // ===== User-facing pipeline representation =====
-// These messages define the 14-node vocabulary shared across GUI, CLI, and config-as-code.
-// The server's PipelineDesugarer converts these into internal PipelineGraph + sink configs.
+// These messages define the node vocabulary shared across the UI, CLI, and
+// pipeline-as-code. The server's PipelineDesugarer converts these into the
+// internal PipelineGraph and sink configurations.
 
+// Kafka topic source — reads from a Kafka topic.
 message KafkaSourceNode {
+  // Virtual filesystem path to the topic (e.g., "/local/topics/my-topic").
   string topic_path = 1;
+  // Data encoding of the topic.
   Encoding encoding = 2;
+  // If true, extract the "after" payload from a CDC envelope.
   bool unwrap_cdc = 3;
 }
 
+// Postgres CDC source — reads change events from a Postgres table via Debezium.
 message PostgresSourceNode {
+  // Virtual filesystem path to the CDC topic.
   string topic_path = 1;
 }
 
+// Filter transform — keeps only records matching an expression.
 message UserFilterNode {
+  // Filter expression (e.g., ".status == 'active'").
   string expression = 1;
 }
 
+// Kafka topic sink — writes output to a Kafka topic.
 message KafkaSinkNode {
+  // Name of the target Kafka topic.
   string topic_name = 1;
 }
 
+// Materialized view — aggregates data into a queryable state store.
 message MaterializedViewNode {
+  // Field to group by for the aggregation.
   string group_by_field = 1;
-  string aggregation_type = 2;  // "count" or "latest"
+  // Aggregation type: "count" or "latest".
+  string aggregation_type = 2;
+  // Whether to apply windowed aggregation.
   bool enable_windowing = 3;
+  // Window size in seconds (only used when enable_windowing is true).
   int64 window_size_seconds = 4;
 }
 
-// User-facing DB sink (mirrors DbSinkConfig without node_id/intermediate_topic)
+// Database sink — writes records to a database table.
 message DbSinkNode {
+  // Registered database connection ID.
   string connection_id = 1;
+  // Target database table name.
   string table_name = 2;
+  // Write mode: "insert", "upsert", or "update".
   string insert_mode = 3;
+  // Comma-separated primary key fields (for upsert/update mode).
   string primary_key_fields = 4;
 }
 
-// User-facing Weaviate sink (mirrors WeaviateSinkConfig without node_id/intermediate_topic)
+// Weaviate sink — writes records to a Weaviate vector database collection.
 message WeaviateSinkNode {
+  // Registered Weaviate connection ID.
   string connection_id = 1;
+  // Target Weaviate collection name.
   string collection_name = 2;
+  // Document ID strategy: "NoIdStrategy", "KafkaIdStrategy", or "FieldIdStrategy".
   string document_id_strategy = 3;
+  // Field to use as document ID (when using FieldIdStrategy).
   string document_id_field = 4;
+  // Vector strategy: "NoVectorStrategy" or "FieldVectorStrategy".
   string vector_strategy = 5;
+  // Field containing the vector.
   string vector_field = 6;
+  // Optional: field name for timestamp conversion.
   string timestamp_field = 7;
 }
 
-// User-facing Elasticsearch sink (mirrors ElasticsearchSinkConfig without node_id/intermediate_topic)
+// Elasticsearch sink — writes records to an Elasticsearch index.
 message ElasticsearchSinkNode {
+  // Registered Elasticsearch connection ID.
   string connection_id = 1;
+  // Target Elasticsearch index name.
   string index_name = 2;
+  // Document ID strategy: "RECORD_KEY" or "TOPIC_PARTITION_OFFSET".
   string document_id_strategy = 3;
+  // Write method: "INSERT" or "UPSERT".
   string write_method = 4;
+  // Behavior on null values: "IGNORE", "DELETE", or "FAIL".
   string behavior_on_null_values = 5;
 }
 
+// A node in a user-facing pipeline graph.
 message UserPipelineNode {
+  // Unique node identifier within the graph.
   string id = 1;
   oneof node_type {
     // Sources
@@ -377,7 +543,10 @@ message UserPipelineNode {
   }
 }
 
+// A user-facing pipeline graph consisting of nodes and edges.
 message UserPipelineGraph {
+  // Nodes in the pipeline.
   repeated UserPipelineNode nodes = 1;
+  // Edges connecting nodes (directed, from source to sink).
   repeated PipelineEdge edges = 2;
 }

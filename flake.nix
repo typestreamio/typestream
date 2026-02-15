@@ -101,6 +101,7 @@
               nodejs_22
               patchelf
               protobuf
+              protoc-gen-doc
               patchProto
             ];
 

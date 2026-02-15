@@ -8,63 +8,80 @@ option go_package = "github.com/typestreamio/typestream/cli/pkg/connection_servi
 
 import "google/protobuf/timestamp.proto";
 
+// ConnectionService manages external data source connections for databases,
+// Weaviate, and Elasticsearch. Register connections for ongoing health
+// monitoring, test connectivity on demand, and create Kafka Connect sink
+// connectors. Credentials are stored server-side and never exposed to clients.
 service ConnectionService {
-    // Register a database connection for monitoring
+    // Register a database connection for ongoing health monitoring.
     rpc RegisterConnection(RegisterConnectionRequest) returns (RegisterConnectionResponse) {}
 
-    // Unregister a connection (stop monitoring)
+    // Unregister a database connection and stop monitoring it.
     rpc UnregisterConnection(UnregisterConnectionRequest) returns (UnregisterConnectionResponse) {}
 
-    // Get current status of all monitored connections
+    // Get the current health status of all registered database connections.
     rpc GetConnectionStatuses(GetConnectionStatusesRequest) returns (GetConnectionStatusesResponse) {}
 
-    // Test a connection immediately (one-shot, doesn't register)
+    // Test a database connection immediately without registering it.
     rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {}
 
-    // Create a JDBC sink connector using a registered connection
-    // Server resolves credentials from connection ID - credentials never sent to UI
+    // Create a JDBC sink connector using a registered database connection.
+    // The server resolves credentials from the connection ID — credentials are never sent from the client.
     rpc CreateJdbcSinkConnector(CreateJdbcSinkConnectorRequest) returns (CreateJdbcSinkConnectorResponse) {}
 
-    // Weaviate connection management
+    // Register a Weaviate vector database connection for health monitoring.
     rpc RegisterWeaviateConnection(RegisterWeaviateConnectionRequest) returns (RegisterWeaviateConnectionResponse) {}
+
+    // Get the current health status of all registered Weaviate connections.
     rpc GetWeaviateConnectionStatuses(GetWeaviateConnectionStatusesRequest) returns (GetWeaviateConnectionStatusesResponse) {}
+
+    // Create a Weaviate sink connector using a registered connection.
     rpc CreateWeaviateSinkConnector(CreateWeaviateSinkConnectorRequest) returns (CreateWeaviateSinkConnectorResponse) {}
 
-    // Elasticsearch connection management
+    // Register an Elasticsearch connection for health monitoring.
     rpc RegisterElasticsearchConnection(RegisterElasticsearchConnectionRequest) returns (RegisterElasticsearchConnectionResponse) {}
+
+    // Get the current health status of all registered Elasticsearch connections.
     rpc GetElasticsearchConnectionStatuses(GetElasticsearchConnectionStatusesRequest) returns (GetElasticsearchConnectionStatusesResponse) {}
+
+    // Create an Elasticsearch sink connector using a registered connection.
     rpc CreateElasticsearchSinkConnector(CreateElasticsearchSinkConnectorRequest) returns (CreateElasticsearchSinkConnectorResponse) {}
 }
 
-// Database connection configuration
+// Database connection configuration including credentials.
 message DatabaseConnectionConfig {
     string id = 1;
     string name = 2;
     DatabaseType database_type = 3;
-    string hostname = 4;              // Hostname for server health checks (e.g., "localhost")
+    // Hostname for server health checks (e.g., "localhost").
+    string hostname = 4;
     int32 port = 5;
     string database = 6;
     string username = 7;
     string password = 8;
-    string connector_hostname = 9;    // Hostname for Kafka Connect connectors (e.g., "postgres" in Docker)
+    // Hostname for Kafka Connect connectors (e.g., "postgres" in Docker).
+    string connector_hostname = 9;
 }
 
+// Supported database types for connections.
 enum DatabaseType {
     DATABASE_TYPE_UNSPECIFIED = 0;
     POSTGRES = 1;
     MYSQL = 2;
 }
 
-// Connection status (excludes credentials - credentials stay server-side)
+// Connection health status (excludes credentials — credentials stay server-side).
 message ConnectionStatus {
     string id = 1;
     string name = 2;
     ConnectionState state = 3;
     string error = 4;
     google.protobuf.Timestamp last_checked = 5;
-    DatabaseConnectionConfigPublic config = 6;  // Public config (no password)
+    // Public config (no password).
+    DatabaseConnectionConfigPublic config = 6;
 }
 
+// Health state of a monitored connection.
 enum ConnectionState {
     CONNECTION_STATE_UNSPECIFIED = 0;
     CONNECTED = 1;
@@ -73,19 +90,20 @@ enum ConnectionState {
     CONNECTING = 4;
 }
 
-// Register connection for monitoring
 message RegisterConnectionRequest {
+    // Database connection configuration (including credentials for initial setup).
     DatabaseConnectionConfig connection = 1;
 }
 
 message RegisterConnectionResponse {
     bool success = 1;
     string error = 2;
+    // Health status of the newly registered connection.
     ConnectionStatus status = 3;
 }
 
-// Unregister connection
 message UnregisterConnectionRequest {
+    // ID of the connection to unregister.
     string connection_id = 1;
 }
 
@@ -94,41 +112,48 @@ message UnregisterConnectionResponse {
     string error = 2;
 }
 
-// Get all connection statuses
 message GetConnectionStatusesRequest {}
 
 message GetConnectionStatusesResponse {
+    // Health statuses of all registered database connections.
     repeated ConnectionStatus statuses = 1;
 }
 
-// Test a connection one-shot
 message TestConnectionRequest {
+    // Database connection configuration to test (one-shot, not registered).
     DatabaseConnectionConfig connection = 1;
 }
 
 message TestConnectionResponse {
     bool success = 1;
     string error = 2;
+    // Round-trip latency of the connection test in milliseconds.
     int64 latency_ms = 3;
 }
 
-// Create JDBC sink connector (server-side credential resolution)
 message CreateJdbcSinkConnectorRequest {
-    string connection_id = 1;      // ID of registered connection (server looks up credentials)
-    string connector_name = 2;     // Name for the Kafka Connect connector
-    string topics = 3;             // Topic(s) to consume from
-    string table_name = 4;         // Target database table
-    string insert_mode = 5;        // insert, upsert, or update
-    string primary_key_fields = 6; // Comma-separated list of primary key fields (for upsert/update)
+    // ID of a registered connection (server resolves credentials).
+    string connection_id = 1;
+    // Name for the Kafka Connect connector.
+    string connector_name = 2;
+    // Kafka topic(s) to consume from.
+    string topics = 3;
+    // Target database table name.
+    string table_name = 4;
+    // Write mode: "insert", "upsert", or "update".
+    string insert_mode = 5;
+    // Comma-separated primary key fields (required for upsert/update mode).
+    string primary_key_fields = 6;
 }
 
 message CreateJdbcSinkConnectorResponse {
     bool success = 1;
     string error = 2;
-    string connector_name = 3;     // Name of created connector
+    // Name of the created connector.
+    string connector_name = 3;
 }
 
-// Public connection config (excludes sensitive fields like password)
+// Public database connection config (excludes sensitive fields like password).
 message DatabaseConnectionConfigPublic {
     string id = 1;
     string name = 2;
@@ -141,19 +166,26 @@ message DatabaseConnectionConfigPublic {
     string connector_hostname = 8;
 }
 
-// Weaviate connection configuration
+// Weaviate vector database connection configuration.
 message WeaviateConnectionConfig {
     string id = 1;
     string name = 2;
-    string rest_url = 3;              // e.g., "http://localhost:8090"
-    string grpc_url = 4;              // e.g., "localhost:50051"
+    // Weaviate REST API URL (e.g., "http://localhost:8090").
+    string rest_url = 3;
+    // Weaviate gRPC URL (e.g., "localhost:50051").
+    string grpc_url = 4;
     bool grpc_secured = 5;
-    string auth_scheme = 6;           // "NONE" or "API_KEY"
-    string api_key = 7;               // For Weaviate Cloud (server-side only)
-    string connector_rest_url = 8;    // For Kafka Connect (e.g., "http://weaviate:8080")
-    string connector_grpc_url = 9;    // For Kafka Connect (e.g., "weaviate:50051")
+    // Authentication scheme: "NONE" or "API_KEY".
+    string auth_scheme = 6;
+    // API key for Weaviate Cloud (stored server-side only).
+    string api_key = 7;
+    // REST URL for Kafka Connect (e.g., "http://weaviate:8080").
+    string connector_rest_url = 8;
+    // gRPC URL for Kafka Connect (e.g., "weaviate:50051").
+    string connector_grpc_url = 9;
 }
 
+// Public Weaviate connection config (excludes API key).
 message WeaviateConnectionConfigPublic {
     string id = 1;
     string name = 2;
@@ -166,6 +198,7 @@ message WeaviateConnectionConfigPublic {
     string connector_grpc_url = 8;
 }
 
+// Health status of a Weaviate connection.
 message WeaviateConnectionStatus {
     string id = 1;
     string name = 2;
@@ -175,8 +208,8 @@ message WeaviateConnectionStatus {
     WeaviateConnectionConfigPublic config = 6;
 }
 
-// Register Weaviate connection for monitoring
 message RegisterWeaviateConnectionRequest {
+    // Weaviate connection configuration (including API key for initial setup).
     WeaviateConnectionConfig connection = 1;
 }
 
@@ -186,24 +219,30 @@ message RegisterWeaviateConnectionResponse {
     WeaviateConnectionStatus status = 3;
 }
 
-// Get all Weaviate connection statuses
 message GetWeaviateConnectionStatusesRequest {}
 
 message GetWeaviateConnectionStatusesResponse {
     repeated WeaviateConnectionStatus statuses = 1;
 }
 
-// Create Weaviate sink connector
 message CreateWeaviateSinkConnectorRequest {
+    // ID of a registered Weaviate connection.
     string connection_id = 1;
+    // Name for the Kafka Connect connector.
     string connector_name = 2;
+    // Kafka topic(s) to consume from.
     string topics = 3;
     string collection_name = 4;
-    string document_id_strategy = 5;  // NoIdStrategy, KafkaIdStrategy, FieldIdStrategy
+    // Document ID strategy: "NoIdStrategy", "KafkaIdStrategy", or "FieldIdStrategy".
+    string document_id_strategy = 5;
+    // Field to use as document ID (when using FieldIdStrategy).
     string document_id_field = 6;
-    string vector_strategy = 7;       // NoVectorStrategy, FieldVectorStrategy
+    // Vector strategy: "NoVectorStrategy" or "FieldVectorStrategy".
+    string vector_strategy = 7;
+    // Field containing the vector (when using FieldVectorStrategy).
     string vector_field = 8;
-    string timestamp_field = 9;       // Optional: field name for timestamp conversion (empty = no transform)
+    // Optional: field name for timestamp conversion (empty = no transform).
+    string timestamp_field = 9;
 }
 
 message CreateWeaviateSinkConnectorResponse {
@@ -212,16 +251,21 @@ message CreateWeaviateSinkConnectorResponse {
     string connector_name = 3;
 }
 
-// Elasticsearch connection configuration
+// Elasticsearch connection configuration.
 message ElasticsearchConnectionConfig {
     string id = 1;
     string name = 2;
-    string connection_url = 3;        // e.g., "http://localhost:9200"
-    string username = 4;              // Optional: for authentication
-    string password = 5;              // Optional: for authentication
-    string connector_url = 6;         // For Kafka Connect (e.g., "http://elasticsearch:9200")
+    // Elasticsearch URL (e.g., "http://localhost:9200").
+    string connection_url = 3;
+    // Optional: username for authentication.
+    string username = 4;
+    // Optional: password for authentication.
+    string password = 5;
+    // URL for Kafka Connect (e.g., "http://elasticsearch:9200").
+    string connector_url = 6;
 }
 
+// Public Elasticsearch connection config (excludes password).
 message ElasticsearchConnectionConfigPublic {
     string id = 1;
     string name = 2;
@@ -231,6 +275,7 @@ message ElasticsearchConnectionConfigPublic {
     string connector_url = 5;
 }
 
+// Health status of an Elasticsearch connection.
 message ElasticsearchConnectionStatus {
     string id = 1;
     string name = 2;
@@ -240,8 +285,8 @@ message ElasticsearchConnectionStatus {
     ElasticsearchConnectionConfigPublic config = 6;
 }
 
-// Register Elasticsearch connection for monitoring
 message RegisterElasticsearchConnectionRequest {
+    // Elasticsearch connection configuration (including password for initial setup).
     ElasticsearchConnectionConfig connection = 1;
 }
 
@@ -251,22 +296,27 @@ message RegisterElasticsearchConnectionResponse {
     ElasticsearchConnectionStatus status = 3;
 }
 
-// Get all Elasticsearch connection statuses
 message GetElasticsearchConnectionStatusesRequest {}
 
 message GetElasticsearchConnectionStatusesResponse {
     repeated ElasticsearchConnectionStatus statuses = 1;
 }
 
-// Create Elasticsearch sink connector
 message CreateElasticsearchSinkConnectorRequest {
+    // ID of a registered Elasticsearch connection.
     string connection_id = 1;
+    // Name for the Kafka Connect connector.
     string connector_name = 2;
+    // Kafka topic(s) to consume from.
     string topics = 3;
+    // Target Elasticsearch index name.
     string index_name = 4;
-    string document_id_strategy = 5;    // RECORD_KEY, TOPIC_PARTITION_OFFSET
-    string write_method = 6;            // INSERT, UPSERT
-    string behavior_on_null_values = 7; // IGNORE, DELETE, FAIL
+    // Document ID strategy: "RECORD_KEY" or "TOPIC_PARTITION_OFFSET".
+    string document_id_strategy = 5;
+    // Write method: "INSERT" or "UPSERT".
+    string write_method = 6;
+    // Behavior on null values: "IGNORE", "DELETE", or "FAIL".
+    string behavior_on_null_values = 7;
 }
 
 message CreateElasticsearchSinkConnectorResponse {
