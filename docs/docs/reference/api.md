@@ -28,6 +28,8 @@ Limitation: GetValue currently only supports simple string keys. For complex key
 
 ## Services
 
+<a id="io-typestream-grpc-ConnectionService"></a>
+
 ### ConnectionService
 
 ConnectionService manages external data source connections for databases,
@@ -51,6 +53,8 @@ connectors. Credentials are stored server-side and never exposed to clients.
 | GetElasticsearchConnectionStatuses | [GetElasticsearchConnectionStatusesRequest](#io-typestream-grpc-GetElasticsearchConnectionStatusesRequest) | [GetElasticsearchConnectionStatusesResponse](#io-typestream-grpc-GetElasticsearchConnectionStatusesResponse) | Get the current health status of all registered Elasticsearch connections. |
 | CreateElasticsearchSinkConnector | [CreateElasticsearchSinkConnectorRequest](#io-typestream-grpc-CreateElasticsearchSinkConnectorRequest) | [CreateElasticsearchSinkConnectorResponse](#io-typestream-grpc-CreateElasticsearchSinkConnectorResponse) | Create an Elasticsearch sink connector using a registered connection. |
 
+<a id="io-typestream-grpc-FileSystemService"></a>
+
 ### FileSystemService
 
 FileSystemService provides a virtual filesystem abstraction over Kafka topics
@@ -65,6 +69,8 @@ available topics, and retrieve topic schemas.
 | Unmount | [UnmountRequest](#io-typestream-grpc-UnmountRequest) | [UnmountResponse](#io-typestream-grpc-UnmountResponse) | Remove a previously mounted data source from the virtual filesystem. |
 | Ls | [LsRequest](#io-typestream-grpc-LsRequest) | [LsResponse](#io-typestream-grpc-LsResponse) | List topics and directories at the given path in the virtual filesystem. |
 | GetSchema | [GetSchemaRequest](#io-typestream-grpc-GetSchemaRequest) | [GetSchemaResponse](#io-typestream-grpc-GetSchemaResponse) | Retrieve the schema (field names) for a topic at the given path. |
+
+<a id="io-typestream-grpc-InteractiveSessionService"></a>
 
 ### InteractiveSessionService
 
@@ -81,6 +87,8 @@ get tab completions, and stop sessions when done.
 | GetProgramOutput | [GetProgramOutputRequest](#io-typestream-grpc-GetProgramOutputRequest) | [GetProgramOutputResponse](#io-typestream-grpc-GetProgramOutputResponse) stream | Stream additional output from a running program. Use this after RunProgram when hasMoreOutput is true. |
 | CompleteProgram | [CompleteProgramRequest](#io-typestream-grpc-CompleteProgramRequest) | [CompleteProgramResponse](#io-typestream-grpc-CompleteProgramResponse) | Get tab-completion suggestions for a partial program at the given cursor position. |
 | StopSession | [StopSessionRequest](#io-typestream-grpc-StopSessionRequest) | [StopSessionResponse](#io-typestream-grpc-StopSessionResponse) | Stop an interactive session and release its resources. |
+
+<a id="io-typestream-grpc-JobService"></a>
 
 ### JobService
 
@@ -102,6 +110,8 @@ and list available OpenAI models for AI-powered transforms.
 | InferGraphSchemas | [InferGraphSchemasRequest](#io-typestream-grpc-InferGraphSchemasRequest) | [InferGraphSchemasResponse](#io-typestream-grpc-InferGraphSchemasResponse) | Infer the output schema for each node in a pipeline graph. Useful for showing field types in the UI before running a job. |
 | ListOpenAIModels | [ListOpenAIModelsRequest](#io-typestream-grpc-ListOpenAIModelsRequest) | [ListOpenAIModelsResponse](#io-typestream-grpc-ListOpenAIModelsResponse) | List available OpenAI models for use with AI-powered transform nodes. |
 
+<a id="io-typestream-grpc-PipelineService"></a>
+
 ### PipelineService
 
 PipelineService manages declarative pipeline definitions using a GitOps-style
@@ -118,6 +128,8 @@ update running jobs, list active pipelines, delete them, and plan changes
 | ListPipelines | [ListPipelinesRequest](#io-typestream-grpc-ListPipelinesRequest) | [ListPipelinesResponse](#io-typestream-grpc-ListPipelinesResponse) | List all currently registered pipelines and their job status. |
 | DeletePipeline | [DeletePipelineRequest](#io-typestream-grpc-DeletePipelineRequest) | [DeletePipelineResponse](#io-typestream-grpc-DeletePipelineResponse) | Delete a pipeline by name, stopping its underlying job. |
 | PlanPipelines | [PlanPipelinesRequest](#io-typestream-grpc-PlanPipelinesRequest) | [PlanPipelinesResponse](#io-typestream-grpc-PlanPipelinesResponse) | Dry-run a set of pipeline definitions against the current state. Returns a plan showing which pipelines would be created, updated, deleted, or unchanged. |
+
+<a id="io-typestream-grpc-StateQueryService"></a>
 
 ### StateQueryService
 
@@ -143,6 +155,8 @@ use GetAllValues and filter on the client side.
 
 ## Messages
 
+<a id="io-typestream-grpc-ConnectionStatus"></a>
+
 ### ConnectionStatus
 
 Connection health status (excludes credentials — credentials stay server-side).
@@ -155,6 +169,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | error | [string](#string) |  |  |
 | last_checked | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | config | [DatabaseConnectionConfigPublic](#io-typestream-grpc-DatabaseConnectionConfigPublic) |  | Public config (no password). |
+
+<a id="io-typestream-grpc-CreateElasticsearchSinkConnectorRequest"></a>
 
 ### CreateElasticsearchSinkConnectorRequest
 
@@ -170,6 +186,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | write_method | [string](#string) |  | Write method: "INSERT" or "UPSERT". |
 | behavior_on_null_values | [string](#string) |  | Behavior on null values: "IGNORE", "DELETE", or "FAIL". |
 
+<a id="io-typestream-grpc-CreateElasticsearchSinkConnectorResponse"></a>
+
 ### CreateElasticsearchSinkConnectorResponse
 
 
@@ -179,6 +197,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | success | [bool](#bool) |  |  |
 | error | [string](#string) |  |  |
 | connector_name | [string](#string) |  |  |
+
+<a id="io-typestream-grpc-CreateJdbcSinkConnectorRequest"></a>
 
 ### CreateJdbcSinkConnectorRequest
 
@@ -193,6 +213,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | insert_mode | [string](#string) |  | Write mode: "insert", "upsert", or "update". |
 | primary_key_fields | [string](#string) |  | Comma-separated primary key fields (required for upsert/update mode). |
 
+<a id="io-typestream-grpc-CreateJdbcSinkConnectorResponse"></a>
+
 ### CreateJdbcSinkConnectorResponse
 
 
@@ -202,6 +224,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | success | [bool](#bool) |  |  |
 | error | [string](#string) |  |  |
 | connector_name | [string](#string) |  | Name of the created connector. |
+
+<a id="io-typestream-grpc-CreateWeaviateSinkConnectorRequest"></a>
 
 ### CreateWeaviateSinkConnectorRequest
 
@@ -219,6 +243,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | vector_field | [string](#string) |  | Field containing the vector (when using FieldVectorStrategy). |
 | timestamp_field | [string](#string) |  | Optional: field name for timestamp conversion (empty = no transform). |
 
+<a id="io-typestream-grpc-CreateWeaviateSinkConnectorResponse"></a>
+
 ### CreateWeaviateSinkConnectorResponse
 
 
@@ -228,6 +254,8 @@ Connection health status (excludes credentials — credentials stay server-side)
 | success | [bool](#bool) |  |  |
 | error | [string](#string) |  |  |
 | connector_name | [string](#string) |  |  |
+
+<a id="io-typestream-grpc-DatabaseConnectionConfig"></a>
 
 ### DatabaseConnectionConfig
 
@@ -245,6 +273,8 @@ Database connection configuration including credentials.
 | password | [string](#string) |  |  |
 | connector_hostname | [string](#string) |  | Hostname for Kafka Connect connectors (e.g., "postgres" in Docker). |
 
+<a id="io-typestream-grpc-DatabaseConnectionConfigPublic"></a>
+
 ### DatabaseConnectionConfigPublic
 
 Public database connection config (excludes sensitive fields like password).
@@ -260,6 +290,8 @@ Public database connection config (excludes sensitive fields like password).
 | username | [string](#string) |  |  |
 | connector_hostname | [string](#string) |  | password intentionally excluded |
 
+<a id="io-typestream-grpc-ElasticsearchConnectionConfig"></a>
+
 ### ElasticsearchConnectionConfig
 
 Elasticsearch connection configuration.
@@ -273,6 +305,8 @@ Elasticsearch connection configuration.
 | password | [string](#string) |  | Optional: password for authentication. |
 | connector_url | [string](#string) |  | URL for Kafka Connect (e.g., "http://elasticsearch:9200"). |
 
+<a id="io-typestream-grpc-ElasticsearchConnectionConfigPublic"></a>
+
 ### ElasticsearchConnectionConfigPublic
 
 Public Elasticsearch connection config (excludes password).
@@ -284,6 +318,8 @@ Public Elasticsearch connection config (excludes password).
 | connection_url | [string](#string) |  |  |
 | username | [string](#string) |  |  |
 | connector_url | [string](#string) |  | password intentionally excluded |
+
+<a id="io-typestream-grpc-ElasticsearchConnectionStatus"></a>
 
 ### ElasticsearchConnectionStatus
 
@@ -298,9 +334,13 @@ Health status of an Elasticsearch connection.
 | last_checked | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | config | [ElasticsearchConnectionConfigPublic](#io-typestream-grpc-ElasticsearchConnectionConfigPublic) |  |  |
 
+<a id="io-typestream-grpc-GetConnectionStatusesRequest"></a>
+
 ### GetConnectionStatusesRequest
 
 
+
+<a id="io-typestream-grpc-GetConnectionStatusesResponse"></a>
 
 ### GetConnectionStatusesResponse
 
@@ -310,9 +350,13 @@ Health status of an Elasticsearch connection.
 | ----- | ---- | ----- | ----------- |
 | statuses | [ConnectionStatus](#io-typestream-grpc-ConnectionStatus) | repeated | Health statuses of all registered database connections. |
 
+<a id="io-typestream-grpc-GetElasticsearchConnectionStatusesRequest"></a>
+
 ### GetElasticsearchConnectionStatusesRequest
 
 
+
+<a id="io-typestream-grpc-GetElasticsearchConnectionStatusesResponse"></a>
 
 ### GetElasticsearchConnectionStatusesResponse
 
@@ -322,9 +366,13 @@ Health status of an Elasticsearch connection.
 | ----- | ---- | ----- | ----------- |
 | statuses | [ElasticsearchConnectionStatus](#io-typestream-grpc-ElasticsearchConnectionStatus) | repeated |  |
 
+<a id="io-typestream-grpc-GetWeaviateConnectionStatusesRequest"></a>
+
 ### GetWeaviateConnectionStatusesRequest
 
 
+
+<a id="io-typestream-grpc-GetWeaviateConnectionStatusesResponse"></a>
 
 ### GetWeaviateConnectionStatusesResponse
 
@@ -334,6 +382,8 @@ Health status of an Elasticsearch connection.
 | ----- | ---- | ----- | ----------- |
 | statuses | [WeaviateConnectionStatus](#io-typestream-grpc-WeaviateConnectionStatus) | repeated |  |
 
+<a id="io-typestream-grpc-RegisterConnectionRequest"></a>
+
 ### RegisterConnectionRequest
 
 
@@ -341,6 +391,8 @@ Health status of an Elasticsearch connection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | connection | [DatabaseConnectionConfig](#io-typestream-grpc-DatabaseConnectionConfig) |  | Database connection configuration (including credentials for initial setup). |
+
+<a id="io-typestream-grpc-RegisterConnectionResponse"></a>
 
 ### RegisterConnectionResponse
 
@@ -352,6 +404,8 @@ Health status of an Elasticsearch connection.
 | error | [string](#string) |  |  |
 | status | [ConnectionStatus](#io-typestream-grpc-ConnectionStatus) |  | Health status of the newly registered connection. |
 
+<a id="io-typestream-grpc-RegisterElasticsearchConnectionRequest"></a>
+
 ### RegisterElasticsearchConnectionRequest
 
 
@@ -359,6 +413,8 @@ Health status of an Elasticsearch connection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | connection | [ElasticsearchConnectionConfig](#io-typestream-grpc-ElasticsearchConnectionConfig) |  | Elasticsearch connection configuration (including password for initial setup). |
+
+<a id="io-typestream-grpc-RegisterElasticsearchConnectionResponse"></a>
 
 ### RegisterElasticsearchConnectionResponse
 
@@ -370,6 +426,8 @@ Health status of an Elasticsearch connection.
 | error | [string](#string) |  |  |
 | status | [ElasticsearchConnectionStatus](#io-typestream-grpc-ElasticsearchConnectionStatus) |  |  |
 
+<a id="io-typestream-grpc-RegisterWeaviateConnectionRequest"></a>
+
 ### RegisterWeaviateConnectionRequest
 
 
@@ -377,6 +435,8 @@ Health status of an Elasticsearch connection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | connection | [WeaviateConnectionConfig](#io-typestream-grpc-WeaviateConnectionConfig) |  | Weaviate connection configuration (including API key for initial setup). |
+
+<a id="io-typestream-grpc-RegisterWeaviateConnectionResponse"></a>
 
 ### RegisterWeaviateConnectionResponse
 
@@ -388,6 +448,8 @@ Health status of an Elasticsearch connection.
 | error | [string](#string) |  |  |
 | status | [WeaviateConnectionStatus](#io-typestream-grpc-WeaviateConnectionStatus) |  |  |
 
+<a id="io-typestream-grpc-TestConnectionRequest"></a>
+
 ### TestConnectionRequest
 
 
@@ -395,6 +457,8 @@ Health status of an Elasticsearch connection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | connection | [DatabaseConnectionConfig](#io-typestream-grpc-DatabaseConnectionConfig) |  | Database connection configuration to test (one-shot, not registered). |
+
+<a id="io-typestream-grpc-TestConnectionResponse"></a>
 
 ### TestConnectionResponse
 
@@ -406,6 +470,8 @@ Health status of an Elasticsearch connection.
 | error | [string](#string) |  |  |
 | latency_ms | [int64](#int64) |  | Round-trip latency of the connection test in milliseconds. |
 
+<a id="io-typestream-grpc-UnregisterConnectionRequest"></a>
+
 ### UnregisterConnectionRequest
 
 
@@ -413,6 +479,8 @@ Health status of an Elasticsearch connection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | connection_id | [string](#string) |  | ID of the connection to unregister. |
+
+<a id="io-typestream-grpc-UnregisterConnectionResponse"></a>
 
 ### UnregisterConnectionResponse
 
@@ -422,6 +490,8 @@ Health status of an Elasticsearch connection.
 | ----- | ---- | ----- | ----------- |
 | success | [bool](#bool) |  |  |
 | error | [string](#string) |  |  |
+
+<a id="io-typestream-grpc-WeaviateConnectionConfig"></a>
 
 ### WeaviateConnectionConfig
 
@@ -439,6 +509,8 @@ Weaviate vector database connection configuration.
 | connector_rest_url | [string](#string) |  | REST URL for Kafka Connect (e.g., "http://weaviate:8080"). |
 | connector_grpc_url | [string](#string) |  | gRPC URL for Kafka Connect (e.g., "weaviate:50051"). |
 
+<a id="io-typestream-grpc-WeaviateConnectionConfigPublic"></a>
+
 ### WeaviateConnectionConfigPublic
 
 Public Weaviate connection config (excludes API key).
@@ -454,6 +526,8 @@ Public Weaviate connection config (excludes API key).
 | connector_rest_url | [string](#string) |  | api_key intentionally excluded |
 | connector_grpc_url | [string](#string) |  |  |
 
+<a id="io-typestream-grpc-WeaviateConnectionStatus"></a>
+
 ### WeaviateConnectionStatus
 
 Health status of a Weaviate connection.
@@ -467,6 +541,8 @@ Health status of a Weaviate connection.
 | last_checked | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | config | [WeaviateConnectionConfigPublic](#io-typestream-grpc-WeaviateConnectionConfigPublic) |  |  |
 
+<a id="io-typestream-grpc-FileInfo"></a>
+
 ### FileInfo
 
 Metadata about a single entry in the virtual filesystem.
@@ -475,6 +551,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | Name of the file or directory. |
 | encoding | [Encoding](#io-typestream-grpc-Encoding) |  | Data encoding of the topic (only set for topic entries). |
+
+<a id="io-typestream-grpc-GetSchemaRequest"></a>
 
 ### GetSchemaRequest
 
@@ -485,6 +563,8 @@ Metadata about a single entry in the virtual filesystem.
 | user_id | [string](#string) |  | Identifier for the user session. |
 | path | [string](#string) |  | Virtual filesystem path to the topic (e.g., "/local/topics/my-topic"). |
 
+<a id="io-typestream-grpc-GetSchemaResponse"></a>
+
 ### GetSchemaResponse
 
 
@@ -493,6 +573,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | fields | [string](#string) | repeated | Field names in the topic's schema. |
 | error | [string](#string) |  | Error message if schema retrieval failed. |
+
+<a id="io-typestream-grpc-LsRequest"></a>
 
 ### LsRequest
 
@@ -503,6 +585,8 @@ Metadata about a single entry in the virtual filesystem.
 | user_id | [string](#string) |  | Identifier for the user session. |
 | path | [string](#string) |  | Virtual filesystem path to list (e.g., "/local/topics"). |
 
+<a id="io-typestream-grpc-LsResponse"></a>
+
 ### LsResponse
 
 
@@ -511,6 +595,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | files | [FileInfo](#io-typestream-grpc-FileInfo) | repeated | List of entries at the requested path. |
 | error | [string](#string) |  | Error message if the listing failed. |
+
+<a id="io-typestream-grpc-MountRequest"></a>
 
 ### MountRequest
 
@@ -521,6 +607,8 @@ Metadata about a single entry in the virtual filesystem.
 | user_id | [string](#string) |  | Identifier for the user session. |
 | config | [string](#string) |  | Configuration string for the data source to mount (e.g., connection details). |
 
+<a id="io-typestream-grpc-MountResponse"></a>
+
 ### MountResponse
 
 
@@ -529,6 +617,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | success | [bool](#bool) |  | Whether the mount operation succeeded. |
 | error | [string](#string) |  | Error message if the mount failed. |
+
+<a id="io-typestream-grpc-UnmountRequest"></a>
 
 ### UnmountRequest
 
@@ -539,6 +629,8 @@ Metadata about a single entry in the virtual filesystem.
 | user_id | [string](#string) |  | Identifier for the user session. |
 | endpoint | [string](#string) |  | The endpoint path of the mounted data source to remove. |
 
+<a id="io-typestream-grpc-UnmountResponse"></a>
+
 ### UnmountResponse
 
 
@@ -547,6 +639,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | success | [bool](#bool) |  | Whether the unmount operation succeeded. |
 | error | [string](#string) |  | Error message if the unmount failed. |
+
+<a id="io-typestream-grpc-CompleteProgramRequest"></a>
 
 ### CompleteProgramRequest
 
@@ -558,6 +652,8 @@ Metadata about a single entry in the virtual filesystem.
 | source | [string](#string) |  | Partial TypeStream DSL source code. |
 | cursor | [int32](#int32) |  | Cursor position (character offset) within the source for completion. |
 
+<a id="io-typestream-grpc-CompleteProgramResponse"></a>
+
 ### CompleteProgramResponse
 
 
@@ -565,6 +661,8 @@ Metadata about a single entry in the virtual filesystem.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | value | [string](#string) | repeated | List of completion suggestions. |
+
+<a id="io-typestream-grpc-GetProgramOutputRequest"></a>
 
 ### GetProgramOutputRequest
 
@@ -575,6 +673,8 @@ Metadata about a single entry in the virtual filesystem.
 | session_id | [string](#string) |  | Session containing the program. |
 | id | [string](#string) |  | Identifier of the running program (from RunProgramResponse.id). |
 
+<a id="io-typestream-grpc-GetProgramOutputResponse"></a>
+
 ### GetProgramOutputResponse
 
 
@@ -584,6 +684,8 @@ Metadata about a single entry in the virtual filesystem.
 | stdOut | [string](#string) |  | Standard output chunk from the running program. |
 | stdErr | [string](#string) |  | Standard error chunk from the running program. |
 
+<a id="io-typestream-grpc-RunProgramRequest"></a>
+
 ### RunProgramRequest
 
 
@@ -592,6 +694,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | session_id | [string](#string) |  | Session to run the program in. |
 | source | [string](#string) |  | TypeStream DSL program source code to execute. |
+
+<a id="io-typestream-grpc-RunProgramResponse"></a>
 
 ### RunProgramResponse
 
@@ -605,6 +709,8 @@ Metadata about a single entry in the virtual filesystem.
 | stdErr | [string](#string) |  | Standard error output from the program. |
 | hasMoreOutput | [bool](#bool) |  | If true, more output is available via GetProgramOutput. |
 
+<a id="io-typestream-grpc-RunProgramResponse-EnvEntry"></a>
+
 ### RunProgramResponse.EnvEntry
 
 
@@ -614,6 +720,8 @@ Metadata about a single entry in the virtual filesystem.
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
 
+<a id="io-typestream-grpc-StartSessionRequest"></a>
+
 ### StartSessionRequest
 
 
@@ -621,6 +729,8 @@ Metadata about a single entry in the virtual filesystem.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user_id | [string](#string) |  | Identifier for the user starting the session. |
+
+<a id="io-typestream-grpc-StartSessionResponse"></a>
 
 ### StartSessionResponse
 
@@ -630,6 +740,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | session_id | [string](#string) |  | Unique identifier for the created session. |
 
+<a id="io-typestream-grpc-StopSessionRequest"></a>
+
 ### StopSessionRequest
 
 
@@ -637,6 +749,8 @@ Metadata about a single entry in the virtual filesystem.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | session_id | [string](#string) |  | Session to stop. |
+
+<a id="io-typestream-grpc-StopSessionResponse"></a>
 
 ### StopSessionResponse
 
@@ -646,6 +760,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | stdOut | [string](#string) |  | Any remaining standard output from the session. |
 | stdErr | [string](#string) |  | Any remaining standard error from the session. |
+
+<a id="io-typestream-grpc-CreateJobFromGraphRequest"></a>
 
 ### CreateJobFromGraphRequest
 
@@ -659,6 +775,8 @@ Metadata about a single entry in the virtual filesystem.
 | weaviate_sink_configs | [WeaviateSinkConfig](#io-typestream-grpc-WeaviateSinkConfig) | repeated | Weaviate sink configurations for Weaviate sink nodes. |
 | elasticsearch_sink_configs | [ElasticsearchSinkConfig](#io-typestream-grpc-ElasticsearchSinkConfig) | repeated | Elasticsearch sink configurations for Elasticsearch sink nodes. |
 
+<a id="io-typestream-grpc-CreateJobRequest"></a>
+
 ### CreateJobRequest
 
 
@@ -667,6 +785,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | user_id | [string](#string) |  | Identifier for the user creating the job. |
 | source | [string](#string) |  | TypeStream DSL source code defining the pipeline. |
+
+<a id="io-typestream-grpc-CreateJobResponse"></a>
 
 ### CreateJobResponse
 
@@ -679,6 +799,8 @@ Metadata about a single entry in the virtual filesystem.
 | error | [string](#string) |  | Error message if job creation failed. |
 | created_connectors | [string](#string) | repeated | Names of Kafka Connect connectors created for DB sinks. |
 
+<a id="io-typestream-grpc-CreatePreviewJobRequest"></a>
+
 ### CreatePreviewJobRequest
 
 
@@ -687,6 +809,8 @@ Metadata about a single entry in the virtual filesystem.
 | ----- | ---- | ----- | ----------- |
 | graph | [PipelineGraph](#io-typestream-grpc-PipelineGraph) |  | Pipeline graph to run as a preview. |
 | inspector_node_id | [string](#string) |  | ID of the inspector node that triggered this preview. |
+
+<a id="io-typestream-grpc-CreatePreviewJobResponse"></a>
 
 ### CreatePreviewJobResponse
 
@@ -698,6 +822,8 @@ Metadata about a single entry in the virtual filesystem.
 | job_id | [string](#string) |  | ID of the created preview job. |
 | inspect_topic | [string](#string) |  | Kafka topic to consume for live preview data. |
 | error | [string](#string) |  |  |
+
+<a id="io-typestream-grpc-DbSinkConfig"></a>
 
 ### DbSinkConfig
 
@@ -713,6 +839,8 @@ server-side from the connection ID.
 | primary_key_fields | [string](#string) |  | Comma-separated primary key fields (for upsert/update mode). |
 | intermediate_topic | [string](#string) |  | Intermediate Kafka topic (auto-generated if empty). |
 
+<a id="io-typestream-grpc-DbSinkNode"></a>
+
 ### DbSinkNode
 
 Database sink — writes records to a database table.
@@ -723,6 +851,8 @@ Database sink — writes records to a database table.
 | table_name | [string](#string) |  | Target database table name. |
 | insert_mode | [string](#string) |  | Write mode: "insert", "upsert", or "update". |
 | primary_key_fields | [string](#string) |  | Comma-separated primary key fields (for upsert/update mode). |
+
+<a id="io-typestream-grpc-ElasticsearchSinkConfig"></a>
 
 ### ElasticsearchSinkConfig
 
@@ -738,6 +868,8 @@ Configuration for an Elasticsearch sink connector.
 | write_method | [string](#string) |  | Write method: "INSERT" or "UPSERT". |
 | behavior_on_null_values | [string](#string) |  | Behavior on null values: "IGNORE", "DELETE", or "FAIL". |
 
+<a id="io-typestream-grpc-ElasticsearchSinkNode"></a>
+
 ### ElasticsearchSinkNode
 
 Elasticsearch sink — writes records to an Elasticsearch index.
@@ -750,6 +882,8 @@ Elasticsearch sink — writes records to an Elasticsearch index.
 | write_method | [string](#string) |  | Write method: "INSERT" or "UPSERT". |
 | behavior_on_null_values | [string](#string) |  | Behavior on null values: "IGNORE", "DELETE", or "FAIL". |
 
+<a id="io-typestream-grpc-EmbeddingGeneratorNode"></a>
+
 ### EmbeddingGeneratorNode
 
 Embedding generator — generates vector embeddings from text using OpenAI.
@@ -760,6 +894,8 @@ Embedding generator — generates vector embeddings from text using OpenAI.
 | output_field | [string](#string) |  | Output field name for the embedding vector (default: "embedding"). |
 | model | [string](#string) |  | OpenAI model to use (default: "text-embedding-3-small"). |
 
+<a id="io-typestream-grpc-GeoIpNode"></a>
+
 ### GeoIpNode
 
 GeoIP enrichment — resolves an IP address to a country code.
@@ -769,6 +905,8 @@ GeoIP enrichment — resolves an IP address to a country code.
 | ip_field | [string](#string) |  | Field containing the IP address to look up. |
 | output_field | [string](#string) |  | Output field name for the country code (default: "country_code"). |
 
+<a id="io-typestream-grpc-InferGraphSchemasRequest"></a>
+
 ### InferGraphSchemasRequest
 
 
@@ -777,6 +915,8 @@ GeoIP enrichment — resolves an IP address to a country code.
 | ----- | ---- | ----- | ----------- |
 | graph | [PipelineGraph](#io-typestream-grpc-PipelineGraph) |  | Pipeline graph to infer schemas for. |
 
+<a id="io-typestream-grpc-InferGraphSchemasResponse"></a>
+
 ### InferGraphSchemasResponse
 
 
@@ -784,6 +924,8 @@ GeoIP enrichment — resolves an IP address to a country code.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | schemas | [InferGraphSchemasResponse.SchemasEntry](#io-typestream-grpc-InferGraphSchemasResponse-SchemasEntry) | repeated | Map of node ID to its inferred schema. |
+
+<a id="io-typestream-grpc-InferGraphSchemasResponse-SchemasEntry"></a>
 
 ### InferGraphSchemasResponse.SchemasEntry
 
@@ -794,6 +936,8 @@ GeoIP enrichment — resolves an IP address to a country code.
 | key | [string](#string) |  |  |
 | value | [NodeSchemaResult](#io-typestream-grpc-NodeSchemaResult) |  |  |
 
+<a id="io-typestream-grpc-InspectorNode"></a>
+
 ### InspectorNode
 
 Inspector — taps into the data stream for live preview.
@@ -801,6 +945,8 @@ Inspector — taps into the data stream for live preview.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | label | [string](#string) |  | Optional label for the inspector tap point. |
+
+<a id="io-typestream-grpc-JobInfo"></a>
 
 ### JobInfo
 
@@ -816,6 +962,8 @@ Information about a streaming job.
 | weaviate_sinks | [WeaviateSinkConfig](#io-typestream-grpc-WeaviateSinkConfig) | repeated | Weaviate sink configs for this job. |
 | elasticsearch_sinks | [ElasticsearchSinkConfig](#io-typestream-grpc-ElasticsearchSinkConfig) | repeated | Elasticsearch sink configs for this job. |
 
+<a id="io-typestream-grpc-JobThroughput"></a>
+
 ### JobThroughput
 
 Throughput metrics for a running job.
@@ -827,6 +975,8 @@ Throughput metrics for a running job.
 | bytes_per_second | [double](#double) |  | Current bandwidth consumption (bytes/sec). |
 | total_bytes | [int64](#int64) |  | Total bytes processed since job start. |
 
+<a id="io-typestream-grpc-KafkaSinkNode"></a>
+
 ### KafkaSinkNode
 
 Kafka topic sink — writes output to a Kafka topic.
@@ -834,6 +984,8 @@ Kafka topic sink — writes output to a Kafka topic.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | topic_name | [string](#string) |  | Name of the target Kafka topic. |
+
+<a id="io-typestream-grpc-KafkaSourceNode"></a>
 
 ### KafkaSourceNode
 
@@ -845,6 +997,8 @@ Kafka topic source — reads from a Kafka topic.
 | encoding | [Encoding](#io-typestream-grpc-Encoding) |  | Data encoding of the topic. |
 | unwrap_cdc | [bool](#bool) |  | If true, extract the "after" payload from a CDC envelope. |
 
+<a id="io-typestream-grpc-ListJobsRequest"></a>
+
 ### ListJobsRequest
 
 
@@ -852,6 +1006,8 @@ Kafka topic source — reads from a Kafka topic.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user_id | [string](#string) |  | Identifier for the user listing jobs. |
+
+<a id="io-typestream-grpc-ListJobsResponse"></a>
 
 ### ListJobsResponse
 
@@ -861,9 +1017,13 @@ Kafka topic source — reads from a Kafka topic.
 | ----- | ---- | ----- | ----------- |
 | jobs | [JobInfo](#io-typestream-grpc-JobInfo) | repeated | All known jobs. |
 
+<a id="io-typestream-grpc-ListOpenAIModelsRequest"></a>
+
 ### ListOpenAIModelsRequest
 
 
+
+<a id="io-typestream-grpc-ListOpenAIModelsResponse"></a>
 
 ### ListOpenAIModelsResponse
 
@@ -872,6 +1032,8 @@ Kafka topic source — reads from a Kafka topic.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | models | [OpenAIModel](#io-typestream-grpc-OpenAIModel) | repeated | Available OpenAI models. |
+
+<a id="io-typestream-grpc-MaterializedViewNode"></a>
 
 ### MaterializedViewNode
 
@@ -884,6 +1046,8 @@ Materialized view — aggregates data into a queryable state store.
 | enable_windowing | [bool](#bool) |  | Whether to apply windowed aggregation. |
 | window_size_seconds | [int64](#int64) |  | Window size in seconds (only used when enable_windowing is true). |
 
+<a id="io-typestream-grpc-NodeSchemaResult"></a>
+
 ### NodeSchemaResult
 
 Inferred schema for a single pipeline node.
@@ -895,6 +1059,8 @@ Inferred schema for a single pipeline node.
 | encoding | [string](#string) |  | Data encoding of the node's output. |
 | error | [string](#string) |  | Error if schema inference failed for this node. |
 
+<a id="io-typestream-grpc-OpenAIModel"></a>
+
 ### OpenAIModel
 
 An available OpenAI model.
@@ -903,6 +1069,8 @@ An available OpenAI model.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  | Model ID (e.g., "gpt-4o-mini"). |
 | name | [string](#string) |  | Human-readable display name. |
+
+<a id="io-typestream-grpc-OpenAiTransformerNode"></a>
 
 ### OpenAiTransformerNode
 
@@ -914,6 +1082,8 @@ OpenAI transformer — enriches records using an OpenAI language model.
 | output_field | [string](#string) |  | Output field name for the AI response (default: "ai_response"). |
 | model | [string](#string) |  | OpenAI model ID to use (default: "gpt-4o-mini"). |
 
+<a id="io-typestream-grpc-PostgresSourceNode"></a>
+
 ### PostgresSourceNode
 
 Postgres CDC source — reads change events from a Postgres table via Debezium.
@@ -921,6 +1091,8 @@ Postgres CDC source — reads change events from a Postgres table via Debezium.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | topic_path | [string](#string) |  | Virtual filesystem path to the CDC topic. |
+
+<a id="io-typestream-grpc-SchemaField"></a>
 
 ### SchemaField
 
@@ -931,6 +1103,8 @@ A single field in a schema.
 | name | [string](#string) |  | Field name. |
 | type | [string](#string) |  | Field type (e.g., "STRING", "INT64", "STRUCT"). |
 
+<a id="io-typestream-grpc-StopPreviewJobRequest"></a>
+
 ### StopPreviewJobRequest
 
 
@@ -938,6 +1112,8 @@ A single field in a schema.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | job_id | [string](#string) |  | ID of the preview job to stop. |
+
+<a id="io-typestream-grpc-StopPreviewJobResponse"></a>
 
 ### StopPreviewJobResponse
 
@@ -948,6 +1124,8 @@ A single field in a schema.
 | success | [bool](#bool) |  |  |
 | error | [string](#string) |  |  |
 
+<a id="io-typestream-grpc-StreamPreviewRequest"></a>
+
 ### StreamPreviewRequest
 
 
@@ -955,6 +1133,8 @@ A single field in a schema.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | job_id | [string](#string) |  | ID of the preview job to stream from. |
+
+<a id="io-typestream-grpc-StreamPreviewResponse"></a>
 
 ### StreamPreviewResponse
 
@@ -966,6 +1146,8 @@ A single record from the preview stream.
 | value | [string](#string) |  | Record value (JSON string). |
 | timestamp | [int64](#int64) |  | Record timestamp (Unix milliseconds). |
 
+<a id="io-typestream-grpc-TextExtractorNode"></a>
+
 ### TextExtractorNode
 
 Text extractor — extracts text content from files referenced in records.
@@ -975,6 +1157,8 @@ Text extractor — extracts text content from files referenced in records.
 | file_path_field | [string](#string) |  | Field containing the file path to extract text from. |
 | output_field | [string](#string) |  | Output field name for the extracted text (default: "text"). |
 
+<a id="io-typestream-grpc-UserFilterNode"></a>
+
 ### UserFilterNode
 
 Filter transform — keeps only records matching an expression.
@@ -982,6 +1166,8 @@ Filter transform — keeps only records matching an expression.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | expression | [string](#string) |  | Filter expression (e.g., ".status == 'active'"). |
+
+<a id="io-typestream-grpc-UserPipelineGraph"></a>
 
 ### UserPipelineGraph
 
@@ -991,6 +1177,8 @@ A user-facing pipeline graph consisting of nodes and edges.
 | ----- | ---- | ----- | ----------- |
 | nodes | [UserPipelineNode](#io-typestream-grpc-UserPipelineNode) | repeated | Nodes in the pipeline. |
 | edges | [PipelineEdge](#io-typestream-grpc-PipelineEdge) | repeated | Edges connecting nodes (directed, from source to sink). |
+
+<a id="io-typestream-grpc-UserPipelineNode"></a>
 
 ### UserPipelineNode
 
@@ -1013,6 +1201,8 @@ A node in a user-facing pipeline graph.
 | weaviate_sink | [WeaviateSinkNode](#io-typestream-grpc-WeaviateSinkNode) |  |  |
 | elasticsearch_sink | [ElasticsearchSinkNode](#io-typestream-grpc-ElasticsearchSinkNode) |  |  |
 
+<a id="io-typestream-grpc-WeaviateSinkConfig"></a>
+
 ### WeaviateSinkConfig
 
 Configuration for a Weaviate vector database sink connector.
@@ -1029,6 +1219,8 @@ Configuration for a Weaviate vector database sink connector.
 | vector_field | [string](#string) |  | Field containing the vector. |
 | timestamp_field | [string](#string) |  | Optional: field name for timestamp conversion (empty = no transform). |
 
+<a id="io-typestream-grpc-WeaviateSinkNode"></a>
+
 ### WeaviateSinkNode
 
 Weaviate sink — writes records to a Weaviate vector database collection.
@@ -1043,6 +1235,8 @@ Weaviate sink — writes records to a Weaviate vector database collection.
 | vector_field | [string](#string) |  | Field containing the vector. |
 | timestamp_field | [string](#string) |  | Optional: field name for timestamp conversion. |
 
+<a id="io-typestream-grpc-ApplyPipelineRequest"></a>
+
 ### ApplyPipelineRequest
 
 
@@ -1051,6 +1245,8 @@ Weaviate sink — writes records to a Weaviate vector database collection.
 | ----- | ---- | ----- | ----------- |
 | metadata | [PipelineMetadata](#io-typestream-grpc-PipelineMetadata) |  | Pipeline metadata (name, version, description). |
 | graph | [UserPipelineGraph](#io-typestream-grpc-UserPipelineGraph) |  | The pipeline graph to deploy. |
+
+<a id="io-typestream-grpc-ApplyPipelineResponse"></a>
 
 ### ApplyPipelineResponse
 
@@ -1063,6 +1259,8 @@ Weaviate sink — writes records to a Weaviate vector database collection.
 | error | [string](#string) |  | Error message if the apply failed. |
 | state | [PipelineState](#io-typestream-grpc-PipelineState) |  | Whether the pipeline was created, updated, or unchanged. |
 
+<a id="io-typestream-grpc-DeletePipelineRequest"></a>
+
 ### DeletePipelineRequest
 
 
@@ -1070,6 +1268,8 @@ Weaviate sink — writes records to a Weaviate vector database collection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | Name of the pipeline to delete. |
+
+<a id="io-typestream-grpc-DeletePipelineResponse"></a>
 
 ### DeletePipelineResponse
 
@@ -1080,9 +1280,13 @@ Weaviate sink — writes records to a Weaviate vector database collection.
 | success | [bool](#bool) |  | Whether the delete operation succeeded. |
 | error | [string](#string) |  | Error message if the delete failed. |
 
+<a id="io-typestream-grpc-ListPipelinesRequest"></a>
+
 ### ListPipelinesRequest
 
 
+
+<a id="io-typestream-grpc-ListPipelinesResponse"></a>
 
 ### ListPipelinesResponse
 
@@ -1091,6 +1295,8 @@ Weaviate sink — writes records to a Weaviate vector database collection.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | pipelines | [PipelineInfo](#io-typestream-grpc-PipelineInfo) | repeated | All registered pipelines. |
+
+<a id="io-typestream-grpc-PipelineInfo"></a>
 
 ### PipelineInfo
 
@@ -1107,6 +1313,8 @@ Information about a registered pipeline and its running job.
 | graph | [PipelineGraph](#io-typestream-grpc-PipelineGraph) |  | Internal pipeline graph (compiler representation). |
 | user_graph | [UserPipelineGraph](#io-typestream-grpc-UserPipelineGraph) |  | User-facing pipeline graph as originally submitted. |
 
+<a id="io-typestream-grpc-PipelineMetadata"></a>
+
 ### PipelineMetadata
 
 Metadata describing a pipeline definition.
@@ -1117,6 +1325,8 @@ Metadata describing a pipeline definition.
 | version | [string](#string) |  | Version string for tracking changes (e.g., "v1", "2024-01-15"). |
 | description | [string](#string) |  | Human-readable description of what this pipeline does. |
 
+<a id="io-typestream-grpc-PipelinePlan"></a>
+
 ### PipelinePlan
 
 A pipeline definition included in a plan request.
@@ -1125,6 +1335,8 @@ A pipeline definition included in a plan request.
 | ----- | ---- | ----- | ----------- |
 | metadata | [PipelineMetadata](#io-typestream-grpc-PipelineMetadata) |  | Pipeline metadata (name, version, description). |
 | graph | [UserPipelineGraph](#io-typestream-grpc-UserPipelineGraph) |  | The pipeline graph to plan. |
+
+<a id="io-typestream-grpc-PipelinePlanResult"></a>
 
 ### PipelinePlanResult
 
@@ -1137,6 +1349,8 @@ Result for a single pipeline in a plan response.
 | current_version | [string](#string) |  | Current version on the server (empty if pipeline is new). |
 | new_version | [string](#string) |  | New version from the plan (empty if pipeline would be deleted). |
 
+<a id="io-typestream-grpc-PlanPipelinesRequest"></a>
+
 ### PlanPipelinesRequest
 
 
@@ -1144,6 +1358,8 @@ Result for a single pipeline in a plan response.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | pipelines | [PipelinePlan](#io-typestream-grpc-PipelinePlan) | repeated | Pipeline definitions to plan against current state. |
+
+<a id="io-typestream-grpc-PlanPipelinesResponse"></a>
 
 ### PlanPipelinesResponse
 
@@ -1154,6 +1370,8 @@ Result for a single pipeline in a plan response.
 | results | [PipelinePlanResult](#io-typestream-grpc-PipelinePlanResult) | repeated | Plan results for each pipeline. |
 | errors | [string](#string) | repeated | Errors encountered during planning. |
 
+<a id="io-typestream-grpc-ValidatePipelineRequest"></a>
+
 ### ValidatePipelineRequest
 
 
@@ -1162,6 +1380,8 @@ Result for a single pipeline in a plan response.
 | ----- | ---- | ----- | ----------- |
 | metadata | [PipelineMetadata](#io-typestream-grpc-PipelineMetadata) |  | Pipeline metadata (name, version, description). |
 | graph | [UserPipelineGraph](#io-typestream-grpc-UserPipelineGraph) |  | The pipeline graph to validate. |
+
+<a id="io-typestream-grpc-ValidatePipelineResponse"></a>
 
 ### ValidatePipelineResponse
 
@@ -1173,6 +1393,8 @@ Result for a single pipeline in a plan response.
 | errors | [string](#string) | repeated | Validation errors (pipeline cannot be applied). |
 | warnings | [string](#string) | repeated | Validation warnings (pipeline can be applied but may have issues). |
 
+<a id="io-typestream-grpc-GetAllValuesRequest"></a>
+
 ### GetAllValuesRequest
 
 
@@ -1183,6 +1405,8 @@ Result for a single pipeline in a plan response.
 | limit | [int32](#int32) |  | Maximum number of entries to return (default: 100) |
 | from_key | [string](#string) |  | Reserved for future pagination support - not currently implemented |
 
+<a id="io-typestream-grpc-GetValueRequest"></a>
+
 ### GetValueRequest
 
 
@@ -1191,6 +1415,8 @@ Result for a single pipeline in a plan response.
 | ----- | ---- | ----- | ----------- |
 | store_name | [string](#string) |  | Name of the state store to query |
 | key | [string](#string) |  | The key to look up. Note: This is used directly as a string key. Complex key types (structs, etc.) are not supported. For stores with complex keys, use GetAllValues and filter client-side. |
+
+<a id="io-typestream-grpc-GetValueResponse"></a>
 
 ### GetValueResponse
 
@@ -1201,6 +1427,8 @@ Result for a single pipeline in a plan response.
 | found | [bool](#bool) |  | True if the key was found in the store |
 | value | [string](#string) |  | String representation of the value, empty if not found |
 
+<a id="io-typestream-grpc-KeyValuePair"></a>
+
 ### KeyValuePair
 
 
@@ -1210,9 +1438,13 @@ Result for a single pipeline in a plan response.
 | key | [string](#string) |  | JSON-serialized representation of the key. Format depends on the key's schema type: - String: "\"value\"" (JSON string) - Int/Long: "123" (JSON number) - Struct: "\{\"field\": \"value\"\}" (JSON object) |
 | value | [string](#string) |  | String representation of the value (for count operations, this is the count as a string) |
 
+<a id="io-typestream-grpc-ListStoresRequest"></a>
+
 ### ListStoresRequest
 
 
+
+<a id="io-typestream-grpc-ListStoresResponse"></a>
 
 ### ListStoresResponse
 
@@ -1221,6 +1453,8 @@ Result for a single pipeline in a plan response.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | stores | [StoreInfo](#io-typestream-grpc-StoreInfo) | repeated |  |
+
+<a id="io-typestream-grpc-StoreInfo"></a>
 
 ### StoreInfo
 
@@ -1234,6 +1468,8 @@ Result for a single pipeline in a plan response.
 
 ## Enums
 
+<a id="io-typestream-grpc-ConnectionState"></a>
+
 ### ConnectionState
 
 Health state of a monitored connection.
@@ -1246,6 +1482,8 @@ Health state of a monitored connection.
 | ERROR | 3 |  |
 | CONNECTING | 4 |  |
 
+<a id="io-typestream-grpc-DatabaseType"></a>
+
 ### DatabaseType
 
 Supported database types for connections.
@@ -1255,6 +1493,8 @@ Supported database types for connections.
 | DATABASE_TYPE_UNSPECIFIED | 0 |  |
 | POSTGRES | 1 |  |
 | MYSQL | 2 |  |
+
+<a id="io-typestream-grpc-Encoding"></a>
 
 ### Encoding
 
@@ -1267,6 +1507,8 @@ Data encoding format for Kafka topics.
 | JSON | 2 |  |
 | AVRO | 3 |  |
 | PROTOBUF | 4 |  |
+
+<a id="io-typestream-grpc-JobState"></a>
 
 ### JobState
 
@@ -1282,6 +1524,8 @@ Lifecycle state of a streaming job.
 | FAILED | 5 |  |
 | UNKNOWN | 6 |  |
 
+<a id="io-typestream-grpc-PipelineAction"></a>
+
 ### PipelineAction
 
 Action that would be taken for a pipeline in a plan.
@@ -1293,6 +1537,8 @@ Action that would be taken for a pipeline in a plan.
 | UPDATE | 2 | Pipeline exists and would be updated. |
 | NO_CHANGE | 3 | Pipeline exists and has not changed. |
 | DELETE | 4 | Pipeline exists on server but is not in the plan, so it would be deleted. |
+
+<a id="io-typestream-grpc-PipelineState"></a>
 
 ### PipelineState
 

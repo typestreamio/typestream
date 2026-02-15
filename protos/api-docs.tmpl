@@ -19,6 +19,8 @@ TypeStream exposes its functionality through six gRPC services.
 {{- range .Files}}
 {{- range .Services}}
 
+<a id="{{.FullName | anchor}}"></a>
+
 ### {{.Name}}
 
 {{.Description}}
@@ -38,6 +40,8 @@ TypeStream exposes its functionality through six gRPC services.
 {{- range .Files}}
 {{- range .Messages}}
 {{- if not (has .LongName $internal)}}
+
+<a id="{{.FullName | anchor}}"></a>
 
 ### {{.LongName}}
 
@@ -59,6 +63,8 @@ TypeStream exposes its functionality through six gRPC services.
 ## Enums
 {{- range .Files}}
 {{- range .Enums}}
+
+<a id="{{.FullName | anchor}}"></a>
 
 ### {{.LongName}}
 
