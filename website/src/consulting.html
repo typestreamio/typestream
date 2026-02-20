@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en" class="light" dir="ltr" data-theme="light">
+  <head>
+    {{> title-meta title="Consulting"}}
+    <meta name="color-scheme" content="light">
+
+    <!-- Css -->
+    {{> head-css}}
+  </head>
+
+  <body class="font-nunito text-lg text-black dark:text-white dark:bg-slate-900">
+    {{> navbar/nav-center}}
+
+    <!-- Hero -->
+    <section class="relative overflow-hidden pt-36 pb-16 lg:pt-44 lg:pb-24">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center">
+          <h1 class="text-4xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
+            Get more from your <span class="text-indigo-600 dark:text-indigo-400">Kafka investment.</span>
+          </h1>
+          <p class="text-xl lg:text-2xl text-slate-600 dark:text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto">
+            We help engineering teams scale Kafka, build streaming pipelines,
+            and ship real-time features faster -- without the months of
+            trial and error.
+          </p>
+          <a
+            href="mailto:consulting@typestream.io"
+            class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors inline-block"
+          >
+            Start a conversation
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" style="border:none;border-top:1px solid #e2e8f0;">
+
+    <!-- What we help with -->
+    <section class="py-20 lg:py-28">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            How we help
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            Whether you're adopting Kafka for the first time or scaling an
+            existing cluster to thousands of topics, we've been there.
+          </p>
+        </div>
+
+        <div class="max-w-5xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Card 1 -->
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Kafka scaling &amp; performance</h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Partition strategy, broker tuning, consumer group design, and
+              capacity planning. We help you handle 10x the throughput on the
+              same infrastructure.
+            </p>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Stream processing architecture</h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Kafka Streams, ksqlDB, or Flink -- we help you pick the right
+              tool and design topologies that are maintainable, testable,
+              and production-ready.
+            </p>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Schema Registry &amp; data governance</h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Schema evolution strategies, Avro vs Protobuf decisions,
+              compatibility modes, and governance policies that prevent
+              breaking changes.
+            </p>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Kafka Connect &amp; CDC</h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Debezium setup, connector configuration, sink tuning, and
+              change data capture pipelines from Postgres, MySQL, and
+              MongoDB into Kafka.
+            </p>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Team enablement</h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Hands-on workshops for your engineering team. Go from "we have
+              Kafka but nobody touches it" to teams confidently building and
+              shipping streaming features.
+            </p>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Observability &amp; operations</h3>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Monitoring, alerting, and runbooks for Kafka clusters and
+              streaming applications. Know when something is wrong before
+              your users do.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" style="border:none;border-top:1px solid #e2e8f0;">
+
+    <!-- How we work -->
+    <section class="py-20 lg:py-28 bg-slate-50 dark:bg-slate-800/30">
+      <div class="container relative">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+          <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            How we work
+          </h2>
+        </div>
+
+        <div class="max-w-3xl mx-auto space-y-10">
+          <div class="flex gap-6 items-start">
+            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Discovery call</h3>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                We learn about your Kafka setup, what's working, what's not,
+                and where you want to go. 30 minutes, no commitment.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Assessment &amp; roadmap</h3>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                We audit your current architecture and deliver a concrete
+                roadmap with priorities, trade-offs, and estimated effort.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Hands-on implementation</h3>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                We work alongside your team -- pairing, reviewing PRs, and
+                building the hard parts together. We leave when your team
+                can run it themselves.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section
+      class="py-20 lg:py-28"
+      style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)"
+    >
+      <div class="container relative">
+        <div class="max-w-2xl mx-auto text-center">
+          <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">
+            Let's talk about your Kafka.
+          </h2>
+          <p class="text-indigo-100 text-lg mb-10 leading-relaxed">
+            Whether you're just getting started or scaling to millions of
+            events per second, we can help.
+          </p>
+          <a
+            href="mailto:consulting@typestream.io"
+            class="px-8 py-4 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors inline-block"
+          >
+            consulting@typestream.io
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {{> footer/footer}}
+
+    {{> script-file}}
+  </body>
+</html>
