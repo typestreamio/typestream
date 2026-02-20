@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "src/index.html"),
         about: resolve(__dirname, "src/about.html"),
+        consulting: resolve(__dirname, "src/consulting.html"),
         error: resolve(__dirname, "src/error.html"),
         integrations: resolve(__dirname, "src/integrations.html"),
         privacy: resolve(__dirname, "src/privacy.html"),
