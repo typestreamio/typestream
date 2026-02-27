@@ -245,15 +245,56 @@ internal class AvroExtKtTest {
     }
 
     @Test
-    fun `fromAvroGenericRecord takes non-nullable GenericRecord - null safety at call site`() {
-        // DataStream.fromAvroGenericRecord(path, genericRecord) takes a non-nullable GenericRecord.
-        // Tombstone records (null values from compacted topics) are handled at the call site
-        // in KafkaStreamSource.stream() via v?.let { fromAvroGenericRecord(path, it) }.
-        // This test documents that the function correctly processes a valid record.
+    fun `null-safe call site pattern for fromAvroGenericRecord`() {
+        // fromAvroGenericRecord takes a non-nullable GenericRecord.
+        // Tombstones are handled at the call site: v?.let { fromAvroGenericRecord(path, it) }
+        // Verify the pattern: null input → null output, valid input → valid DataStream
         val smokeType = SmokeType().toAvro()
-        val dataStream = DataStream.fromAvroGenericRecord("smokeType", smokeType)
-        assertThat(dataStream.path).isEqualTo("smokeType")
-        assertThat(dataStream.schema).isInstanceOf(Schema.Struct::class.java)
+
+        val nullResult: DataStream? = (null as org.apache.avro.generic.GenericRecord?)?.let {
+            DataStream.fromAvroGenericRecord("smokeType", it)
+        }
+        assertThat(nullResult).isNull()
+
+        val validResult: DataStream? = smokeType?.let {
+            DataStream.fromAvroGenericRecord("smokeType", it)
+        }
+        assertThat(validResult).isNotNull()
+        assertThat(validResult!!.path).isEqualTo("smokeType")
+        assertThat(validResult.schema).isInstanceOf(Schema.Struct::class.java)
+    }
+
+    @Test
+    fun `null-safe call site pattern for fromProtoMessage`() {
+        // fromProtoMessage takes a non-nullable Message.
+        // Same v?.let pattern at the call site.
+        val protoBook = io.typestream.testing.model.Book(
+            title = "Test", authorId = java.util.UUID.randomUUID().toString(), wordCount = 100
+        ).toProto()
+
+        val nullResult: DataStream? = (null as com.google.protobuf.Message?)?.let {
+            DataStream.fromProtoMessage("books", it)
+        }
+        assertThat(nullResult).isNull()
+
+        val validResult: DataStream? = protoBook?.let {
+            DataStream.fromProtoMessage("books", it)
+        }
+        assertThat(validResult).isNotNull()
+        assertThat(validResult!!.path).isEqualTo("books")
+        assertThat(validResult.schema).isInstanceOf(Schema.Struct::class.java)
+    }
+
+    @Test
+    fun `null-safe call site pattern for fromKeyBytes`() {
+        // fromKeyBytes takes a non-nullable Bytes and nullable SchemaRegistryClient.
+        // Keys are never null in Kafka (they come from Bytes serde), but verify
+        // the function handles a null registry gracefully (falls back to raw bytes).
+        val keyBytes = org.apache.kafka.common.utils.Bytes("test-key".toByteArray())
+
+        val result = DataStream.fromKeyBytes("/test/path", keyBytes, null)
+        assertThat(result).isNotNull()
+        assertThat(result.path).isEqualTo("/test/path")
     }
 
     @Test

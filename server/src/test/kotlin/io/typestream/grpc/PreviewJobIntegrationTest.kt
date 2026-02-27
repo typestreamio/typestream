@@ -1117,8 +1117,9 @@ internal class PreviewJobIntegrationTest {
                 override fun onNext(response: Job.StreamPreviewResponse) {
                     println("Received tombstone-test message: key=${response.key}, value=${response.value}")
                     receivedMessages.add(response)
-                    // Expect at least 2 messages (Beta and Gamma survive; Alpha was tombstoned)
-                    if (receivedMessages.size >= 2) {
+                    // KTable emits changelog entries as records arrive (insert, update, delete).
+                    // 3 inserts + 1 tombstone deletion = at least 3 changelog records
+                    if (receivedMessages.size >= 3) {
                         latch.countDown()
                     }
                 }
@@ -1140,9 +1141,23 @@ internal class PreviewJobIntegrationTest {
                 Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
             )
 
-            // Pipeline should not crash on tombstone records
             assertThat(streamError).isNull()
             assertThat(receivedMessages).isNotEmpty()
+
+            val allValues = receivedMessages.map { it.value }
+
+            // Beta and Gamma should appear in the output (they were not tombstoned)
+            assertThat(allValues.any { it.contains("Beta") }).isTrue()
+            assertThat(allValues.any { it.contains("Gamma") }).isTrue()
+
+            // The tombstoned key (Alpha) should produce a null-value changelog entry.
+            // In the KTable changelog stream, a tombstone is emitted as an empty/null value.
+            val tombstoneKey = produced[0].id
+            val tombstoneRecords = receivedMessages.filter { it.key.contains(tombstoneKey) }
+            assertThat(tombstoneRecords).isNotEmpty()
+            // The last record for this key should be the tombstone (empty value)
+            val lastForKey = tombstoneRecords.last()
+            assertThat(lastForKey.value).isEmpty()
         }
     }
 
@@ -1259,9 +1274,23 @@ internal class PreviewJobIntegrationTest {
                 Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
             )
 
-            // Pipeline should not crash on tombstone records
             assertThat(streamError).isNull()
             assertThat(receivedMessages).isNotEmpty()
+
+            // Verify count output contains both author groups
+            val allKeys = receivedMessages.map { it.key }
+            assertThat(allKeys.any { it.contains(authorA) || it.contains(authorB) }).isTrue()
+
+            // The last emitted count for authorA should reflect the tombstone deletion.
+            // authorA had 2 books, 1 was tombstoned → final count should be 1.
+            val authorAMessages = receivedMessages.filter { it.key.contains(authorA) }
+            if (authorAMessages.isNotEmpty()) {
+                val lastCount = authorAMessages.last().value
+                println("Last count for authorA: $lastCount")
+                // Count value is serialized as a DataStream with Schema.Long
+                // After tombstone processing, authorA's count should be 1 (2 inserts - 1 tombstone)
+                assertThat(lastCount).contains("1")
+            }
         }
     }
 
