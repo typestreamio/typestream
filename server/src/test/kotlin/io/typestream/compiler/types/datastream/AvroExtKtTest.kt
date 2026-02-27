@@ -245,6 +245,18 @@ internal class AvroExtKtTest {
     }
 
     @Test
+    fun `fromAvroGenericRecord takes non-nullable GenericRecord - null safety at call site`() {
+        // DataStream.fromAvroGenericRecord(path, genericRecord) takes a non-nullable GenericRecord.
+        // Tombstone records (null values from compacted topics) are handled at the call site
+        // in KafkaStreamSource.stream() via v?.let { fromAvroGenericRecord(path, it) }.
+        // This test documents that the function correctly processes a valid record.
+        val smokeType = SmokeType().toAvro()
+        val dataStream = DataStream.fromAvroGenericRecord("smokeType", smokeType)
+        assertThat(dataStream.path).isEqualTo("smokeType")
+        assertThat(dataStream.schema).isInstanceOf(Schema.Struct::class.java)
+    }
+
+    @Test
     fun `toAvroGenericRecord reconstructs schema when originalAvroSchema is null`() {
         // No originalAvroSchema - simulates post-transformation scenario
         val dataStream = DataStream(

@@ -12,6 +12,12 @@ import java.util.Properties
 
 class KafkaProducerWrapper(private val bootstrapServers: String, private val schemaRegistryUrl: String) {
 
+    fun produceTombstone(topic: String, encoding: String, key: String) {
+        KafkaProducer<String, Any?>(producerConfig(encoding)).use {
+            it.send(ProducerRecord(topic, key, null)).get()
+        }
+    }
+
     fun produce(topic: String, encoding: String, records: List<TestRecord>): List<TestRecord> {
         return when (encoding) {
             "avro" -> produceRecords(

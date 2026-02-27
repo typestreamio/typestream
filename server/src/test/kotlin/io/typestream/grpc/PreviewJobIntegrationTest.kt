@@ -1026,6 +1026,246 @@ internal class PreviewJobIntegrationTest {
     }
 
     @Test
+    fun `materialized view handles tombstones`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            val authorId = UUID.randomUUID().toString()
+            val testBooks = listOf(
+                Book(title = "Alpha", wordCount = 100, authorId = authorId),
+                Book(title = "Beta", wordCount = 200, authorId = UUID.randomUUID().toString()),
+                Book(title = "Gamma", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+            val produced = testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            // Send tombstone for first book's key
+            testKafka.produceTombstone(topic, "avro", produced[0].id)
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> TableMaterialized -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("")
+                        .setAggregationType("latest")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("tombstone-test"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            // This would NPE before the fix when processing the tombstone record
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            println("CreatePreviewJob (tombstone) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
+
+            assertThat(createResponse.success).isTrue()
+            assertThat(createResponse.jobId).isNotEmpty()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received tombstone-test message: key=${response.key}, value=${response.value}")
+                    receivedMessages.add(response)
+                    // Expect at least 2 messages (Beta and Gamma survive; Alpha was tombstoned)
+                    if (receivedMessages.size >= 2) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    latch.countDown()
+                }
+            })
+
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            // Pipeline should not crash on tombstone records
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+        }
+    }
+
+    @Test
+    fun `materialized view count with tombstones`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            val authorA = UUID.randomUUID().toString()
+            val authorB = UUID.randomUUID().toString()
+            val testBooks = listOf(
+                Book(title = "Book A1", wordCount = 100, authorId = authorA),
+                Book(title = "Book A2", wordCount = 200, authorId = authorA),
+                Book(title = "Book B1", wordCount = 300, authorId = authorB)
+            )
+            val produced = testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            // Tombstone one of authorA's books
+            testKafka.produceTombstone(topic, "avro", produced[0].id)
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> TableMaterialized(groupBy=author_id, count) -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("author_id")
+                        .setAggregationType("count")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("count-tombstone-test"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            println("CreatePreviewJob (count tombstone) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
+
+            assertThat(createResponse.success).isTrue()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received count-tombstone message: key=${response.key}, value=${response.value}")
+                    receivedMessages.add(response)
+                    if (receivedMessages.size >= 2) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    latch.countDown()
+                }
+            })
+
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            // Pipeline should not crash on tombstone records
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+        }
+    }
+
+    @Test
     fun `source to materializedView with groupByField count aggregation`(): Unit = runBlocking {
         val topic = TestKafka.uniqueTopic("books")
 

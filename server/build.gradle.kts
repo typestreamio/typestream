@@ -44,6 +44,7 @@ dependencies {
     testImplementation(project(":libs:testing"))
 
     testImplementation(libs.bundles.testcontainers)
+    testImplementation(libs.kafka.streams.test.utils)
     testImplementation(libs.grpc.testing)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.test.containers.redpanda)
