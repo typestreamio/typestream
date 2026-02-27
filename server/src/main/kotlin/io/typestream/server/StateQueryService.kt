@@ -71,7 +71,7 @@ class StateQueryService(private val vm: Vm) :
                     try {
                         // Use naming convention to determine store type
                         val approxCount = when {
-                            storeName.contains("reduce") -> {
+                            storeName.contains("reduce") || (storeName.contains("table") && !storeName.contains("count")) -> {
                                 val store = kafkaStreams.store(
                                     StoreQueryParameters.fromNameAndType(
                                         storeName,
@@ -154,7 +154,7 @@ class StateQueryService(private val vm: Vm) :
         try {
             // Use naming convention to determine store type
             when {
-                storeName.contains("reduce") -> {
+                storeName.contains("reduce") || (storeName.contains("table") && !storeName.contains("count")) -> {
                     val store = kafkaStreams.store(
                         StoreQueryParameters.fromNameAndType(
                             storeName,
@@ -170,7 +170,7 @@ class StateQueryService(private val vm: Vm) :
                                 emit(keyValuePair {
                                     // Serialize key using schema's JSON representation
                                     key = kv.key.schema.toJsonElement().toString()
-                                    // Value is a DataStream from reduce operations
+                                    // Value is a DataStream from reduce/table operations
                                     value = kv.value.schema.toJsonElement().toString()
                                 })
                                 count++
@@ -288,7 +288,7 @@ class StateQueryService(private val vm: Vm) :
             val key = DataStream.fromString("", keyStr)
 
             // Use naming convention to determine store type
-            if (storeName.contains("reduce")) {
+            if (storeName.contains("reduce") || (storeName.contains("table") && !storeName.contains("count"))) {
                 val store = kafkaStreams.store(
                     StoreQueryParameters.fromNameAndType(
                         storeName,

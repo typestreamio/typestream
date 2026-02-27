@@ -19,6 +19,7 @@ import io.typestream.compiler.node.NodeReduceLatest
 import io.typestream.compiler.node.NodeShellSource
 import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.node.NodeStreamSource
+import io.typestream.compiler.node.NodeTableMaterialized
 import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.node.NodeWindowedCount
 import io.typestream.compiler.types.DataStream
@@ -97,6 +98,7 @@ class KafkaStreamsJob(
         val streamsBuilder = StreamsBuilderWrapper(config())
         var countStoreIndex = 0
         var reduceStoreIndex = 0
+        var tableStoreIndex = 0
 
         program.graph.children.forEach { sourceNode ->
             val source = sourceNode.ref
@@ -124,6 +126,12 @@ class KafkaStreamsJob(
                         reduceStoreIndex++
                         kafkaStreamSource.reduceLatest(storeName)
                         stateStoreNames.add(storeName)
+                    }
+                    is NodeTableMaterialized -> {
+                        val storeName = "${program.id}-table-store-$tableStoreIndex"
+                        tableStoreIndex++
+                        kafkaStreamSource.tableMaterialize(currentNode.ref, storeName)
+                        stateStoreNames.addAll(kafkaStreamSource.getTableStoreNames())
                     }
                     is NodeFilter -> kafkaStreamSource.filter(currentNode.ref)
                     is NodeGroup -> kafkaStreamSource.group(currentNode.ref)

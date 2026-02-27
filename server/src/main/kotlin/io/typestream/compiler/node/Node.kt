@@ -40,6 +40,7 @@ sealed interface Node {
             proto.hasTextExtractor() -> NodeTextExtractor.fromProto(proto, context)
             proto.hasEmbeddingGenerator() -> NodeEmbeddingGenerator.fromProto(proto, context)
             proto.hasOpenAiTransformer() -> NodeOpenAiTransformer.fromProto(proto, context)
+            proto.hasTableMaterialized() -> NodeTableMaterialized.fromProto(proto, context)
             else -> error("Unknown node type: $proto")
         }
     }

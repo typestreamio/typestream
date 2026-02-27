@@ -6,6 +6,7 @@ import io.typestream.compiler.node.Node
 import io.typestream.compiler.node.NodeFilter
 import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.node.NodeStreamSource
+import io.typestream.compiler.node.NodeTableMaterialized
 import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
@@ -597,6 +598,16 @@ internal class GraphCompilerTest {
             )
             .build()
 
+    private fun tableMaterializedNode(id: String, groupByField: String, aggregationType: String): Job.PipelineNode =
+        Job.PipelineNode.newBuilder()
+            .setId(id)
+            .setTableMaterialized(
+                Job.TableMaterializedNode.newBuilder()
+                    .setGroupByField(groupByField)
+                    .setAggregationType(aggregationType)
+            )
+            .build()
+
     private fun embeddingGeneratorNode(id: String, textField: String, outputField: String): Job.PipelineNode =
         Job.PipelineNode.newBuilder()
             .setId(id)
@@ -633,6 +644,70 @@ internal class GraphCompilerTest {
             .setUserId("user")
             .setGraph(graphBuilder.build())
             .build()
+    }
+
+    // ===== TableMaterialized Tests =====
+
+    @Test
+    fun `compiles stream source with table materialized latest`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Table Mat Test", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                tableMaterializedNode("mat-view", "title", "latest")
+            ),
+            edges = listOf(edge("source", "mat-view"))
+        )
+
+        val program = compiler.compile(request)
+
+        val streamGraph = program.graph.children.single()
+        val stream = streamGraph.ref as NodeStreamSource
+        assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
+
+        val tableMat = streamGraph.children.single().ref
+        assertThat(tableMat).isInstanceOf(io.typestream.compiler.node.NodeTableMaterialized::class.java)
+        tableMat as io.typestream.compiler.node.NodeTableMaterialized
+        assertThat(tableMat.groupByField).isEqualTo("title")
+        assertThat(tableMat.aggregationType).isEqualTo("latest")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI propagates schema through table materialized`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Schema Test", wordCount = 200, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                tableMaterializedNode("mat-1", "title", "count")
+            ),
+            edges = listOf(edge("src-1", "mat-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["src-1"]?.error).isNull()
+        assertThat(results["mat-1"]?.error).isNull()
+
+        // TableMaterialized passes through schema
+        val sourceSchema = results["src-1"]?.schema?.schema as Schema.Struct
+        val matSchema = results["mat-1"]?.schema?.schema as Schema.Struct
+        assertThat(matSchema.value.map { it.name }).containsExactlyInAnyOrderElementsOf(
+            sourceSchema.value.map { it.name }
+        )
     }
 
     // ===== Elasticsearch Sink Tests =====

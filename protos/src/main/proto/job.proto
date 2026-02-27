@@ -153,6 +153,12 @@ message InspectorNode {
 /** @exclude */
 message ReduceLatestNode {}
 
+/** @exclude */
+message TableMaterializedNode {
+  string group_by_field = 1;
+  string aggregation_type = 2;
+}
+
 // Text extractor — extracts text content from files referenced in records.
 message TextExtractorNode {
   // Field containing the file path to extract text from.
@@ -202,6 +208,7 @@ message PipelineNode {
     EmbeddingGeneratorNode embedding_generator = 16;
     OpenAiTransformerNode open_ai_transformer = 17;
     WindowedCountNode windowed_count = 18;
+    TableMaterializedNode table_materialized = 19;
   }
 }
 

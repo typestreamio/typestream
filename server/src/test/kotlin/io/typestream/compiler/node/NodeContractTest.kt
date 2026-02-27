@@ -66,6 +66,7 @@ internal class NodeContractTest {
             Arguments.of("NodeTextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
             Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
             Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
+            Arguments.of("NodeTableMaterialized", NodeTableMaterialized("table-mat-1", "status", "latest")),
         )
 
         @JvmStatic
@@ -83,6 +84,7 @@ internal class NodeContractTest {
             Arguments.of("NodeTextExtractor", NodeTextExtractor("text-1", "file_path", "extracted_text")),
             Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
             Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
+            Arguments.of("NodeTableMaterialized", NodeTableMaterialized("table-mat-1", "status", "latest")),
             Arguments.of("NodeSink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
         )
 
@@ -240,6 +242,16 @@ internal class NodeContractTest {
         val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeMap
 
         assertThat(roundTripped.mapperExpr).isEqualTo("select .id .name")
+    }
+
+    @Test
+    fun `TableMaterialized round-trips groupByField and aggregationType`() {
+        val original = NodeTableMaterialized("tm1", "category", "count")
+        val proto = original.toProto()
+        val roundTripped = Node.fromProto(proto, mockFromProtoContext) as NodeTableMaterialized
+
+        assertThat(roundTripped.groupByField).isEqualTo("category")
+        assertThat(roundTripped.aggregationType).isEqualTo("count")
     }
 
     @Test

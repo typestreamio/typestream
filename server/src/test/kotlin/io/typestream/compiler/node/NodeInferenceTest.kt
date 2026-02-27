@@ -150,6 +150,44 @@ internal class NodeInferenceTest {
     }
 
     @Nested
+    inner class TableMaterializedNodeTests {
+        @Test
+        fun `passes through input schema unchanged`() {
+            val node = NodeTableMaterialized("table-mat-1", "status", "latest")
+            val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
+
+            assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
+            assertThat(result.dataStream.path).isEqualTo(sampleDataStream.path)
+            assertThat(result.encoding).isEqualTo(Encoding.AVRO)
+        }
+
+        @Test
+        fun `preserves JSON encoding`() {
+            val node = NodeTableMaterialized("table-mat-1", "status", "count")
+            val result = node.inferOutputSchema(sampleDataStream, Encoding.JSON, mockContext)
+
+            assertThat(result.encoding).isEqualTo(Encoding.JSON)
+        }
+
+        @Test
+        fun `throws error when input is missing`() {
+            val node = NodeTableMaterialized("table-mat-1", "status", "latest")
+
+            assertThatThrownBy {
+                node.inferOutputSchema(null, null, mockContext)
+            }.hasMessageContaining("tableMaterialized table-mat-1 missing input")
+        }
+
+        @Test
+        fun `works with empty groupByField for latest-by-key`() {
+            val node = NodeTableMaterialized("table-mat-1", "", "latest")
+            val result = node.inferOutputSchema(sampleDataStream, Encoding.AVRO, mockContext)
+
+            assertThat(result.dataStream.schema).isEqualTo(sampleDataStream.schema)
+        }
+    }
+
+    @Nested
     inner class EachNodeTests {
         @Test
         fun `passes through input schema unchanged`() {

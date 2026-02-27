@@ -12,6 +12,7 @@ import io.typestream.compiler.node.NodeMap
 import io.typestream.compiler.node.NodeOpenAiTransformer
 import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.node.NodeStreamSource
+import io.typestream.compiler.node.NodeTableMaterialized
 import io.typestream.compiler.node.NodeTextExtractor
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
@@ -71,6 +72,7 @@ data class KafkaStreamSource(
     private var groupedStream: KGroupedStream<DataStream, DataStream>? = null
     private var countStoreName: String? = null
     private var reduceStoreNames = mutableListOf<String>()
+    private var tableStoreNames = mutableListOf<String>()
 
     private fun initStream(): KStream<DataStream, DataStream> {
         var s = stream(node.dataStream)
@@ -125,6 +127,7 @@ data class KafkaStreamSource(
 
     fun getCountStoreName(): String? = countStoreName
     fun getReduceStoreNames(): List<String> = reduceStoreNames.toList()
+    fun getTableStoreNames(): List<String> = tableStoreNames.toList()
 
     private fun stream(dataStream: DataStream): KStream<DataStream, DataStream> {
         val config = streamsBuilder.config.toMutableMap()
@@ -256,6 +259,79 @@ data class KafkaStreamSource(
             { _, newValue -> newValue },  // Keep latest value
             materialized
         ).toStream()
+    }
+
+    fun tableMaterialize(tableMaterialized: NodeTableMaterialized, storeName: String) {
+        val dataStream = node.dataStream
+        val config = streamsBuilder.config.toMutableMap()
+
+        // Read the topic as a KTable using streamsBuilder.table()
+        val rawTable = when (node.encoding) {
+            Encoding.AVRO -> {
+                val valueSerde = AvroSerde(dataStream.toAvroSchema())
+                valueSerde.configure(config, false)
+                streamsBuilder.table(
+                    dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
+                ).mapValues { v ->
+                    DataStream.fromAvroGenericRecord(dataStream.path, v)
+                }
+            }
+            Encoding.PROTOBUF -> {
+                val valueSerde = ProtoSerde(dataStream.toProtoSchema())
+                valueSerde.configure(config, false)
+                streamsBuilder.table(
+                    dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
+                ).mapValues { v ->
+                    DataStream.fromProtoMessage(dataStream.path, v)
+                }
+            }
+            else -> streamsBuilder.table(dataStream.name)
+        }
+
+        // Convert to a KTable<DataStream, DataStream> with proper key deserialization
+        val table = rawTable.toStream().map { k, v ->
+            pair(DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient), v)
+        }.toTable()
+
+        when {
+            tableMaterialized.aggregationType == "count" -> {
+                val countStoreName = storeName.replace("-table-store-", "-table-count-store-")
+                tableStoreNames.add(countStoreName)
+                val materialized = Materialized.`as`<DataStream, Long, KeyValueStore<Bytes, ByteArray>>(countStoreName)
+                if (tableMaterialized.groupByField.isNotBlank()) {
+                    val fields = tableMaterialized.groupByField.split('.').filter { it.isNotBlank() }
+                    stream = table.groupBy { _, v ->
+                        pair(v.select(fields), v)
+                    }.count(materialized).mapValues { v ->
+                        DataStream.fromLong("", v)
+                    }.toStream()
+                } else {
+                    stream = table.groupBy { k, v ->
+                        pair(k, v)
+                    }.count(materialized).mapValues { v ->
+                        DataStream.fromLong("", v)
+                    }.toStream()
+                }
+            }
+            else -> {
+                // "latest" aggregation
+                tableStoreNames.add(storeName)
+                if (tableMaterialized.groupByField.isNotBlank()) {
+                    val fields = tableMaterialized.groupByField.split('.').filter { it.isNotBlank() }
+                    val materialized = Materialized.`as`<DataStream, DataStream, KeyValueStore<Bytes, ByteArray>>(storeName)
+                    stream = table.groupBy { _, v ->
+                        pair(v.select(fields), v)
+                    }.reduce(
+                        { _, newValue -> newValue },  // adder: keep latest
+                        { _, _ -> null },              // subtractor: remove on tombstone
+                        materialized
+                    ).toStream()
+                } else {
+                    val materialized = Materialized.`as`<DataStream, DataStream, KeyValueStore<Bytes, ByteArray>>(storeName)
+                    stream = table.toStream().toTable(materialized).toStream()
+                }
+            }
+        }
     }
 
     fun geoIp(geoIp: NodeGeoIp) {

@@ -218,6 +218,9 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         val o = proto.openAiTransformer
         NodeOpenAiTransformer(nodeId, o.prompt, o.outputField.ifBlank { "ai_response" }, o.model)
       }
+      proto.hasTableMaterialized() -> {
+        NodeTableMaterialized(nodeId, proto.tableMaterialized.groupByField, proto.tableMaterialized.aggregationType)
+      }
       else -> error("Unknown node type: $nodeId")
     }
 

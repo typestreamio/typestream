@@ -127,47 +127,51 @@ object PipelineDesugarer {
 
                 Job.UserPipelineNode.NodeTypeCase.MATERIALIZED_VIEW -> {
                     val mv = userNode.materializedView
-                    val groupId = "${userNode.id}-group"
-                    redirectMap[userNode.id] = groupId
 
-                    // Group node
-                    nodes.add(
-                        Job.PipelineNode.newBuilder()
-                            .setId(groupId)
-                            .setGroup(
-                                Job.GroupNode.newBuilder()
-                                    .setKeyMapperExpr(".${mv.groupByField}")
-                            )
-                            .build()
-                    )
+                    if (mv.enableWindowing && mv.windowSizeSeconds > 0 && mv.aggregationType == "count") {
+                        // Windowed count: keep KStream path (Group + WindowedCount)
+                        val groupId = "${userNode.id}-group"
+                        redirectMap[userNode.id] = groupId
 
-                    // Aggregation node
-                    val aggBuilder = Job.PipelineNode.newBuilder().setId(userNode.id)
-                    when {
-                        mv.aggregationType == "count" && mv.enableWindowing && mv.windowSizeSeconds > 0 -> {
-                            aggBuilder.setWindowedCount(
-                                Job.WindowedCountNode.newBuilder()
-                                    .setWindowSizeSeconds(mv.windowSizeSeconds)
-                            )
-                        }
+                        nodes.add(
+                            Job.PipelineNode.newBuilder()
+                                .setId(groupId)
+                                .setGroup(
+                                    Job.GroupNode.newBuilder()
+                                        .setKeyMapperExpr(".${mv.groupByField}")
+                                )
+                                .build()
+                        )
 
-                        mv.aggregationType == "count" -> {
-                            aggBuilder.setCount(Job.CountNode.getDefaultInstance())
-                        }
+                        nodes.add(
+                            Job.PipelineNode.newBuilder()
+                                .setId(userNode.id)
+                                .setWindowedCount(
+                                    Job.WindowedCountNode.newBuilder()
+                                        .setWindowSizeSeconds(mv.windowSizeSeconds)
+                                )
+                                .build()
+                        )
 
-                        else -> {
-                            aggBuilder.setReduceLatest(Job.ReduceLatestNode.getDefaultInstance())
-                        }
+                        edges.add(
+                            Job.PipelineEdge.newBuilder()
+                                .setFromId(groupId)
+                                .setToId(userNode.id)
+                                .build()
+                        )
+                    } else {
+                        // Non-windowed: use KTable path (single TableMaterialized node)
+                        nodes.add(
+                            Job.PipelineNode.newBuilder()
+                                .setId(userNode.id)
+                                .setTableMaterialized(
+                                    Job.TableMaterializedNode.newBuilder()
+                                        .setGroupByField(mv.groupByField)
+                                        .setAggregationType(mv.aggregationType)
+                                )
+                                .build()
+                        )
                     }
-                    nodes.add(aggBuilder.build())
-
-                    // Internal edge: group → aggregation
-                    edges.add(
-                        Job.PipelineEdge.newBuilder()
-                            .setFromId(groupId)
-                            .setToId(userNode.id)
-                            .build()
-                    )
                 }
 
                 Job.UserPipelineNode.NodeTypeCase.DB_SINK -> {
