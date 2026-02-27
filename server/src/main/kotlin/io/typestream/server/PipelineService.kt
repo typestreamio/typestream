@@ -42,19 +42,23 @@ class PipelineService(
 
     init {
         if (stateStore != null) {
-            stateStore.ensureTopicExists()
-            val loaded = stateStore.load()
-            loaded.forEach { (name, record) ->
-                val deterministicId = "typestream-pipeline-$name"
-                managedPipelines[name] = ManagedPipeline(
-                    metadata = record.metadata,
-                    userGraph = record.userGraph,
-                    graph = record.graph,
-                    jobId = deterministicId,
-                    appliedAt = record.appliedAt
-                )
+            try {
+                stateStore.ensureTopicExists()
+                val loaded = stateStore.load()
+                loaded.forEach { (name, record) ->
+                    val deterministicId = "typestream-pipeline-$name"
+                    managedPipelines[name] = ManagedPipeline(
+                        metadata = record.metadata,
+                        userGraph = record.userGraph,
+                        graph = record.graph,
+                        jobId = deterministicId,
+                        appliedAt = record.appliedAt
+                    )
+                }
+                logger.info { "Loaded ${loaded.size} pipeline(s) from state store" }
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to load pipelines from state store (Kafka may be unavailable)" }
             }
-            logger.info { "Loaded ${loaded.size} pipeline(s) from state store" }
         }
     }
 

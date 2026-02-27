@@ -60,7 +60,12 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         subSystems.add(jobService)
         serverBuilder.addService(jobService)
         val kafkaConfig = fileSystem.config.sources.kafka.values.firstOrNull()
-        val stateStore = if (kafkaConfig != null) PipelineStateStore(kafkaConfig) else null
+        val stateStore = if (kafkaConfig != null) {
+            try { PipelineStateStore(kafkaConfig) } catch (e: Exception) {
+                logger.warn(e) { "Failed to create pipeline state store (Kafka may be unavailable)" }
+                null
+            }
+        } else null
         val pipelineService = PipelineService(config, vm, stateStore)
         subSystems.add(pipelineService)
         serverBuilder.addService(pipelineService)
