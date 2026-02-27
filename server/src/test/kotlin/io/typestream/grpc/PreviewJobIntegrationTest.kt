@@ -774,4 +774,375 @@ internal class PreviewJobIntegrationTest {
             assertThat(allValues).isNotEmpty()
         }
     }
+
+    @Test
+    fun `source to materializedView builds topology without duplicate topic registration`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            val testBooks = listOf(
+                Book(title = "Alpha", wordCount = 100, authorId = UUID.randomUUID().toString()),
+                Book(title = "Beta", wordCount = 200, authorId = UUID.randomUUID().toString()),
+                Book(title = "Alpha", wordCount = 150, authorId = UUID.randomUUID().toString())
+            )
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> TableMaterialized -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("")
+                        .setAggregationType("latest")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("mat-view-output"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            // This would throw TopologyException before the fix
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            println("CreatePreviewJob (materializedView) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
+
+            assertThat(createResponse.success).isTrue()
+            assertThat(createResponse.jobId).isNotEmpty()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received materializedView message: key=${response.key}, value=${response.value}")
+                    receivedMessages.add(response)
+                    if (receivedMessages.size >= 2) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    println("Stream completed with ${receivedMessages.size} messages")
+                    latch.countDown()
+                }
+            })
+
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            println("Latch result: received=$received, messageCount=${receivedMessages.size}, error=$streamError")
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+        }
+    }
+
+    @Test
+    fun `source to filter to materializedView applies filter before materialization`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            val testBooks = listOf(
+                Book(title = "Short Story", wordCount = 50, authorId = UUID.randomUUID().toString()),
+                Book(title = "Novel", wordCount = 300, authorId = UUID.randomUUID().toString()),
+                Book(title = "Epic", wordCount = 500, authorId = UUID.randomUUID().toString()),
+                Book(title = "Pamphlet", wordCount = 20, authorId = UUID.randomUUID().toString())
+            )
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> Filter(.word_count > 100) -> TableMaterialized -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val filterNode = Job.PipelineNode.newBuilder()
+                .setId("filter")
+                .setFilter(
+                    Job.FilterNode.newBuilder()
+                        .setByKey(false)
+                        .setPredicate(Job.PredicateProto.newBuilder().setExpr(".word_count > 100"))
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("")
+                        .setAggregationType("latest")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("filtered-mat-view"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(filterNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("filter"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("filter").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            assertThat(createResponse.success).isTrue()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received filtered mat-view message: value=${response.value}")
+                    receivedMessages.add(response)
+                    // Expect 2 messages (Novel=300, Epic=500 pass the filter)
+                    if (receivedMessages.size >= 2) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    latch.countDown()
+                }
+            })
+
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+            // Should only contain books with word_count > 100
+            assertThat(receivedMessages.size).isEqualTo(2)
+            val allValues = receivedMessages.map { it.value }
+            assertThat(allValues.any { it.contains("Novel") }).isTrue()
+            assertThat(allValues.any { it.contains("Epic") }).isTrue()
+            // Filtered out books should NOT be present
+            assertThat(allValues.none { it.contains("Short Story") }).isTrue()
+            assertThat(allValues.none { it.contains("Pamphlet") }).isTrue()
+        }
+    }
+
+    @Test
+    fun `source to materializedView with groupByField count aggregation`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            val authorA = UUID.randomUUID().toString()
+            val authorB = UUID.randomUUID().toString()
+            val testBooks = listOf(
+                Book(title = "Book A1", wordCount = 100, authorId = authorA),
+                Book(title = "Book A2", wordCount = 200, authorId = authorA),
+                Book(title = "Book B1", wordCount = 300, authorId = authorB),
+                Book(title = "Book A3", wordCount = 150, authorId = authorA)
+            )
+            testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> TableMaterialized(groupBy=author_id, count) -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("author_id")
+                        .setAggregationType("count")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("count-output"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            println("CreatePreviewJob (groupBy count) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
+
+            assertThat(createResponse.success).isTrue()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val latch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    println("Received count message: key=${response.key}, value=${response.value}")
+                    receivedMessages.add(response)
+                    // KTable count emits updates as records arrive; expect at least 2 groups
+                    if (receivedMessages.size >= 2) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    println("Stream error: ${t.message}")
+                    streamError = t
+                    latch.countDown()
+                }
+
+                override fun onCompleted() {
+                    latch.countDown()
+                }
+            })
+
+            val received = latch.await(30, TimeUnit.SECONDS)
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            assertThat(streamError).isNull()
+            assertThat(receivedMessages).isNotEmpty()
+
+            // Keys should contain the author IDs
+            val allKeys = receivedMessages.map { it.key }
+            assertThat(allKeys.any { it.contains(authorA) || it.contains(authorB) }).isTrue()
+        }
+    }
 }

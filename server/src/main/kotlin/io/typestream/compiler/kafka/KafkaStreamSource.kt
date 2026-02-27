@@ -262,36 +262,10 @@ data class KafkaStreamSource(
     }
 
     fun tableMaterialize(tableMaterialized: NodeTableMaterialized, storeName: String) {
-        val dataStream = node.dataStream
-        val config = streamsBuilder.config.toMutableMap()
-
-        // Read the topic as a KTable using streamsBuilder.table()
-        val rawTable = when (node.encoding) {
-            Encoding.AVRO -> {
-                val valueSerde = AvroSerde(dataStream.toAvroSchema())
-                valueSerde.configure(config, false)
-                streamsBuilder.table(
-                    dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
-                ).mapValues { v ->
-                    DataStream.fromAvroGenericRecord(dataStream.path, v)
-                }
-            }
-            Encoding.PROTOBUF -> {
-                val valueSerde = ProtoSerde(dataStream.toProtoSchema())
-                valueSerde.configure(config, false)
-                streamsBuilder.table(
-                    dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
-                ).mapValues { v ->
-                    DataStream.fromProtoMessage(dataStream.path, v)
-                }
-            }
-            else -> streamsBuilder.table(dataStream.name)
-        }
-
-        // Convert to a KTable<DataStream, DataStream> with proper key deserialization
-        val table = rawTable.toStream().map { k, v ->
-            pair(DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient), v)
-        }.toTable()
+        // Convert the existing stream (which already has deserialization, key mapping,
+        // CDC unwrap, and any upstream transforms applied) to a KTable.
+        // This avoids re-registering the source topic via streamsBuilder.table().
+        val table = stream.toTable()
 
         when {
             tableMaterialized.aggregationType == "count" -> {
