@@ -25,6 +25,10 @@ dependencies {
     api("com.google.protobuf:protobuf-kotlin:$protobufVersion")
 }
 
+// Ensure Avro generation happens before Kotlin compilation
+tasks.named("compileKotlin") {
+    dependsOn("generateAvroJava")
+}
 
 project.protobuf {
     protoc {
