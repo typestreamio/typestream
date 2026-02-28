@@ -7,8 +7,8 @@
 <br />
 
 <div align="center">
-    <a href="https://github.com/typestreamio/typestream/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/typestreamio/typestream" />
+    <a href="https://github.com/typestreamio/typestream/blob/main/LICENSE.md">
+        <img src="https://img.shields.io/badge/license-BSL%201.1-blue" />
     </a>
     <a href="https://discord.gg/Ha9sJWXb">
         <img src="https://img.shields.io/badge/Chat-on%20Discord-blue" alt="Discord invite" />
@@ -194,4 +194,11 @@ covenant](http://contributor-covenant.org/) initiative!
 
 ## License
 
-[Apache 2.0](/LICENSE)
+TypeStream is licensed under the [Business Source License 1.1](/LICENSE.md).
+
+You can use, modify, and redistribute TypeStream freely for non-production and
+internal purposes. Production use is permitted as long as you are not offering a
+competing streaming data pipeline service. Each version converts to
+[Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) after four years.
+
+See [LICENSE.md](/LICENSE.md) for the full terms.
