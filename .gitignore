@@ -24,3 +24,6 @@ devenv.lock
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Beads backup artifacts
+.beads/
