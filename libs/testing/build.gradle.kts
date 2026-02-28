@@ -2,7 +2,7 @@ import com.google.protobuf.gradle.id
 
 plugins {
     id("typestream.kotlin-conventions")
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.5.0"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
     id("com.google.protobuf") version "0.9.4"
 }
 
@@ -28,6 +28,15 @@ dependencies {
 // Ensure Avro generation happens before Kotlin compilation
 tasks.named("compileKotlin") {
     dependsOn("generateAvroJava")
+}
+
+// Add generated Avro sources to source set
+sourceSets {
+    main {
+        java {
+            srcDir(layout.buildDirectory.dir("generated-main-avro-java"))
+        }
+    }
 }
 
 project.protobuf {
