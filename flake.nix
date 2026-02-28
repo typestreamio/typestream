@@ -43,14 +43,14 @@
         {
           typestream = pkgs.buildGo124Module {
             pname = "typestream";
-            version = "0.3.4";
+            version = "0.3.5";
             src = self;
             modRoot = "cli";
             vendorHash = "sha256-SaYkuKUEYGEX44qzl++fxlzVXyCjf3SmKiP9m8BGi5E=";
             ldflags = [
               "-s"
               "-w"
-              "-X github.com/typestreamio/typestream/cli/pkg/version.Version=0.3.4"
+              "-X github.com/typestreamio/typestream/cli/pkg/version.Version=0.3.5"
               "-X github.com/typestreamio/typestream/cli/pkg/version.CommitHash=${self.shortRev or "dirty"}"
             ];
             postInstall = ''
