@@ -7,14 +7,19 @@ import io.typestream.testing.model.TestRecord
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.util.Properties
 
 class KafkaProducerWrapper(private val bootstrapServers: String, private val schemaRegistryUrl: String) {
 
-    fun produceTombstone(topic: String, encoding: String, key: String) {
-        KafkaProducer<String, Any?>(producerConfig(encoding)).use {
-            it.send(ProducerRecord(topic, key, null)).get()
+    fun produceTombstone(topic: String, key: String) {
+        val props = Properties()
+        props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
+        props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = ByteArraySerializer::class.java
+        KafkaProducer<String, ByteArray?>(props).use {
+            it.send(ProducerRecord<String, ByteArray?>(topic, key, null)).get()
         }
     }
 

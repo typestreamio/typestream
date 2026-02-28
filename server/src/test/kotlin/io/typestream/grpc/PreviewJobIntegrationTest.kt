@@ -25,6 +25,7 @@ import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Testcontainers
 internal class PreviewJobIntegrationTest {
@@ -1030,16 +1031,14 @@ internal class PreviewJobIntegrationTest {
         val topic = TestKafka.uniqueTopic("books")
 
         app.use {
-            val authorId = UUID.randomUUID().toString()
+            // Phase 1: Produce initial records (NO tombstone yet — avoids KTable commit-cycle coalescing)
             val testBooks = listOf(
-                Book(title = "Alpha", wordCount = 100, authorId = authorId),
+                Book(title = "Alpha", wordCount = 100, authorId = UUID.randomUUID().toString()),
                 Book(title = "Beta", wordCount = 200, authorId = UUID.randomUUID().toString()),
                 Book(title = "Gamma", wordCount = 300, authorId = UUID.randomUUID().toString())
             )
             val produced = testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
-
-            // Send tombstone for first book's key
-            testKafka.produceTombstone(topic, "avro", produced[0].id)
+            val tombstoneKey = produced[0].id
 
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
@@ -1056,7 +1055,7 @@ internal class PreviewJobIntegrationTest {
             val blockingStub = JobServiceGrpc.newBlockingStub(channel)
             val asyncStub = JobServiceGrpc.newStub(channel)
 
-            // Build graph: StreamSource -> TableMaterialized -> Inspector
+            // Build graph: StreamSource -> TableMaterialized(latest) -> Inspector
             val streamSourceNode = Job.PipelineNode.newBuilder()
                 .setId("source")
                 .setStreamSource(
@@ -1093,10 +1092,7 @@ internal class PreviewJobIntegrationTest {
                 .setInspectorNodeId("inspector-node-1")
                 .build()
 
-            // This would NPE before the fix when processing the tombstone record
             val createResponse = blockingStub.createPreviewJob(createRequest)
-
-            println("CreatePreviewJob (tombstone) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
 
             assertThat(createResponse.success).isTrue()
             assertThat(createResponse.jobId).isNotEmpty()
@@ -1106,7 +1102,8 @@ internal class PreviewJobIntegrationTest {
             delay(3000)
 
             val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
-            val latch = CountDownLatch(1)
+            val initialLatch = CountDownLatch(1)
+            val tombstoneLatch = CountDownLatch(1)
             var streamError: Throwable? = null
 
             val streamRequest = Job.StreamPreviewRequest.newBuilder()
@@ -1115,49 +1112,69 @@ internal class PreviewJobIntegrationTest {
 
             asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
                 override fun onNext(response: Job.StreamPreviewResponse) {
-                    println("Received tombstone-test message: key=${response.key}, value=${response.value}")
                     receivedMessages.add(response)
-                    // KTable emits changelog entries as records arrive (insert, update, delete).
-                    // 3 inserts + 1 tombstone deletion = at least 3 changelog records
-                    if (receivedMessages.size >= 3) {
-                        latch.countDown()
+
+                    // Phase 1: Wait for all 3 initial inserts (3 unique keys with non-empty values)
+                    val nonEmptyKeys = receivedMessages
+                        .filter { it.value.isNotEmpty() }
+                        .map { it.key }
+                        .distinct()
+                    if (nonEmptyKeys.size >= 3) {
+                        initialLatch.countDown()
+                    }
+
+                    // Phase 2: Detect tombstone entry (empty value with the tombstoned key)
+                    if (response.value.isEmpty() && response.key.contains(tombstoneKey)) {
+                        tombstoneLatch.countDown()
                     }
                 }
 
                 override fun onError(t: Throwable) {
-                    println("Stream error: ${t.message}")
                     streamError = t
-                    latch.countDown()
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
                 }
 
                 override fun onCompleted() {
-                    latch.countDown()
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
                 }
             })
 
-            val received = latch.await(30, TimeUnit.SECONDS)
+            // Phase 1: Wait for the 3 initial inserts to be processed and confirmed
+            assertThat(initialLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for 3 initial records from KTable changelog")
+                .isTrue()
+            assertThat(streamError).isNull()
+
+            // Verify all 3 books appeared as inserts
+            val insertValues = receivedMessages.filter { it.value.isNotEmpty() }.map { it.value }
+            assertThat(insertValues.any { it.contains("Alpha") }).isTrue()
+            assertThat(insertValues.any { it.contains("Beta") }).isTrue()
+            assertThat(insertValues.any { it.contains("Gamma") }).isTrue()
+
+            // Phase 2: Now produce the tombstone — initial records are confirmed committed
+            // to the KTable state store, so the tombstone will be processed in a separate
+            // commit window and will NOT be coalesced with the initial insert.
+            testKafka.produceTombstone(topic, tombstoneKey)
+
+            // Wait for the KTable to emit the deletion changelog entry
+            assertThat(tombstoneLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for tombstone deletion entry")
+                .isTrue()
+            assertThat(streamError).isNull()
 
             blockingStub.stopPreviewJob(
                 Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
             )
 
-            assertThat(streamError).isNull()
-            assertThat(receivedMessages).isNotEmpty()
+            // Verify the tombstone entry: key matches the deleted record, value is empty
+            val tombstoneEntries = receivedMessages.filter { it.value.isEmpty() && it.key.contains(tombstoneKey) }
+            assertThat(tombstoneEntries).hasSize(1)
 
-            val allValues = receivedMessages.map { it.value }
-
-            // Beta and Gamma should appear in the output (they were not tombstoned)
-            assertThat(allValues.any { it.contains("Beta") }).isTrue()
-            assertThat(allValues.any { it.contains("Gamma") }).isTrue()
-
-            // The tombstoned key (Alpha) should produce a null-value changelog entry.
-            // In the KTable changelog stream, a tombstone is emitted as an empty/null value.
-            val tombstoneKey = produced[0].id
-            val tombstoneRecords = receivedMessages.filter { it.key.contains(tombstoneKey) }
-            assertThat(tombstoneRecords).isNotEmpty()
-            // The last record for this key should be the tombstone (empty value)
-            val lastForKey = tombstoneRecords.last()
-            assertThat(lastForKey.value).isEmpty()
+            // Beta and Gamma should still be present (not tombstoned)
+            assertThat(insertValues.any { it.contains("Beta") }).isTrue()
+            assertThat(insertValues.any { it.contains("Gamma") }).isTrue()
         }
     }
 
@@ -1168,15 +1185,14 @@ internal class PreviewJobIntegrationTest {
         app.use {
             val authorA = UUID.randomUUID().toString()
             val authorB = UUID.randomUUID().toString()
+
+            // Phase 1: Produce initial records (NO tombstone yet)
             val testBooks = listOf(
                 Book(title = "Book A1", wordCount = 100, authorId = authorA),
                 Book(title = "Book A2", wordCount = 200, authorId = authorA),
                 Book(title = "Book B1", wordCount = 300, authorId = authorB)
             )
             val produced = testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
-
-            // Tombstone one of authorA's books
-            testKafka.produceTombstone(topic, "avro", produced[0].id)
 
             val serverName = InProcessServerBuilder.generateName()
             launch(dispatcher) {
@@ -1232,8 +1248,6 @@ internal class PreviewJobIntegrationTest {
 
             val createResponse = blockingStub.createPreviewJob(createRequest)
 
-            println("CreatePreviewJob (count tombstone) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
-
             assertThat(createResponse.success).isTrue()
 
             val jobId = createResponse.jobId
@@ -1241,7 +1255,11 @@ internal class PreviewJobIntegrationTest {
             delay(3000)
 
             val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
-            val latch = CountDownLatch(1)
+            // Phase 1 latch: fires when authorA count reaches 2 and authorB count reaches 1
+            val initialLatch = CountDownLatch(1)
+            // Phase 2 latch: fires when authorA count drops to 1 after tombstone
+            val tombstoneLatch = CountDownLatch(1)
+            val tombstoneProduced = AtomicBoolean(false)
             var streamError: Throwable? = null
 
             val streamRequest = Job.StreamPreviewRequest.newBuilder()
@@ -1250,47 +1268,64 @@ internal class PreviewJobIntegrationTest {
 
             asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
                 override fun onNext(response: Job.StreamPreviewResponse) {
-                    println("Received count-tombstone message: key=${response.key}, value=${response.value}")
                     receivedMessages.add(response)
-                    if (receivedMessages.size >= 2) {
-                        latch.countDown()
+
+                    // Phase 1: Wait for initial counts to settle
+                    // authorA should have 2 books, authorB should have 1
+                    val lastAuthorA = receivedMessages.filter { it.key.contains(authorA) }.lastOrNull()?.value
+                    val lastAuthorB = receivedMessages.filter { it.key.contains(authorB) }.lastOrNull()?.value
+                    if (lastAuthorA == "2" && lastAuthorB == "1") {
+                        initialLatch.countDown()
+                    }
+
+                    // Phase 2: After tombstone produced, detect authorA's count dropping to 1
+                    if (tombstoneProduced.get() && response.key.contains(authorA) && response.value == "1") {
+                        tombstoneLatch.countDown()
                     }
                 }
 
                 override fun onError(t: Throwable) {
-                    println("Stream error: ${t.message}")
                     streamError = t
-                    latch.countDown()
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
                 }
 
                 override fun onCompleted() {
-                    latch.countDown()
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
                 }
             })
 
-            val received = latch.await(30, TimeUnit.SECONDS)
+            // Phase 1: Wait for initial count state to settle
+            assertThat(initialLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for initial counts (authorA=2, authorB=1)")
+                .isTrue()
+            assertThat(streamError).isNull()
+
+            // Verify initial counts before tombstone
+            val preAuthorACount = receivedMessages.filter { it.key.contains(authorA) }.last().value
+            assertThat(preAuthorACount).isEqualTo("2")
+            val preAuthorBCount = receivedMessages.filter { it.key.contains(authorB) }.last().value
+            assertThat(preAuthorBCount).isEqualTo("1")
+
+            // Phase 2: Produce tombstone for Book A1 — authorA's count should drop from 2 to 1
+            tombstoneProduced.set(true)
+            testKafka.produceTombstone(topic, produced[0].id)
+
+            assertThat(tombstoneLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for authorA count to drop to 1 after tombstone")
+                .isTrue()
+            assertThat(streamError).isNull()
 
             blockingStub.stopPreviewJob(
                 Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
             )
 
-            assertThat(streamError).isNull()
-            assertThat(receivedMessages).isNotEmpty()
-
-            // Verify count output contains both author groups
-            val allKeys = receivedMessages.map { it.key }
-            assertThat(allKeys.any { it.contains(authorA) || it.contains(authorB) }).isTrue()
-
-            // The last emitted count for authorA should reflect the tombstone deletion.
-            // authorA had 2 books, 1 was tombstoned → final count should be 1.
-            val authorAMessages = receivedMessages.filter { it.key.contains(authorA) }
-            if (authorAMessages.isNotEmpty()) {
-                val lastCount = authorAMessages.last().value
-                println("Last count for authorA: $lastCount")
-                // Count value is serialized as a DataStream with Schema.Long
-                // After tombstone processing, authorA's count should be 1 (2 inserts - 1 tombstone)
-                assertThat(lastCount).contains("1")
-            }
+            // Verify final counts: authorA = 1 (2 inserts - 1 tombstone), authorB = 1 (unchanged)
+            val finalAuthorACount = receivedMessages.filter { it.key.contains(authorA) }.last().value
+            assertThat(finalAuthorACount).isEqualTo("1")
+            val finalAuthorBCount = receivedMessages.filter { it.key.contains(authorB) }.last().value
+            assertThat(finalAuthorBCount).isEqualTo("1")
         }
     }
 
@@ -1363,8 +1398,6 @@ internal class PreviewJobIntegrationTest {
 
             val createResponse = blockingStub.createPreviewJob(createRequest)
 
-            println("CreatePreviewJob (groupBy count) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
-
             assertThat(createResponse.success).isTrue()
 
             val jobId = createResponse.jobId
@@ -1381,16 +1414,13 @@ internal class PreviewJobIntegrationTest {
 
             asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
                 override fun onNext(response: Job.StreamPreviewResponse) {
-                    println("Received count message: key=${response.key}, value=${response.value}")
                     receivedMessages.add(response)
-                    // KTable count emits updates as records arrive; expect at least 2 groups
                     if (receivedMessages.size >= 2) {
                         latch.countDown()
                     }
                 }
 
                 override fun onError(t: Throwable) {
-                    println("Stream error: ${t.message}")
                     streamError = t
                     latch.countDown()
                 }
@@ -1400,7 +1430,9 @@ internal class PreviewJobIntegrationTest {
                 }
             })
 
-            val received = latch.await(30, TimeUnit.SECONDS)
+            assertThat(latch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for count messages")
+                .isTrue()
 
             blockingStub.stopPreviewJob(
                 Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()

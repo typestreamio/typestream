@@ -23,9 +23,9 @@ class TestKafka : RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v
         }
     }
 
-    fun produceTombstone(topic: String, encoding: String, key: String) {
+    fun produceTombstone(topic: String, key: String) {
         val kafkaProducer = KafkaProducerWrapper(bootstrapServers, schemaRegistryAddress)
-        kafkaProducer.produceTombstone(topic, encoding, key)
+        kafkaProducer.produceTombstone(topic, key)
     }
 
     fun produceRecords(topic: String, encoding: String, vararg records: TestRecord): List<TestRecord> {

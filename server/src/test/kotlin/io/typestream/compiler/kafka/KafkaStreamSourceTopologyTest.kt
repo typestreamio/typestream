@@ -43,13 +43,15 @@ class KafkaStreamSourceTopologyTest {
     }
 
     @Test
-    fun `avro stream handles tombstone values`() {
+    fun `DataStreamSerde serializes tombstone as null bytes and deserializes back to null`() {
         val builder = StreamsBuilder()
         val serde = DataStreamSerde()
 
         val stream = builder.stream("input", Consumed.with(serde, serde))
 
-        // Simulate the null-safe map pattern from KafkaStreamSource (avro branch)
+        // This tests the serde round-trip that underpins both the AVRO and PROTOBUF
+        // branches in KafkaStreamSource.stream(). Both branches use v?.let { ... }
+        // which relies on DataStreamSerde returning null for null bytes.
         stream.mapValues { v -> v?.let { it } }
             .to("output", Produced.with(serde, serde))
 
@@ -59,35 +61,6 @@ class KafkaStreamSourceTopologyTest {
 
         val key = testKey("key-1")
         val value = testDataStream("Test Book", 100)
-
-        input.pipeInput(key, value)
-        input.pipeInput(key, null as DataStream?)
-
-        val records = output.readRecordsToList()
-        assertThat(records).hasSize(2)
-        assertThat(records[0].value()).isEqualTo(value)
-        assertThat(records[1].value()).isNull()
-
-        driver.close()
-    }
-
-    @Test
-    fun `protobuf stream handles tombstone values`() {
-        val builder = StreamsBuilder()
-        val serde = DataStreamSerde()
-
-        val stream = builder.stream("input", Consumed.with(serde, serde))
-
-        // Same null-safe pattern applies to protobuf branch
-        stream.mapValues { v -> v?.let { it } }
-            .to("output", Produced.with(serde, serde))
-
-        val driver = TopologyTestDriver(builder.build(), testProperties())
-        val input = driver.createInputTopic("input", serde.serializer(), serde.serializer())
-        val output = driver.createOutputTopic("output", serde.deserializer(), serde.deserializer())
-
-        val key = testKey("key-1")
-        val value = testDataStream("Proto Book", 200)
 
         input.pipeInput(key, value)
         input.pipeInput(key, null as DataStream?)
