@@ -25,6 +25,7 @@ import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Testcontainers
 internal class PreviewJobIntegrationTest {
@@ -1026,6 +1027,309 @@ internal class PreviewJobIntegrationTest {
     }
 
     @Test
+    fun `materialized view handles tombstones`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            // Phase 1: Produce initial records (NO tombstone yet — avoids KTable commit-cycle coalescing)
+            val testBooks = listOf(
+                Book(title = "Alpha", wordCount = 100, authorId = UUID.randomUUID().toString()),
+                Book(title = "Beta", wordCount = 200, authorId = UUID.randomUUID().toString()),
+                Book(title = "Gamma", wordCount = 300, authorId = UUID.randomUUID().toString())
+            )
+            val produced = testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+            val tombstoneKey = produced[0].id
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> TableMaterialized(latest) -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("")
+                        .setAggregationType("latest")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("tombstone-test"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            assertThat(createResponse.success).isTrue()
+            assertThat(createResponse.jobId).isNotEmpty()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            val initialLatch = CountDownLatch(1)
+            val tombstoneLatch = CountDownLatch(1)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    receivedMessages.add(response)
+
+                    // Phase 1: Wait for all 3 initial inserts (3 unique keys with non-empty values)
+                    val nonEmptyKeys = receivedMessages
+                        .filter { it.value.isNotEmpty() }
+                        .map { it.key }
+                        .distinct()
+                    if (nonEmptyKeys.size >= 3) {
+                        initialLatch.countDown()
+                    }
+
+                    // Phase 2: Detect tombstone entry (empty value with the tombstoned key)
+                    if (response.value.isEmpty() && response.key.contains(tombstoneKey)) {
+                        tombstoneLatch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    streamError = t
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
+                }
+
+                override fun onCompleted() {
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
+                }
+            })
+
+            // Phase 1: Wait for the 3 initial inserts to be processed and confirmed
+            assertThat(initialLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for 3 initial records from KTable changelog")
+                .isTrue()
+            assertThat(streamError).isNull()
+
+            // Verify all 3 books appeared as inserts
+            val insertValues = receivedMessages.filter { it.value.isNotEmpty() }.map { it.value }
+            assertThat(insertValues.any { it.contains("Alpha") }).isTrue()
+            assertThat(insertValues.any { it.contains("Beta") }).isTrue()
+            assertThat(insertValues.any { it.contains("Gamma") }).isTrue()
+
+            // Phase 2: Now produce the tombstone — initial records are confirmed committed
+            // to the KTable state store, so the tombstone will be processed in a separate
+            // commit window and will NOT be coalesced with the initial insert.
+            testKafka.produceTombstone(topic, tombstoneKey)
+
+            // Wait for the KTable to emit the deletion changelog entry
+            assertThat(tombstoneLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for tombstone deletion entry")
+                .isTrue()
+            assertThat(streamError).isNull()
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            // Verify the tombstone entry: key matches the deleted record, value is empty
+            val tombstoneEntries = receivedMessages.filter { it.value.isEmpty() && it.key.contains(tombstoneKey) }
+            assertThat(tombstoneEntries).hasSize(1)
+
+            // Beta and Gamma should still be present (not tombstoned)
+            assertThat(insertValues.any { it.contains("Beta") }).isTrue()
+            assertThat(insertValues.any { it.contains("Gamma") }).isTrue()
+        }
+    }
+
+    @Test
+    fun `materialized view count with tombstones`(): Unit = runBlocking {
+        val topic = TestKafka.uniqueTopic("books")
+
+        app.use {
+            val authorA = UUID.randomUUID().toString()
+            val authorB = UUID.randomUUID().toString()
+
+            // Phase 1: Produce initial records (NO tombstone yet)
+            val testBooks = listOf(
+                Book(title = "Book A1", wordCount = 100, authorId = authorA),
+                Book(title = "Book A2", wordCount = 200, authorId = authorA),
+                Book(title = "Book B1", wordCount = 300, authorId = authorB)
+            )
+            val produced = testKafka.produceRecords(topic, "avro", *testBooks.toTypedArray())
+
+            val serverName = InProcessServerBuilder.generateName()
+            launch(dispatcher) {
+                app.run(InProcessServerBuilder.forName(serverName).directExecutor())
+            }
+
+            until { requireNotNull(app.server) }
+
+            grpcCleanupRule.register(app.server ?: return@use)
+
+            val channel = grpcCleanupRule.register(
+                InProcessChannelBuilder.forName(serverName).directExecutor().build()
+            )
+            val blockingStub = JobServiceGrpc.newBlockingStub(channel)
+            val asyncStub = JobServiceGrpc.newStub(channel)
+
+            // Build graph: StreamSource -> TableMaterialized(groupBy=author_id, count) -> Inspector
+            val streamSourceNode = Job.PipelineNode.newBuilder()
+                .setId("source")
+                .setStreamSource(
+                    Job.StreamSourceNode.newBuilder()
+                        .setDataStream(Job.DataStreamProto.newBuilder().setPath("/dev/kafka/local/topics/$topic"))
+                        .setEncoding(Job.Encoding.AVRO)
+                )
+                .build()
+
+            val tableMaterializedNode = Job.PipelineNode.newBuilder()
+                .setId("mat-view")
+                .setTableMaterialized(
+                    Job.TableMaterializedNode.newBuilder()
+                        .setGroupByField("author_id")
+                        .setAggregationType("count")
+                )
+                .build()
+
+            val inspectorNode = Job.PipelineNode.newBuilder()
+                .setId("inspector-node-1")
+                .setInspector(Job.InspectorNode.newBuilder().setLabel("count-tombstone-test"))
+                .build()
+
+            val graph = Job.PipelineGraph.newBuilder()
+                .addNodes(streamSourceNode)
+                .addNodes(tableMaterializedNode)
+                .addNodes(inspectorNode)
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("source").setToId("mat-view"))
+                .addEdges(Job.PipelineEdge.newBuilder().setFromId("mat-view").setToId("inspector-node-1"))
+                .build()
+
+            val createRequest = Job.CreatePreviewJobRequest.newBuilder()
+                .setGraph(graph)
+                .setInspectorNodeId("inspector-node-1")
+                .build()
+
+            val createResponse = blockingStub.createPreviewJob(createRequest)
+
+            assertThat(createResponse.success).isTrue()
+
+            val jobId = createResponse.jobId
+
+            delay(3000)
+
+            val receivedMessages = CopyOnWriteArrayList<Job.StreamPreviewResponse>()
+            // Phase 1 latch: fires when authorA count reaches 2 and authorB count reaches 1
+            val initialLatch = CountDownLatch(1)
+            // Phase 2 latch: fires when authorA count drops to 1 after tombstone
+            val tombstoneLatch = CountDownLatch(1)
+            val tombstoneProduced = AtomicBoolean(false)
+            var streamError: Throwable? = null
+
+            val streamRequest = Job.StreamPreviewRequest.newBuilder()
+                .setJobId(jobId)
+                .build()
+
+            asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
+                override fun onNext(response: Job.StreamPreviewResponse) {
+                    receivedMessages.add(response)
+
+                    // Phase 1: Wait for initial counts to settle
+                    // authorA should have 2 books, authorB should have 1
+                    val lastAuthorA = receivedMessages.filter { it.key.contains(authorA) }.lastOrNull()?.value
+                    val lastAuthorB = receivedMessages.filter { it.key.contains(authorB) }.lastOrNull()?.value
+                    if (lastAuthorA == "2" && lastAuthorB == "1") {
+                        initialLatch.countDown()
+                    }
+
+                    // Phase 2: After tombstone produced, detect authorA's count dropping to 1
+                    if (tombstoneProduced.get() && response.key.contains(authorA) && response.value == "1") {
+                        tombstoneLatch.countDown()
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    streamError = t
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
+                }
+
+                override fun onCompleted() {
+                    initialLatch.countDown()
+                    tombstoneLatch.countDown()
+                }
+            })
+
+            // Phase 1: Wait for initial count state to settle
+            assertThat(initialLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for initial counts (authorA=2, authorB=1)")
+                .isTrue()
+            assertThat(streamError).isNull()
+
+            // Verify initial counts before tombstone
+            val preAuthorACount = receivedMessages.filter { it.key.contains(authorA) }.last().value
+            assertThat(preAuthorACount).isEqualTo("2")
+            val preAuthorBCount = receivedMessages.filter { it.key.contains(authorB) }.last().value
+            assertThat(preAuthorBCount).isEqualTo("1")
+
+            // Phase 2: Produce tombstone for Book A1 — authorA's count should drop from 2 to 1
+            tombstoneProduced.set(true)
+            testKafka.produceTombstone(topic, produced[0].id)
+
+            assertThat(tombstoneLatch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for authorA count to drop to 1 after tombstone")
+                .isTrue()
+            assertThat(streamError).isNull()
+
+            blockingStub.stopPreviewJob(
+                Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()
+            )
+
+            // Verify final counts: authorA = 1 (2 inserts - 1 tombstone), authorB = 1 (unchanged)
+            val finalAuthorACount = receivedMessages.filter { it.key.contains(authorA) }.last().value
+            assertThat(finalAuthorACount).isEqualTo("1")
+            val finalAuthorBCount = receivedMessages.filter { it.key.contains(authorB) }.last().value
+            assertThat(finalAuthorBCount).isEqualTo("1")
+        }
+    }
+
+    @Test
     fun `source to materializedView with groupByField count aggregation`(): Unit = runBlocking {
         val topic = TestKafka.uniqueTopic("books")
 
@@ -1094,8 +1398,6 @@ internal class PreviewJobIntegrationTest {
 
             val createResponse = blockingStub.createPreviewJob(createRequest)
 
-            println("CreatePreviewJob (groupBy count) response: success=${createResponse.success}, jobId=${createResponse.jobId}, error=${createResponse.error}")
-
             assertThat(createResponse.success).isTrue()
 
             val jobId = createResponse.jobId
@@ -1112,16 +1414,13 @@ internal class PreviewJobIntegrationTest {
 
             asyncStub.streamPreview(streamRequest, object : StreamObserver<Job.StreamPreviewResponse> {
                 override fun onNext(response: Job.StreamPreviewResponse) {
-                    println("Received count message: key=${response.key}, value=${response.value}")
                     receivedMessages.add(response)
-                    // KTable count emits updates as records arrive; expect at least 2 groups
                     if (receivedMessages.size >= 2) {
                         latch.countDown()
                     }
                 }
 
                 override fun onError(t: Throwable) {
-                    println("Stream error: ${t.message}")
                     streamError = t
                     latch.countDown()
                 }
@@ -1131,7 +1430,9 @@ internal class PreviewJobIntegrationTest {
                 }
             })
 
-            val received = latch.await(30, TimeUnit.SECONDS)
+            assertThat(latch.await(30, TimeUnit.SECONDS))
+                .withFailMessage("Timed out waiting for count messages")
+                .isTrue()
 
             blockingStub.stopPreviewJob(
                 Job.StopPreviewJobRequest.newBuilder().setJobId(jobId).build()

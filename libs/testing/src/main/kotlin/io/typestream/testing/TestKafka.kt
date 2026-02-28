@@ -23,6 +23,11 @@ class TestKafka : RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v
         }
     }
 
+    fun produceTombstone(topic: String, key: String) {
+        val kafkaProducer = KafkaProducerWrapper(bootstrapServers, schemaRegistryAddress)
+        kafkaProducer.produceTombstone(topic, key)
+    }
+
     fun produceRecords(topic: String, encoding: String, vararg records: TestRecord): List<TestRecord> {
         val adminClient = AdminClientWrapper(bootstrapServers)
         adminClient.createTopics(topic)

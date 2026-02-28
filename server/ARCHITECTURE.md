@@ -194,11 +194,26 @@ TypeStream uses Avro as its primary serialization format. The `kafka/` package h
 
 The deserializer fetches the **writer's schema** from Schema Registry using the schema ID embedded in each message (`[0x00][schema ID (4 bytes)][avro binary]`). This enables TypeStream to read topics produced by external systems (like Debezium CDC) that use different schema namespaces.
 
+### Tombstone Handling
+
+Compacted Kafka topics contain **tombstone records** (null values) that signal key deletion. The serdes (`AvroSerde`, `ProtoSerde`, `DataStreamSerde`) all return `null` for tombstone byte arrays. `KafkaStreamSource.stream()` uses null-safe deserialization at the `.map()` call site:
+
+```kotlin
+// v is null for tombstones — pass null through instead of calling fromAvroGenericRecord
+v?.let { DataStream.fromAvroGenericRecord(dataStream.path, it) }
+```
+
+Downstream nodes handle null values as follows:
+- **Filter**: `v != null && predicate.matches(v)` — tombstones are filtered out
+- **toTable()** / `tableMaterialize`: null values delete the key from the state store (standard KTable semantics)
+- **CDC unwrap**: `v != null && getAfterFieldValue(v.schema) != null` — tombstones filtered before schema access
+
 ### Key Files
 
 | File | Purpose |
 |------|---------|
 | `AvroSerde.kt` | Kafka serde with schema registry lookup |
+| `DataStreamSerde.kt` | JSON-based serde for internal DataStream (returns null for null data) |
 | `SchemaRegistryClient.kt` | HTTP client for Schema Registry API |
 | `GenericDataWithLogicalTypes.kt` | Avro logical type support |
 
@@ -210,6 +225,8 @@ TypeStream supports consuming Change Data Capture (CDC) events from Debezium. Th
 Debezium Topic (CDC envelope: before/after/source/op/ts_ms)
         ↓
 StreamSource(unwrapCdc=true)
+        ↓
+Filter: v != null && 'after' field is not null (filters tombstones + DELETEs)
         ↓
 DataStream.unwrapCdc() extracts schema from "after" field
         ↓
@@ -275,12 +292,15 @@ Integration tests use **Testcontainers with real Kafka** (Redpanda) to verify pi
 - `TestKafkaContainer.instance` singleton provides a shared Redpanda container
 - `TestKafka.uniqueTopic("name")` generates isolated topic names per test
 - `testKafka.produceRecords(topic, encoding, records...)` for test data
+- `testKafka.produceTombstone(topic, encoding, key)` for tombstone records
 - gRPC services tested via `InProcessServerBuilder` + `GrpcCleanupRule`
+- `TopologyTestDriver` + `DataStreamSerde` for fast topology-level tests (no Testcontainers)
 
 ### Key Test Files
 
 | File | Purpose |
 |------|---------|
+| `KafkaStreamSourceTopologyTest.kt` | Tombstone/null handling in stream topologies (TopologyTestDriver) |
 | `GraphCompilerTest.kt` | Graph compilation, schema propagation through node chains |
 | `PreviewJobIntegrationTest.kt` | End-to-end message flow via gRPC streaming |
 | `JobServiceTest.kt` | Graph-to-job creation via gRPC |

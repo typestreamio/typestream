@@ -91,8 +91,7 @@ data class KafkaStreamSource(
         return s
             // Filter out DELETE records where 'after' is null
             .filter { _, v ->
-                val afterValue = getAfterFieldValue(v.schema)
-                afterValue != null
+                v != null && getAfterFieldValue(v.schema) != null
             }
             // Extract 'after' fields to top level
             .mapValues { v ->
@@ -141,7 +140,8 @@ data class KafkaStreamSource(
                     dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
                 ).map { k, v ->
                     pair(
-                        DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient), DataStream.fromAvroGenericRecord(dataStream.path, v)
+                        DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient),
+                        v?.let { DataStream.fromAvroGenericRecord(dataStream.path, it) }
                     )
                 }
             }
@@ -153,7 +153,8 @@ data class KafkaStreamSource(
                     dataStream.name, Consumed.with(Serdes.Bytes(), valueSerde)
                 ).map { k, v ->
                     pair(
-                        DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient), DataStream.fromProtoMessage(dataStream.path, v)
+                        DataStream.fromKeyBytes(dataStream.path, k, schemaRegistryClient),
+                        v?.let { DataStream.fromProtoMessage(dataStream.path, it) }
                     )
                 }
             }
@@ -218,7 +219,7 @@ data class KafkaStreamSource(
         stream = if (filter.byKey) {
             stream.filter { k, _ -> filter.predicate.matches(k) }
         } else {
-            stream.filter { _, v -> filter.predicate.matches(v) }
+            stream.filter { _, v -> v != null && filter.predicate.matches(v) }
         }
     }
 

@@ -20,3 +20,10 @@ node_modules/
 devenv.lock
 .devenv/
 .devenv.flake.nix
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
+
+# Beads backup artifacts
+.beads/

@@ -172,8 +172,8 @@ class KafkaStreamsJob(
         while (isRunning()) {
             val records = consumer.poll(1.seconds.toJavaDuration())
             records.forEach {
-                val valueElement = it.value().schema.toJsonElement()
-                emit(valueElement.toString())
+                val value = it.value() ?: return@forEach
+                emit(value.schema.toJsonElement().toString())
             }
         }
 
@@ -200,7 +200,7 @@ class KafkaStreamsJob(
             val records = consumer.poll(1.seconds.toJavaDuration())
             records.forEach {
                 val keyElement = it.key()?.schema?.toJsonElement()?.toString() ?: ""
-                val valueElement = it.value().schema.toJsonElement().toString()
+                val valueElement = it.value()?.schema?.toJsonElement()?.toString() ?: ""
                 emit(PreviewRecord(keyElement, valueElement))
             }
         }
