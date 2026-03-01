@@ -21,7 +21,7 @@ var pipelinesListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists all managed pipelines",
 	Run: func(cmd *cobra.Command, args []string) {
-		client := grpc.NewClient()
+		client := grpc.NewClient(ServerAddress())
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		defer func() { _ = client.Close() }()
@@ -57,7 +57,7 @@ var pipelinesDeleteCmd = &cobra.Command{
 	Short: "Deletes a managed pipeline",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client := grpc.NewClient()
+		client := grpc.NewClient(ServerAddress())
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		defer func() { _ = client.Close() }()

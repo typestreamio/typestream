@@ -67,7 +67,7 @@ var planCmd = &cobra.Command{
 			})
 		}
 
-		client := grpc.NewClient()
+		client := grpc.NewClient(ServerAddress())
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		defer func() { _ = client.Close() }()

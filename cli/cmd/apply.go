@@ -28,7 +28,7 @@ var applyCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		client := grpc.NewClient()
+		client := grpc.NewClient(ServerAddress())
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		defer func() { _ = client.Close() }()

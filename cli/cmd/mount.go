@@ -16,7 +16,7 @@ var mountCmd = &cobra.Command{
 	Short: "Mounts endpoints to a TypeStream server",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client := grpc.NewClient()
+		client := grpc.NewClient(ServerAddress())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()

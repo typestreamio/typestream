@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"os"
 
 	"github.com/charmbracelet/log"
 	"github.com/typestreamio/typestream/cli/pkg/filesystem_service"
@@ -18,21 +17,15 @@ type Client struct {
 	conn *grpc.ClientConn
 }
 
-func NewClient() *Client {
-	var opts []grpc.DialOption
+func NewClient(server string) *Client {
+	if server == "" {
+		log.Fatal("server address is required (use --server flag or TYPESTREAM_SERVER env var)")
+	}
 
+	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	host := os.Getenv("TYPESTREAM_HOST")
-	port := os.Getenv("TYPESTREAM_PORT")
-	if host == "" {
-		host = "127.0.0.1"
-	}
-	if port == "" {
-		port = "4242"
-	}
-
-	conn, err := grpc.NewClient(host+":"+port, opts...)
+	conn, err := grpc.NewClient(server, opts...)
 	if err != nil {
 		log.Fatalf("💥 cannot connect to TypeStream server %v\n", err)
 	}

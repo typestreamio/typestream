@@ -22,8 +22,8 @@ type shell struct {
 }
 
 // TODO: get user id from config
-func newShell(ctx context.Context, userId string) (*shell, error) {
-	client := grpc.NewClient()
+func newShell(ctx context.Context, server string, userId string) (*shell, error) {
+	client := grpc.NewClient(server)
 	startSessionResponse, err := client.StartSession(ctx, &interactive_session_service.StartSessionRequest{UserId: userId})
 	if err != nil {
 		fmt.Printf("💥 failed to start session: %v\n", err)
@@ -90,14 +90,14 @@ func (s *shell) completer(line []rune, cursor int) readline.Completions {
 	return readline.CompleteValues(completeProgramResponse.Value...)
 }
 
-func Run() {
+func Run(server string) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	s, err := newShell(ctx, "42")
+	s, err := newShell(ctx, server, "42")
 	if err != nil {
 		return
 	}
@@ -191,14 +191,14 @@ func Run() {
 	fmt.Println("👋 Bye!")
 }
 
-func Exec(source string) error {
+func Exec(server string, source string) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	s, err := newShell(ctx, "42")
+	s, err := newShell(ctx, server, "42")
 	if err != nil {
 		return err
 	}
