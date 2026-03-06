@@ -61,9 +61,12 @@ class Server(private val config: Config, private val dispatcher: CoroutineDispat
         serverBuilder.addService(jobService)
         val kafkaConfig = fileSystem.config.sources.kafka.values.firstOrNull()
         val stateStore = if (kafkaConfig != null) {
-            try { PipelineStateStore(kafkaConfig) } catch (e: Exception) {
-                logger.warn(e) { "Failed to create pipeline state store (Kafka may be unavailable)" }
-                null
+            try {
+                PipelineStateStore(kafkaConfig)
+            } catch (e: Exception) {
+                throw IllegalStateException(
+                    "cannot start: Kafka is unreachable at ${kafkaConfig.bootstrapServers}", e
+                )
             }
         } else null
         val pipelineService = PipelineService(config, vm, stateStore)

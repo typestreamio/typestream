@@ -7,6 +7,11 @@ import io.typestream.filesystem.Directory
 import io.typestream.kafka.KafkaAdminClient
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import kotlinx.coroutines.supervisorScope
+import org.apache.kafka.clients.admin.Admin
+import org.apache.kafka.clients.admin.AdminClientConfig
+import org.apache.kafka.common.config.SaslConfigs
+import java.util.Properties
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -26,6 +31,47 @@ class KafkaClusterDirectory(
 
     init {
         setOf(brokersDir, consumerGroupsDir, topicsDir, schemaRegistryDir).forEach(::add)
+    }
+
+    fun verifyConnectivity(timeoutMs: Long = 10_000) {
+        verifyKafkaConnectivity(timeoutMs)
+        verifySchemaRegistryConnectivity()
+    }
+
+    private fun verifyKafkaConnectivity(timeoutMs: Long) {
+        logger.info { "verifying Kafka connectivity for cluster '$name' at ${kafkaConfig.bootstrapServers}" }
+        val props = Properties().apply {
+            put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.bootstrapServers)
+            put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, timeoutMs.toInt())
+            put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, timeoutMs.toInt())
+        }
+        kafkaConfig.saslConfig?.let {
+            props[AdminClientConfig.SECURITY_PROTOCOL_CONFIG] = "SASL_SSL"
+            props[SaslConfigs.SASL_MECHANISM] = it.mechanism
+            props[SaslConfigs.SASL_JAAS_CONFIG] = it.jaasConfig
+        }
+        try {
+            Admin.create(props).use { admin ->
+                admin.describeCluster().clusterId().get(timeoutMs, TimeUnit.MILLISECONDS)
+            }
+            logger.info { "Kafka cluster '$name' is reachable" }
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                "cannot start: Kafka cluster '$name' is unreachable at ${kafkaConfig.bootstrapServers}", e
+            )
+        }
+    }
+
+    private fun verifySchemaRegistryConnectivity() {
+        logger.info { "verifying Schema Registry connectivity for cluster '$name' at ${kafkaConfig.schemaRegistry.url}" }
+        try {
+            schemaRegistryClient.subjects()
+            logger.info { "Schema Registry for cluster '$name' is reachable" }
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                "cannot start: Schema Registry for cluster '$name' is unreachable at ${kafkaConfig.schemaRegistry.url}", e
+            )
+        }
     }
 
     override fun stat() = buildString {
