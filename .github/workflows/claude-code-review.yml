@@ -11,8 +11,11 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
-    # Only review PR builds
-    if: github.event.workflow_run.event == 'pull_request'
+    # Only review PR builds, skip Claude's own commits to prevent loops
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login != 'claude[bot]' &&
+      github.event.workflow_run.actor.login != 'github-actions[bot]'
 
     permissions:
       contents: write
@@ -42,10 +45,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Allow review to run after Claude's own fix commits
-          allowed_bots: 'claude'
-          # Prevent Claude from merging or closing PRs
-          claude_args: '--disallowedTools "Bash(gh pr merge:*),Bash(gh pr close:*)"'
+          use_sticky_comment: true
+          claude_args: >-
+            --max-turns 5
+            --disallowedTools "Bash(gh pr merge:*),Bash(gh pr close:*)"
           prompt: |
             REPO: ${{ github.repository }}
             WORKFLOW: ${{ github.event.workflow_run.name }}
