@@ -45,7 +45,9 @@ class FileSystem(val config: Config, private val dispatcher: CoroutineDispatcher
     init {
         config.sources.kafka.forEach { (name, config) ->
             logger.info { "starting filesystem for kafka cluster: $name" }
-            kafkaDir.add(KafkaClusterDirectory(name, config))
+            val clusterDir = KafkaClusterDirectory(name, config)
+            clusterDir.verifyConnectivity()
+            kafkaDir.add(clusterDir)
         }
         config.mounts.random.values.forEach { (valueType, endpoint) ->
             randomDir.add(Random(endpoint.substringAfterLast("/"), valueType))
