@@ -25,7 +25,7 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.14")
 
     testImplementation(kotlin("test"))
-    testImplementation("org.assertj:assertj-core:3.27.3")
+    testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("nz.lae.stacksrc:stacksrc-junit5:0.6.0")
