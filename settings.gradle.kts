@@ -24,7 +24,7 @@ dependencyResolutionManagement {
             version("okhttp", "4.12.0")
             version("mockk", "1.14.11")
             version("protobuf", "3.24.2")
-            version("rocksdbjni", "6.29.4.1")
+            version("rocksdbjni", "6.29.5")
             version("slf4j", "2.0.7")
             version("testcontainers", "2.0.3")
 
