@@ -22,6 +22,7 @@ CDC_TOPIC=${CDC_TOPIC:-dbserver.public.help_articles}
 EMBEDDINGS_TOPIC=${EMBEDDINGS_TOPIC:-help_article_embeddings}
 COLLECTION=${COLLECTION:-HelpArticle}
 PIPELINE_FILE=${PIPELINE_FILE:-pipeline/help-articles.typestream.json}
+EXPECTED_DOCS=${EXPECTED_DOCS:-10}   # rows in db/01-help-articles.sql; bump if you change the seed
 export KAFKA_CONNECT SERVER_ADDR WEAVIATE_REST SCHEMA_REGISTRY EMBEDDINGS_TOPIC COLLECTION
 
 # shellcheck source=target.sh
@@ -40,12 +41,19 @@ retry() { # retry <seconds> <description> <command...>
 
 subject_exists() { curl -sf "${SCHEMA_REGISTRY}/subjects" | jq -e --arg s "$1" 'index($s)' >/dev/null; }
 
-echo "[1/6] waiting for dependencies (kafka-connect, weaviate, server)..."
+weaviate_count() {
+  curl -s "${WEAVIATE_REST}/v1/graphql" -H 'Content-Type: application/json' \
+    -d "{\"query\":\"{Aggregate{${COLLECTION}{meta{count}}}}\"}" \
+    | jq -r ".data.Aggregate.${COLLECTION}[0].meta.count // 0"
+}
+docs_ready() { [ "$(weaviate_count)" -ge "${EXPECTED_DOCS}" ]; }
+
+echo "[1/7] waiting for dependencies (kafka-connect, weaviate, server)..."
 retry 120 "kafka-connect"     curl -sf "${KAFKA_CONNECT}/connectors"
 retry 120 "weaviate"          curl -sf "${WEAVIATE_REST}/v1/.well-known/ready"
 retry 120 "server reflection" grpcurl -plaintext "${SERVER_ADDR}" list
 
-echo "[2/6] registering Postgres CDC connector (public.help_articles)..."
+echo "[2/7] registering Postgres CDC connector (public.help_articles)..."
 curl -sf -X PUT "${KAFKA_CONNECT}/connectors/help-articles-cdc/config" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -68,23 +76,27 @@ curl -sf -X PUT "${KAFKA_CONNECT}/connectors/help-articles-cdc/config" \
   }' >/dev/null
 echo "  done"
 
-echo "[3/6] waiting for CDC snapshot to populate ${CDC_TOPIC}..."
+echo "[3/7] waiting for CDC snapshot to populate ${CDC_TOPIC}..."
 retry 120 "${CDC_TOPIC} schema" subject_exists "${CDC_TOPIC}-value"
 sleep 12   # let the server's filesystem (fsRefreshRate=10s) discover the topic
 
-echo "[4/6] creating destination collection..."
+echo "[4/7] creating destination collection..."
 create_collection
 
-echo "[5/6] applying TypeStream pipeline..."
+echo "[5/7] applying TypeStream pipeline..."
 jq '{metadata: {name: .name, version: .version, description: .description}, graph: .graph}' \
   "${PIPELINE_FILE}" > /tmp/apply.json
 grpcurl -plaintext -d @ "${SERVER_ADDR}" \
   io.typestream.grpc.PipelineService/ApplyPipeline < /tmp/apply.json
 echo "  pipeline applied"
 
-echo "[6/6] waiting for embeddings, then registering sink connector..."
+echo "[6/7] waiting for embeddings, then registering sink connector..."
 retry 180 "${EMBEDDINGS_TOPIC} schema" subject_exists "${EMBEDDINGS_TOPIC}-value"
 register_sink_connector
+
+echo "[7/7] waiting for all ${EXPECTED_DOCS} docs to land in ${COLLECTION}..."
+retry 120 "${EXPECTED_DOCS} docs in ${COLLECTION}" docs_ready
+echo "  ${COLLECTION} now has $(weaviate_count) objects"
 
 echo ""
 echo "Demo is live. Open http://localhost:8000 and ask: \"How long is the free trial?\""

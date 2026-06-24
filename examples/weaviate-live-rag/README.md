@@ -7,6 +7,8 @@ reindex job, no consumer code, no Kafka to operate.
 
 > Data is fictional ("Northwind"). Nothing here is real.
 
+![The pipeline in the TypeStream UI](pipeline-graph.png)
+
 ## What's inside
 
 ```
