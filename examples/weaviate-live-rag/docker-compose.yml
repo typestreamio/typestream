@@ -1,0 +1,190 @@
+# Self-contained "live RAG" demo: Postgres -> TypeStream -> Weaviate, with a chatbot.
+# Quickstart:  cp .env.example .env  (add OPENAI_API_KEY)  &&  docker compose up
+# Then open http://localhost:8000
+#
+# Per-target surface (what changes when cloning this to another datastore):
+#   - the `weaviate` service block + the chatbot's WEAVIATE_HOST
+#   - bootstrap/target.sh (create collection + register sink connector)
+#   - chatbot/retriever.js (how a question becomes documents)
+# Everything else (postgres, redpanda, kafka-connect, server, the bootstrap core) is reusable.
+
+networks:
+  typestream_network:
+    driver: bridge
+
+# No named volumes on purpose: this stack is ephemeral. `docker compose down`
+# wipes all state; `docker compose up` re-seeds Postgres and re-runs bootstrap
+# for a clean baseline every time. (Use stop/start to pause without wiping.)
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.9
+    command:
+      - redpanda start
+      - --smp 1
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+    ports:
+      - "18081:18081"
+      - "19092:19092"
+    networks: [typestream_network]
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: typestream
+      POSTGRES_PASSWORD: typestream
+      POSTGRES_DB: demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d:ro
+    command: ["postgres", "-c", "wal_level=logical"]
+    networks: [typestream_network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U typestream -d demo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  kafka-connect:
+    image: ghcr.io/typestreamio/kafka-connect:${TYPESTREAM_VERSION:-latest}
+    # Skip the image's baked-in CDC auto-registration (it targets demo tables we don't use);
+    # bootstrap registers our own help_articles connector instead.
+    entrypoint: ["/docker-entrypoint.sh"]
+    command: ["start"]
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: redpanda:9092
+      GROUP_ID: typestream-connect
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://redpanda:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://redpanda:8081
+    networks: [typestream_network]
+    depends_on:
+      redpanda: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.28.4
+    command: ["--host", "0.0.0.0", "--port", "8080", "--scheme", "http"]
+    ports:
+      - "8090:8080"   # REST
+      - "50051:50051" # gRPC
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      CLUSTER_HOSTNAME: node1
+    networks: [typestream_network]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/v1/.well-known/ready || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  server:
+    image: ghcr.io/typestreamio/server:${TYPESTREAM_VERSION:-latest}
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+      # Point the server's auto-registered dev connections at the compose service
+      # names (they default to localhost, which is the server container itself).
+      TYPESTREAM_POSTGRES_HOST: postgres
+      TYPESTREAM_WEAVIATE_REST_URL: http://weaviate:8080
+      TYPESTREAM_WEAVIATE_GRPC_URL: weaviate:50051
+      TYPESTREAM_CONFIG: |-
+        [grpc]
+        port=4242
+        [sources.kafka.local]
+        bootstrapServers="redpanda:9092"
+        schemaRegistry.url="http://redpanda:8081"
+        fsRefreshRate=10
+    ports:
+      - "4242:4242"
+    networks: [typestream_network]
+    depends_on:
+      redpanda: { condition: service_healthy }
+
+  chatbot:
+    build:
+      context: ./chatbot
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+      WEAVIATE_HOST: weaviate:8080
+      WEAVIATE_SCHEME: http
+      COLLECTION: HelpArticle
+      EMBEDDING_MODEL: text-embedding-3-small
+      CHAT_MODEL: gpt-4o-mini
+    ports:
+      - "8000:8000"
+    networks: [typestream_network]
+    depends_on:
+      weaviate: { condition: service_healthy }
+
+  # --- TypeStream UI (visual pipeline graph + job status) -------------------
+  # Reached at http://localhost:5173 via caddy -> {uiv2 static, envoy gRPC-web}.
+  uiv2:
+    image: ghcr.io/typestreamio/ui:${TYPESTREAM_VERSION:-latest}
+    networks: [typestream_network]
+    depends_on: [envoy]
+
+  envoy:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - ./ui/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    networks: [typestream_network]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      server: { condition: service_started }
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: ":80"
+    ports:
+      - "5173:80"
+    volumes:
+      - ./ui/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks: [typestream_network]
+    depends_on: [uiv2, envoy]
+
+  # One-shot: registers CDC, creates the Weaviate collection, applies the pipeline,
+  # registers the Weaviate sink connector. Exits 0 when the demo is live.
+  bootstrap:
+    build:
+      context: .
+      dockerfile: bootstrap/Dockerfile
+    restart: "no"
+    networks: [typestream_network]
+    depends_on:
+      kafka-connect: { condition: service_healthy }
+      weaviate: { condition: service_healthy }
+      server: { condition: service_started }
