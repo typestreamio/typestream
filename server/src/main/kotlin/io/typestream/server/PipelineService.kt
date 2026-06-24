@@ -1,9 +1,11 @@
 package io.typestream.server
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.typestream.compiler.DesugarResult
 import io.typestream.compiler.GraphCompiler
 import io.typestream.compiler.PipelineDesugarer
 import io.typestream.compiler.vm.Env
+import io.typestream.grpc.connection_service.Connection
 import io.typestream.compiler.vm.Session
 import io.typestream.compiler.vm.Vm
 import io.typestream.config.Config
@@ -33,7 +35,8 @@ data class ManagedPipeline(
 class PipelineService(
     private val config: Config,
     private val vm: Vm,
-    private val stateStore: PipelineStateStore? = null
+    private val stateStore: PipelineStateStore? = null,
+    private val connectionService: ConnectionService? = null
 ) : PipelineServiceGrpcKt.PipelineServiceCoroutineImplBase(), Closeable {
 
     private val logger = KotlinLogging.logger {}
@@ -75,6 +78,54 @@ class PipelineService(
             } catch (e: Exception) {
                 logger.error(e) { "Failed to recover pipeline '${managed.metadata.name}'" }
             }
+        }
+    }
+
+    /**
+     * Create the Kafka Connect sink connectors derived by the desugarer for this pipeline.
+     *
+     * Connector names are deterministic ("<jobId>-qdrant-sink-<nodeId>"), so re-applying a
+     * changed pipeline replaces the existing connector (delete-then-create) — pointing it at
+     * the freshly-generated intermediate topic. Connectors persist in Kafka Connect across
+     * server restarts, so [recoverPipelines] intentionally does not recreate them.
+     */
+    private suspend fun createSinkConnectors(jobId: String, desugared: DesugarResult) {
+        val cs = connectionService ?: return
+        for (config in desugared.qdrantSinkConfigs) {
+            val connectorName = "$jobId-qdrant-sink-${config.nodeId}"
+            deleteKafkaConnectConnector(connectorName) // idempotent replace on re-apply
+            val req = Connection.CreateQdrantSinkConnectorRequest.newBuilder()
+                .setConnectionId(config.connectionId)
+                .setConnectorName(connectorName)
+                .setTopics(config.intermediateTopic)
+                .setCollectionName(config.collectionName)
+                .build()
+            val resp = cs.createQdrantSinkConnector(req)
+            if (!resp.success) {
+                throw RuntimeException("Failed to create Qdrant connector $connectorName: ${resp.error}")
+            }
+            logger.info { "Created Qdrant sink connector: $connectorName" }
+        }
+    }
+
+    private fun connectorNamesFor(jobId: String, userGraph: ProtoJob.UserPipelineGraph): List<String> =
+        PipelineDesugarer.desugar(userGraph).qdrantSinkConfigs.map { "$jobId-qdrant-sink-${it.nodeId}" }
+
+    private fun deleteKafkaConnectConnector(connectorName: String) {
+        try {
+            val connectUrl = System.getenv("KAFKA_CONNECT_URL") ?: "http://localhost:8083"
+            val url = java.net.URI.create("$connectUrl/connectors/$connectorName").toURL()
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            try {
+                connection.connectTimeout = 10000
+                connection.readTimeout = 30000
+                connection.requestMethod = "DELETE"
+                connection.responseCode // trigger the request; 404 is fine (nothing to delete)
+            } finally {
+                connection.disconnect()
+            }
+        } catch (e: Exception) {
+            logger.debug { "Delete connector $connectorName: ${e.message}" }
         }
     }
 
@@ -136,6 +187,23 @@ class PipelineService(
             val desugared = PipelineDesugarer.desugar(request.graph)
             val program = graphCompiler.compileFromGraph(desugared.graph, deterministicId)
             vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
+
+            // Provision sink connectors for this pipeline. Unlike the UI's CreateJobFromGraph
+            // path, pipeline-as-code (ApplyPipeline) is responsible for creating the Kafka
+            // Connect sinks the desugarer derived. Roll the job back if a connector fails.
+            try {
+                createSinkConnectors(deterministicId, desugared)
+            } catch (e: Exception) {
+                logger.error(e) { "Connector creation failed, rolling back pipeline '$name'" }
+                try {
+                    vm.scheduler.kill(program.id)
+                } catch (killErr: Exception) {
+                    logger.warn(killErr) { "Failed to kill job ${program.id} during rollback" }
+                }
+                success = false
+                error = "Connector creation failed: ${e.message}"
+                return@applyPipelineResponse
+            }
 
             val now = System.currentTimeMillis()
             managedPipelines[name] = ManagedPipeline(
@@ -214,6 +282,11 @@ class PipelineService(
             logger.info { "Stopped and deleted pipeline '$name' (job: ${managed.jobId})" }
         } catch (e: Exception) {
             logger.warn(e) { "Failed to stop pipeline job: ${managed.jobId}" }
+        }
+
+        // Remove the sink connectors this pipeline provisioned.
+        if (connectionService != null) {
+            connectorNamesFor(managed.jobId, managed.userGraph).forEach { deleteKafkaConnectConnector(it) }
         }
 
         // Remove from state store

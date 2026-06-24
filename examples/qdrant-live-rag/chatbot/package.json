@@ -1,0 +1,15 @@
+{
+  "name": "live-rag-chatbot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.12.0",
+    "express": "^4.19.2",
+    "openai": "^4.67.3"
+  }
+}

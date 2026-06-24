@@ -6,7 +6,8 @@ data class DesugarResult(
     val graph: Job.PipelineGraph,
     val dbSinkConfigs: List<Job.DbSinkConfig>,
     val weaviateSinkConfigs: List<Job.WeaviateSinkConfig>,
-    val elasticsearchSinkConfigs: List<Job.ElasticsearchSinkConfig>
+    val elasticsearchSinkConfigs: List<Job.ElasticsearchSinkConfig>,
+    val qdrantSinkConfigs: List<Job.QdrantSinkConfig>
 )
 
 object PipelineDesugarer {
@@ -17,6 +18,7 @@ object PipelineDesugarer {
         val dbSinkConfigs = mutableListOf<Job.DbSinkConfig>()
         val weaviateSinkConfigs = mutableListOf<Job.WeaviateSinkConfig>()
         val elasticsearchSinkConfigs = mutableListOf<Job.ElasticsearchSinkConfig>()
+        val qdrantSinkConfigs = mutableListOf<Job.QdrantSinkConfig>()
 
         // Track materializedView → group node redirections for edge rewriting
         val redirectMap = mutableMapOf<String, String>()
@@ -259,6 +261,59 @@ object PipelineDesugarer {
                     )
                 }
 
+                Job.UserPipelineNode.NodeTypeCase.QDRANT_SINK -> {
+                    val q = userNode.qdrantSink
+                    val intermediateTopic = generateIntermediateTopic("qdrant-sink", userNode.id)
+                    val fullPath = "/dev/kafka/local/topics/$intermediateTopic"
+                    val envelopeId = "${userNode.id}-envelope"
+                    val idField = q.idField.ifEmpty { "id" }
+                    val vectorField = q.vectorField.ifEmpty { "embedding" }
+
+                    // Incoming edges (X -> qdrant sink) are redirected to the envelope node;
+                    // the envelope feeds the JSON sink the Qdrant connector drains.
+                    redirectMap[userNode.id] = envelopeId
+
+                    nodes.add(
+                        Job.PipelineNode.newBuilder()
+                            .setId(envelopeId)
+                            .setVectorEnvelope(
+                                Job.VectorEnvelopeNode.newBuilder()
+                                    .setIdField(idField)
+                                    .setVectorField(vectorField)
+                            )
+                            .build()
+                    )
+
+                    nodes.add(
+                        Job.PipelineNode.newBuilder()
+                            .setId(userNode.id)
+                            .setSink(
+                                Job.SinkNode.newBuilder()
+                                    .setOutput(Job.DataStreamProto.newBuilder().setPath(fullPath))
+                                    .setCleanJson(true)
+                            )
+                            .build()
+                    )
+
+                    edges.add(
+                        Job.PipelineEdge.newBuilder()
+                            .setFromId(envelopeId)
+                            .setToId(userNode.id)
+                            .build()
+                    )
+
+                    qdrantSinkConfigs.add(
+                        Job.QdrantSinkConfig.newBuilder()
+                            .setNodeId(userNode.id)
+                            .setConnectionId(q.connectionId)
+                            .setCollectionName(q.collectionName)
+                            .setIdField(idField)
+                            .setVectorField(vectorField)
+                            .setIntermediateTopic(intermediateTopic)
+                            .build()
+                    )
+                }
+
                 else -> error("Unknown user pipeline node type: ${userNode.nodeTypeCase}")
             }
         }
@@ -281,7 +336,8 @@ object PipelineDesugarer {
                 .build(),
             dbSinkConfigs = dbSinkConfigs,
             weaviateSinkConfigs = weaviateSinkConfigs,
-            elasticsearchSinkConfigs = elasticsearchSinkConfigs
+            elasticsearchSinkConfigs = elasticsearchSinkConfigs,
+            qdrantSinkConfigs = qdrantSinkConfigs
         )
     }
 

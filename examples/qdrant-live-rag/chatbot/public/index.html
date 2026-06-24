@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Northwind Support</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 640px; margin: 8vh auto; padding: 0 20px; }
+    h1 { font-size: 1.25rem; font-weight: 600; }
+    .sub { opacity: .6; margin-top: -.5rem; font-size: .9rem; }
+    form { display: flex; gap: 8px; margin: 1.5rem 0; }
+    input { flex: 1; padding: 12px 14px; font-size: 1rem; border: 1px solid #8884; border-radius: 10px; }
+    button { padding: 12px 18px; font-size: 1rem; border: 0; border-radius: 10px; background: #4f46e5; color: #fff; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    #answer { white-space: pre-wrap; line-height: 1.5; min-height: 2rem; padding: 16px; border: 1px solid #8884; border-radius: 12px; }
+    #sources { margin-top: .75rem; font-size: .8rem; opacity: .6; }
+  </style>
+</head>
+<body>
+  <h1>Northwind Support Assistant</h1>
+  <p class="sub">Answers grounded in the help center — kept fresh by TypeStream.</p>
+
+  <form id="chat">
+    <input id="q" value="How long is the free trial?" placeholder="How long is the free trial?" autocomplete="off" autofocus />
+    <button type="submit">Ask</button>
+  </form>
+
+  <div id="answer">Ask a question to get started.</div>
+  <div id="sources"></div>
+
+  <script>
+    const form = document.getElementById("chat");
+    const input = document.getElementById("q");
+    const answer = document.getElementById("answer");
+    const sources = document.getElementById("sources");
+    const button = form.querySelector("button");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      button.disabled = true;
+      answer.textContent = "Thinking…";
+      sources.textContent = "";
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        });
+        const data = await res.json();
+        answer.textContent = data.answer || data.error || "(no answer)";
+        sources.textContent = data.sources?.length ? "Sources: " + data.sources.join(", ") : "";
+      } catch {
+        answer.textContent = "Request failed.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

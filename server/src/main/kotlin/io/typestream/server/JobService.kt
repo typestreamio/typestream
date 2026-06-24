@@ -76,6 +76,9 @@ class JobService(
     // Track elasticsearch sink configs per job: jobId -> List<ElasticsearchSinkConfig>
     private val jobElasticsearchSinks = ConcurrentHashMap<String, List<ProtoJob.ElasticsearchSinkConfig>>()
 
+    // Track qdrant sink configs per job: jobId -> List<QdrantSinkConfig>
+    private val jobQdrantSinks = ConcurrentHashMap<String, List<ProtoJob.QdrantSinkConfig>>()
+
     // TTL for preview jobs (cleanup if no client connected for this long)
     private val previewJobTtl = 10.minutes
 
@@ -313,9 +316,54 @@ class JobService(
                 }
             }
 
+            // Create Qdrant sink connectors
+            val qdrantSinkConfigs = request.qdrantSinkConfigsList
+            if (qdrantSinkConfigs.isNotEmpty()) {
+                logger.info { "Creating ${qdrantSinkConfigs.size} Qdrant sink connector(s) for job ${program.id}" }
+
+                for (config in qdrantSinkConfigs) {
+                    val connectorName = "${program.id}-qdrant-sink-${config.nodeId}"
+                    val intermediateTopic = config.intermediateTopic.ifEmpty {
+                        generateQdrantIntermediateTopicName(config.nodeId)
+                    }
+
+                    try {
+                        val connectorRequest = io.typestream.grpc.connection_service.Connection.CreateQdrantSinkConnectorRequest.newBuilder()
+                            .setConnectionId(config.connectionId)
+                            .setConnectorName(connectorName)
+                            .setTopics(intermediateTopic)
+                            .setCollectionName(config.collectionName)
+                            .build()
+
+                        val response = connectionService.createQdrantSinkConnector(connectorRequest)
+
+                        if (!response.success) {
+                            throw RuntimeException("Failed to create Qdrant connector $connectorName: ${response.error}")
+                        }
+
+                        createdConnectorNames.add(connectorName)
+                        logger.info { "Created Qdrant sink connector: $connectorName" }
+                    } catch (e: Exception) {
+                        // Rollback: Kill the job and delete any created connectors
+                        logger.error(e) { "Qdrant connector creation failed, rolling back job ${program.id}" }
+                        rollbackJobAndConnectors(program.id, createdConnectorNames)
+
+                        this.success = false
+                        this.jobId = ""
+                        this.error = "Qdrant connector creation failed: ${e.message}"
+                        return@createJobResponse
+                    }
+                }
+            }
+
             // Store weaviate sink configs for this job (for job details display)
             if (weaviateSinkConfigs.isNotEmpty()) {
                 jobWeaviateSinks[program.id] = weaviateSinkConfigs
+            }
+
+            // Store qdrant sink configs for this job (for job details display)
+            if (qdrantSinkConfigs.isNotEmpty()) {
+                jobQdrantSinks[program.id] = qdrantSinkConfigs
             }
 
             // Store elasticsearch sink configs for this job (for job details display)
@@ -359,6 +407,15 @@ class JobService(
         val timestamp = System.currentTimeMillis()
         val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
         return "elasticsearch-sink-$sanitizedNodeId-$timestamp"
+    }
+
+    /**
+     * Generate a unique topic name for intermediate Qdrant sink output
+     */
+    private fun generateQdrantIntermediateTopicName(nodeId: String): String {
+        val timestamp = System.currentTimeMillis()
+        val sanitizedNodeId = nodeId.replace(Regex("[^a-zA-Z0-9]"), "-")
+        return "qdrant-sink-$sanitizedNodeId-$timestamp"
     }
 
     /**
@@ -442,6 +499,10 @@ class JobService(
                     // Include elasticsearch sink configs if available
                     jobElasticsearchSinks[schedulerJob.id]?.let { configs ->
                         elasticsearchSinks.addAll(configs)
+                    }
+                    // Include qdrant sink configs if available
+                    jobQdrantSinks[schedulerJob.id]?.let { configs ->
+                        qdrantSinks.addAll(configs)
                     }
                 })
             }

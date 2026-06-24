@@ -218,6 +218,17 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         val o = proto.openAiTransformer
         NodeOpenAiTransformer(nodeId, o.prompt, o.outputField.ifBlank { "ai_response" }, o.model)
       }
+      proto.hasVectorEnvelope() -> {
+        val v = proto.vectorEnvelope
+        NodeVectorEnvelope(
+          nodeId,
+          v.idField.ifBlank { NodeVectorEnvelope.DEFAULT_ID_FIELD },
+          v.vectorField.ifBlank { NodeVectorEnvelope.DEFAULT_VECTOR_FIELD },
+          v.idOut.ifBlank { NodeVectorEnvelope.DEFAULT_ID_OUT },
+          v.vectorOut.ifBlank { NodeVectorEnvelope.DEFAULT_VECTOR_OUT },
+          v.payloadOut.ifBlank { NodeVectorEnvelope.DEFAULT_PAYLOAD_OUT },
+        )
+      }
       proto.hasTableMaterialized() -> {
         NodeTableMaterialized(nodeId, proto.tableMaterialized.groupByField, proto.tableMaterialized.aggregationType)
       }

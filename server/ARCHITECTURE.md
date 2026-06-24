@@ -272,7 +272,8 @@ If connector creation fails, `JobService` performs rollback by killing the job a
 
 ### Kafka Connect
 - **REST API**: `ConnectionService.createKafkaConnectConnector()` POSTs connector configs
-- **Connector types**: JDBC Sink (`io.debezium.connector.jdbc.JdbcSinkConnector`), Weaviate Sink, Elasticsearch Sink
+- **Connector types**: JDBC Sink (`io.debezium.connector.jdbc.JdbcSinkConnector`), Weaviate Sink, Elasticsearch Sink, Qdrant Sink (`io.qdrant.kafka.QdrantSinkConnector`)
+- **Qdrant note**: the desugarer inserts a `VectorEnvelope` reshape + clean-JSON sink so records arrive as Qdrant's `{id, vector, payload}` envelope (JsonConverter, `schemas.enable=false`). Unlike the UI path, `PipelineService.applyPipeline` provisions sink connectors for pipeline-as-code.
 
 ### gRPC Clients (UI, CLI)
 - Server listens on configurable port (default 8080)

@@ -21,6 +21,7 @@ import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.node.NodeTableMaterialized
 import io.typestream.compiler.node.NodeTextExtractor
+import io.typestream.compiler.node.NodeVectorEnvelope
 import io.typestream.compiler.node.NodeWindowedCount
 import io.typestream.compiler.types.DataStream
 import io.typestream.config.KafkaConfig
@@ -142,6 +143,7 @@ class KafkaStreamsJob(
                     is NodeTextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
                     is NodeEmbeddingGenerator -> kafkaStreamSource.embeddingGenerate(currentNode.ref)
                     is NodeOpenAiTransformer -> kafkaStreamSource.openAiTransform(currentNode.ref)
+                    is NodeVectorEnvelope -> kafkaStreamSource.vectorEnvelope(currentNode.ref)
                     is NodeNoOp -> {}
                     is NodeStreamSource -> {}
                     is NodeSink -> kafkaStreamSource.to(currentNode.ref)

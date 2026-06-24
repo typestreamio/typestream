@@ -14,6 +14,7 @@ import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.node.NodeTableMaterialized
 import io.typestream.compiler.node.NodeTextExtractor
+import io.typestream.compiler.node.NodeVectorEnvelope
 import io.typestream.compiler.types.DataStream
 import io.typestream.compiler.types.Encoding
 import io.typestream.compiler.types.schema.Schema
@@ -37,6 +38,7 @@ import io.typestream.textextractor.TextExtractorExecution
 import io.typestream.textextractor.TextExtractorService
 import io.typestream.config.SchemaRegistryConfig
 import io.typestream.kafka.avro.AvroSerde
+import io.typestream.kafka.JsonValueSerde
 import io.typestream.kafka.ProtoSerde
 import io.typestream.kafka.schemaregistry.SchemaRegistryClient
 import io.typestream.kafka.StreamsBuilderWrapper
@@ -165,6 +167,16 @@ data class KafkaStreamSource(
 
     fun to(node: NodeSink) {
         val config = streamsBuilder.config.toMutableMap()
+
+        // Plain-JSON output for connectors that consume a literal JSON value
+        // (e.g. Qdrant via a JsonConverter). Key is a UTF-8 string; the connector
+        // reads the point id from the value, so the key is informational only.
+        if (node.cleanJson) {
+            stream.map { _, v ->
+                pair(v?.selectFieldAsString("id") ?: "", v)
+            }.to(node.output.name, Produced.with(Serdes.String(), JsonValueSerde()))
+            return
+        }
 
         when (node.encoding) {
             Encoding.AVRO -> {
@@ -323,6 +335,10 @@ data class KafkaStreamSource(
 
     fun openAiTransform(openAiTransformer: NodeOpenAiTransformer) {
         stream = OpenAiTransformerExecution.applyToKafka(openAiTransformer, stream, openAiService)
+    }
+
+    fun vectorEnvelope(node: NodeVectorEnvelope) {
+        stream = stream.mapValues { v -> node.reshape(v) }
     }
 
     /**

@@ -134,6 +134,27 @@ message EachNode {
 message SinkNode {
   DataStreamProto output = 1;
   Encoding encoding = 2;
+  // When true, the value is serialized as plain JSON (the record's literal
+  // field structure), rather than via the configured encoding. Used by sink
+  // connectors that consume JSON (e.g. Qdrant) instead of Avro.
+  bool clean_json = 3;
+}
+
+/** @exclude */
+// Reshapes a flat record into a vector-store envelope: {<id_out>, <vector_out>,
+// <payload_out>: {...remaining fields}}. Synthesized by the desugarer in front
+// of sinks whose connector expects a fixed {id, vector, payload} shape (Qdrant).
+message VectorEnvelopeNode {
+  // Source field to use as the point id (e.g. "id").
+  string id_field = 1;
+  // Source field holding the embedding vector (e.g. "embedding").
+  string vector_field = 2;
+  // Output key for the id (default "id").
+  string id_out = 3;
+  // Output key for the vector (default "vector").
+  string vector_out = 4;
+  // Output key for the payload object holding all remaining fields (default "payload").
+  string payload_out = 5;
 }
 
 // GeoIP enrichment — resolves an IP address to a country code.
@@ -209,6 +230,7 @@ message PipelineNode {
     OpenAiTransformerNode open_ai_transformer = 17;
     WindowedCountNode windowed_count = 18;
     TableMaterializedNode table_materialized = 19;
+    VectorEnvelopeNode vector_envelope = 20;
   }
 }
 
@@ -263,6 +285,25 @@ message WeaviateSinkConfig {
   string timestamp_field = 9;
 }
 
+// Configuration for a Qdrant vector database sink connector. The desugarer
+// reshapes records into Qdrant's {id, vector, payload} envelope and writes them
+// as JSON to the intermediate topic; the out-of-the-box Qdrant connector
+// (io.qdrant.kafka.QdrantSinkConnector) drains it into the collection.
+message QdrantSinkConfig {
+  // ID of the node this sink config belongs to.
+  string node_id = 1;
+  // Registered Qdrant connection ID.
+  string connection_id = 2;
+  // Intermediate Kafka topic for the connector.
+  string intermediate_topic = 3;
+  // Target Qdrant collection name.
+  string collection_name = 4;
+  // Source field used as the point id (default "id").
+  string id_field = 5;
+  // Source field holding the embedding vector (default "embedding").
+  string vector_field = 6;
+}
+
 // Configuration for an Elasticsearch sink connector.
 message ElasticsearchSinkConfig {
   // ID of the node this sink config belongs to.
@@ -292,6 +333,8 @@ message CreateJobFromGraphRequest {
     repeated WeaviateSinkConfig weaviate_sink_configs = 4;
     // Elasticsearch sink configurations for Elasticsearch sink nodes.
     repeated ElasticsearchSinkConfig elasticsearch_sink_configs = 5;
+    // Qdrant sink configurations for Qdrant sink nodes.
+    repeated QdrantSinkConfig qdrant_sink_configs = 6;
 }
 
 message ListJobsRequest {
@@ -338,6 +381,8 @@ message JobInfo {
   repeated WeaviateSinkConfig weaviate_sinks = 6;
   // Elasticsearch sink configs for this job.
   repeated ElasticsearchSinkConfig elasticsearch_sinks = 7;
+  // Qdrant sink configs for this job.
+  repeated QdrantSinkConfig qdrant_sinks = 8;
 }
 
 message ListJobsResponse {
@@ -512,6 +557,21 @@ message WeaviateSinkNode {
   string timestamp_field = 7;
 }
 
+// Qdrant sink — writes records to a Qdrant vector database collection. The
+// pipeline supplies pre-computed embeddings; the server reshapes each record
+// into Qdrant's {id, vector, payload} envelope and provisions the out-of-the-box
+// Qdrant Kafka connector automatically.
+message QdrantSinkNode {
+  // Registered Qdrant connection ID.
+  string connection_id = 1;
+  // Target Qdrant collection name (must be pre-created with the right vector size/distance).
+  string collection_name = 2;
+  // Field to use as the point id (default "id").
+  string id_field = 3;
+  // Field containing the embedding vector (default "embedding").
+  string vector_field = 4;
+}
+
 // Elasticsearch sink — writes records to an Elasticsearch index.
 message ElasticsearchSinkNode {
   // Registered Elasticsearch connection ID.
@@ -547,6 +607,7 @@ message UserPipelineNode {
     DbSinkNode db_sink = 12;
     WeaviateSinkNode weaviate_sink = 13;
     ElasticsearchSinkNode elasticsearch_sink = 14;
+    QdrantSinkNode qdrant_sink = 15;
   }
 }
 

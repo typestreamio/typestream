@@ -31,7 +31,7 @@ TypeStream is a streaming data platform that compiles visual or text-based pipel
      └──────────────────┘ └──────────────────┘  └──────────────────┘
 ```
 
-**Data path**: Sources (Kafka topics, CDC) → Server compiles pipeline → Kafka Streams topology → Sinks (Kafka topics, JDBC, Weaviate, Elasticsearch)
+**Data path**: Sources (Kafka topics, CDC) → Server compiles pipeline → Kafka Streams topology → Sinks (Kafka topics, JDBC, Weaviate, Elasticsearch, Qdrant)
 
 **Control path**: UI/CLI → gRPC → Server → compiles, schedules, and monitors jobs
 
@@ -239,7 +239,7 @@ The full stack (`docker-compose.yml`) includes:
 | `redpanda` | Redpanda v24.2.9 | 19092 (Kafka), 18081 (Schema Registry) | Kafka-compatible broker |
 | `server` | `ghcr.io/typestreamio/server` | 4242 (gRPC) | TypeStream server |
 | `envoy` | Envoy v1.28 | 8080 | gRPC-Web proxy for UI |
-| `kafka-connect` | Custom Debezium image | 8083 | CDC source + JDBC/Weaviate/ES sinks |
+| `kafka-connect` | Custom Debezium image | 8083 | CDC source + JDBC/Weaviate/ES/Qdrant sinks |
 | `postgres` | PostgreSQL 16 | 5432 | Demo database (WAL level=logical for CDC) |
 | `tika` | Apache Tika 2.9.2 | 9998 | Text extraction service |
 | `uiv2` | `ghcr.io/typestreamio/ui` | -- | React frontend (served via Caddy) |

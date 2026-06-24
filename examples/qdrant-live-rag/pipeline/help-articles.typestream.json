@@ -1,0 +1,38 @@
+{
+  "name": "help-articles-rag",
+  "version": "1",
+  "description": "Embed help_articles from Postgres CDC and stream them into a Qdrant collection",
+  "graph": {
+    "nodes": [
+      {
+        "id": "source-1",
+        "kafkaSource": {
+          "topicPath": "/dev/kafka/local/topics/dbserver.public.help_articles",
+          "encoding": "AVRO",
+          "unwrapCdc": true
+        }
+      },
+      {
+        "id": "embed-1",
+        "embeddingGenerator": {
+          "textField": "body",
+          "outputField": "embedding",
+          "model": "text-embedding-3-small"
+        }
+      },
+      {
+        "id": "sink-1",
+        "qdrantSink": {
+          "connectionId": "dev-qdrant",
+          "collectionName": "help_articles",
+          "idField": "id",
+          "vectorField": "embedding"
+        }
+      }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "embed-1" },
+      { "fromId": "embed-1", "toId": "sink-1" }
+    ]
+  }
+}
