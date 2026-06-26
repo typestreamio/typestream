@@ -1,5 +1,6 @@
 package io.typestream.scheduler
 
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.typestream.compiler.Program
 import io.typestream.compiler.kafka.KafkaStreamSource
@@ -38,6 +39,7 @@ import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.Topology
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler
 import java.util.Properties
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -46,6 +48,19 @@ import kotlin.time.toJavaDuration
  * A key-value record from a Kafka topic, used for preview streaming.
  */
 data class PreviewRecord(val key: String, val value: String)
+
+/**
+ * Handler installed on each job's [KafkaStreams] client. A fatal stream-thread error shuts down
+ * this client only ([StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT],
+ * not `SHUTDOWN_APPLICATION`) so one bad job doesn't take its in-process siblings down with it; the
+ * resulting ERROR state surfaces as `Job.State.FAILED`, which the gRPC health check turns into a pod
+ * restart.
+ */
+internal fun streamsUncaughtExceptionHandler(id: String, logger: KLogger) =
+    StreamsUncaughtExceptionHandler { exception ->
+        logger.error(exception) { "$id hit a fatal stream error, shutting down client" }
+        StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT
+    }
 
 
 /**
@@ -210,7 +225,16 @@ class KafkaStreamsJob(
 
     override fun start() {
         val topology = buildTopology()
-        kafkaStreams = KafkaStreams(topology, StreamsConfig(config()))
+        kafkaStreams = KafkaStreams(topology, StreamsConfig(config())).apply {
+            // Without these, a fatal stream error kills the thread silently and the job wedges
+            // invisibly (the 2026-05-31 incident). The state listener gives a diagnostic trail;
+            // the exception handler transitions this client to ERROR (-> Job.State.FAILED) so the
+            // gRPC health check can report NOT_SERVING and Kubernetes can restart the pod.
+            setStateListener { newState, oldState ->
+                logger.info { "${program.id} state $oldState -> $newState" }
+            }
+            setUncaughtExceptionHandler(streamsUncaughtExceptionHandler(program.id, logger))
+        }
         logger.debug { topology.describe().toString() }
 
         logger.info { "starting ${program.id}" }

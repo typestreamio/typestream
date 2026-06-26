@@ -85,19 +85,35 @@ class KafkaClusterDirectory(
 
     override suspend fun watch(): Unit = supervisorScope {
         val fsRefreshRate = kafkaConfig.fsRefreshRate.seconds
-        logger.info { "launching kafka watchers (rate: $fsRefreshRate seconds)" }
+        logger.info { "launching kafka watchers (rate: $fsRefreshRate)" }
 
+        // A broker outage makes every watcher tick fail. Don't flood the logs with a full stack
+        // trace per tick (the 2026-05-31 incident produced ~18.9k of them): log the first
+        // occurrence (and any change of error) at warn, and keep the rest at debug. Combined with
+        // the exponential backoff below, a transient blip stays quiet.
+        var lastTransientFailure: String? = null
         val exceptionHandler: (Throwable) -> Unit = { exception ->
-            when (exception) {
-                is java.net.ConnectException -> logger.debug(exception) { "kafka cluster directory watcher failed" }
-                else -> logger.error(exception) { "kafka cluster directory watcher failed" }
+            if (isTransientBrokerException(exception)) {
+                val signature = exception::class.qualifiedName
+                if (signature != lastTransientFailure) {
+                    lastTransientFailure = signature
+                    logger.warn { "kafka cluster '$name' is unreachable, backing off: ${exception.message}" }
+                } else {
+                    logger.debug(exception) { "kafka cluster directory watcher still failing" }
+                }
+            } else {
+                lastTransientFailure = null
+                logger.error(exception) { "kafka cluster directory watcher failed" }
             }
         }
 
-        tick(fsRefreshRate, exceptionHandler) { refreshConsumerGroupsDir() }
-        tick(fsRefreshRate, exceptionHandler) { refreshBrokersDir() }
-        tick(fsRefreshRate, exceptionHandler) { refreshTopicsDir() }
-        tick(fsRefreshRate, exceptionHandler) { refreshSchemaRegistryDir() }
+        // Back off up to ~10x the refresh rate while the cluster stays unreachable.
+        val maxBackoff = fsRefreshRate * 10
+
+        tick(fsRefreshRate, exceptionHandler, maxBackoff) { refreshConsumerGroupsDir() }
+        tick(fsRefreshRate, exceptionHandler, maxBackoff) { refreshBrokersDir() }
+        tick(fsRefreshRate, exceptionHandler, maxBackoff) { refreshTopicsDir() }
+        tick(fsRefreshRate, exceptionHandler, maxBackoff) { refreshSchemaRegistryDir() }
     }
 
     override fun refresh() {
@@ -134,4 +150,23 @@ class KafkaClusterDirectory(
         logger.debug { "$name schema registry refresh" }
         schemaRegistryDir.replaceAll(schemaRegistryClient.subjects().keys.map { t -> Directory(t) })
     }
+}
+
+/**
+ * Whether [throwable] (or any of its causes) is a transient broker-connectivity failure — a
+ * connection refusal or a Kafka client error/timeout — as opposed to an unexpected bug. Admin
+ * client calls surface these wrapped in [java.util.concurrent.ExecutionException], so we walk the
+ * cause chain. `org.apache.kafka.common.errors.TimeoutException` is a `KafkaException`, so the
+ * `KafkaException` check covers broker timeouts too.
+ */
+internal fun isTransientBrokerException(throwable: Throwable): Boolean {
+    var e: Throwable? = throwable
+    while (e != null) {
+        when (e) {
+            is java.net.ConnectException,
+            is org.apache.kafka.common.KafkaException -> return true
+        }
+        e = e.cause
+    }
+    return false
 }
