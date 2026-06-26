@@ -89,6 +89,12 @@ spec:
             - containerPort: 4242
               hostPort: 4242
               protocol: TCP
+          livenessProbe:
+            grpc:
+              port: 4242
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
           resources:
             limits:
               cpu: "4"

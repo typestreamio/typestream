@@ -1,11 +1,17 @@
 package io.typestream.config
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
 import net.peanuuutz.tomlkt.Toml
 import net.peanuuutz.tomlkt.TomlTable
 
 @Serializable
-data class TomlConfig(val sources: SourcesConfig, val grpc: GrpcConfig, val mounts: MountsConfig) {
+data class TomlConfig(
+    val sources: SourcesConfig,
+    val grpc: GrpcConfig,
+    val mounts: MountsConfig,
+    val k8sMode: Boolean = false,
+) {
     fun mergeWith(mountsConfig: MountsConfig) {
         mounts.random.putAll(mountsConfig.random)
     }
@@ -30,8 +36,11 @@ data class TomlConfig(val sources: SourcesConfig, val grpc: GrpcConfig, val moun
                 MountsConfig(random = mutableMapOf())
             }
 
+            val k8sMode = toml["k8sMode"]?.let {
+                Toml.decodeFromTomlElement(Boolean.serializer(), it)
+            } ?: false
 
-            return TomlConfig(sources, grpc, mounts)
+            return TomlConfig(sources, grpc, mounts, k8sMode)
         }
     }
 }
