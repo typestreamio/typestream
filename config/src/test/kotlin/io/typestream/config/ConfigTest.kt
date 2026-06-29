@@ -68,6 +68,27 @@ internal class ConfigTest {
     }
 
     @Test
+    fun `k8sMode is an explicit config flag`() {
+        val tempDir = createTempDirectory()
+
+        every { SystemEnv["TYPESTREAM_SYSTEM_CONFIG_PATH"] } returns "$tempDir/typestream"
+
+        every { SystemEnv["TYPESTREAM_CONFIG"] } returns """
+            k8sMode=true
+            [grpc]
+            port=4242
+            [sources.kafka.local]
+            bootstrapServers="localhost:9092"
+            schemaRegistry.url="http://localhost:8081"
+            fsRefreshRate=1
+        """.trimIndent()
+
+        val config = Config.fetch()
+
+        assertThat(config.k8sMode).isTrue()
+    }
+
+    @Test
     fun `loads defaults`() {
         val tempDir = createTempDirectory()
 

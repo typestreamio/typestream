@@ -40,14 +40,18 @@ data class Config(
             // Not convinced this should be public for now (which is why it's not officially documented)
             val systemConfigPath = SystemEnv["TYPESTREAM_SYSTEM_CONFIG_PATH"] ?: "/etc/typestream"
 
-            var kubernetesMode = false
+            // DNS detection only drives copying the mounted /config into the system config
+            // path for in-cluster deployments. It does NOT enable the K8s-Job scheduler/watcher;
+            // that is the explicit `k8sMode` config flag (see below), so in-process deployments
+            // don't trigger the unfinished worker-job path (and its `list jobs` 403).
+            var inCluster = false
             try {
                 InetAddress.getByName("kubernetes.default.svc")
-                kubernetesMode = true
+                inCluster = true
             } catch (_: Exception) {
             }
 
-            if (kubernetesMode) {
+            if (inCluster) {
                 logger.info { "copy config from /config into /etc/typestream" }
                 val configFile = Paths.get("/config", "typestream.toml").toFile()
                 val systemConfigFile = Paths.get(systemConfigPath, "typestream.toml").toFile()
@@ -113,7 +117,7 @@ data class Config(
                 tomlConfig.sources,
                 tomlConfig.grpc,
                 tomlConfig.mounts,
-                kubernetesMode,
+                tomlConfig.k8sMode,
                 versionInfo,
                 configFilePath
             )

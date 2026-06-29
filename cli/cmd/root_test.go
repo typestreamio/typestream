@@ -40,7 +40,7 @@ func TestResolveServerAddress_FlagTakesPrecedence(t *testing.T) {
 }
 
 func TestResolveServerAddress_Missing(t *testing.T) {
-	os.Unsetenv("TYPESTREAM_SERVER")
+	_ = os.Unsetenv("TYPESTREAM_SERVER")
 
 	_, err := resolveServerAddress("")
 	if err == nil {
