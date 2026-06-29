@@ -21,6 +21,7 @@ import io.typestream.server.StateQueryService
 import io.typestream.pipeline.PipelineStateStore
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable
@@ -39,6 +40,10 @@ class Server(
     var server: Server? = null
 
     private val subSystems = mutableListOf<Closeable>()
+
+    // The health monitor is a long-running loop (not a Closeable), so close() must cancel it
+    // explicitly; otherwise run()'s runBlocking never completes after shutdown (it joins this child).
+    private var healthMonitorJob: Job? = null
 
     fun run(serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(config.grpc.port)) = runBlocking {
         val fileSystem = FileSystem(config, dispatcher)
@@ -100,7 +105,7 @@ class Server(
             graceWindow = healthGraceWindow,
             interval = healthPollInterval,
         )
-        launch(dispatcher) {
+        healthMonitorJob = launch(dispatcher) {
             healthMonitor.run()
         }
 
@@ -112,6 +117,7 @@ class Server(
 
     override fun close() {
         logger.info { "shutting down grpc server" }
+        healthMonitorJob?.cancel()
         server?.shutdown()
 
         logger.info { "shutting down sub-systems" }
