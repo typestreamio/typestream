@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus
 import io.grpc.services.HealthStatusManager
 import io.typestream.scheduler.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -27,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 class HealthMonitor(
     private val jobStates: () -> List<Pair<String, Job.State>>,
     private val healthManager: HealthStatusManager,
-    private val graceWindow: Duration = 5.minutes,
+    private val graceWindow: Duration = 15.minutes,
     private val interval: Duration = 15.seconds,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
@@ -39,8 +40,18 @@ class HealthMonitor(
 
     suspend fun run() = coroutineScope {
         while (isActive) {
-            val status = evaluate()
-            healthManager.setStatus(HealthStatusManager.SERVICE_NAME_ALL_SERVICES, status)
+            try {
+                val status = evaluate()
+                healthManager.setStatus(HealthStatusManager.SERVICE_NAME_ALL_SERVICES, status)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // A transient failure to read job state (e.g. a concurrent-modification race in
+                // scheduler.ps()) must not crash the monitor — its launch is a child of the server's
+                // root scope, so an escaping exception would cancel the whole gRPC server. Leave the
+                // last reported status in place and re-evaluate next tick.
+                logger.warn(e) { "health evaluation failed; leaving serving status unchanged" }
+            }
             delay(interval)
         }
     }

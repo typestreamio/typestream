@@ -3,9 +3,14 @@ package io.typestream.health
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus
 import io.grpc.services.HealthStatusManager
 import io.typestream.scheduler.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 internal class HealthMonitorTest {
@@ -64,5 +69,28 @@ internal class HealthMonitorTest {
         now = 10.minutes.inWholeMilliseconds
         state = Job.State.RUNNING
         assertThat(m.evaluate()).isEqualTo(ServingStatus.SERVING) // running again
+    }
+
+    @Test
+    fun `keeps running when reading job state throws`(): Unit = runBlocking {
+        var explode = true
+        // Models a concurrent-modification race in scheduler.ps(): without the guard in run(), this
+        // exception would escape the launched coroutine and cancel the whole server's root scope.
+        val m = HealthMonitor(
+            jobStates = {
+                if (explode) throw ConcurrentModificationException("ps() race") else listOf("a" to Job.State.RUNNING)
+            },
+            healthManager = HealthStatusManager(),
+            interval = 5.milliseconds,
+            clock = { 0 },
+        )
+
+        val job = launch { m.run() }
+        delay(40) // several ticks while jobStates() throws
+
+        assertThat(job.isActive).isTrue() // a throwing read did not crash the monitor
+
+        explode = false
+        job.cancelAndJoin()
     }
 }

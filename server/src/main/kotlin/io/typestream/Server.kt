@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.seconds
 class Server(
     private val config: Config,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val healthGraceWindow: Duration = 5.minutes,
+    private val healthGraceWindow: Duration = 15.minutes,
     private val healthPollInterval: Duration = 15.seconds,
 ) : Closeable {
     private val logger = KotlinLogging.logger {}
