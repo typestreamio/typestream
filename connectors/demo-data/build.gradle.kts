@@ -33,7 +33,7 @@ dependencies {
     implementation("commons-net:commons-net:3.11.1")
 
     // PostgreSQL JDBC driver for file uploads connector
-    implementation("org.postgresql:postgresql:42.7.11")
+    implementation("org.postgresql:postgresql:42.7.13")
 
     // Test dependencies
     testImplementation("org.testcontainers:testcontainers:1.20.4")
