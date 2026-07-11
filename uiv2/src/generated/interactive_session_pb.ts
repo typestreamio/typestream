@@ -11,6 +11,8 @@ import { Message, proto3 } from "@bufbuild/protobuf";
  */
 export class StartSessionRequest extends Message<StartSessionRequest> {
   /**
+   * Identifier for the user starting the session.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
@@ -48,6 +50,8 @@ export class StartSessionRequest extends Message<StartSessionRequest> {
  */
 export class StartSessionResponse extends Message<StartSessionResponse> {
   /**
+   * Unique identifier for the created session.
+   *
    * @generated from field: string session_id = 1;
    */
   sessionId = "";
@@ -85,11 +89,15 @@ export class StartSessionResponse extends Message<StartSessionResponse> {
  */
 export class RunProgramRequest extends Message<RunProgramRequest> {
   /**
+   * Session to run the program in.
+   *
    * @generated from field: string session_id = 1;
    */
   sessionId = "";
 
   /**
+   * TypeStream DSL program source code to execute.
+   *
    * @generated from field: string source = 2;
    */
   source = "";
@@ -128,26 +136,36 @@ export class RunProgramRequest extends Message<RunProgramRequest> {
  */
 export class RunProgramResponse extends Message<RunProgramResponse> {
   /**
+   * Identifier for the running program instance.
+   *
    * @generated from field: string id = 1;
    */
   id = "";
 
   /**
+   * Environment variables set by the program (e.g., topic assignments).
+   *
    * @generated from field: map<string, string> env = 2;
    */
   env: { [key: string]: string } = {};
 
   /**
+   * Initial standard output from the program.
+   *
    * @generated from field: string stdOut = 3;
    */
   stdOut = "";
 
   /**
+   * Standard error output from the program.
+   *
    * @generated from field: string stdErr = 4;
    */
   stdErr = "";
 
   /**
+   * If true, more output is available via GetProgramOutput.
+   *
    * @generated from field: bool hasMoreOutput = 5;
    */
   hasMoreOutput = false;
@@ -189,11 +207,15 @@ export class RunProgramResponse extends Message<RunProgramResponse> {
  */
 export class GetProgramOutputRequest extends Message<GetProgramOutputRequest> {
   /**
+   * Session containing the program.
+   *
    * @generated from field: string session_id = 1;
    */
   sessionId = "";
 
   /**
+   * Identifier of the running program (from RunProgramResponse.id).
+   *
    * @generated from field: string id = 2;
    */
   id = "";
@@ -232,11 +254,15 @@ export class GetProgramOutputRequest extends Message<GetProgramOutputRequest> {
  */
 export class GetProgramOutputResponse extends Message<GetProgramOutputResponse> {
   /**
+   * Standard output chunk from the running program.
+   *
    * @generated from field: string stdOut = 1;
    */
   stdOut = "";
 
   /**
+   * Standard error chunk from the running program.
+   *
    * @generated from field: string stdErr = 2;
    */
   stdErr = "";
@@ -275,16 +301,22 @@ export class GetProgramOutputResponse extends Message<GetProgramOutputResponse> 
  */
 export class CompleteProgramRequest extends Message<CompleteProgramRequest> {
   /**
+   * Session to get completions for.
+   *
    * @generated from field: string session_id = 1;
    */
   sessionId = "";
 
   /**
+   * Partial TypeStream DSL source code.
+   *
    * @generated from field: string source = 2;
    */
   source = "";
 
   /**
+   * Cursor position (character offset) within the source for completion.
+   *
    * @generated from field: int32 cursor = 3;
    */
   cursor = 0;
@@ -324,6 +356,8 @@ export class CompleteProgramRequest extends Message<CompleteProgramRequest> {
  */
 export class CompleteProgramResponse extends Message<CompleteProgramResponse> {
   /**
+   * List of completion suggestions.
+   *
    * @generated from field: repeated string value = 1;
    */
   value: string[] = [];
@@ -361,6 +395,8 @@ export class CompleteProgramResponse extends Message<CompleteProgramResponse> {
  */
 export class StopSessionRequest extends Message<StopSessionRequest> {
   /**
+   * Session to stop.
+   *
    * @generated from field: string session_id = 1;
    */
   sessionId = "";
@@ -398,11 +434,15 @@ export class StopSessionRequest extends Message<StopSessionRequest> {
  */
 export class StopSessionResponse extends Message<StopSessionResponse> {
   /**
+   * Any remaining standard output from the session.
+   *
    * @generated from field: string stdOut = 1;
    */
   stdOut = "";
 
   /**
+   * Any remaining standard error from the session.
+   *
    * @generated from field: string stdErr = 2;
    */
   stdErr = "";

@@ -23,7 +23,8 @@ internal class NodeContractTest {
                 Schema.Field("name", Schema.String("test")),
                 Schema.Field("ip_address", Schema.String("8.8.8.8")),
                 Schema.Field("file_path", Schema.String("/path/to/file.pdf")),
-                Schema.Field("text_content", Schema.String("Hello world"))
+                Schema.Field("text_content", Schema.String("Hello world")),
+                Schema.Field("embedding", Schema.List(emptyList(), Schema.Float(0.0f)))
             )
         )
 
@@ -67,6 +68,7 @@ internal class NodeContractTest {
             Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
             Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
             Arguments.of("NodeTableMaterialized", NodeTableMaterialized("table-mat-1", "status", "latest")),
+            Arguments.of("NodeQdrantEnvelope", NodeQdrantEnvelope("qdrant-env-1", "help_articles", "id", "embedding", listOf("name"))),
         )
 
         @JvmStatic
@@ -85,6 +87,7 @@ internal class NodeContractTest {
             Arguments.of("NodeEmbeddingGenerator", NodeEmbeddingGenerator("embed-1", "text_content", "embedding", "text-embedding-3-small")),
             Arguments.of("NodeOpenAiTransformer", NodeOpenAiTransformer("ai-1", "Summarize this", "ai_response", "gpt-4o-mini")),
             Arguments.of("NodeTableMaterialized", NodeTableMaterialized("table-mat-1", "status", "latest")),
+            Arguments.of("NodeQdrantEnvelope", NodeQdrantEnvelope("qdrant-env-1", "help_articles", "id", "embedding", listOf("name"))),
             Arguments.of("NodeSink", NodeSink("sink-1", sampleDataStream, Encoding.AVRO)),
         )
 

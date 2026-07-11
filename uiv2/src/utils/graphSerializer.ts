@@ -20,8 +20,10 @@ import {
   DbSinkConfig,
   WeaviateSinkConfig,
   ElasticsearchSinkConfig,
+  QdrantSinkConfig,
+  QdrantEnvelopeNode as QdrantEnvelopeNodeProto,
 } from '../generated/job_pb';
-import type { KafkaSourceNodeData, PostgresSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, ElasticsearchSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
+import type { KafkaSourceNodeData, PostgresSourceNodeData, KafkaSinkNodeData, GeoIpNodeData, InspectorNodeData, MaterializedViewNodeData, DbSinkNodeData, WeaviateSinkNodeData, QdrantSinkNodeData, ElasticsearchSinkNodeData, TextExtractorNodeData, EmbeddingGeneratorNodeData, OpenAiTransformerNodeData, FilterNodeData } from '../components/graph-builder/nodes';
 
 /**
  * Result of serializing a graph with sink connectors
@@ -31,6 +33,7 @@ export interface SerializedGraphWithSinks {
   dbSinkConfigs: DbSinkConfig[];  // Proto objects ready for request
   weaviateSinkConfigs: WeaviateSinkConfig[];  // Proto objects ready for request
   elasticsearchSinkConfigs: ElasticsearchSinkConfig[];  // Proto objects ready for request
+  qdrantSinkConfigs: QdrantSinkConfig[];  // Proto objects ready for request
 }
 
 // Re-export for backward compatibility
@@ -40,7 +43,7 @@ export interface SerializedGraphWithDbSinks {
 }
 
 // Re-export for consumers that need the type
-export { DbSinkConfig, WeaviateSinkConfig, ElasticsearchSinkConfig };
+export { DbSinkConfig, WeaviateSinkConfig, ElasticsearchSinkConfig, QdrantSinkConfig };
 
 /**
  * Generate a unique topic name for intermediate JDBC sink output
@@ -70,6 +73,15 @@ function generateElasticsearchIntermediateTopicName(nodeId: string): string {
 }
 
 /**
+ * Generate a unique topic name for intermediate Qdrant sink output
+ */
+function generateQdrantIntermediateTopicName(nodeId: string): string {
+  const timestamp = Date.now();
+  const sanitizedNodeId = nodeId.replace(/[^a-zA-Z0-9]/g, '-');
+  return `qdrant-sink-${sanitizedNodeId}-${timestamp}`;
+}
+
+/**
  * Serialize a graph to a PipelineGraph proto and extract all sink configurations
  * (credentials resolved server-side for security)
  */
@@ -79,6 +91,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
   const dbSinkConfigs: DbSinkConfig[] = [];
   const weaviateSinkConfigs: WeaviateSinkConfig[] = [];
   const elasticsearchSinkConfigs: ElasticsearchSinkConfig[] = [];
+  const qdrantSinkConfigs: QdrantSinkConfig[] = [];
 
   // Process each node
   nodes.forEach((node) => {
@@ -189,6 +202,58 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
         vectorStrategy: data.vectorStrategy || 'NoVectorStrategy',
         vectorField: data.vectorField || '',
         timestampField: data.timestampField || '',
+      }));
+      return;
+    }
+
+    if (node.type === 'qdrantSink') {
+      const data = node.data as QdrantSinkNodeData;
+
+      // Generate an intermediate topic for the TypeStream job to write to
+      const intermediateTopic = generateQdrantIntermediateTopicName(node.id);
+      const fullPath = `/dev/kafka/local/topics/${intermediateTopic}`;
+
+      // The qdrant-kafka connector requires a fixed record envelope
+      // ({collection_name, id, vector, payload}), so an envelope node is
+      // inserted in front of the intermediate-topic sink. Incoming edges are
+      // redirected to the envelope node in the edge pass below.
+      const envelopeId = `${node.id}-envelope`;
+      pipelineNodes.push(new PipelineNode({
+        id: envelopeId,
+        nodeType: {
+          case: 'qdrantEnvelope',
+          value: new QdrantEnvelopeNodeProto({
+            collectionName: data.collectionName || '',
+            idField: data.idField || 'id',
+            vectorField: data.vectorField || 'embedding',
+            payloadFields: data.payloadFields || '',
+          }),
+        },
+      }));
+
+      // Create a regular SinkNode that writes to the intermediate topic.
+      // plainJson: qdrant-kafka cannot deserialize Connect Structs, so the
+      // intermediate topic carries plain schemaless JSON.
+      pipelineNodes.push(new PipelineNode({
+        id: node.id,
+        nodeType: {
+          case: 'sink',
+          value: new SinkNode({
+            output: new DataStreamProto({ path: fullPath }),
+            plainJson: true,
+          }),
+        },
+      }));
+
+      // Internal edge from envelope to sink
+      pipelineEdges.push(new PipelineEdge({ fromId: envelopeId, toId: node.id }));
+
+      // Record the Qdrant sink configuration as proto (credentials resolved server-side)
+      qdrantSinkConfigs.push(new QdrantSinkConfig({
+        nodeId: node.id,
+        connectionId: data.connectionId,
+        intermediateTopic,
+        collectionName: data.collectionName || '',
       }));
       return;
     }
@@ -362,9 +427,15 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
   });
 
   // Process edges - redirect edges targeting materializedView to its group node
+  // and edges targeting qdrantSink to its envelope node
   edges.forEach((edge) => {
     const targetNode = nodes.find((n) => n.id === edge.target);
-    const toId = targetNode?.type === 'materializedView' ? `${edge.target}-group` : edge.target;
+    let toId = edge.target;
+    if (targetNode?.type === 'materializedView') {
+      toId = `${edge.target}-group`;
+    } else if (targetNode?.type === 'qdrantSink') {
+      toId = `${edge.target}-envelope`;
+    }
     pipelineEdges.push(new PipelineEdge({ fromId: edge.source, toId }));
   });
 
@@ -376,6 +447,7 @@ export function serializeGraphWithSinks(nodes: Node[], edges: Edge[]): Serialize
     dbSinkConfigs,
     weaviateSinkConfigs,
     elasticsearchSinkConfigs,
+    qdrantSinkConfigs,
   };
 }
 

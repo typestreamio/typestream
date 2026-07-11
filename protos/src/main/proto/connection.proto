@@ -9,7 +9,7 @@ option go_package = "github.com/typestreamio/typestream/cli/pkg/connection_servi
 import "google/protobuf/timestamp.proto";
 
 // ConnectionService manages external data source connections for databases,
-// Weaviate, and Elasticsearch. Register connections for ongoing health
+// Weaviate, Qdrant, and Elasticsearch. Register connections for ongoing health
 // monitoring, test connectivity on demand, and create Kafka Connect sink
 // connectors. Credentials are stored server-side and never exposed to clients.
 service ConnectionService {
@@ -37,6 +37,15 @@ service ConnectionService {
 
     // Create a Weaviate sink connector using a registered connection.
     rpc CreateWeaviateSinkConnector(CreateWeaviateSinkConnectorRequest) returns (CreateWeaviateSinkConnectorResponse) {}
+
+    // Register a Qdrant vector database connection for health monitoring.
+    rpc RegisterQdrantConnection(RegisterQdrantConnectionRequest) returns (RegisterQdrantConnectionResponse) {}
+
+    // Get the current health status of all registered Qdrant connections.
+    rpc GetQdrantConnectionStatuses(GetQdrantConnectionStatusesRequest) returns (GetQdrantConnectionStatusesResponse) {}
+
+    // Create a Qdrant sink connector using a registered connection.
+    rpc CreateQdrantSinkConnector(CreateQdrantSinkConnectorRequest) returns (CreateQdrantSinkConnectorResponse) {}
 
     // Register an Elasticsearch connection for health monitoring.
     rpc RegisterElasticsearchConnection(RegisterElasticsearchConnectionRequest) returns (RegisterElasticsearchConnectionResponse) {}
@@ -246,6 +255,74 @@ message CreateWeaviateSinkConnectorRequest {
 }
 
 message CreateWeaviateSinkConnectorResponse {
+    bool success = 1;
+    string error = 2;
+    string connector_name = 3;
+}
+
+// Qdrant vector database connection configuration.
+message QdrantConnectionConfig {
+    string id = 1;
+    string name = 2;
+    // Qdrant REST API URL, used for health checks (e.g., "http://localhost:6333").
+    string rest_url = 3;
+    // Qdrant gRPC URL (e.g., "http://localhost:6334").
+    string grpc_url = 4;
+    // API key for Qdrant Cloud (stored server-side only).
+    string api_key = 5;
+    // gRPC URL for Kafka Connect (e.g., "http://qdrant:6334").
+    string connector_grpc_url = 6;
+}
+
+// Public Qdrant connection config (excludes API key).
+message QdrantConnectionConfigPublic {
+    string id = 1;
+    string name = 2;
+    string rest_url = 3;
+    string grpc_url = 4;
+    // api_key intentionally excluded
+    string connector_grpc_url = 5;
+}
+
+// Health status of a Qdrant connection.
+message QdrantConnectionStatus {
+    string id = 1;
+    string name = 2;
+    ConnectionState state = 3;
+    string error = 4;
+    google.protobuf.Timestamp last_checked = 5;
+    QdrantConnectionConfigPublic config = 6;
+}
+
+message RegisterQdrantConnectionRequest {
+    // Qdrant connection configuration (including API key for initial setup).
+    QdrantConnectionConfig connection = 1;
+}
+
+message RegisterQdrantConnectionResponse {
+    bool success = 1;
+    string error = 2;
+    QdrantConnectionStatus status = 3;
+}
+
+message GetQdrantConnectionStatusesRequest {}
+
+message GetQdrantConnectionStatusesResponse {
+    repeated QdrantConnectionStatus statuses = 1;
+}
+
+message CreateQdrantSinkConnectorRequest {
+    // ID of a registered Qdrant connection.
+    string connection_id = 1;
+    // Name for the Kafka Connect connector.
+    string connector_name = 2;
+    // Kafka topic(s) to consume from.
+    string topics = 3;
+    // Target Qdrant collection name.
+    string collection_name = 4;
+}
+
+message CreateQdrantSinkConnectorResponse {
     bool success = 1;
     string error = 2;
     string connector_name = 3;

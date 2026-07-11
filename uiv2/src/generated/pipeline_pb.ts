@@ -8,6 +8,8 @@ import { Message, proto3, protoInt64 } from "@bufbuild/protobuf";
 import { JobState, PipelineGraph, UserPipelineGraph } from "./job_pb.js";
 
 /**
+ * Result state after applying a pipeline.
+ *
  * @generated from enum io.typestream.grpc.PipelineState
  */
 export enum PipelineState {
@@ -17,16 +19,22 @@ export enum PipelineState {
   PIPELINE_STATE_UNSPECIFIED = 0,
 
   /**
+   * Pipeline was newly created.
+   *
    * @generated from enum value: CREATED = 1;
    */
   CREATED = 1,
 
   /**
+   * Pipeline was updated with new configuration.
+   *
    * @generated from enum value: UPDATED = 2;
    */
   UPDATED = 2,
 
   /**
+   * Pipeline configuration has not changed.
+   *
    * @generated from enum value: UNCHANGED = 3;
    */
   UNCHANGED = 3,
@@ -40,6 +48,8 @@ proto3.util.setEnumType(PipelineState, "io.typestream.grpc.PipelineState", [
 ]);
 
 /**
+ * Action that would be taken for a pipeline in a plan.
+ *
  * @generated from enum io.typestream.grpc.PipelineAction
  */
 export enum PipelineAction {
@@ -49,21 +59,29 @@ export enum PipelineAction {
   PIPELINE_ACTION_UNSPECIFIED = 0,
 
   /**
+   * Pipeline does not exist and would be created.
+   *
    * @generated from enum value: CREATE = 1;
    */
   CREATE = 1,
 
   /**
+   * Pipeline exists and would be updated.
+   *
    * @generated from enum value: UPDATE = 2;
    */
   UPDATE = 2,
 
   /**
+   * Pipeline exists and has not changed.
+   *
    * @generated from enum value: NO_CHANGE = 3;
    */
   NO_CHANGE = 3,
 
   /**
+   * Pipeline exists on server but is not in the plan, so it would be deleted.
+   *
    * @generated from enum value: DELETE = 4;
    */
   DELETE = 4,
@@ -78,20 +96,28 @@ proto3.util.setEnumType(PipelineAction, "io.typestream.grpc.PipelineAction", [
 ]);
 
 /**
+ * Metadata describing a pipeline definition.
+ *
  * @generated from message io.typestream.grpc.PipelineMetadata
  */
 export class PipelineMetadata extends Message<PipelineMetadata> {
   /**
+   * Unique name identifying this pipeline.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Version string for tracking changes (e.g., "v1", "2024-01-15").
+   *
    * @generated from field: string version = 2;
    */
   version = "";
 
   /**
+   * Human-readable description of what this pipeline does.
+   *
    * @generated from field: string description = 3;
    */
   description = "";
@@ -131,11 +157,15 @@ export class PipelineMetadata extends Message<PipelineMetadata> {
  */
 export class ValidatePipelineRequest extends Message<ValidatePipelineRequest> {
   /**
+   * Pipeline metadata (name, version, description).
+   *
    * @generated from field: io.typestream.grpc.PipelineMetadata metadata = 1;
    */
   metadata?: PipelineMetadata;
 
   /**
+   * The pipeline graph to validate.
+   *
    * @generated from field: io.typestream.grpc.UserPipelineGraph graph = 2;
    */
   graph?: UserPipelineGraph;
@@ -174,16 +204,22 @@ export class ValidatePipelineRequest extends Message<ValidatePipelineRequest> {
  */
 export class ValidatePipelineResponse extends Message<ValidatePipelineResponse> {
   /**
+   * Whether the pipeline is valid.
+   *
    * @generated from field: bool valid = 1;
    */
   valid = false;
 
   /**
+   * Validation errors (pipeline cannot be applied).
+   *
    * @generated from field: repeated string errors = 2;
    */
   errors: string[] = [];
 
   /**
+   * Validation warnings (pipeline can be applied but may have issues).
+   *
    * @generated from field: repeated string warnings = 3;
    */
   warnings: string[] = [];
@@ -223,11 +259,15 @@ export class ValidatePipelineResponse extends Message<ValidatePipelineResponse> 
  */
 export class ApplyPipelineRequest extends Message<ApplyPipelineRequest> {
   /**
+   * Pipeline metadata (name, version, description).
+   *
    * @generated from field: io.typestream.grpc.PipelineMetadata metadata = 1;
    */
   metadata?: PipelineMetadata;
 
   /**
+   * The pipeline graph to deploy.
+   *
    * @generated from field: io.typestream.grpc.UserPipelineGraph graph = 2;
    */
   graph?: UserPipelineGraph;
@@ -266,21 +306,29 @@ export class ApplyPipelineRequest extends Message<ApplyPipelineRequest> {
  */
 export class ApplyPipelineResponse extends Message<ApplyPipelineResponse> {
   /**
+   * Whether the apply operation succeeded.
+   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
+   * ID of the created or updated job.
+   *
    * @generated from field: string job_id = 2;
    */
   jobId = "";
 
   /**
+   * Error message if the apply failed.
+   *
    * @generated from field: string error = 3;
    */
   error = "";
 
   /**
+   * Whether the pipeline was created, updated, or unchanged.
+   *
    * @generated from field: io.typestream.grpc.PipelineState state = 4;
    */
   state = PipelineState.PIPELINE_STATE_UNSPECIFIED;
@@ -348,45 +396,63 @@ export class ListPipelinesRequest extends Message<ListPipelinesRequest> {
 }
 
 /**
+ * Information about a registered pipeline and its running job.
+ *
  * @generated from message io.typestream.grpc.PipelineInfo
  */
 export class PipelineInfo extends Message<PipelineInfo> {
   /**
+   * Pipeline name.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Pipeline version.
+   *
    * @generated from field: string version = 2;
    */
   version = "";
 
   /**
+   * Pipeline description.
+   *
    * @generated from field: string description = 3;
    */
   description = "";
 
   /**
+   * ID of the underlying job.
+   *
    * @generated from field: string job_id = 4;
    */
   jobId = "";
 
   /**
+   * Current state of the underlying job.
+   *
    * @generated from field: io.typestream.grpc.JobState job_state = 5;
    */
   jobState = JobState.JOB_STATE_UNSPECIFIED;
 
   /**
+   * Unix timestamp (milliseconds) when this pipeline was last applied.
+   *
    * @generated from field: int64 applied_at = 6;
    */
   appliedAt = protoInt64.zero;
 
   /**
+   * Internal pipeline graph (compiler representation).
+   *
    * @generated from field: io.typestream.grpc.PipelineGraph graph = 7;
    */
   graph?: PipelineGraph;
 
   /**
+   * User-facing pipeline graph as originally submitted.
+   *
    * @generated from field: io.typestream.grpc.UserPipelineGraph user_graph = 8;
    */
   userGraph?: UserPipelineGraph;
@@ -431,6 +497,8 @@ export class PipelineInfo extends Message<PipelineInfo> {
  */
 export class ListPipelinesResponse extends Message<ListPipelinesResponse> {
   /**
+   * All registered pipelines.
+   *
    * @generated from field: repeated io.typestream.grpc.PipelineInfo pipelines = 1;
    */
   pipelines: PipelineInfo[] = [];
@@ -468,6 +536,8 @@ export class ListPipelinesResponse extends Message<ListPipelinesResponse> {
  */
 export class DeletePipelineRequest extends Message<DeletePipelineRequest> {
   /**
+   * Name of the pipeline to delete.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
@@ -505,11 +575,15 @@ export class DeletePipelineRequest extends Message<DeletePipelineRequest> {
  */
 export class DeletePipelineResponse extends Message<DeletePipelineResponse> {
   /**
+   * Whether the delete operation succeeded.
+   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
+   * Error message if the delete failed.
+   *
    * @generated from field: string error = 2;
    */
   error = "";
@@ -544,15 +618,21 @@ export class DeletePipelineResponse extends Message<DeletePipelineResponse> {
 }
 
 /**
+ * A pipeline definition included in a plan request.
+ *
  * @generated from message io.typestream.grpc.PipelinePlan
  */
 export class PipelinePlan extends Message<PipelinePlan> {
   /**
+   * Pipeline metadata (name, version, description).
+   *
    * @generated from field: io.typestream.grpc.PipelineMetadata metadata = 1;
    */
   metadata?: PipelineMetadata;
 
   /**
+   * The pipeline graph to plan.
+   *
    * @generated from field: io.typestream.grpc.UserPipelineGraph graph = 2;
    */
   graph?: UserPipelineGraph;
@@ -591,6 +671,8 @@ export class PipelinePlan extends Message<PipelinePlan> {
  */
 export class PlanPipelinesRequest extends Message<PlanPipelinesRequest> {
   /**
+   * Pipeline definitions to plan against current state.
+   *
    * @generated from field: repeated io.typestream.grpc.PipelinePlan pipelines = 1;
    */
   pipelines: PipelinePlan[] = [];
@@ -624,25 +706,35 @@ export class PlanPipelinesRequest extends Message<PlanPipelinesRequest> {
 }
 
 /**
+ * Result for a single pipeline in a plan response.
+ *
  * @generated from message io.typestream.grpc.PipelinePlanResult
  */
 export class PipelinePlanResult extends Message<PipelinePlanResult> {
   /**
+   * Pipeline name.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Action that would be taken.
+   *
    * @generated from field: io.typestream.grpc.PipelineAction action = 2;
    */
   action = PipelineAction.PIPELINE_ACTION_UNSPECIFIED;
 
   /**
+   * Current version on the server (empty if pipeline is new).
+   *
    * @generated from field: string current_version = 3;
    */
   currentVersion = "";
 
   /**
+   * New version from the plan (empty if pipeline would be deleted).
+   *
    * @generated from field: string new_version = 4;
    */
   newVersion = "";
@@ -683,11 +775,15 @@ export class PipelinePlanResult extends Message<PipelinePlanResult> {
  */
 export class PlanPipelinesResponse extends Message<PlanPipelinesResponse> {
   /**
+   * Plan results for each pipeline.
+   *
    * @generated from field: repeated io.typestream.grpc.PipelinePlanResult results = 1;
    */
   results: PipelinePlanResult[] = [];
 
   /**
+   * Errors encountered during planning.
+   *
    * @generated from field: repeated string errors = 2;
    */
   errors: string[] = [];

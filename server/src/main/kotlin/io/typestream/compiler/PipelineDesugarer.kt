@@ -6,7 +6,8 @@ data class DesugarResult(
     val graph: Job.PipelineGraph,
     val dbSinkConfigs: List<Job.DbSinkConfig>,
     val weaviateSinkConfigs: List<Job.WeaviateSinkConfig>,
-    val elasticsearchSinkConfigs: List<Job.ElasticsearchSinkConfig>
+    val elasticsearchSinkConfigs: List<Job.ElasticsearchSinkConfig>,
+    val qdrantSinkConfigs: List<Job.QdrantSinkConfig>
 )
 
 object PipelineDesugarer {
@@ -17,6 +18,7 @@ object PipelineDesugarer {
         val dbSinkConfigs = mutableListOf<Job.DbSinkConfig>()
         val weaviateSinkConfigs = mutableListOf<Job.WeaviateSinkConfig>()
         val elasticsearchSinkConfigs = mutableListOf<Job.ElasticsearchSinkConfig>()
+        val qdrantSinkConfigs = mutableListOf<Job.QdrantSinkConfig>()
 
         // Track materializedView → group node redirections for edge rewriting
         val redirectMap = mutableMapOf<String, String>()
@@ -231,6 +233,61 @@ object PipelineDesugarer {
                     )
                 }
 
+                Job.UserPipelineNode.NodeTypeCase.QDRANT_SINK -> {
+                    val qs = userNode.qdrantSink
+                    val intermediateTopic = generateIntermediateTopic("qdrant-sink", userNode.id)
+                    val fullPath = "/dev/kafka/local/topics/$intermediateTopic"
+
+                    // The qdrant-kafka connector requires a fixed record envelope
+                    // ({collection_name, id, vector, payload}), so an envelope node is
+                    // inserted in front of the intermediate-topic sink. Incoming user
+                    // edges are redirected to the envelope node.
+                    val envelopeId = "${userNode.id}-envelope"
+                    redirectMap[userNode.id] = envelopeId
+
+                    nodes.add(
+                        Job.PipelineNode.newBuilder()
+                            .setId(envelopeId)
+                            .setQdrantEnvelope(
+                                Job.QdrantEnvelopeNode.newBuilder()
+                                    .setCollectionName(qs.collectionName)
+                                    .setIdField(qs.idField)
+                                    .setVectorField(qs.vectorField)
+                                    .setPayloadFields(qs.payloadFields)
+                            )
+                            .build()
+                    )
+
+                    nodes.add(
+                        Job.PipelineNode.newBuilder()
+                            .setId(userNode.id)
+                            .setSink(
+                                Job.SinkNode.newBuilder()
+                                    .setOutput(Job.DataStreamProto.newBuilder().setPath(fullPath))
+                                    // qdrant-kafka cannot deserialize Connect Structs, so
+                                    // the intermediate topic carries plain schemaless JSON.
+                                    .setPlainJson(true)
+                            )
+                            .build()
+                    )
+
+                    edges.add(
+                        Job.PipelineEdge.newBuilder()
+                            .setFromId(envelopeId)
+                            .setToId(userNode.id)
+                            .build()
+                    )
+
+                    qdrantSinkConfigs.add(
+                        Job.QdrantSinkConfig.newBuilder()
+                            .setNodeId(userNode.id)
+                            .setConnectionId(qs.connectionId)
+                            .setCollectionName(qs.collectionName)
+                            .setIntermediateTopic(intermediateTopic)
+                            .build()
+                    )
+                }
+
                 Job.UserPipelineNode.NodeTypeCase.ELASTICSEARCH_SINK -> {
                     val es = userNode.elasticsearchSink
                     val intermediateTopic = generateIntermediateTopic("elasticsearch-sink", userNode.id)
@@ -281,7 +338,8 @@ object PipelineDesugarer {
                 .build(),
             dbSinkConfigs = dbSinkConfigs,
             weaviateSinkConfigs = weaviateSinkConfigs,
-            elasticsearchSinkConfigs = elasticsearchSinkConfigs
+            elasticsearchSinkConfigs = elasticsearchSinkConfigs,
+            qdrantSinkConfigs = qdrantSinkConfigs
         )
     }
 

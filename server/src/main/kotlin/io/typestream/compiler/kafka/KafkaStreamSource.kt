@@ -10,6 +10,7 @@ import io.typestream.compiler.node.NodeInspector
 import io.typestream.compiler.node.NodeJoin
 import io.typestream.compiler.node.NodeMap
 import io.typestream.compiler.node.NodeOpenAiTransformer
+import io.typestream.compiler.node.NodeQdrantEnvelope
 import io.typestream.compiler.node.NodeSink
 import io.typestream.compiler.node.NodeStreamSource
 import io.typestream.compiler.node.NodeTableMaterialized
@@ -165,6 +166,18 @@ data class KafkaStreamSource(
 
     fun to(node: NodeSink) {
         val config = streamsBuilder.config.toMutableMap()
+
+        if (node.plainJson) {
+            // Plain schemaless JSON (record value only, no schema registry) —
+            // consumable by Kafka Connect's JsonConverter with schemas.enable=false.
+            val keySerde = Serdes.Bytes()
+            keySerde.configure(config, true)
+
+            stream.map { k, v ->
+                pair(k.toBytes(), v.schema.toJsonElement().toString())
+            }.to(node.output.name, Produced.with(keySerde, Serdes.String()))
+            return
+        }
 
         when (node.encoding) {
             Encoding.AVRO -> {
@@ -323,6 +336,10 @@ data class KafkaStreamSource(
 
     fun openAiTransform(openAiTransformer: NodeOpenAiTransformer) {
         stream = OpenAiTransformerExecution.applyToKafka(openAiTransformer, stream, openAiService)
+    }
+
+    fun qdrantEnvelope(qdrantEnvelope: NodeQdrantEnvelope) {
+        stream = stream.mapValues { value -> qdrantEnvelope.reshape(value) }
     }
 
     /**

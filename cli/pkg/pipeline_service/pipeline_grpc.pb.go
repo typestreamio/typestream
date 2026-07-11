@@ -22,10 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PipelineServiceClient interface {
+	// Validate a pipeline definition without deploying it.
+	// Returns validation errors and warnings.
 	ValidatePipeline(ctx context.Context, in *ValidatePipelineRequest, opts ...grpc.CallOption) (*ValidatePipelineResponse, error)
+	// Apply a pipeline definition — creates a new job or updates an existing one.
+	// Returns the job ID and whether the pipeline was created, updated, or unchanged.
 	ApplyPipeline(ctx context.Context, in *ApplyPipelineRequest, opts ...grpc.CallOption) (*ApplyPipelineResponse, error)
+	// List all currently registered pipelines and their job status.
 	ListPipelines(ctx context.Context, in *ListPipelinesRequest, opts ...grpc.CallOption) (*ListPipelinesResponse, error)
+	// Delete a pipeline by name, stopping its underlying job.
 	DeletePipeline(ctx context.Context, in *DeletePipelineRequest, opts ...grpc.CallOption) (*DeletePipelineResponse, error)
+	// Dry-run a set of pipeline definitions against the current state.
+	// Returns a plan showing which pipelines would be created, updated, deleted, or unchanged.
 	PlanPipelines(ctx context.Context, in *PlanPipelinesRequest, opts ...grpc.CallOption) (*PlanPipelinesResponse, error)
 }
 
@@ -86,10 +94,18 @@ func (c *pipelineServiceClient) PlanPipelines(ctx context.Context, in *PlanPipel
 // All implementations must embed UnimplementedPipelineServiceServer
 // for forward compatibility
 type PipelineServiceServer interface {
+	// Validate a pipeline definition without deploying it.
+	// Returns validation errors and warnings.
 	ValidatePipeline(context.Context, *ValidatePipelineRequest) (*ValidatePipelineResponse, error)
+	// Apply a pipeline definition — creates a new job or updates an existing one.
+	// Returns the job ID and whether the pipeline was created, updated, or unchanged.
 	ApplyPipeline(context.Context, *ApplyPipelineRequest) (*ApplyPipelineResponse, error)
+	// List all currently registered pipelines and their job status.
 	ListPipelines(context.Context, *ListPipelinesRequest) (*ListPipelinesResponse, error)
+	// Delete a pipeline by name, stopping its underlying job.
 	DeletePipeline(context.Context, *DeletePipelineRequest) (*DeletePipelineResponse, error)
+	// Dry-run a set of pipeline definitions against the current state.
+	// Returns a plan showing which pipelines would be created, updated, deleted, or unchanged.
 	PlanPipelines(context.Context, *PlanPipelinesRequest) (*PlanPipelinesResponse, error)
 	mustEmbedUnimplementedPipelineServiceServer()
 }

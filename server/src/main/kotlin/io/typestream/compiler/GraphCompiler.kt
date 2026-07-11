@@ -214,6 +214,16 @@ class GraphCompiler(private val fileSystem: FileSystem) {
         val e = proto.embeddingGenerator
         NodeEmbeddingGenerator(nodeId, e.textField, e.outputField.ifBlank { "embedding" }, e.model)
       }
+      proto.hasQdrantEnvelope() -> {
+        val q = proto.qdrantEnvelope
+        NodeQdrantEnvelope(
+          nodeId,
+          q.collectionName,
+          q.idField.ifBlank { "id" },
+          q.vectorField.ifBlank { "embedding" },
+          NodeQdrantEnvelope.parsePayloadFields(q.payloadFields),
+        )
+      }
       proto.hasOpenAiTransformer() -> {
         val o = proto.openAiTransformer
         NodeOpenAiTransformer(nodeId, o.prompt, o.outputField.ifBlank { "ai_response" }, o.model)

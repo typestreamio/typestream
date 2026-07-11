@@ -7,6 +7,9 @@ import { MethodKind } from "@bufbuild/protobuf";
 import { GetSchemaRequest, GetSchemaResponse, LsRequest, LsResponse, MountRequest, MountResponse, UnmountRequest, UnmountResponse } from "./filesystem_pb.js";
 
 /**
+ * Mount a data source (e.g., a Kafka cluster or database) into the virtual filesystem.
+ * Once mounted, its topics become browsable via Ls and their schemas via GetSchema.
+ *
  * @generated from rpc io.typestream.grpc.FileSystemService.Mount
  */
 export const mount = {
@@ -21,6 +24,8 @@ export const mount = {
 } as const;
 
 /**
+ * Remove a previously mounted data source from the virtual filesystem.
+ *
  * @generated from rpc io.typestream.grpc.FileSystemService.Unmount
  */
 export const unmount = {
@@ -35,6 +40,8 @@ export const unmount = {
 } as const;
 
 /**
+ * List topics and directories at the given path in the virtual filesystem.
+ *
  * @generated from rpc io.typestream.grpc.FileSystemService.Ls
  */
 export const ls = {
@@ -49,6 +56,8 @@ export const ls = {
 } as const;
 
 /**
+ * Retrieve the schema (field names) for a topic at the given path.
+ *
  * @generated from rpc io.typestream.grpc.FileSystemService.GetSchema
  */
 export const getSchema = {

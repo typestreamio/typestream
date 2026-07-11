@@ -13,3 +13,11 @@ export function getWeaviateBaseUrl(): string {
   }
   return `${protocol}//${hostname}/weaviate`;
 }
+
+export function getQdrantBaseUrl(): string {
+  const { hostname, protocol } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:6333';
+  }
+  return `${protocol}//${hostname}/qdrant`;
+}

@@ -96,6 +96,27 @@ data class MonitoredElasticsearchConnection(
 )
 
 /**
+ * Immutable snapshot of Qdrant connection state for thread-safe reads
+ */
+data class QdrantConnectionStateSnapshot(
+    val state: ConnectionState,
+    val error: String?,
+    val lastChecked: Instant
+)
+
+/**
+ * Represents a monitored Qdrant connection with its current state.
+ */
+data class MonitoredQdrantConnection(
+    val config: Connection.QdrantConnectionConfig,
+    @Volatile var stateSnapshot: QdrantConnectionStateSnapshot = QdrantConnectionStateSnapshot(
+        state = ConnectionState.CONNECTION_STATE_UNSPECIFIED,
+        error = null,
+        lastChecked = Instant.now()
+    )
+)
+
+/**
  * Service that monitors database connections and reports their status.
  * Maintains persistent JDBC connections to detect connectivity issues.
  */
@@ -112,6 +133,9 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     // Map of Elasticsearch connection ID to monitored Elasticsearch connection
     private val elasticsearchConnections = ConcurrentHashMap<String, MonitoredElasticsearchConnection>()
 
+    // Map of Qdrant connection ID to monitored Qdrant connection
+    private val qdrantConnections = ConcurrentHashMap<String, MonitoredQdrantConnection>()
+
     // Background monitoring coroutine scope
     private val monitorScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var monitorJob: Job? = null
@@ -123,6 +147,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
     private val registerDevConnection = System.getenv("TYPESTREAM_REGISTER_DEV_POSTGRES")?.toBoolean() ?: true
     private val registerDevWeaviate = System.getenv("TYPESTREAM_REGISTER_DEV_WEAVIATE")?.toBoolean() ?: true
     private val registerDevElasticsearch = System.getenv("TYPESTREAM_REGISTER_DEV_ELASTICSEARCH")?.toBoolean() ?: true
+    private val registerDevQdrant = System.getenv("TYPESTREAM_REGISTER_DEV_QDRANT")?.toBoolean() ?: true
 
     init {
         // Start background health monitoring
@@ -132,6 +157,7 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
                 checkAllConnections()
                 checkAllWeaviateConnections()
                 checkAllElasticsearchConnections()
+                checkAllQdrantConnections()
             }
         }
         logger.info { "ConnectionService started with ${healthCheckInterval.inWholeSeconds}s health check interval" }
@@ -155,6 +181,13 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             registerDevElasticsearchConnection()
         } else {
             logger.info { "Skipping dev-elasticsearch registration (TYPESTREAM_REGISTER_DEV_ELASTICSEARCH=false)" }
+        }
+
+        // Register default dev qdrant connection for testing (can be disabled via TYPESTREAM_REGISTER_DEV_QDRANT=false)
+        if (registerDevQdrant) {
+            registerDevQdrantConnection()
+        } else {
+            logger.info { "Skipping dev-qdrant registration (TYPESTREAM_REGISTER_DEV_QDRANT=false)" }
         }
     }
 
@@ -265,6 +298,38 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             logger.info { "dev-elasticsearch connection established successfully" }
         } else {
             logger.warn { "dev-elasticsearch connection failed (this is normal if elasticsearch is not running)" }
+        }
+    }
+
+    /**
+     * Register the default dev qdrant connection on startup
+     */
+    private fun registerDevQdrantConnection() {
+        val restUrl = System.getenv("TYPESTREAM_QDRANT_REST_URL") ?: "http://localhost:6333"
+        val grpcUrl = System.getenv("TYPESTREAM_QDRANT_GRPC_URL") ?: "http://localhost:6334"
+        val devConfig = Connection.QdrantConnectionConfig.newBuilder()
+            .setId("dev-qdrant")
+            .setName("dev-qdrant")
+            .setRestUrl(restUrl)
+            .setGrpcUrl(grpcUrl)
+            .setConnectorGrpcUrl("http://qdrant:6334")
+            .build()
+
+        logger.info { "Registering default dev-qdrant connection (restUrl=$restUrl)" }
+
+        val isHealthy = checkQdrantHealth(devConfig.restUrl)
+        qdrantConnections["dev-qdrant"] = MonitoredQdrantConnection(
+            config = devConfig,
+            stateSnapshot = QdrantConnectionStateSnapshot(
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                error = if (isHealthy) null else "Qdrant not reachable",
+                lastChecked = Instant.now()
+            )
+        )
+        if (isHealthy) {
+            logger.info { "dev-qdrant connection established successfully" }
+        } else {
+            logger.warn { "dev-qdrant connection failed (this is normal if qdrant is not running)" }
         }
     }
 
@@ -642,6 +707,30 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
             }
 
             logger.info { "Successfully created connector: ${connectorConfig["name"]}" }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    /**
+     * Delete a connector via Kafka Connect REST API (404 is treated as success).
+     * Used by [PipelineService] to clean up connectors on pipeline update/delete.
+     */
+    fun deleteKafkaConnectConnector(connectorName: String) {
+        val connectUrl = System.getenv("KAFKA_CONNECT_URL") ?: "http://localhost:8083"
+        val url = java.net.URI.create("$connectUrl/connectors/$connectorName").toURL()
+        val connection = url.openConnection() as java.net.HttpURLConnection
+
+        try {
+            connection.connectTimeout = 10000
+            connection.readTimeout = 30000
+            connection.requestMethod = "DELETE"
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299 && responseCode != 404) {
+                val errorBody = connection.errorStream?.bufferedReader()?.readText() ?: ""
+                throw RuntimeException("Kafka Connect returned $responseCode: $errorBody")
+            }
+            logger.info { "Deleted connector: $connectorName" }
         } finally {
             connection.disconnect()
         }
@@ -1157,5 +1246,218 @@ class ConnectionService : ConnectionServiceGrpcKt.ConnectionServiceCoroutineImpl
      */
     fun getElasticsearchConnection(connectionId: String): MonitoredElasticsearchConnection? {
         return elasticsearchConnections[connectionId]
+    }
+
+    // ==================== Qdrant Connection Methods ====================
+
+    /**
+     * Register a Qdrant connection for monitoring
+     */
+    override suspend fun registerQdrantConnection(request: Connection.RegisterQdrantConnectionRequest): Connection.RegisterQdrantConnectionResponse {
+        val config = request.connection
+
+        // Validate required fields
+        if (config.id.isBlank() || config.name.isBlank() || config.restUrl.isBlank()) {
+            return Connection.RegisterQdrantConnectionResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Connection id, name, and restUrl are required")
+                .build()
+        }
+
+        logger.info { "Registering Qdrant connection: ${config.name} (${config.id})" }
+
+        val isHealthy = checkQdrantHealth(config.restUrl)
+        val monitored = MonitoredQdrantConnection(
+            config = config,
+            stateSnapshot = QdrantConnectionStateSnapshot(
+                state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                error = if (isHealthy) null else "Qdrant not reachable at ${config.restUrl}",
+                lastChecked = Instant.now()
+            )
+        )
+        qdrantConnections[config.id] = monitored
+
+        return Connection.RegisterQdrantConnectionResponse.newBuilder()
+            .setSuccess(true)
+            .setStatus(monitored.toQdrantProto())
+            .build()
+    }
+
+    /**
+     * Get status of all Qdrant connections
+     */
+    override suspend fun getQdrantConnectionStatuses(request: Connection.GetQdrantConnectionStatusesRequest): Connection.GetQdrantConnectionStatusesResponse {
+        val builder = Connection.GetQdrantConnectionStatusesResponse.newBuilder()
+        qdrantConnections.values.forEach { monitored ->
+            builder.addStatuses(monitored.toQdrantProto())
+        }
+        return builder.build()
+    }
+
+    /**
+     * Create a Qdrant sink connector using a registered connection.
+     * Credentials are resolved server-side from the connection ID.
+     */
+    override suspend fun createQdrantSinkConnector(request: Connection.CreateQdrantSinkConnectorRequest): Connection.CreateQdrantSinkConnectorResponse {
+        val connectionId = request.connectionId
+        val monitored = qdrantConnections[connectionId]
+
+        if (monitored == null) {
+            return Connection.CreateQdrantSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Qdrant connection not found: $connectionId")
+                .build()
+        }
+
+        val config = monitored.config
+        logger.info { "Creating Qdrant sink connector: ${request.connectorName} for connection ${config.name}" }
+
+        try {
+            val connectorConfig = buildQdrantSinkConnectorConfig(
+                name = request.connectorName,
+                config = config,
+                topics = request.topics,
+                collectionName = request.collectionName
+            )
+
+            // Create connector via Kafka Connect REST API
+            createKafkaConnectConnector(connectorConfig)
+
+            return Connection.CreateQdrantSinkConnectorResponse.newBuilder()
+                .setSuccess(true)
+                .setConnectorName(request.connectorName)
+                .build()
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to create Qdrant sink connector: ${request.connectorName}" }
+            return Connection.CreateQdrantSinkConnectorResponse.newBuilder()
+                .setSuccess(false)
+                .setError(e.message ?: "Unknown error")
+                .build()
+        }
+    }
+
+    /**
+     * Build the Kafka Connect Qdrant sink connector configuration.
+     * The qdrant-kafka connector reads the record value envelope
+     * ({collection_name, id, vector, payload}) produced by the QdrantEnvelope node,
+     * so no field-mapping options exist here.
+     */
+    internal fun buildQdrantSinkConnectorConfig(
+        name: String,
+        config: Connection.QdrantConnectionConfig,
+        topics: String,
+        collectionName: String
+    ): Map<String, Any> {
+        require(collectionName.isNotBlank()) { "Collection name cannot be empty" }
+
+        // Use the connector URL for Kafka Connect (Docker network)
+        val grpcUrl = config.connectorGrpcUrl.ifEmpty { config.grpcUrl }
+
+        val connectorConfig = mutableMapOf<String, Any>(
+            "name" to name,
+            "connector.class" to "io.qdrant.kafka.QdrantSinkConnector",
+            "tasks.max" to "1",
+            "topics" to topics,
+            "qdrant.grpc.url" to grpcUrl,
+            // Keys are written as UTF-8 strings by TypeStream (the connector ignores keys).
+            // The intermediate topic carries schemaless JSON (see the QdrantEnvelope node):
+            // qdrant-kafka cannot handle Connect Structs, so Avro is not an option here.
+            "key.converter" to "org.apache.kafka.connect.storage.StringConverter",
+            "value.converter" to "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable" to "false",
+            // Route malformed records (e.g. a missing vector) to a DLQ instead of
+            // killing the task — the qdrant-kafka README's recommended setup.
+            "errors.tolerance" to "all",
+            "errors.deadletterqueue.topic.name" to "$name-dlq",
+            "errors.deadletterqueue.topic.replication.factor" to "1"
+        )
+
+        if (config.apiKey.isNotEmpty()) {
+            connectorConfig["qdrant.api.key"] = config.apiKey
+        }
+
+        return mapOf("name" to name, "config" to connectorConfig)
+    }
+
+    /**
+     * Check health of Qdrant by calling its readiness endpoint
+     */
+    private fun checkQdrantHealth(restUrl: String): Boolean {
+        return try {
+            val url = java.net.URI.create("$restUrl/readyz").toURL()
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            connection.requestMethod = "GET"
+
+            try {
+                val responseCode = connection.responseCode
+                responseCode == 200
+            } finally {
+                connection.disconnect()
+            }
+        } catch (e: Exception) {
+            logger.debug { "Qdrant health check failed for $restUrl: ${e.message}" }
+            false
+        }
+    }
+
+    /**
+     * Check health of all registered Qdrant connections
+     */
+    private fun checkAllQdrantConnections() {
+        qdrantConnections.values.forEach { monitored ->
+            try {
+                val isHealthy = checkQdrantHealth(monitored.config.restUrl)
+                monitored.stateSnapshot = QdrantConnectionStateSnapshot(
+                    state = if (isHealthy) ConnectionState.CONNECTED else ConnectionState.DISCONNECTED,
+                    error = if (isHealthy) null else "Qdrant not reachable",
+                    lastChecked = Instant.now()
+                )
+            } catch (e: Exception) {
+                logger.warn(e) { "Error checking Qdrant connection ${monitored.config.id}" }
+                monitored.stateSnapshot = QdrantConnectionStateSnapshot(
+                    state = ConnectionState.ERROR,
+                    error = e.message ?: "Unknown error during health check",
+                    lastChecked = Instant.now()
+                )
+            }
+        }
+    }
+
+    /**
+     * Convert MonitoredQdrantConnection to proto (excludes api_key for security)
+     */
+    private fun MonitoredQdrantConnection.toQdrantProto(): Connection.QdrantConnectionStatus {
+        val snapshot = this.stateSnapshot
+        return Connection.QdrantConnectionStatus.newBuilder()
+            .setId(this.config.id)
+            .setName(this.config.name)
+            .setState(snapshot.state)
+            .setError(snapshot.error ?: "")
+            .setLastChecked(
+                Timestamp.newBuilder()
+                    .setSeconds(snapshot.lastChecked.epochSecond)
+                    .setNanos(snapshot.lastChecked.nano)
+                    .build()
+            )
+            .setConfig(
+                Connection.QdrantConnectionConfigPublic.newBuilder()
+                    .setId(this.config.id)
+                    .setName(this.config.name)
+                    .setRestUrl(this.config.restUrl)
+                    .setGrpcUrl(this.config.grpcUrl)
+                    // api_key intentionally excluded
+                    .setConnectorGrpcUrl(this.config.connectorGrpcUrl)
+                    .build()
+            )
+            .build()
+    }
+
+    /**
+     * Get a Qdrant connection config by ID (used by JobService)
+     */
+    fun getQdrantConnection(connectionId: String): MonitoredQdrantConnection? {
+        return qdrantConnections[connectionId]
     }
 }

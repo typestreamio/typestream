@@ -26,7 +26,9 @@ type MountRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Identifier for the user session.
 	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Configuration string for the data source to mount (e.g., connection details).
 	Config string `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
 }
 
@@ -81,8 +83,10 @@ type MountResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Error   string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	// Whether the mount operation succeeded.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// Error message if the mount failed.
+	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 }
 
 func (x *MountResponse) Reset() {
@@ -136,7 +140,9 @@ type UnmountRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId   string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Identifier for the user session.
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// The endpoint path of the mounted data source to remove.
 	Endpoint string `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 }
 
@@ -191,8 +197,10 @@ type UnmountResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Error   string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	// Whether the unmount operation succeeded.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// Error message if the unmount failed.
+	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 }
 
 func (x *UnmountResponse) Reset() {
@@ -246,8 +254,10 @@ type LsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Identifier for the user session.
 	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Path   string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	// Virtual filesystem path to list (e.g., "/local/topics").
+	Path string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
 }
 
 func (x *LsRequest) Reset() {
@@ -296,12 +306,15 @@ func (x *LsRequest) GetPath() string {
 	return ""
 }
 
+// Metadata about a single entry in the virtual filesystem.
 type FileInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name     string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Name of the file or directory.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Data encoding of the topic (only set for topic entries).
 	Encoding job_service.Encoding `protobuf:"varint,2,opt,name=encoding,proto3,enum=io.typestream.grpc.Encoding" json:"encoding,omitempty"`
 }
 
@@ -356,8 +369,10 @@ type LsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// List of entries at the requested path.
 	Files []*FileInfo `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
-	Error string      `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	// Error message if the listing failed.
+	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
 }
 
 func (x *LsResponse) Reset() {
@@ -411,8 +426,10 @@ type GetSchemaRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Identifier for the user session.
 	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Path   string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"` // Topic path
+	// Virtual filesystem path to the topic (e.g., "/local/topics/my-topic").
+	Path string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
 }
 
 func (x *GetSchemaRequest) Reset() {
@@ -466,8 +483,10 @@ type GetSchemaResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Field names in the topic's schema.
 	Fields []string `protobuf:"bytes,1,rep,name=fields,proto3" json:"fields,omitempty"`
-	Error  string   `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	// Error message if schema retrieval failed.
+	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
 }
 
 func (x *GetSchemaResponse) Reset() {

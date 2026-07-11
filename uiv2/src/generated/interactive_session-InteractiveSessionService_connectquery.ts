@@ -7,6 +7,9 @@ import { MethodKind } from "@bufbuild/protobuf";
 import { CompleteProgramRequest, CompleteProgramResponse, RunProgramRequest, RunProgramResponse, StartSessionRequest, StartSessionResponse, StopSessionRequest, StopSessionResponse } from "./interactive_session_pb.js";
 
 /**
+ * Start a new interactive session for the given user.
+ * Returns a session ID used to identify the session in subsequent calls.
+ *
  * @generated from rpc io.typestream.grpc.InteractiveSessionService.StartSession
  */
 export const startSession = {
@@ -21,6 +24,9 @@ export const startSession = {
 } as const;
 
 /**
+ * Execute a TypeStream DSL program within an existing session.
+ * Returns the initial output; use GetProgramOutput to stream additional results.
+ *
  * @generated from rpc io.typestream.grpc.InteractiveSessionService.RunProgram
  */
 export const runProgram = {
@@ -35,6 +41,8 @@ export const runProgram = {
 } as const;
 
 /**
+ * Get tab-completion suggestions for a partial program at the given cursor position.
+ *
  * @generated from rpc io.typestream.grpc.InteractiveSessionService.CompleteProgram
  */
 export const completeProgram = {
@@ -49,6 +57,8 @@ export const completeProgram = {
 } as const;
 
 /**
+ * Stop an interactive session and release its resources.
+ *
  * @generated from rpc io.typestream.grpc.InteractiveSessionService.StopSession
  */
 export const stopSession = {

@@ -1,0 +1,30 @@
+# TypeStream Demo - Caddyfile
+#
+# For IP-only deployment (no DNS):
+#   DOMAIN=:80 docker compose up
+#
+# For domain deployment (auto HTTPS):
+#   DOMAIN=demo.typestream.io docker compose up
+#
+{$DOMAIN:localhost} {
+    # gRPC-web proxy (Envoy handles gRPC-web to gRPC translation)
+    handle /io.typestream.* {
+        reverse_proxy envoy:8080
+    }
+
+    # Kafka Connect API (routed through Envoy)
+    handle /connect/* {
+        reverse_proxy envoy:8080
+    }
+
+    # Qdrant API - vector database queries
+    handle /qdrant/* {
+        uri strip_prefix /qdrant
+        reverse_proxy qdrant:6333
+    }
+
+    # UI - React frontend via Vite
+    handle {
+        reverse_proxy uiv2:5173
+    }
+}

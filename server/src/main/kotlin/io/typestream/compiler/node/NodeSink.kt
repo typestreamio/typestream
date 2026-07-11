@@ -9,7 +9,13 @@ import io.typestream.grpc.job_service.Job
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class NodeSink(override val id: String, val output: DataStream, val encoding: Encoding) : Node {
+data class NodeSink(
+    override val id: String,
+    val output: DataStream,
+    val encoding: Encoding,
+    /** Write plain schemaless JSON instead of the encoding's native wire format. */
+    val plainJson: Boolean = false,
+) : Node {
     override fun inferOutputSchema(
         input: DataStream?,
         inputEncoding: Encoding?,
@@ -26,6 +32,7 @@ data class NodeSink(override val id: String, val output: DataStream, val encodin
             Job.SinkNode.newBuilder()
                 .setOutput(Job.DataStreamProto.newBuilder().setPath(output.path))
                 .setEncoding(encoding.toProtoEncoding())
+                .setPlainJson(plainJson)
         )
         .build()
 
@@ -38,7 +45,7 @@ data class NodeSink(override val id: String, val output: DataStream, val encodin
                 ?: error("No inferred schema for sink ${proto.id}")
             val encoding = context.inferredEncodings[proto.id]
                 ?: error("No inferred encoding for sink ${proto.id}")
-            return NodeSink(proto.id, out, encoding)
+            return NodeSink(proto.id, out, encoding, proto.sink.plainJson)
         }
     }
 }

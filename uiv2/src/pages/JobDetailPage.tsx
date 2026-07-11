@@ -17,7 +17,7 @@ import { PipelineGraphViewer } from '../components/graph-builder/PipelineGraphVi
 import { Sparkline } from '../components/Sparkline';
 import { useThroughputHistory } from '../hooks/useThroughputHistory';
 import { useServerConnection } from '../providers/ServerConnectionContext';
-import { getGrpcHost, getWeaviateBaseUrl } from '../utils/endpoints';
+import { getGrpcHost, getWeaviateBaseUrl, getQdrantBaseUrl } from '../utils/endpoints';
 
 export function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -242,6 +242,44 @@ curl -s '${getWeaviateBaseUrl()}/v1/graphql' -X POST \\
   -H 'Content-Type: application/json' \\
   -d '{"query": "{ Get { ${sink.collectionName}(limit: 5, nearText: {concepts: [\\"your search query\\"]}) { _additional { id distance } } } }"}' \\
   | jq '.data.Get.${sink.collectionName}'`}
+                    </Typography>
+                  </Box>
+                ))}
+              </>
+            )}
+
+            {job.state === JobState.RUNNING && job.qdrantSinks.length > 0 && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" gutterBottom>
+                  Qdrant Vector Sinks
+                </Typography>
+                {job.qdrantSinks.map((sink) => (
+                  <Box key={sink.nodeId} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">
+                      Collection: {sink.collectionName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Intermediate Topic: {sink.intermediateTopic}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      component="pre"
+                      className="dark-panel"
+                      sx={{
+                        mt: 1,
+                        overflow: 'auto',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+{`# Count points in collection
+curl -s '${getQdrantBaseUrl()}/collections/${sink.collectionName}' | jq '.result.points_count'
+
+# List points (first 5)
+curl -s '${getQdrantBaseUrl()}/collections/${sink.collectionName}/points/scroll' -X POST \\
+  -H 'Content-Type: application/json' \\
+  -d '{"limit": 5, "with_payload": true}' \\
+  | jq '.result.points[] | {id, payload}'`}
                     </Typography>
                   </Box>
                 ))}

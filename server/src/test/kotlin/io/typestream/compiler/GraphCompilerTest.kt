@@ -619,6 +619,24 @@ internal class GraphCompilerTest {
             )
             .build()
 
+    private fun qdrantEnvelopeNode(
+        id: String,
+        collectionName: String,
+        idField: String,
+        vectorField: String,
+        payloadFields: String
+    ): Job.PipelineNode =
+        Job.PipelineNode.newBuilder()
+            .setId(id)
+            .setQdrantEnvelope(
+                Job.QdrantEnvelopeNode.newBuilder()
+                    .setCollectionName(collectionName)
+                    .setIdField(idField)
+                    .setVectorField(vectorField)
+                    .setPayloadFields(payloadFields)
+            )
+            .build()
+
     private fun edge(from: String, to: String): Job.PipelineEdge =
         Job.PipelineEdge.newBuilder().setFromId(from).setToId(to).build()
 
@@ -776,5 +794,214 @@ internal class GraphCompilerTest {
         assertThat(sinkSchema.value.map { it.name }).containsExactlyInAnyOrderElementsOf(
             sourceSchema.value.map { it.name }
         )
+    }
+
+    // ===== Qdrant Envelope Tests =====
+
+    @Test
+    fun `compiles stream source with qdrant envelope and sink`() {
+        val sourceTopic = TestKafka.uniqueTopic("books")
+        val intermediateTopic = "qdrant-sink-test-${System.currentTimeMillis()}"
+        testKafka.produceRecords(
+            sourceTopic,
+            "avro",
+            Book(title = "Qdrant Test", wordCount = 200, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        // The embedding generator supplies the vector field the envelope requires;
+        // the actual Qdrant connector is created via ConnectionService.
+        val request = createRequest(
+            nodes = listOf(
+                streamSourceNode("source", "/dev/kafka/local/topics/$sourceTopic", Job.Encoding.AVRO),
+                embeddingGeneratorNode("embed", "title", "embedding"),
+                qdrantEnvelopeNode("envelope", "help_articles", "id", "embedding", "title"),
+                sinkNode("qdrant-sink", "/dev/kafka/local/topics/$intermediateTopic")
+            ),
+            edges = listOf(edge("source", "embed"), edge("embed", "envelope"), edge("envelope", "qdrant-sink"))
+        )
+
+        val program = compiler.compile(request)
+
+        val streamGraph = program.graph.children.single()
+        val stream = streamGraph.ref as NodeStreamSource
+        assertThat(stream.encoding).isEqualTo(Encoding.AVRO)
+
+        val embed = streamGraph.children.single().ref
+        assertThat(embed).isInstanceOf(io.typestream.compiler.node.NodeEmbeddingGenerator::class.java)
+
+        val envelope = streamGraph.children.single().children.single().ref
+        assertThat(envelope).isInstanceOf(io.typestream.compiler.node.NodeQdrantEnvelope::class.java)
+        envelope as io.typestream.compiler.node.NodeQdrantEnvelope
+        assertThat(envelope.collectionName).isEqualTo("help_articles")
+        assertThat(envelope.idField).isEqualTo("id")
+        assertThat(envelope.vectorField).isEqualTo("embedding")
+        assertThat(envelope.payloadFields).containsExactly("title")
+
+        val sink = streamGraph.children.single().children.single().children.single().ref as NodeSink
+        assertThat(sink.output.path).isEqualTo("/dev/kafka/local/topics/$intermediateTopic")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI propagates schema through qdrant envelope`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Envelope Schema", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                embeddingGeneratorNode("embed-1", "title", "embedding"),
+                qdrantEnvelopeNode("env-1", "help_articles", "id", "embedding", "title")
+            ),
+            edges = listOf(edge("src-1", "embed-1"), edge("embed-1", "env-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["src-1"]?.error).isNull()
+        assertThat(results["embed-1"]?.error).isNull()
+        assertThat(results["env-1"]?.error).isNull()
+
+        // The envelope replaces the input schema with the qdrant-kafka envelope shape
+        val envSchema = results["env-1"]?.schema?.schema as Schema.Struct
+        assertThat(envSchema.value.map { it.name }).containsExactly("collection_name", "id", "vector", "payload")
+
+        assertThat(envSchema["collection_name"]).isEqualTo(Schema.String("help_articles"))
+        assertThat(envSchema["vector"]).isInstanceOf(Schema.List::class.java)
+
+        val payload = envSchema["payload"] as Schema.Struct
+        assertThat(payload.value.map { it.name }).containsExactly("title")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI defaults empty payload fields to all except id and vector`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Payload Defaults", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                embeddingGeneratorNode("embed-1", "title", "embedding"),
+                qdrantEnvelopeNode("env-1", "help_articles", "id", "embedding", "")
+            ),
+            edges = listOf(edge("src-1", "embed-1"), edge("embed-1", "env-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["env-1"]?.error).isNull()
+        val payload = (results["env-1"]?.schema?.schema as Schema.Struct)["payload"] as Schema.Struct
+        assertThat(payload.value.map { it.name })
+            .containsExactlyInAnyOrder("title", "word_count", "author_id")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI reports error for missing qdrant id field`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Missing Id", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                embeddingGeneratorNode("embed-1", "title", "embedding"),
+                qdrantEnvelopeNode("env-1", "help_articles", "nonexistent_id", "embedding", "")
+            ),
+            edges = listOf(edge("src-1", "embed-1"), edge("embed-1", "env-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["env-1"]?.error).isNotNull()
+        assertThat(results["env-1"]?.error).contains("nonexistent_id")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI reports error for non-scalar qdrant id field`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Bad Id Type", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        // The embedding field is a list — not a valid Qdrant point ID type
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                embeddingGeneratorNode("embed-1", "title", "embedding"),
+                qdrantEnvelopeNode("env-1", "help_articles", "embedding", "embedding", "")
+            ),
+            edges = listOf(edge("src-1", "embed-1"), edge("embed-1", "env-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["env-1"]?.error).isNotNull()
+        assertThat(results["env-1"]?.error).contains("must be an integer")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI reports error for missing qdrant vector field`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Missing Vector", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        // No embedding generator upstream: the vector field does not exist
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                qdrantEnvelopeNode("env-1", "help_articles", "id", "embedding", "")
+            ),
+            edges = listOf(edge("src-1", "env-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["env-1"]?.error).isNotNull()
+        assertThat(results["env-1"]?.error).contains("embedding")
+    }
+
+    @Test
+    fun `inferNodeSchemasForUI reports error for non-list qdrant vector field`() {
+        val topic = TestKafka.uniqueTopic("books")
+        testKafka.produceRecords(
+            topic,
+            "avro",
+            Book(title = "Bad Vector Type", wordCount = 100, authorId = UUID.randomUUID().toString())
+        )
+        fileSystem.refresh()
+
+        val graph = createGraph(
+            nodes = listOf(
+                streamSourceNode("src-1", "/dev/kafka/local/topics/$topic", Job.Encoding.AVRO),
+                qdrantEnvelopeNode("env-1", "help_articles", "id", "title", "")
+            ),
+            edges = listOf(edge("src-1", "env-1"))
+        )
+
+        val results = compiler.inferNodeSchemasForUI(graph)
+
+        assertThat(results["env-1"]?.error).isNotNull()
+        assertThat(results["env-1"]?.error).contains("must be a list")
     }
 }

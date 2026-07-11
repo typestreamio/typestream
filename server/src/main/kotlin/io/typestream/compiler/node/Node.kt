@@ -39,6 +39,7 @@ sealed interface Node {
             proto.hasReduceLatest() -> NodeReduceLatest.fromProto(proto, context)
             proto.hasTextExtractor() -> NodeTextExtractor.fromProto(proto, context)
             proto.hasEmbeddingGenerator() -> NodeEmbeddingGenerator.fromProto(proto, context)
+            proto.hasQdrantEnvelope() -> NodeQdrantEnvelope.fromProto(proto, context)
             proto.hasOpenAiTransformer() -> NodeOpenAiTransformer.fromProto(proto, context)
             proto.hasTableMaterialized() -> NodeTableMaterialized.fromProto(proto, context)
             else -> error("Unknown node type: $proto")

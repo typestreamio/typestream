@@ -22,9 +22,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FileSystemServiceClient interface {
+	// Mount a data source (e.g., a Kafka cluster or database) into the virtual filesystem.
+	// Once mounted, its topics become browsable via Ls and their schemas via GetSchema.
 	Mount(ctx context.Context, in *MountRequest, opts ...grpc.CallOption) (*MountResponse, error)
+	// Remove a previously mounted data source from the virtual filesystem.
 	Unmount(ctx context.Context, in *UnmountRequest, opts ...grpc.CallOption) (*UnmountResponse, error)
+	// List topics and directories at the given path in the virtual filesystem.
 	Ls(ctx context.Context, in *LsRequest, opts ...grpc.CallOption) (*LsResponse, error)
+	// Retrieve the schema (field names) for a topic at the given path.
 	GetSchema(ctx context.Context, in *GetSchemaRequest, opts ...grpc.CallOption) (*GetSchemaResponse, error)
 }
 
@@ -76,9 +81,14 @@ func (c *fileSystemServiceClient) GetSchema(ctx context.Context, in *GetSchemaRe
 // All implementations must embed UnimplementedFileSystemServiceServer
 // for forward compatibility
 type FileSystemServiceServer interface {
+	// Mount a data source (e.g., a Kafka cluster or database) into the virtual filesystem.
+	// Once mounted, its topics become browsable via Ls and their schemas via GetSchema.
 	Mount(context.Context, *MountRequest) (*MountResponse, error)
+	// Remove a previously mounted data source from the virtual filesystem.
 	Unmount(context.Context, *UnmountRequest) (*UnmountResponse, error)
+	// List topics and directories at the given path in the virtual filesystem.
 	Ls(context.Context, *LsRequest) (*LsResponse, error)
+	// Retrieve the schema (field names) for a topic at the given path.
 	GetSchema(context.Context, *GetSchemaRequest) (*GetSchemaResponse, error)
 	mustEmbedUnimplementedFileSystemServiceServer()
 }

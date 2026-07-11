@@ -22,13 +22,22 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type JobServiceClient interface {
+	// Create a streaming job from TypeStream DSL source code.
 	CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*CreateJobResponse, error)
+	// Create a streaming job from a visual pipeline graph with optional sink configurations.
 	CreateJobFromGraph(ctx context.Context, in *CreateJobFromGraphRequest, opts ...grpc.CallOption) (*CreateJobResponse, error)
+	// List all running and recently stopped jobs.
 	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
+	// Create a short-lived preview job for inspecting live data flowing through a pipeline.
 	CreatePreviewJob(ctx context.Context, in *CreatePreviewJobRequest, opts ...grpc.CallOption) (*CreatePreviewJobResponse, error)
+	// Stop a running preview job.
 	StopPreviewJob(ctx context.Context, in *StopPreviewJobRequest, opts ...grpc.CallOption) (*StopPreviewJobResponse, error)
+	// Stream live preview data from a running preview job.
 	StreamPreview(ctx context.Context, in *StreamPreviewRequest, opts ...grpc.CallOption) (JobService_StreamPreviewClient, error)
+	// Infer the output schema for each node in a pipeline graph.
+	// Useful for showing field types in the UI before running a job.
 	InferGraphSchemas(ctx context.Context, in *InferGraphSchemasRequest, opts ...grpc.CallOption) (*InferGraphSchemasResponse, error)
+	// List available OpenAI models for use with AI-powered transform nodes.
 	ListOpenAIModels(ctx context.Context, in *ListOpenAIModelsRequest, opts ...grpc.CallOption) (*ListOpenAIModelsResponse, error)
 }
 
@@ -139,13 +148,22 @@ func (c *jobServiceClient) ListOpenAIModels(ctx context.Context, in *ListOpenAIM
 // All implementations must embed UnimplementedJobServiceServer
 // for forward compatibility
 type JobServiceServer interface {
+	// Create a streaming job from TypeStream DSL source code.
 	CreateJob(context.Context, *CreateJobRequest) (*CreateJobResponse, error)
+	// Create a streaming job from a visual pipeline graph with optional sink configurations.
 	CreateJobFromGraph(context.Context, *CreateJobFromGraphRequest) (*CreateJobResponse, error)
+	// List all running and recently stopped jobs.
 	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
+	// Create a short-lived preview job for inspecting live data flowing through a pipeline.
 	CreatePreviewJob(context.Context, *CreatePreviewJobRequest) (*CreatePreviewJobResponse, error)
+	// Stop a running preview job.
 	StopPreviewJob(context.Context, *StopPreviewJobRequest) (*StopPreviewJobResponse, error)
+	// Stream live preview data from a running preview job.
 	StreamPreview(*StreamPreviewRequest, JobService_StreamPreviewServer) error
+	// Infer the output schema for each node in a pipeline graph.
+	// Useful for showing field types in the UI before running a job.
 	InferGraphSchemas(context.Context, *InferGraphSchemasRequest) (*InferGraphSchemasResponse, error)
+	// List available OpenAI models for use with AI-powered transform nodes.
 	ListOpenAIModels(context.Context, *ListOpenAIModelsRequest) (*ListOpenAIModelsResponse, error)
 	mustEmbedUnimplementedJobServiceServer()
 }
