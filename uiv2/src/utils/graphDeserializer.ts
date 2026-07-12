@@ -221,8 +221,28 @@ function applyDagreLayout(nodes: Node[], edges: Edge[]): Node[] {
  * Applies Dagre auto-layout since the server doesn't store positions.
  */
 export function deserializeGraph(graph: PipelineGraph): DeserializedGraph {
+  // The qdrantSink user node desugars to a qdrantEnvelope node feeding a generic
+  // sink that writes an internal intermediate topic (which the qdrant-kafka
+  // connector then drains into Qdrant). For display, collapse that pair into the
+  // single "Qdrant Sink" node so the graph mirrors the authored pipeline instead
+  // of showing a confusing "Qdrant Sink -> Kafka Sink" hop.
+  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+  const intermediateSinkIds = new Set<string>();
+  for (const edge of graph.edges) {
+    const from = nodeById.get(edge.fromId);
+    const to = nodeById.get(edge.toId);
+    if (from?.nodeType.case === 'qdrantEnvelope' && to?.nodeType.case === 'sink') {
+      intermediateSinkIds.add(edge.toId);
+    }
+  }
+
+  const visibleNodes = graph.nodes.filter((n) => !intermediateSinkIds.has(n.id));
+  const visibleEdges = graph.edges.filter(
+    (e) => !intermediateSinkIds.has(e.fromId) && !intermediateSinkIds.has(e.toId),
+  );
+
   // Convert proto nodes to React Flow nodes
-  const nodes: Node[] = graph.nodes.map((pipelineNode) => ({
+  const nodes: Node[] = visibleNodes.map((pipelineNode) => ({
     id: pipelineNode.id,
     type: getReactFlowNodeType(pipelineNode),
     position: { x: 0, y: 0 }, // Will be set by Dagre
@@ -235,7 +255,7 @@ export function deserializeGraph(graph: PipelineGraph): DeserializedGraph {
   }));
 
   // Convert proto edges to React Flow edges
-  const edges: Edge[] = graph.edges.map((pipelineEdge, index) => ({
+  const edges: Edge[] = visibleEdges.map((pipelineEdge, index) => ({
     id: `e${index}-${pipelineEdge.fromId}-${pipelineEdge.toId}`,
     source: pipelineEdge.fromId,
     target: pipelineEdge.toId,
