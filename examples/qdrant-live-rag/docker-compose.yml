@@ -91,7 +91,7 @@ services:
       start_period: 30s
 
   qdrant:
-    image: qdrant/qdrant:v1.15.1
+    image: qdrant/qdrant:v1.18.2
     ports:
       - "6333:6333"  # REST
       - "6334:6334"  # gRPC

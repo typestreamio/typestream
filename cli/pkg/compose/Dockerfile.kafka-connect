@@ -72,7 +72,14 @@ RUN cd /kafka/connect/weaviate-sink/Weaviate-kafka-connect-weaviate-${WEAVIATE_C
     curl -sLO https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/${NETTY_VERSION}/netty-transport-native-unix-common-${NETTY_VERSION}.jar
 
 # Install Qdrant Kafka Connect Sink connector
-# Distributed as a Confluent-archive ZIP with a single self-contained fat jar
+# Distributed as a Confluent-archive ZIP with a single self-contained fat jar.
+#
+# PINNED to 1.3.1 ON PURPOSE — do not bump without re-checking. v1.3.2 and v1.3.3
+# ship a shading regression: their shaded META-INF/services/shadow.grpc.NameResolverProvider
+# dropped the DnsNameResolverProvider entry, so any host:port qdrant.grpc.url fails at
+# runtime with "Address types of NameResolver 'unix' ... not supported". 1.3.1 is the
+# newest release whose services file still lists DnsNameResolverProvider. Before upgrading,
+# verify the target release's jar contains DnsNameResolverProvider in that services file.
 ENV QDRANT_CONNECTOR_VERSION=1.3.1
 
 RUN mkdir -p /kafka/connect/qdrant-sink && \
