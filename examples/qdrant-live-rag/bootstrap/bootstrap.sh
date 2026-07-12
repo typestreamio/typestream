@@ -44,10 +44,13 @@ retry() { # retry <seconds> <description> <command...>
 
 subject_exists() { curl -sf "${SCHEMA_REGISTRY}/subjects" | jq -e --arg s "$1" 'index($s)' >/dev/null; }
 
+# Compose already gates this container on its dependencies being healthy, but a
+# cold server boot (Kafka + schema registry + state store) can still take a while,
+# so keep generous timeouts here as a safety net.
 echo "[1/6] waiting for dependencies (kafka-connect, qdrant, server)..."
-retry 120 "kafka-connect"     curl -sf "${KAFKA_CONNECT}/connectors"
-retry 120 "qdrant"            curl -sf "${QDRANT_REST}/readyz"
-retry 120 "server reflection" grpcurl -plaintext "${SERVER_ADDR}" list
+retry 300 "kafka-connect"     curl -sf "${KAFKA_CONNECT}/connectors"
+retry 300 "qdrant"            curl -sf "${QDRANT_REST}/readyz"
+retry 300 "server reflection" grpcurl -plaintext "${SERVER_ADDR}" list
 
 echo "[2/6] registering Postgres CDC connector (public.help_articles)..."
 curl -sf -X PUT "${KAFKA_CONNECT}/connectors/help-articles-cdc/config" \

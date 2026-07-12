@@ -127,6 +127,15 @@ services:
     networks: [typestream_network]
     depends_on:
       redpanda: { condition: service_healthy }
+    healthcheck:
+      # The gRPC port only binds after the server finishes booting (Kafka +
+      # schema registry + state store), so an open port == server is ready.
+      # The jib image has bash but no curl/grpcurl/nc, hence /dev/tcp.
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/4242' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 20s
 
   chatbot:
     build:
@@ -182,4 +191,7 @@ services:
     depends_on:
       kafka-connect: { condition: service_healthy }
       qdrant: { condition: service_healthy }
-      server: { condition: service_started }
+      # service_healthy (not service_started) so bootstrap doesn't begin until the
+      # server's gRPC port is actually accepting connections — avoids a step-1 race
+      # on cold boots where the server takes ~90s+ to come up.
+      server: { condition: service_healthy }
