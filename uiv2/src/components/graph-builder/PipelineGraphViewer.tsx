@@ -81,7 +81,9 @@ const nodeTitles: Record<string, string> = {
 const ViewerNode = memo(({ data, type = 'default' }: ViewerNodeProps) => {
   const theme = useTheme();
   const isSource = type === 'kafkaSource';
-  const isSink = type === 'kafkaSink';
+  // qdrantSink collapses the envelope + intermediate topic into one terminal node,
+  // so it's a sink for handle purposes just like kafkaSink.
+  const isSink = type === 'kafkaSink' || type === 'qdrantSink';
 
   // Get display value based on node type
   const displayValue = useMemo(() => {
