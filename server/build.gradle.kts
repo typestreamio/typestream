@@ -38,7 +38,7 @@ dependencies {
     implementation("com.maxmind.geoip2:geoip2:4.2.0")
 
     // JDBC drivers for connection monitoring
-    implementation("org.postgresql:postgresql:42.7.11")
+    implementation("org.postgresql:postgresql:42.7.13")
     implementation("com.mysql:mysql-connector-j:8.3.0")
 
     testImplementation(project(":libs:testing"))
