@@ -26,44 +26,105 @@ pipeline file is the whole configuration.
 
 The chatbot queries Qdrant directly; TypeStream's only job is keeping Qdrant fresh.
 
-## Run it
+## Walkthrough
+
+### 1. Start the stack
 
 ```bash
 cp .env.example .env          # add your OPENAI_API_KEY
-docker compose up             # wait for the `bootstrap` container to print "Demo is live."
+docker compose up             # wait until the `bootstrap` container prints "Demo is live."
 ```
 
-Then open **http://localhost:8000**.
+`bootstrap` runs once: it registers the Postgres CDC connector, creates the Qdrant
+collection, and applies the TypeStream pipeline (the server registers the Qdrant sink
+connector as part of the apply), then exits. It waits for the server to be healthy first,
+so a slow first boot is fine — there are no manual steps. When it prints **"Demo is live."**
+everything is seeded. The pipeline is persisted in Kafka and auto-recovers on restart.
 
-The `bootstrap` container runs once: it registers the CDC connector, creates the Qdrant
-collection, and applies the TypeStream pipeline (the server creates the Qdrant sink
-connector as part of the apply), then exits. After that the pipeline is persisted in
-Kafka and auto-recovers on every restart.
+Three things are now running:
 
-## The two demo moves
+| URL | What |
+|-----|------|
+| **http://localhost:8000** | the support assistant (RAG chatbot) |
+| **http://localhost:5173** | the TypeStream UI — the pipeline graph + live job status |
+| **http://localhost:6333/dashboard** | Qdrant's own dashboard (browse the `help_articles` points) |
 
-Dry-run all three questions before recording — answers are deterministic (temperature 0),
-so only freshness changes on camera.
+### 2. Look at the pipeline
 
-**1. UPDATE — a clean number flip**
+The entire pipeline is one config-as-code file, **`pipeline/help-articles.typestream.json`**:
 
-Ask: *"How long is the free trial?"* → **"14 days."**
+```json
+{
+  "name": "help-articles-rag",
+  "graph": {
+    "nodes": [
+      { "id": "source-1", "kafkaSource": {
+          "topicPath": "/dev/kafka/local/topics/dbserver.public.help_articles",
+          "encoding": "AVRO", "unwrapCdc": true } },
+      { "id": "embed-1", "embeddingGenerator": {
+          "textField": "body", "outputField": "embedding",
+          "model": "text-embedding-3-small" } },
+      { "id": "sink-1", "qdrantSink": {
+          "connectionId": "dev-qdrant", "collectionName": "help_articles",
+          "idField": "id", "vectorField": "embedding",
+          "payloadFields": "title,body,category" } }
+    ],
+    "edges": [
+      { "fromId": "source-1", "toId": "embed-1" },
+      { "fromId": "embed-1", "toId": "sink-1" }
+    ]
+  }
+}
+```
+
+Read top to bottom: Postgres CDC (unwrapped) → OpenAI embedding → native `qdrantSink`.
+That single file is the whole configuration — the server compiles it into a running Kafka
+Streams job **and** the qdrant-kafka sink connector.
+
+Prefer to see it running visually? Open the **TypeStream UI at http://localhost:5173** — the
+applied pipeline shows up as a live graph with per-node throughput and job status.
+(To render the native Qdrant node on the drag-and-drop canvas you need the UI image built
+from this branch — see [Running against locally built images](#running-against-locally-built-images);
+the published UI image still lists the running job either way.)
+
+### 3. Ask the support assistant
+
+Open **http://localhost:8000** and ask:
+
+> **How long is the free trial?** → *"The free trial is 14 days."*
+
+The answer is grounded in the `Free Trial` help-center doc — the source of truth is Postgres.
+
+### 4. Change the source data, then ask again
+
+Now change a row in Postgres. TypeStream picks up the change over CDC, re-embeds the row,
+and Qdrant is fresh within seconds — no reindex job, no consumer code.
+
+**UPDATE — flip a number in place:**
 
 ```bash
 docker compose exec -T postgres psql -U typestream -d demo < demo/update-trial.sql
 ```
 
-Ask the same question again → **"30 days."**
+Ask the same question again → *"The free trial is 30 days."*
 
-**2. INSERT — a topic that didn't exist**
-
-Ask: *"Do you support single sign-on / Okta?"* → **"I don't have that information."**
+**INSERT — a topic that didn't exist yet:** first ask *"Do you support single sign-on / Okta?"*
+→ *"I don't have that information."* Then insert the new doc:
 
 ```bash
 docker compose exec -T postgres psql -U typestream -d demo < demo/insert-sso.sql
 ```
 
-Ask again seconds later → the bot answers from the brand-new SSO doc.
+Ask again a few seconds later → the bot answers from the brand-new SSO doc.
+
+> Answers are deterministic (temperature 0), so only *freshness* changes between asks —
+> clean for a screen recording.
+
+### 5. Start over with fresh data
+
+The stack has no volumes — all state is ephemeral. `docker compose down` wipes everything
+(Postgres rows, Qdrant points, Kafka offsets); the next `docker compose up` re-seeds a clean
+baseline. (`docker compose stop`/`start` pauses **without** wiping.)
 
 ## Retargeting to another datastore
 
