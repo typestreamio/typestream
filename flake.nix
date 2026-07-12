@@ -128,7 +128,7 @@
               bash
               nodePackages.pnpm
               buf
-              nodejs_22
+              nodejs_24
               patchelf
               protobuf
               protoc-gen-doc
