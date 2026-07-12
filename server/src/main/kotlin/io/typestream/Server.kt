@@ -84,7 +84,7 @@ class Server(
                 )
             }
         } else null
-        val pipelineService = PipelineService(config, vm, stateStore)
+        val pipelineService = PipelineService(config, vm, stateStore, connectionService)
         subSystems.add(pipelineService)
         serverBuilder.addService(pipelineService)
         if (stateStore != null) {

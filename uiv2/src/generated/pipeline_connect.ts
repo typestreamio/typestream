@@ -7,12 +7,20 @@ import { ApplyPipelineRequest, ApplyPipelineResponse, DeletePipelineRequest, Del
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
+ * PipelineService manages declarative pipeline definitions using a GitOps-style
+ * workflow. Validate pipeline graphs before deploying, apply them to create or
+ * update running jobs, list active pipelines, delete them, and plan changes
+ * (dry-run diff) before applying.
+ *
  * @generated from service io.typestream.grpc.PipelineService
  */
 export const PipelineService = {
   typeName: "io.typestream.grpc.PipelineService",
   methods: {
     /**
+     * Validate a pipeline definition without deploying it.
+     * Returns validation errors and warnings.
+     *
      * @generated from rpc io.typestream.grpc.PipelineService.ValidatePipeline
      */
     validatePipeline: {
@@ -22,6 +30,9 @@ export const PipelineService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Apply a pipeline definition — creates a new job or updates an existing one.
+     * Returns the job ID and whether the pipeline was created, updated, or unchanged.
+     *
      * @generated from rpc io.typestream.grpc.PipelineService.ApplyPipeline
      */
     applyPipeline: {
@@ -31,6 +42,8 @@ export const PipelineService = {
       kind: MethodKind.Unary,
     },
     /**
+     * List all currently registered pipelines and their job status.
+     *
      * @generated from rpc io.typestream.grpc.PipelineService.ListPipelines
      */
     listPipelines: {
@@ -40,6 +53,8 @@ export const PipelineService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Delete a pipeline by name, stopping its underlying job.
+     *
      * @generated from rpc io.typestream.grpc.PipelineService.DeletePipeline
      */
     deletePipeline: {
@@ -49,6 +64,9 @@ export const PipelineService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Dry-run a set of pipeline definitions against the current state.
+     * Returns a plan showing which pipelines would be created, updated, deleted, or unchanged.
+     *
      * @generated from rpc io.typestream.grpc.PipelineService.PlanPipelines
      */
     planPipelines: {

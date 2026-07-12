@@ -16,6 +16,7 @@ import io.typestream.compiler.node.NodeJoin
 import io.typestream.compiler.node.NodeMap
 import io.typestream.compiler.node.NodeNoOp
 import io.typestream.compiler.node.NodeOpenAiTransformer
+import io.typestream.compiler.node.NodeQdrantEnvelope
 import io.typestream.compiler.node.NodeReduceLatest
 import io.typestream.compiler.node.NodeShellSource
 import io.typestream.compiler.node.NodeSink
@@ -156,6 +157,7 @@ class KafkaStreamsJob(
                     is NodeGeoIp -> kafkaStreamSource.geoIp(currentNode.ref)
                     is NodeTextExtractor -> kafkaStreamSource.textExtract(currentNode.ref)
                     is NodeEmbeddingGenerator -> kafkaStreamSource.embeddingGenerate(currentNode.ref)
+                    is NodeQdrantEnvelope -> kafkaStreamSource.qdrantEnvelope(currentNode.ref)
                     is NodeOpenAiTransformer -> kafkaStreamSource.openAiTransform(currentNode.ref)
                     is NodeNoOp -> {}
                     is NodeStreamSource -> {}

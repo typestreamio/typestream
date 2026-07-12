@@ -7,6 +7,8 @@ import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialM
 import { Message, proto3, protoInt64 } from "@bufbuild/protobuf";
 
 /**
+ * Data encoding format for Kafka topics.
+ *
  * @generated from enum io.typestream.grpc.Encoding
  */
 export enum Encoding {
@@ -45,6 +47,8 @@ proto3.util.setEnumType(Encoding, "io.typestream.grpc.Encoding", [
 ]);
 
 /**
+ * Lifecycle state of a streaming job.
+ *
  * @generated from enum io.typestream.grpc.JobState
  */
 export enum JobState {
@@ -99,11 +103,15 @@ proto3.util.setEnumType(JobState, "io.typestream.grpc.JobState", [
  */
 export class CreateJobRequest extends Message<CreateJobRequest> {
   /**
+   * Identifier for the user creating the job.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
 
   /**
+   * TypeStream DSL source code defining the pipeline.
+   *
    * @generated from field: string source = 2;
    */
   source = "";
@@ -142,22 +150,28 @@ export class CreateJobRequest extends Message<CreateJobRequest> {
  */
 export class CreateJobResponse extends Message<CreateJobResponse> {
   /**
+   * Whether the job was created successfully.
+   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
+   * Unique identifier for the created job.
+   *
    * @generated from field: string job_id = 2;
    */
   jobId = "";
 
   /**
+   * Error message if job creation failed.
+   *
    * @generated from field: string error = 3;
    */
   error = "";
 
   /**
-   * Connector names created for DB sinks
+   * Names of Kafka Connect connectors created for DB sinks.
    *
    * @generated from field: repeated string created_connectors = 4;
    */
@@ -195,6 +209,8 @@ export class CreateJobResponse extends Message<CreateJobResponse> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.JoinTypeProto
  */
 export class JoinTypeProto extends Message<JoinTypeProto> {
@@ -238,6 +254,8 @@ export class JoinTypeProto extends Message<JoinTypeProto> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.DataStreamProto
  */
 export class DataStreamProto extends Message<DataStreamProto> {
@@ -275,6 +293,8 @@ export class DataStreamProto extends Message<DataStreamProto> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.PredicateProto
  */
 export class PredicateProto extends Message<PredicateProto> {
@@ -312,6 +332,8 @@ export class PredicateProto extends Message<PredicateProto> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.CountNode
  */
 export class CountNode extends Message<CountNode> {
@@ -343,12 +365,12 @@ export class CountNode extends Message<CountNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.WindowedCountNode
  */
 export class WindowedCountNode extends Message<WindowedCountNode> {
   /**
-   * e.g., 60 for 1-minute windows
-   *
    * @generated from field: int64 window_size_seconds = 1;
    */
   windowSizeSeconds = protoInt64.zero;
@@ -382,6 +404,8 @@ export class WindowedCountNode extends Message<WindowedCountNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.FilterNode
  */
 export class FilterNode extends Message<FilterNode> {
@@ -425,6 +449,8 @@ export class FilterNode extends Message<FilterNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.GroupNode
  */
 export class GroupNode extends Message<GroupNode> {
@@ -462,6 +488,8 @@ export class GroupNode extends Message<GroupNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.JoinNode
  */
 export class JoinNode extends Message<JoinNode> {
@@ -505,6 +533,8 @@ export class JoinNode extends Message<JoinNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.MapNode
  */
 export class MapNode extends Message<MapNode> {
@@ -542,6 +572,8 @@ export class MapNode extends Message<MapNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.NoOpNode
  */
 export class NoOpNode extends Message<NoOpNode> {
@@ -573,6 +605,8 @@ export class NoOpNode extends Message<NoOpNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.ShellSourceNode
  */
 export class ShellSourceNode extends Message<ShellSourceNode> {
@@ -610,6 +644,8 @@ export class ShellSourceNode extends Message<ShellSourceNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.StreamSourceNode
  */
 export class StreamSourceNode extends Message<StreamSourceNode> {
@@ -624,8 +660,6 @@ export class StreamSourceNode extends Message<StreamSourceNode> {
   encoding = Encoding.STRING;
 
   /**
-   * Extract 'after' payload from CDC envelope
-   *
    * @generated from field: bool unwrap_cdc = 3;
    */
   unwrapCdc = false;
@@ -661,6 +695,8 @@ export class StreamSourceNode extends Message<StreamSourceNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.EachNode
  */
 export class EachNode extends Message<EachNode> {
@@ -698,6 +734,8 @@ export class EachNode extends Message<EachNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.SinkNode
  */
 export class SinkNode extends Message<SinkNode> {
@@ -711,6 +749,15 @@ export class SinkNode extends Message<SinkNode> {
    */
   encoding = Encoding.STRING;
 
+  /**
+   * If true, write plain schemaless JSON (record value only, no internal
+   * envelope) — consumable by Kafka Connect's JsonConverter with
+   * schemas.enable=false. Used by connector sinks like qdrantSink.
+   *
+   * @generated from field: bool plain_json = 3;
+   */
+  plainJson = false;
+
   constructor(data?: PartialMessage<SinkNode>) {
     super();
     proto3.util.initPartial(data, this);
@@ -721,6 +768,7 @@ export class SinkNode extends Message<SinkNode> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "output", kind: "message", T: DataStreamProto },
     { no: 2, name: "encoding", kind: "enum", T: proto3.getEnumType(Encoding) },
+    { no: 3, name: "plain_json", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SinkNode {
@@ -741,18 +789,20 @@ export class SinkNode extends Message<SinkNode> {
 }
 
 /**
+ * GeoIP enrichment — resolves an IP address to a country code.
+ *
  * @generated from message io.typestream.grpc.GeoIpNode
  */
 export class GeoIpNode extends Message<GeoIpNode> {
   /**
-   * Field containing IP address
+   * Field containing the IP address to look up.
    *
    * @generated from field: string ip_field = 1;
    */
   ipField = "";
 
   /**
-   * Output field name (default: country_code)
+   * Output field name for the country code (default: "country_code").
    *
    * @generated from field: string output_field = 2;
    */
@@ -788,11 +838,13 @@ export class GeoIpNode extends Message<GeoIpNode> {
 }
 
 /**
+ * Inspector — taps into the data stream for live preview.
+ *
  * @generated from message io.typestream.grpc.InspectorNode
  */
 export class InspectorNode extends Message<InspectorNode> {
   /**
-   * Optional label for the inspector
+   * Optional label for the inspector tap point.
    *
    * @generated from field: string label = 1;
    */
@@ -827,6 +879,8 @@ export class InspectorNode extends Message<InspectorNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.ReduceLatestNode
  */
 export class ReduceLatestNode extends Message<ReduceLatestNode> {
@@ -858,18 +912,65 @@ export class ReduceLatestNode extends Message<ReduceLatestNode> {
 }
 
 /**
+ * * @exclude 
+ *
+ * @generated from message io.typestream.grpc.TableMaterializedNode
+ */
+export class TableMaterializedNode extends Message<TableMaterializedNode> {
+  /**
+   * @generated from field: string group_by_field = 1;
+   */
+  groupByField = "";
+
+  /**
+   * @generated from field: string aggregation_type = 2;
+   */
+  aggregationType = "";
+
+  constructor(data?: PartialMessage<TableMaterializedNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.TableMaterializedNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "group_by_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "aggregation_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TableMaterializedNode {
+    return new TableMaterializedNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TableMaterializedNode {
+    return new TableMaterializedNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TableMaterializedNode {
+    return new TableMaterializedNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TableMaterializedNode | PlainMessage<TableMaterializedNode> | undefined, b: TableMaterializedNode | PlainMessage<TableMaterializedNode> | undefined): boolean {
+    return proto3.util.equals(TableMaterializedNode, a, b);
+  }
+}
+
+/**
+ * Text extractor — extracts text content from files referenced in records.
+ *
  * @generated from message io.typestream.grpc.TextExtractorNode
  */
 export class TextExtractorNode extends Message<TextExtractorNode> {
   /**
-   * Field containing the file path
+   * Field containing the file path to extract text from.
    *
    * @generated from field: string file_path_field = 1;
    */
   filePathField = "";
 
   /**
-   * Output field name (default: text)
+   * Output field name for the extracted text (default: "text").
    *
    * @generated from field: string output_field = 2;
    */
@@ -905,25 +1006,27 @@ export class TextExtractorNode extends Message<TextExtractorNode> {
 }
 
 /**
+ * Embedding generator — generates vector embeddings from text using OpenAI.
+ *
  * @generated from message io.typestream.grpc.EmbeddingGeneratorNode
  */
 export class EmbeddingGeneratorNode extends Message<EmbeddingGeneratorNode> {
   /**
-   * Field containing text to embed
+   * Field containing the text to embed.
    *
    * @generated from field: string text_field = 1;
    */
   textField = "";
 
   /**
-   * Output field name (default: embedding)
+   * Output field name for the embedding vector (default: "embedding").
    *
    * @generated from field: string output_field = 2;
    */
   outputField = "";
 
   /**
-   * OpenAI model (default: text-embedding-3-small)
+   * OpenAI model to use (default: "text-embedding-3-small").
    *
    * @generated from field: string model = 3;
    */
@@ -960,25 +1063,27 @@ export class EmbeddingGeneratorNode extends Message<EmbeddingGeneratorNode> {
 }
 
 /**
+ * OpenAI transformer — enriches records using an OpenAI language model.
+ *
  * @generated from message io.typestream.grpc.OpenAiTransformerNode
  */
 export class OpenAiTransformerNode extends Message<OpenAiTransformerNode> {
   /**
-   * User's instruction prompt
+   * Instruction prompt describing the transformation.
    *
    * @generated from field: string prompt = 1;
    */
   prompt = "";
 
   /**
-   * Output field name (default: ai_response)
+   * Output field name for the AI response (default: "ai_response").
    *
    * @generated from field: string output_field = 2;
    */
   outputField = "";
 
   /**
-   * OpenAI model ID (default: gpt-4o-mini)
+   * OpenAI model ID to use (default: "gpt-4o-mini").
    *
    * @generated from field: string model = 3;
    */
@@ -1015,6 +1120,76 @@ export class OpenAiTransformerNode extends Message<OpenAiTransformerNode> {
 }
 
 /**
+ * Reshapes records into the envelope expected by the qdrant-kafka sink
+ * connector: { collection_name, id, vector, payload: { ... } }. Inserted by
+ * the desugarer in front of a Qdrant sink's intermediate topic.
+ *
+ * @generated from message io.typestream.grpc.QdrantEnvelopeNode
+ */
+export class QdrantEnvelopeNode extends Message<QdrantEnvelopeNode> {
+  /**
+   * Target Qdrant collection name (emitted as collection_name on every record).
+   *
+   * @generated from field: string collection_name = 1;
+   */
+  collectionName = "";
+
+  /**
+   * Field to use as the Qdrant point ID (must be an integer or UUID string).
+   *
+   * @generated from field: string id_field = 2;
+   */
+  idField = "";
+
+  /**
+   * Field containing the vector (a list of floats).
+   *
+   * @generated from field: string vector_field = 3;
+   */
+  vectorField = "";
+
+  /**
+   * Comma-separated fields to include in the payload (empty = all fields
+   * except the id and vector fields).
+   *
+   * @generated from field: string payload_fields = 4;
+   */
+  payloadFields = "";
+
+  constructor(data?: PartialMessage<QdrantEnvelopeNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.QdrantEnvelopeNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "id_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "vector_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "payload_fields", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): QdrantEnvelopeNode {
+    return new QdrantEnvelopeNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): QdrantEnvelopeNode {
+    return new QdrantEnvelopeNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): QdrantEnvelopeNode {
+    return new QdrantEnvelopeNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: QdrantEnvelopeNode | PlainMessage<QdrantEnvelopeNode> | undefined, b: QdrantEnvelopeNode | PlainMessage<QdrantEnvelopeNode> | undefined): boolean {
+    return proto3.util.equals(QdrantEnvelopeNode, a, b);
+  }
+}
+
+/**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.PipelineNode
  */
 export class PipelineNode extends Message<PipelineNode> {
@@ -1128,6 +1303,18 @@ export class PipelineNode extends Message<PipelineNode> {
      */
     value: WindowedCountNode;
     case: "windowedCount";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.TableMaterializedNode table_materialized = 19;
+     */
+    value: TableMaterializedNode;
+    case: "tableMaterialized";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.QdrantEnvelopeNode qdrant_envelope = 20;
+     */
+    value: QdrantEnvelopeNode;
+    case: "qdrantEnvelope";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PipelineNode>) {
@@ -1156,6 +1343,8 @@ export class PipelineNode extends Message<PipelineNode> {
     { no: 16, name: "embedding_generator", kind: "message", T: EmbeddingGeneratorNode, oneof: "node_type" },
     { no: 17, name: "open_ai_transformer", kind: "message", T: OpenAiTransformerNode, oneof: "node_type" },
     { no: 18, name: "windowed_count", kind: "message", T: WindowedCountNode, oneof: "node_type" },
+    { no: 19, name: "table_materialized", kind: "message", T: TableMaterializedNode, oneof: "node_type" },
+    { no: 20, name: "qdrant_envelope", kind: "message", T: QdrantEnvelopeNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PipelineNode {
@@ -1176,6 +1365,8 @@ export class PipelineNode extends Message<PipelineNode> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.PipelineEdge
  */
 export class PipelineEdge extends Message<PipelineEdge> {
@@ -1219,6 +1410,8 @@ export class PipelineEdge extends Message<PipelineEdge> {
 }
 
 /**
+ * * @exclude 
+ *
  * @generated from message io.typestream.grpc.PipelineGraph
  */
 export class PipelineGraph extends Message<PipelineGraph> {
@@ -1262,40 +1455,49 @@ export class PipelineGraph extends Message<PipelineGraph> {
 }
 
 /**
- * Configuration for DB sink connectors (credentials resolved server-side)
+ * Configuration for a database sink connector. Credentials are resolved
+ * server-side from the connection ID.
  *
  * @generated from message io.typestream.grpc.DbSinkConfig
  */
 export class DbSinkConfig extends Message<DbSinkConfig> {
   /**
+   * ID of the node this sink config belongs to.
+   *
    * @generated from field: string node_id = 1;
    */
   nodeId = "";
 
   /**
-   * Server resolves credentials from this
+   * Registered connection ID (server resolves credentials).
    *
    * @generated from field: string connection_id = 2;
    */
   connectionId = "";
 
   /**
+   * Target database table name.
+   *
    * @generated from field: string table_name = 3;
    */
   tableName = "";
 
   /**
+   * Write mode: "insert", "upsert", or "update".
+   *
    * @generated from field: string insert_mode = 4;
    */
   insertMode = "";
 
   /**
+   * Comma-separated primary key fields (for upsert/update mode).
+   *
    * @generated from field: string primary_key_fields = 5;
    */
   primaryKeyFields = "";
 
   /**
-   * Optional - server auto-generates if empty
+   * Intermediate Kafka topic (auto-generated if empty).
    *
    * @generated from field: string intermediate_topic = 6;
    */
@@ -1335,53 +1537,69 @@ export class DbSinkConfig extends Message<DbSinkConfig> {
 }
 
 /**
- * Configuration for Weaviate sink connectors
+ * Configuration for a Weaviate vector database sink connector.
  *
  * @generated from message io.typestream.grpc.WeaviateSinkConfig
  */
 export class WeaviateSinkConfig extends Message<WeaviateSinkConfig> {
   /**
+   * ID of the node this sink config belongs to.
+   *
    * @generated from field: string node_id = 1;
    */
   nodeId = "";
 
   /**
+   * Registered Weaviate connection ID.
+   *
    * @generated from field: string connection_id = 2;
    */
   connectionId = "";
 
   /**
+   * Intermediate Kafka topic for the connector.
+   *
    * @generated from field: string intermediate_topic = 3;
    */
   intermediateTopic = "";
 
   /**
+   * Target Weaviate collection name.
+   *
    * @generated from field: string collection_name = 4;
    */
   collectionName = "";
 
   /**
+   * Document ID strategy: "NoIdStrategy", "KafkaIdStrategy", or "FieldIdStrategy".
+   *
    * @generated from field: string document_id_strategy = 5;
    */
   documentIdStrategy = "";
 
   /**
+   * Field to use as document ID (when using FieldIdStrategy).
+   *
    * @generated from field: string document_id_field = 6;
    */
   documentIdField = "";
 
   /**
+   * Vector strategy: "NoVectorStrategy" or "FieldVectorStrategy".
+   *
    * @generated from field: string vector_strategy = 7;
    */
   vectorStrategy = "";
 
   /**
+   * Field containing the vector.
+   *
    * @generated from field: string vector_field = 8;
    */
   vectorField = "";
 
   /**
-   * Optional: field name for timestamp conversion (empty = no transform)
+   * Optional: field name for timestamp conversion (empty = no transform).
    *
    * @generated from field: string timestamp_field = 9;
    */
@@ -1424,47 +1642,120 @@ export class WeaviateSinkConfig extends Message<WeaviateSinkConfig> {
 }
 
 /**
- * Configuration for Elasticsearch sink connectors
+ * Configuration for a Qdrant vector database sink connector.
  *
- * @generated from message io.typestream.grpc.ElasticsearchSinkConfig
+ * @generated from message io.typestream.grpc.QdrantSinkConfig
  */
-export class ElasticsearchSinkConfig extends Message<ElasticsearchSinkConfig> {
+export class QdrantSinkConfig extends Message<QdrantSinkConfig> {
   /**
+   * ID of the node this sink config belongs to.
+   *
    * @generated from field: string node_id = 1;
    */
   nodeId = "";
 
   /**
+   * Registered Qdrant connection ID.
+   *
    * @generated from field: string connection_id = 2;
    */
   connectionId = "";
 
   /**
+   * Intermediate Kafka topic for the connector.
+   *
    * @generated from field: string intermediate_topic = 3;
    */
   intermediateTopic = "";
 
   /**
+   * Target Qdrant collection name.
+   *
+   * @generated from field: string collection_name = 4;
+   */
+  collectionName = "";
+
+  constructor(data?: PartialMessage<QdrantSinkConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.QdrantSinkConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "intermediate_topic", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): QdrantSinkConfig {
+    return new QdrantSinkConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): QdrantSinkConfig {
+    return new QdrantSinkConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): QdrantSinkConfig {
+    return new QdrantSinkConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: QdrantSinkConfig | PlainMessage<QdrantSinkConfig> | undefined, b: QdrantSinkConfig | PlainMessage<QdrantSinkConfig> | undefined): boolean {
+    return proto3.util.equals(QdrantSinkConfig, a, b);
+  }
+}
+
+/**
+ * Configuration for an Elasticsearch sink connector.
+ *
+ * @generated from message io.typestream.grpc.ElasticsearchSinkConfig
+ */
+export class ElasticsearchSinkConfig extends Message<ElasticsearchSinkConfig> {
+  /**
+   * ID of the node this sink config belongs to.
+   *
+   * @generated from field: string node_id = 1;
+   */
+  nodeId = "";
+
+  /**
+   * Registered Elasticsearch connection ID.
+   *
+   * @generated from field: string connection_id = 2;
+   */
+  connectionId = "";
+
+  /**
+   * Intermediate Kafka topic for the connector.
+   *
+   * @generated from field: string intermediate_topic = 3;
+   */
+  intermediateTopic = "";
+
+  /**
+   * Target Elasticsearch index name.
+   *
    * @generated from field: string index_name = 4;
    */
   indexName = "";
 
   /**
-   * RECORD_KEY, TOPIC_PARTITION_OFFSET
+   * Document ID strategy: "RECORD_KEY" or "TOPIC_PARTITION_OFFSET".
    *
    * @generated from field: string document_id_strategy = 5;
    */
   documentIdStrategy = "";
 
   /**
-   * INSERT, UPSERT
+   * Write method: "INSERT" or "UPSERT".
    *
    * @generated from field: string write_method = 6;
    */
   writeMethod = "";
 
   /**
-   * IGNORE, DELETE, FAIL
+   * Behavior on null values: "IGNORE", "DELETE", or "FAIL".
    *
    * @generated from field: string behavior_on_null_values = 7;
    */
@@ -1509,35 +1800,46 @@ export class ElasticsearchSinkConfig extends Message<ElasticsearchSinkConfig> {
  */
 export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest> {
   /**
+   * Identifier for the user creating the job.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
 
   /**
+   * Pipeline graph defining the job topology.
+   *
    * @generated from field: io.typestream.grpc.PipelineGraph graph = 2;
    */
   graph?: PipelineGraph;
 
   /**
-   * DB sink configurations
+   * Database sink configurations for DB sink nodes.
    *
    * @generated from field: repeated io.typestream.grpc.DbSinkConfig db_sink_configs = 3;
    */
   dbSinkConfigs: DbSinkConfig[] = [];
 
   /**
-   * Weaviate sink configurations
+   * Weaviate sink configurations for Weaviate sink nodes.
    *
    * @generated from field: repeated io.typestream.grpc.WeaviateSinkConfig weaviate_sink_configs = 4;
    */
   weaviateSinkConfigs: WeaviateSinkConfig[] = [];
 
   /**
-   * Elasticsearch sink configurations
+   * Elasticsearch sink configurations for Elasticsearch sink nodes.
    *
    * @generated from field: repeated io.typestream.grpc.ElasticsearchSinkConfig elasticsearch_sink_configs = 5;
    */
   elasticsearchSinkConfigs: ElasticsearchSinkConfig[] = [];
+
+  /**
+   * Qdrant sink configurations for Qdrant sink nodes.
+   *
+   * @generated from field: repeated io.typestream.grpc.QdrantSinkConfig qdrant_sink_configs = 6;
+   */
+  qdrantSinkConfigs: QdrantSinkConfig[] = [];
 
   constructor(data?: PartialMessage<CreateJobFromGraphRequest>) {
     super();
@@ -1552,6 +1854,7 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
     { no: 3, name: "db_sink_configs", kind: "message", T: DbSinkConfig, repeated: true },
     { no: 4, name: "weaviate_sink_configs", kind: "message", T: WeaviateSinkConfig, repeated: true },
     { no: 5, name: "elasticsearch_sink_configs", kind: "message", T: ElasticsearchSinkConfig, repeated: true },
+    { no: 6, name: "qdrant_sink_configs", kind: "message", T: QdrantSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateJobFromGraphRequest {
@@ -1576,6 +1879,8 @@ export class CreateJobFromGraphRequest extends Message<CreateJobFromGraphRequest
  */
 export class ListJobsRequest extends Message<ListJobsRequest> {
   /**
+   * Identifier for the user listing jobs.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
@@ -1609,32 +1914,34 @@ export class ListJobsRequest extends Message<ListJobsRequest> {
 }
 
 /**
+ * Throughput metrics for a running job.
+ *
  * @generated from message io.typestream.grpc.JobThroughput
  */
 export class JobThroughput extends Message<JobThroughput> {
   /**
-   * Current processing rate (messages/sec)
+   * Current processing rate (messages/sec).
    *
    * @generated from field: double messages_per_second = 1;
    */
   messagesPerSecond = 0;
 
   /**
-   * Total messages processed since job start
+   * Total messages processed since job start.
    *
    * @generated from field: int64 total_messages = 2;
    */
   totalMessages = protoInt64.zero;
 
   /**
-   * Current bandwidth consumption (bytes/sec)
+   * Current bandwidth consumption (bytes/sec).
    *
    * @generated from field: double bytes_per_second = 3;
    */
   bytesPerSecond = 0;
 
   /**
-   * Total bytes processed since job start
+   * Total bytes processed since job start.
    *
    * @generated from field: int64 total_bytes = 4;
    */
@@ -1672,53 +1979,66 @@ export class JobThroughput extends Message<JobThroughput> {
 }
 
 /**
+ * Information about a streaming job.
+ *
  * @generated from message io.typestream.grpc.JobInfo
  */
 export class JobInfo extends Message<JobInfo> {
   /**
+   * Unique job identifier.
+   *
    * @generated from field: string job_id = 1;
    */
   jobId = "";
 
   /**
+   * Current lifecycle state.
+   *
    * @generated from field: io.typestream.grpc.JobState state = 2;
    */
   state = JobState.JOB_STATE_UNSPECIFIED;
 
   /**
-   * Unix timestamp in milliseconds
+   * Unix timestamp in milliseconds when the job started.
    *
    * @generated from field: int64 start_time = 3;
    */
   startTime = protoInt64.zero;
 
   /**
-   * Optional: the job's pipeline graph
+   * The job's pipeline graph.
    *
    * @generated from field: io.typestream.grpc.PipelineGraph graph = 4;
    */
   graph?: PipelineGraph;
 
   /**
-   * Throughput metrics
+   * Throughput metrics.
    *
    * @generated from field: io.typestream.grpc.JobThroughput throughput = 5;
    */
   throughput?: JobThroughput;
 
   /**
-   * Weaviate sink configs for this job
+   * Weaviate sink configs for this job.
    *
    * @generated from field: repeated io.typestream.grpc.WeaviateSinkConfig weaviate_sinks = 6;
    */
   weaviateSinks: WeaviateSinkConfig[] = [];
 
   /**
-   * Elasticsearch sink configs for this job
+   * Elasticsearch sink configs for this job.
    *
    * @generated from field: repeated io.typestream.grpc.ElasticsearchSinkConfig elasticsearch_sinks = 7;
    */
   elasticsearchSinks: ElasticsearchSinkConfig[] = [];
+
+  /**
+   * Qdrant sink configs for this job.
+   *
+   * @generated from field: repeated io.typestream.grpc.QdrantSinkConfig qdrant_sinks = 8;
+   */
+  qdrantSinks: QdrantSinkConfig[] = [];
 
   constructor(data?: PartialMessage<JobInfo>) {
     super();
@@ -1735,6 +2055,7 @@ export class JobInfo extends Message<JobInfo> {
     { no: 5, name: "throughput", kind: "message", T: JobThroughput },
     { no: 6, name: "weaviate_sinks", kind: "message", T: WeaviateSinkConfig, repeated: true },
     { no: 7, name: "elasticsearch_sinks", kind: "message", T: ElasticsearchSinkConfig, repeated: true },
+    { no: 8, name: "qdrant_sinks", kind: "message", T: QdrantSinkConfig, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JobInfo {
@@ -1759,6 +2080,8 @@ export class JobInfo extends Message<JobInfo> {
  */
 export class ListJobsResponse extends Message<ListJobsResponse> {
   /**
+   * All known jobs.
+   *
    * @generated from field: repeated io.typestream.grpc.JobInfo jobs = 1;
    */
   jobs: JobInfo[] = [];
@@ -1792,18 +2115,18 @@ export class ListJobsResponse extends Message<ListJobsResponse> {
 }
 
 /**
- * Preview job messages
- *
  * @generated from message io.typestream.grpc.CreatePreviewJobRequest
  */
 export class CreatePreviewJobRequest extends Message<CreatePreviewJobRequest> {
   /**
+   * Pipeline graph to run as a preview.
+   *
    * @generated from field: io.typestream.grpc.PipelineGraph graph = 1;
    */
   graph?: PipelineGraph;
 
   /**
-   * Which inspector node triggered this
+   * ID of the inspector node that triggered this preview.
    *
    * @generated from field: string inspector_node_id = 2;
    */
@@ -1848,12 +2171,14 @@ export class CreatePreviewJobResponse extends Message<CreatePreviewJobResponse> 
   success = false;
 
   /**
+   * ID of the created preview job.
+   *
    * @generated from field: string job_id = 2;
    */
   jobId = "";
 
   /**
-   * Topic to consume for preview data
+   * Kafka topic to consume for live preview data.
    *
    * @generated from field: string inspect_topic = 3;
    */
@@ -1900,6 +2225,8 @@ export class CreatePreviewJobResponse extends Message<CreatePreviewJobResponse> 
  */
 export class StopPreviewJobRequest extends Message<StopPreviewJobRequest> {
   /**
+   * ID of the preview job to stop.
+   *
    * @generated from field: string job_id = 1;
    */
   jobId = "";
@@ -1980,6 +2307,8 @@ export class StopPreviewJobResponse extends Message<StopPreviewJobResponse> {
  */
 export class StreamPreviewRequest extends Message<StreamPreviewRequest> {
   /**
+   * ID of the preview job to stream from.
+   *
    * @generated from field: string job_id = 1;
    */
   jobId = "";
@@ -2013,20 +2342,28 @@ export class StreamPreviewRequest extends Message<StreamPreviewRequest> {
 }
 
 /**
+ * A single record from the preview stream.
+ *
  * @generated from message io.typestream.grpc.StreamPreviewResponse
  */
 export class StreamPreviewResponse extends Message<StreamPreviewResponse> {
   /**
+   * Record key.
+   *
    * @generated from field: string key = 1;
    */
   key = "";
 
   /**
+   * Record value (JSON string).
+   *
    * @generated from field: string value = 2;
    */
   value = "";
 
   /**
+   * Record timestamp (Unix milliseconds).
+   *
    * @generated from field: int64 timestamp = 3;
    */
   timestamp = protoInt64.zero;
@@ -2062,12 +2399,12 @@ export class StreamPreviewResponse extends Message<StreamPreviewResponse> {
 }
 
 /**
- * Schema inference messages
- *
  * @generated from message io.typestream.grpc.InferGraphSchemasRequest
  */
 export class InferGraphSchemasRequest extends Message<InferGraphSchemasRequest> {
   /**
+   * Pipeline graph to infer schemas for.
+   *
    * @generated from field: io.typestream.grpc.PipelineGraph graph = 1;
    */
   graph?: PipelineGraph;
@@ -2105,6 +2442,8 @@ export class InferGraphSchemasRequest extends Message<InferGraphSchemasRequest> 
  */
 export class InferGraphSchemasResponse extends Message<InferGraphSchemasResponse> {
   /**
+   * Map of node ID to its inferred schema.
+   *
    * @generated from field: map<string, io.typestream.grpc.NodeSchemaResult> schemas = 1;
    */
   schemas: { [key: string]: NodeSchemaResult } = {};
@@ -2138,15 +2477,21 @@ export class InferGraphSchemasResponse extends Message<InferGraphSchemasResponse
 }
 
 /**
+ * A single field in a schema.
+ *
  * @generated from message io.typestream.grpc.SchemaField
  */
 export class SchemaField extends Message<SchemaField> {
   /**
+   * Field name.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Field type (e.g., "STRING", "INT64", "STRUCT").
+   *
    * @generated from field: string type = 2;
    */
   type = "";
@@ -2181,25 +2526,35 @@ export class SchemaField extends Message<SchemaField> {
 }
 
 /**
+ * Inferred schema for a single pipeline node.
+ *
  * @generated from message io.typestream.grpc.NodeSchemaResult
  */
 export class NodeSchemaResult extends Message<NodeSchemaResult> {
   /**
+   * Field names (simplified view).
+   *
    * @generated from field: repeated string fields = 1;
    */
   fields: string[] = [];
 
   /**
+   * Fields with type information.
+   *
    * @generated from field: repeated io.typestream.grpc.SchemaField typed_fields = 2;
    */
   typedFields: SchemaField[] = [];
 
   /**
+   * Data encoding of the node's output.
+   *
    * @generated from field: string encoding = 3;
    */
   encoding = "";
 
   /**
+   * Error if schema inference failed for this node.
+   *
    * @generated from field: string error = 4;
    */
   error = "";
@@ -2236,8 +2591,6 @@ export class NodeSchemaResult extends Message<NodeSchemaResult> {
 }
 
 /**
- * OpenAI models listing
- *
  * @generated from message io.typestream.grpc.ListOpenAIModelsRequest
  */
 export class ListOpenAIModelsRequest extends Message<ListOpenAIModelsRequest> {
@@ -2269,18 +2622,20 @@ export class ListOpenAIModelsRequest extends Message<ListOpenAIModelsRequest> {
 }
 
 /**
+ * An available OpenAI model.
+ *
  * @generated from message io.typestream.grpc.OpenAIModel
  */
 export class OpenAIModel extends Message<OpenAIModel> {
   /**
-   * e.g. "gpt-4o-mini"
+   * Model ID (e.g., "gpt-4o-mini").
    *
    * @generated from field: string id = 1;
    */
   id = "";
 
   /**
-   * Display name
+   * Human-readable display name.
    *
    * @generated from field: string name = 2;
    */
@@ -2320,6 +2675,8 @@ export class OpenAIModel extends Message<OpenAIModel> {
  */
 export class ListOpenAIModelsResponse extends Message<ListOpenAIModelsResponse> {
   /**
+   * Available OpenAI models.
+   *
    * @generated from field: repeated io.typestream.grpc.OpenAIModel models = 1;
    */
   models: OpenAIModel[] = [];
@@ -2353,20 +2710,28 @@ export class ListOpenAIModelsResponse extends Message<ListOpenAIModelsResponse> 
 }
 
 /**
+ * Kafka topic source — reads from a Kafka topic.
+ *
  * @generated from message io.typestream.grpc.KafkaSourceNode
  */
 export class KafkaSourceNode extends Message<KafkaSourceNode> {
   /**
+   * Virtual filesystem path to the topic (e.g., "/local/topics/my-topic").
+   *
    * @generated from field: string topic_path = 1;
    */
   topicPath = "";
 
   /**
+   * Data encoding of the topic.
+   *
    * @generated from field: io.typestream.grpc.Encoding encoding = 2;
    */
   encoding = Encoding.STRING;
 
   /**
+   * If true, extract the "after" payload from a CDC envelope.
+   *
    * @generated from field: bool unwrap_cdc = 3;
    */
   unwrapCdc = false;
@@ -2402,10 +2767,14 @@ export class KafkaSourceNode extends Message<KafkaSourceNode> {
 }
 
 /**
+ * Postgres CDC source — reads change events from a Postgres table via Debezium.
+ *
  * @generated from message io.typestream.grpc.PostgresSourceNode
  */
 export class PostgresSourceNode extends Message<PostgresSourceNode> {
   /**
+   * Virtual filesystem path to the CDC topic.
+   *
    * @generated from field: string topic_path = 1;
    */
   topicPath = "";
@@ -2439,10 +2808,14 @@ export class PostgresSourceNode extends Message<PostgresSourceNode> {
 }
 
 /**
+ * Filter transform — keeps only records matching an expression.
+ *
  * @generated from message io.typestream.grpc.UserFilterNode
  */
 export class UserFilterNode extends Message<UserFilterNode> {
   /**
+   * Filter expression (e.g., ".status == 'active'").
+   *
    * @generated from field: string expression = 1;
    */
   expression = "";
@@ -2476,10 +2849,14 @@ export class UserFilterNode extends Message<UserFilterNode> {
 }
 
 /**
+ * Kafka topic sink — writes output to a Kafka topic.
+ *
  * @generated from message io.typestream.grpc.KafkaSinkNode
  */
 export class KafkaSinkNode extends Message<KafkaSinkNode> {
   /**
+   * Name of the target Kafka topic.
+   *
    * @generated from field: string topic_name = 1;
    */
   topicName = "";
@@ -2513,27 +2890,35 @@ export class KafkaSinkNode extends Message<KafkaSinkNode> {
 }
 
 /**
+ * Materialized view — aggregates data into a queryable state store.
+ *
  * @generated from message io.typestream.grpc.MaterializedViewNode
  */
 export class MaterializedViewNode extends Message<MaterializedViewNode> {
   /**
+   * Field to group by for the aggregation.
+   *
    * @generated from field: string group_by_field = 1;
    */
   groupByField = "";
 
   /**
-   * "count" or "latest"
+   * Aggregation type: "count" or "latest".
    *
    * @generated from field: string aggregation_type = 2;
    */
   aggregationType = "";
 
   /**
+   * Whether to apply windowed aggregation.
+   *
    * @generated from field: bool enable_windowing = 3;
    */
   enableWindowing = false;
 
   /**
+   * Window size in seconds (only used when enable_windowing is true).
+   *
    * @generated from field: int64 window_size_seconds = 4;
    */
   windowSizeSeconds = protoInt64.zero;
@@ -2570,27 +2955,35 @@ export class MaterializedViewNode extends Message<MaterializedViewNode> {
 }
 
 /**
- * User-facing DB sink (mirrors DbSinkConfig without node_id/intermediate_topic)
+ * Database sink — writes records to a database table.
  *
  * @generated from message io.typestream.grpc.DbSinkNode
  */
 export class DbSinkNode extends Message<DbSinkNode> {
   /**
+   * Registered database connection ID.
+   *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
 
   /**
+   * Target database table name.
+   *
    * @generated from field: string table_name = 2;
    */
   tableName = "";
 
   /**
+   * Write mode: "insert", "upsert", or "update".
+   *
    * @generated from field: string insert_mode = 3;
    */
   insertMode = "";
 
   /**
+   * Comma-separated primary key fields (for upsert/update mode).
+   *
    * @generated from field: string primary_key_fields = 4;
    */
   primaryKeyFields = "";
@@ -2627,42 +3020,56 @@ export class DbSinkNode extends Message<DbSinkNode> {
 }
 
 /**
- * User-facing Weaviate sink (mirrors WeaviateSinkConfig without node_id/intermediate_topic)
+ * Weaviate sink — writes records to a Weaviate vector database collection.
  *
  * @generated from message io.typestream.grpc.WeaviateSinkNode
  */
 export class WeaviateSinkNode extends Message<WeaviateSinkNode> {
   /**
+   * Registered Weaviate connection ID.
+   *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
 
   /**
+   * Target Weaviate collection name.
+   *
    * @generated from field: string collection_name = 2;
    */
   collectionName = "";
 
   /**
+   * Document ID strategy: "NoIdStrategy", "KafkaIdStrategy", or "FieldIdStrategy".
+   *
    * @generated from field: string document_id_strategy = 3;
    */
   documentIdStrategy = "";
 
   /**
+   * Field to use as document ID (when using FieldIdStrategy).
+   *
    * @generated from field: string document_id_field = 4;
    */
   documentIdField = "";
 
   /**
+   * Vector strategy: "NoVectorStrategy" or "FieldVectorStrategy".
+   *
    * @generated from field: string vector_strategy = 5;
    */
   vectorStrategy = "";
 
   /**
+   * Field containing the vector.
+   *
    * @generated from field: string vector_field = 6;
    */
   vectorField = "";
 
   /**
+   * Optional: field name for timestamp conversion.
+   *
    * @generated from field: string timestamp_field = 7;
    */
   timestampField = "";
@@ -2702,32 +3109,42 @@ export class WeaviateSinkNode extends Message<WeaviateSinkNode> {
 }
 
 /**
- * User-facing Elasticsearch sink (mirrors ElasticsearchSinkConfig without node_id/intermediate_topic)
+ * Elasticsearch sink — writes records to an Elasticsearch index.
  *
  * @generated from message io.typestream.grpc.ElasticsearchSinkNode
  */
 export class ElasticsearchSinkNode extends Message<ElasticsearchSinkNode> {
   /**
+   * Registered Elasticsearch connection ID.
+   *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
 
   /**
+   * Target Elasticsearch index name.
+   *
    * @generated from field: string index_name = 2;
    */
   indexName = "";
 
   /**
+   * Document ID strategy: "RECORD_KEY" or "TOPIC_PARTITION_OFFSET".
+   *
    * @generated from field: string document_id_strategy = 3;
    */
   documentIdStrategy = "";
 
   /**
+   * Write method: "INSERT" or "UPSERT".
+   *
    * @generated from field: string write_method = 4;
    */
   writeMethod = "";
 
   /**
+   * Behavior on null values: "IGNORE", "DELETE", or "FAIL".
+   *
    * @generated from field: string behavior_on_null_values = 5;
    */
   behaviorOnNullValues = "";
@@ -2765,10 +3182,90 @@ export class ElasticsearchSinkNode extends Message<ElasticsearchSinkNode> {
 }
 
 /**
+ * Qdrant sink — writes records to a Qdrant vector database collection.
+ * Records are reshaped into the qdrant-kafka connector envelope
+ * ({ collection_name, id, vector, payload }) before sinking.
+ *
+ * @generated from message io.typestream.grpc.QdrantSinkNode
+ */
+export class QdrantSinkNode extends Message<QdrantSinkNode> {
+  /**
+   * Registered Qdrant connection ID.
+   *
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * Target Qdrant collection name (must exist with matching vector dimensions).
+   *
+   * @generated from field: string collection_name = 2;
+   */
+  collectionName = "";
+
+  /**
+   * Field to use as the Qdrant point ID (must be an integer or UUID string).
+   *
+   * @generated from field: string id_field = 3;
+   */
+  idField = "";
+
+  /**
+   * Field containing the vector (a list of floats).
+   *
+   * @generated from field: string vector_field = 4;
+   */
+  vectorField = "";
+
+  /**
+   * Comma-separated fields to include in the payload (empty = all fields
+   * except the id and vector fields).
+   *
+   * @generated from field: string payload_fields = 5;
+   */
+  payloadFields = "";
+
+  constructor(data?: PartialMessage<QdrantSinkNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.QdrantSinkNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "id_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "vector_field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "payload_fields", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): QdrantSinkNode {
+    return new QdrantSinkNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): QdrantSinkNode {
+    return new QdrantSinkNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): QdrantSinkNode {
+    return new QdrantSinkNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: QdrantSinkNode | PlainMessage<QdrantSinkNode> | undefined, b: QdrantSinkNode | PlainMessage<QdrantSinkNode> | undefined): boolean {
+    return proto3.util.equals(QdrantSinkNode, a, b);
+  }
+}
+
+/**
+ * A node in a user-facing pipeline graph.
+ *
  * @generated from message io.typestream.grpc.UserPipelineNode
  */
 export class UserPipelineNode extends Message<UserPipelineNode> {
   /**
+   * Unique node identifier within the graph.
+   *
    * @generated from field: string id = 1;
    */
   id = "";
@@ -2860,6 +3357,12 @@ export class UserPipelineNode extends Message<UserPipelineNode> {
      */
     value: ElasticsearchSinkNode;
     case: "elasticsearchSink";
+  } | {
+    /**
+     * @generated from field: io.typestream.grpc.QdrantSinkNode qdrant_sink = 15;
+     */
+    value: QdrantSinkNode;
+    case: "qdrantSink";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<UserPipelineNode>) {
@@ -2884,6 +3387,7 @@ export class UserPipelineNode extends Message<UserPipelineNode> {
     { no: 12, name: "db_sink", kind: "message", T: DbSinkNode, oneof: "node_type" },
     { no: 13, name: "weaviate_sink", kind: "message", T: WeaviateSinkNode, oneof: "node_type" },
     { no: 14, name: "elasticsearch_sink", kind: "message", T: ElasticsearchSinkNode, oneof: "node_type" },
+    { no: 15, name: "qdrant_sink", kind: "message", T: QdrantSinkNode, oneof: "node_type" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UserPipelineNode {
@@ -2904,15 +3408,21 @@ export class UserPipelineNode extends Message<UserPipelineNode> {
 }
 
 /**
+ * A user-facing pipeline graph consisting of nodes and edges.
+ *
  * @generated from message io.typestream.grpc.UserPipelineGraph
  */
 export class UserPipelineGraph extends Message<UserPipelineGraph> {
   /**
+   * Nodes in the pipeline.
+   *
    * @generated from field: repeated io.typestream.grpc.UserPipelineNode nodes = 1;
    */
   nodes: UserPipelineNode[] = [];
 
   /**
+   * Edges connecting nodes (directed, from source to sink).
+   *
    * @generated from field: repeated io.typestream.grpc.PipelineEdge edges = 2;
    */
   edges: PipelineEdge[] = [];

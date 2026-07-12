@@ -33,7 +33,8 @@ data class ManagedPipeline(
 class PipelineService(
     private val config: Config,
     private val vm: Vm,
-    private val stateStore: PipelineStateStore? = null
+    private val stateStore: PipelineStateStore? = null,
+    private val connectionService: ConnectionService? = null
 ) : PipelineServiceGrpcKt.PipelineServiceCoroutineImplBase(), Closeable {
 
     private val logger = KotlinLogging.logger {}
@@ -130,12 +131,59 @@ class PipelineService(
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to stop existing pipeline: ${existing.jobId}" }
                 }
+
+                // Delete the previous graph's sink connectors — the new desugar
+                // generates fresh intermediate topics, so stale connectors must go.
+                deletePipelineConnectors(name, existing.userGraph)
             }
 
             // Desugar, compile, and start new job
             val desugared = PipelineDesugarer.desugar(request.graph)
             val program = graphCompiler.compileFromGraph(desugared.graph, deterministicId)
             vm.runProgram(program, Session(vm.fileSystem, vm.scheduler, Env(config)))
+
+            // Create sink connectors for the desugared sink configs
+            val createdConnectors = mutableListOf<String>()
+            for (sinkConfig in desugared.qdrantSinkConfigs) {
+                val connectorName = qdrantConnectorName(name, sinkConfig.nodeId)
+                try {
+                    val service = connectionService
+                        ?: error("ConnectionService not available — cannot create Qdrant sink connectors")
+
+                    val response = service.createQdrantSinkConnector(
+                        io.typestream.grpc.connection_service.Connection.CreateQdrantSinkConnectorRequest.newBuilder()
+                            .setConnectionId(sinkConfig.connectionId)
+                            .setConnectorName(connectorName)
+                            .setTopics(sinkConfig.intermediateTopic)
+                            .setCollectionName(sinkConfig.collectionName)
+                            .build()
+                    )
+                    if (!response.success) {
+                        error("Failed to create Qdrant connector $connectorName: ${response.error}")
+                    }
+                    createdConnectors.add(connectorName)
+                    logger.info { "Created Qdrant sink connector: $connectorName" }
+                } catch (e: Exception) {
+                    logger.error(e) { "Qdrant connector creation failed, rolling back pipeline '$name'" }
+                    try {
+                        vm.scheduler.kill(program.id)
+                    } catch (killError: Exception) {
+                        logger.warn(killError) { "Failed to kill job ${program.id} during rollback" }
+                    }
+                    createdConnectors.forEach { created ->
+                        try {
+                            connectionService?.deleteKafkaConnectConnector(created)
+                        } catch (deleteError: Exception) {
+                            logger.warn(deleteError) { "Failed to delete connector $created during rollback" }
+                        }
+                    }
+                    managedPipelines.remove(name)
+                    stateStore?.delete(name)
+                    success = false
+                    error = "Qdrant connector creation failed: ${e.message}"
+                    return@applyPipelineResponse
+                }
+            }
 
             val now = System.currentTimeMillis()
             managedPipelines[name] = ManagedPipeline(
@@ -216,10 +264,37 @@ class PipelineService(
             logger.warn(e) { "Failed to stop pipeline job: ${managed.jobId}" }
         }
 
+        // Delete the pipeline's sink connectors (best effort)
+        deletePipelineConnectors(name, managed.userGraph)
+
         // Remove from state store
         stateStore?.delete(name)
 
         success = true
+    }
+
+    /**
+     * Connector names are deterministic (pipeline name + node id), so they can be
+     * recomputed from the user graph — no need to persist them in the state store.
+     */
+    private fun qdrantConnectorName(pipelineName: String, nodeId: String) =
+        "typestream-pipeline-$pipelineName-qdrant-sink-$nodeId"
+
+    /**
+     * Best-effort deletion of all sink connectors created for a pipeline's graph.
+     */
+    private fun deletePipelineConnectors(pipelineName: String, userGraph: ProtoJob.UserPipelineGraph) {
+        val service = connectionService ?: return
+        userGraph.nodesList
+            .filter { it.hasQdrantSink() }
+            .forEach { node ->
+                val connectorName = qdrantConnectorName(pipelineName, node.id)
+                try {
+                    service.deleteKafkaConnectConnector(connectorName)
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to delete connector $connectorName for pipeline '$pipelineName'" }
+                }
+            }
     }
 
     override suspend fun planPipelines(

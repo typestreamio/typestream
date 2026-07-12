@@ -134,6 +134,10 @@ message EachNode {
 message SinkNode {
   DataStreamProto output = 1;
   Encoding encoding = 2;
+  // If true, write plain schemaless JSON (record value only, no internal
+  // envelope) — consumable by Kafka Connect's JsonConverter with
+  // schemas.enable=false. Used by connector sinks like qdrantSink.
+  bool plain_json = 3;
 }
 
 // GeoIP enrichment — resolves an IP address to a country code.
@@ -187,6 +191,21 @@ message OpenAiTransformerNode {
   string model = 3;
 }
 
+// Reshapes records into the envelope expected by the qdrant-kafka sink
+// connector: { collection_name, id, vector, payload: { ... } }. Inserted by
+// the desugarer in front of a Qdrant sink's intermediate topic.
+message QdrantEnvelopeNode {
+  // Target Qdrant collection name (emitted as collection_name on every record).
+  string collection_name = 1;
+  // Field to use as the Qdrant point ID (must be an integer or UUID string).
+  string id_field = 2;
+  // Field containing the vector (a list of floats).
+  string vector_field = 3;
+  // Comma-separated fields to include in the payload (empty = all fields
+  // except the id and vector fields).
+  string payload_fields = 4;
+}
+
 /** @exclude */
 message PipelineNode {
   string id = 1;
@@ -209,6 +228,7 @@ message PipelineNode {
     OpenAiTransformerNode open_ai_transformer = 17;
     WindowedCountNode windowed_count = 18;
     TableMaterializedNode table_materialized = 19;
+    QdrantEnvelopeNode qdrant_envelope = 20;
   }
 }
 
@@ -263,6 +283,18 @@ message WeaviateSinkConfig {
   string timestamp_field = 9;
 }
 
+// Configuration for a Qdrant vector database sink connector.
+message QdrantSinkConfig {
+  // ID of the node this sink config belongs to.
+  string node_id = 1;
+  // Registered Qdrant connection ID.
+  string connection_id = 2;
+  // Intermediate Kafka topic for the connector.
+  string intermediate_topic = 3;
+  // Target Qdrant collection name.
+  string collection_name = 4;
+}
+
 // Configuration for an Elasticsearch sink connector.
 message ElasticsearchSinkConfig {
   // ID of the node this sink config belongs to.
@@ -292,6 +324,8 @@ message CreateJobFromGraphRequest {
     repeated WeaviateSinkConfig weaviate_sink_configs = 4;
     // Elasticsearch sink configurations for Elasticsearch sink nodes.
     repeated ElasticsearchSinkConfig elasticsearch_sink_configs = 5;
+    // Qdrant sink configurations for Qdrant sink nodes.
+    repeated QdrantSinkConfig qdrant_sink_configs = 6;
 }
 
 message ListJobsRequest {
@@ -338,6 +372,8 @@ message JobInfo {
   repeated WeaviateSinkConfig weaviate_sinks = 6;
   // Elasticsearch sink configs for this job.
   repeated ElasticsearchSinkConfig elasticsearch_sinks = 7;
+  // Qdrant sink configs for this job.
+  repeated QdrantSinkConfig qdrant_sinks = 8;
 }
 
 message ListJobsResponse {
@@ -526,6 +562,23 @@ message ElasticsearchSinkNode {
   string behavior_on_null_values = 5;
 }
 
+// Qdrant sink — writes records to a Qdrant vector database collection.
+// Records are reshaped into the qdrant-kafka connector envelope
+// ({ collection_name, id, vector, payload }) before sinking.
+message QdrantSinkNode {
+  // Registered Qdrant connection ID.
+  string connection_id = 1;
+  // Target Qdrant collection name (must exist with matching vector dimensions).
+  string collection_name = 2;
+  // Field to use as the Qdrant point ID (must be an integer or UUID string).
+  string id_field = 3;
+  // Field containing the vector (a list of floats).
+  string vector_field = 4;
+  // Comma-separated fields to include in the payload (empty = all fields
+  // except the id and vector fields).
+  string payload_fields = 5;
+}
+
 // A node in a user-facing pipeline graph.
 message UserPipelineNode {
   // Unique node identifier within the graph.
@@ -547,6 +600,7 @@ message UserPipelineNode {
     DbSinkNode db_sink = 12;
     WeaviateSinkNode weaviate_sink = 13;
     ElasticsearchSinkNode elasticsearch_sink = 14;
+    QdrantSinkNode qdrant_sink = 15;
   }
 }
 

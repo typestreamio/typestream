@@ -22,10 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InteractiveSessionServiceClient interface {
+	// Start a new interactive session for the given user.
+	// Returns a session ID used to identify the session in subsequent calls.
 	StartSession(ctx context.Context, in *StartSessionRequest, opts ...grpc.CallOption) (*StartSessionResponse, error)
+	// Execute a TypeStream DSL program within an existing session.
+	// Returns the initial output; use GetProgramOutput to stream additional results.
 	RunProgram(ctx context.Context, in *RunProgramRequest, opts ...grpc.CallOption) (*RunProgramResponse, error)
+	// Stream additional output from a running program.
+	// Use this after RunProgram when hasMoreOutput is true.
 	GetProgramOutput(ctx context.Context, in *GetProgramOutputRequest, opts ...grpc.CallOption) (InteractiveSessionService_GetProgramOutputClient, error)
+	// Get tab-completion suggestions for a partial program at the given cursor position.
 	CompleteProgram(ctx context.Context, in *CompleteProgramRequest, opts ...grpc.CallOption) (*CompleteProgramResponse, error)
+	// Stop an interactive session and release its resources.
 	StopSession(ctx context.Context, in *StopSessionRequest, opts ...grpc.CallOption) (*StopSessionResponse, error)
 }
 
@@ -109,10 +117,18 @@ func (c *interactiveSessionServiceClient) StopSession(ctx context.Context, in *S
 // All implementations must embed UnimplementedInteractiveSessionServiceServer
 // for forward compatibility
 type InteractiveSessionServiceServer interface {
+	// Start a new interactive session for the given user.
+	// Returns a session ID used to identify the session in subsequent calls.
 	StartSession(context.Context, *StartSessionRequest) (*StartSessionResponse, error)
+	// Execute a TypeStream DSL program within an existing session.
+	// Returns the initial output; use GetProgramOutput to stream additional results.
 	RunProgram(context.Context, *RunProgramRequest) (*RunProgramResponse, error)
+	// Stream additional output from a running program.
+	// Use this after RunProgram when hasMoreOutput is true.
 	GetProgramOutput(*GetProgramOutputRequest, InteractiveSessionService_GetProgramOutputServer) error
+	// Get tab-completion suggestions for a partial program at the given cursor position.
 	CompleteProgram(context.Context, *CompleteProgramRequest) (*CompleteProgramResponse, error)
+	// Stop an interactive session and release its resources.
 	StopSession(context.Context, *StopSessionRequest) (*StopSessionResponse, error)
 	mustEmbedUnimplementedInteractiveSessionServiceServer()
 }

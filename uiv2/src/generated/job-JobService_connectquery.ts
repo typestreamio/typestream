@@ -7,6 +7,8 @@ import { MethodKind } from "@bufbuild/protobuf";
 import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreatePreviewJobRequest, CreatePreviewJobResponse, InferGraphSchemasRequest, InferGraphSchemasResponse, ListJobsRequest, ListJobsResponse, ListOpenAIModelsRequest, ListOpenAIModelsResponse, StopPreviewJobRequest, StopPreviewJobResponse } from "./job_pb.js";
 
 /**
+ * Create a streaming job from TypeStream DSL source code.
+ *
  * @generated from rpc io.typestream.grpc.JobService.CreateJob
  */
 export const createJob = {
@@ -21,6 +23,8 @@ export const createJob = {
 } as const;
 
 /**
+ * Create a streaming job from a visual pipeline graph with optional sink configurations.
+ *
  * @generated from rpc io.typestream.grpc.JobService.CreateJobFromGraph
  */
 export const createJobFromGraph = {
@@ -35,6 +39,8 @@ export const createJobFromGraph = {
 } as const;
 
 /**
+ * List all running and recently stopped jobs.
+ *
  * @generated from rpc io.typestream.grpc.JobService.ListJobs
  */
 export const listJobs = {
@@ -49,6 +55,8 @@ export const listJobs = {
 } as const;
 
 /**
+ * Create a short-lived preview job for inspecting live data flowing through a pipeline.
+ *
  * @generated from rpc io.typestream.grpc.JobService.CreatePreviewJob
  */
 export const createPreviewJob = {
@@ -63,6 +71,8 @@ export const createPreviewJob = {
 } as const;
 
 /**
+ * Stop a running preview job.
+ *
  * @generated from rpc io.typestream.grpc.JobService.StopPreviewJob
  */
 export const stopPreviewJob = {
@@ -77,6 +87,9 @@ export const stopPreviewJob = {
 } as const;
 
 /**
+ * Infer the output schema for each node in a pipeline graph.
+ * Useful for showing field types in the UI before running a job.
+ *
  * @generated from rpc io.typestream.grpc.JobService.InferGraphSchemas
  */
 export const inferGraphSchemas = {
@@ -91,6 +104,8 @@ export const inferGraphSchemas = {
 } as const;
 
 /**
+ * List available OpenAI models for use with AI-powered transform nodes.
+ *
  * @generated from rpc io.typestream.grpc.JobService.ListOpenAIModels
  */
 export const listOpenAIModels = {

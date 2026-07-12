@@ -4,10 +4,10 @@
 // @ts-nocheck
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { CreateElasticsearchSinkConnectorRequest, CreateElasticsearchSinkConnectorResponse, CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetElasticsearchConnectionStatusesRequest, GetElasticsearchConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterElasticsearchConnectionRequest, RegisterElasticsearchConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
+import { CreateElasticsearchSinkConnectorRequest, CreateElasticsearchSinkConnectorResponse, CreateJdbcSinkConnectorRequest, CreateJdbcSinkConnectorResponse, CreateQdrantSinkConnectorRequest, CreateQdrantSinkConnectorResponse, CreateWeaviateSinkConnectorRequest, CreateWeaviateSinkConnectorResponse, GetConnectionStatusesRequest, GetConnectionStatusesResponse, GetElasticsearchConnectionStatusesRequest, GetElasticsearchConnectionStatusesResponse, GetQdrantConnectionStatusesRequest, GetQdrantConnectionStatusesResponse, GetWeaviateConnectionStatusesRequest, GetWeaviateConnectionStatusesResponse, RegisterConnectionRequest, RegisterConnectionResponse, RegisterElasticsearchConnectionRequest, RegisterElasticsearchConnectionResponse, RegisterQdrantConnectionRequest, RegisterQdrantConnectionResponse, RegisterWeaviateConnectionRequest, RegisterWeaviateConnectionResponse, TestConnectionRequest, TestConnectionResponse, UnregisterConnectionRequest, UnregisterConnectionResponse } from "./connection_pb.js";
 
 /**
- * Register a database connection for monitoring
+ * Register a database connection for ongoing health monitoring.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.RegisterConnection
  */
@@ -23,7 +23,7 @@ export const registerConnection = {
 } as const;
 
 /**
- * Unregister a connection (stop monitoring)
+ * Unregister a database connection and stop monitoring it.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.UnregisterConnection
  */
@@ -39,7 +39,7 @@ export const unregisterConnection = {
 } as const;
 
 /**
- * Get current status of all monitored connections
+ * Get the current health status of all registered database connections.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.GetConnectionStatuses
  */
@@ -55,7 +55,7 @@ export const getConnectionStatuses = {
 } as const;
 
 /**
- * Test a connection immediately (one-shot, doesn't register)
+ * Test a database connection immediately without registering it.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.TestConnection
  */
@@ -71,8 +71,8 @@ export const testConnection = {
 } as const;
 
 /**
- * Create a JDBC sink connector using a registered connection
- * Server resolves credentials from connection ID - credentials never sent to UI
+ * Create a JDBC sink connector using a registered database connection.
+ * The server resolves credentials from the connection ID — credentials are never sent from the client.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.CreateJdbcSinkConnector
  */
@@ -88,7 +88,7 @@ export const createJdbcSinkConnector = {
 } as const;
 
 /**
- * Weaviate connection management
+ * Register a Weaviate vector database connection for health monitoring.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.RegisterWeaviateConnection
  */
@@ -104,6 +104,8 @@ export const registerWeaviateConnection = {
 } as const;
 
 /**
+ * Get the current health status of all registered Weaviate connections.
+ *
  * @generated from rpc io.typestream.grpc.ConnectionService.GetWeaviateConnectionStatuses
  */
 export const getWeaviateConnectionStatuses = {
@@ -118,6 +120,8 @@ export const getWeaviateConnectionStatuses = {
 } as const;
 
 /**
+ * Create a Weaviate sink connector using a registered connection.
+ *
  * @generated from rpc io.typestream.grpc.ConnectionService.CreateWeaviateSinkConnector
  */
 export const createWeaviateSinkConnector = {
@@ -132,7 +136,55 @@ export const createWeaviateSinkConnector = {
 } as const;
 
 /**
- * Elasticsearch connection management
+ * Register a Qdrant vector database connection for health monitoring.
+ *
+ * @generated from rpc io.typestream.grpc.ConnectionService.RegisterQdrantConnection
+ */
+export const registerQdrantConnection = {
+  localName: "registerQdrantConnection",
+  name: "RegisterQdrantConnection",
+  kind: MethodKind.Unary,
+  I: RegisterQdrantConnectionRequest,
+  O: RegisterQdrantConnectionResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * Get the current health status of all registered Qdrant connections.
+ *
+ * @generated from rpc io.typestream.grpc.ConnectionService.GetQdrantConnectionStatuses
+ */
+export const getQdrantConnectionStatuses = {
+  localName: "getQdrantConnectionStatuses",
+  name: "GetQdrantConnectionStatuses",
+  kind: MethodKind.Unary,
+  I: GetQdrantConnectionStatusesRequest,
+  O: GetQdrantConnectionStatusesResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * Create a Qdrant sink connector using a registered connection.
+ *
+ * @generated from rpc io.typestream.grpc.ConnectionService.CreateQdrantSinkConnector
+ */
+export const createQdrantSinkConnector = {
+  localName: "createQdrantSinkConnector",
+  name: "CreateQdrantSinkConnector",
+  kind: MethodKind.Unary,
+  I: CreateQdrantSinkConnectorRequest,
+  O: CreateQdrantSinkConnectorResponse,
+  service: {
+    typeName: "io.typestream.grpc.ConnectionService"
+  }
+} as const;
+
+/**
+ * Register an Elasticsearch connection for health monitoring.
  *
  * @generated from rpc io.typestream.grpc.ConnectionService.RegisterElasticsearchConnection
  */
@@ -148,6 +200,8 @@ export const registerElasticsearchConnection = {
 } as const;
 
 /**
+ * Get the current health status of all registered Elasticsearch connections.
+ *
  * @generated from rpc io.typestream.grpc.ConnectionService.GetElasticsearchConnectionStatuses
  */
 export const getElasticsearchConnectionStatuses = {
@@ -162,6 +216,8 @@ export const getElasticsearchConnectionStatuses = {
 } as const;
 
 /**
+ * Create an Elasticsearch sink connector using a registered connection.
+ *
  * @generated from rpc io.typestream.grpc.ConnectionService.CreateElasticsearchSinkConnector
  */
 export const createElasticsearchSinkConnector = {

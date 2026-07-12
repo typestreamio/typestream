@@ -7,12 +7,19 @@ import { CreateJobFromGraphRequest, CreateJobRequest, CreateJobResponse, CreateP
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
+ * JobService manages streaming jobs — the core execution units of TypeStream.
+ * Create jobs from DSL source code or visual pipeline graphs, list running jobs,
+ * run preview jobs for live data inspection, infer schemas across a pipeline,
+ * and list available OpenAI models for AI-powered transforms.
+ *
  * @generated from service io.typestream.grpc.JobService
  */
 export const JobService = {
   typeName: "io.typestream.grpc.JobService",
   methods: {
     /**
+     * Create a streaming job from TypeStream DSL source code.
+     *
      * @generated from rpc io.typestream.grpc.JobService.CreateJob
      */
     createJob: {
@@ -22,6 +29,8 @@ export const JobService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Create a streaming job from a visual pipeline graph with optional sink configurations.
+     *
      * @generated from rpc io.typestream.grpc.JobService.CreateJobFromGraph
      */
     createJobFromGraph: {
@@ -31,6 +40,8 @@ export const JobService = {
       kind: MethodKind.Unary,
     },
     /**
+     * List all running and recently stopped jobs.
+     *
      * @generated from rpc io.typestream.grpc.JobService.ListJobs
      */
     listJobs: {
@@ -40,6 +51,8 @@ export const JobService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Create a short-lived preview job for inspecting live data flowing through a pipeline.
+     *
      * @generated from rpc io.typestream.grpc.JobService.CreatePreviewJob
      */
     createPreviewJob: {
@@ -49,6 +62,8 @@ export const JobService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Stop a running preview job.
+     *
      * @generated from rpc io.typestream.grpc.JobService.StopPreviewJob
      */
     stopPreviewJob: {
@@ -58,6 +73,8 @@ export const JobService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Stream live preview data from a running preview job.
+     *
      * @generated from rpc io.typestream.grpc.JobService.StreamPreview
      */
     streamPreview: {
@@ -67,6 +84,9 @@ export const JobService = {
       kind: MethodKind.ServerStreaming,
     },
     /**
+     * Infer the output schema for each node in a pipeline graph.
+     * Useful for showing field types in the UI before running a job.
+     *
      * @generated from rpc io.typestream.grpc.JobService.InferGraphSchemas
      */
     inferGraphSchemas: {
@@ -76,6 +96,8 @@ export const JobService = {
       kind: MethodKind.Unary,
     },
     /**
+     * List available OpenAI models for use with AI-powered transform nodes.
+     *
      * @generated from rpc io.typestream.grpc.JobService.ListOpenAIModels
      */
     listOpenAIModels: {

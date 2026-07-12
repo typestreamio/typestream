@@ -7,6 +7,9 @@ import { MethodKind } from "@bufbuild/protobuf";
 import { ApplyPipelineRequest, ApplyPipelineResponse, DeletePipelineRequest, DeletePipelineResponse, ListPipelinesRequest, ListPipelinesResponse, PlanPipelinesRequest, PlanPipelinesResponse, ValidatePipelineRequest, ValidatePipelineResponse } from "./pipeline_pb.js";
 
 /**
+ * Validate a pipeline definition without deploying it.
+ * Returns validation errors and warnings.
+ *
  * @generated from rpc io.typestream.grpc.PipelineService.ValidatePipeline
  */
 export const validatePipeline = {
@@ -21,6 +24,9 @@ export const validatePipeline = {
 } as const;
 
 /**
+ * Apply a pipeline definition — creates a new job or updates an existing one.
+ * Returns the job ID and whether the pipeline was created, updated, or unchanged.
+ *
  * @generated from rpc io.typestream.grpc.PipelineService.ApplyPipeline
  */
 export const applyPipeline = {
@@ -35,6 +41,8 @@ export const applyPipeline = {
 } as const;
 
 /**
+ * List all currently registered pipelines and their job status.
+ *
  * @generated from rpc io.typestream.grpc.PipelineService.ListPipelines
  */
 export const listPipelines = {
@@ -49,6 +57,8 @@ export const listPipelines = {
 } as const;
 
 /**
+ * Delete a pipeline by name, stopping its underlying job.
+ *
  * @generated from rpc io.typestream.grpc.PipelineService.DeletePipeline
  */
 export const deletePipeline = {
@@ -63,6 +73,9 @@ export const deletePipeline = {
 } as const;
 
 /**
+ * Dry-run a set of pipeline definitions against the current state.
+ * Returns a plan showing which pipelines would be created, updated, deleted, or unchanged.
+ *
  * @generated from rpc io.typestream.grpc.PipelineService.PlanPipelines
  */
 export const planPipelines = {

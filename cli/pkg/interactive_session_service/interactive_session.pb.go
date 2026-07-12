@@ -25,6 +25,7 @@ type StartSessionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Identifier for the user starting the session.
 	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 }
 
@@ -72,6 +73,7 @@ type StartSessionResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Unique identifier for the created session.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 }
 
@@ -119,8 +121,10 @@ type RunProgramRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Session to run the program in.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Source    string `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	// TypeStream DSL program source code to execute.
+	Source string `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 }
 
 func (x *RunProgramRequest) Reset() {
@@ -174,11 +178,16 @@ type RunProgramResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id            string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Env           map[string]string `protobuf:"bytes,2,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	StdOut        string            `protobuf:"bytes,3,opt,name=stdOut,proto3" json:"stdOut,omitempty"`
-	StdErr        string            `protobuf:"bytes,4,opt,name=stdErr,proto3" json:"stdErr,omitempty"`
-	HasMoreOutput bool              `protobuf:"varint,5,opt,name=hasMoreOutput,proto3" json:"hasMoreOutput,omitempty"`
+	// Identifier for the running program instance.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Environment variables set by the program (e.g., topic assignments).
+	Env map[string]string `protobuf:"bytes,2,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Initial standard output from the program.
+	StdOut string `protobuf:"bytes,3,opt,name=stdOut,proto3" json:"stdOut,omitempty"`
+	// Standard error output from the program.
+	StdErr string `protobuf:"bytes,4,opt,name=stdErr,proto3" json:"stdErr,omitempty"`
+	// If true, more output is available via GetProgramOutput.
+	HasMoreOutput bool `protobuf:"varint,5,opt,name=hasMoreOutput,proto3" json:"hasMoreOutput,omitempty"`
 }
 
 func (x *RunProgramResponse) Reset() {
@@ -253,8 +262,10 @@ type GetProgramOutputRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Session containing the program.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// Identifier of the running program (from RunProgramResponse.id).
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (x *GetProgramOutputRequest) Reset() {
@@ -308,7 +319,9 @@ type GetProgramOutputResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Standard output chunk from the running program.
 	StdOut string `protobuf:"bytes,1,opt,name=stdOut,proto3" json:"stdOut,omitempty"`
+	// Standard error chunk from the running program.
 	StdErr string `protobuf:"bytes,2,opt,name=stdErr,proto3" json:"stdErr,omitempty"`
 }
 
@@ -363,9 +376,12 @@ type CompleteProgramRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Session to get completions for.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Source    string `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
-	Cursor    int32  `protobuf:"varint,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	// Partial TypeStream DSL source code.
+	Source string `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	// Cursor position (character offset) within the source for completion.
+	Cursor int32 `protobuf:"varint,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
 }
 
 func (x *CompleteProgramRequest) Reset() {
@@ -426,6 +442,7 @@ type CompleteProgramResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// List of completion suggestions.
 	Value []string `protobuf:"bytes,1,rep,name=value,proto3" json:"value,omitempty"`
 }
 
@@ -473,6 +490,7 @@ type StopSessionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Session to stop.
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 }
 
@@ -520,7 +538,9 @@ type StopSessionResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Any remaining standard output from the session.
 	StdOut string `protobuf:"bytes,1,opt,name=stdOut,proto3" json:"stdOut,omitempty"`
+	// Any remaining standard error from the session.
 	StdErr string `protobuf:"bytes,2,opt,name=stdErr,proto3" json:"stdErr,omitempty"`
 }
 

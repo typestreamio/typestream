@@ -7,12 +7,19 @@ import { GetSchemaRequest, GetSchemaResponse, LsRequest, LsResponse, MountReques
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
+ * FileSystemService provides a virtual filesystem abstraction over Kafka topics
+ * and connected data sources. Use it to mount external data sources, browse
+ * available topics, and retrieve topic schemas.
+ *
  * @generated from service io.typestream.grpc.FileSystemService
  */
 export const FileSystemService = {
   typeName: "io.typestream.grpc.FileSystemService",
   methods: {
     /**
+     * Mount a data source (e.g., a Kafka cluster or database) into the virtual filesystem.
+     * Once mounted, its topics become browsable via Ls and their schemas via GetSchema.
+     *
      * @generated from rpc io.typestream.grpc.FileSystemService.Mount
      */
     mount: {
@@ -22,6 +29,8 @@ export const FileSystemService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Remove a previously mounted data source from the virtual filesystem.
+     *
      * @generated from rpc io.typestream.grpc.FileSystemService.Unmount
      */
     unmount: {
@@ -31,6 +40,8 @@ export const FileSystemService = {
       kind: MethodKind.Unary,
     },
     /**
+     * List topics and directories at the given path in the virtual filesystem.
+     *
      * @generated from rpc io.typestream.grpc.FileSystemService.Ls
      */
     ls: {
@@ -40,6 +51,8 @@ export const FileSystemService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Retrieve the schema (field names) for a topic at the given path.
+     *
      * @generated from rpc io.typestream.grpc.FileSystemService.GetSchema
      */
     getSchema: {

@@ -7,12 +7,19 @@ import { CompleteProgramRequest, CompleteProgramResponse, GetProgramOutputReques
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
+ * InteractiveSessionService provides a REPL-like interface for executing
+ * TypeStream DSL programs. Start a session, run programs, stream their output,
+ * get tab completions, and stop sessions when done.
+ *
  * @generated from service io.typestream.grpc.InteractiveSessionService
  */
 export const InteractiveSessionService = {
   typeName: "io.typestream.grpc.InteractiveSessionService",
   methods: {
     /**
+     * Start a new interactive session for the given user.
+     * Returns a session ID used to identify the session in subsequent calls.
+     *
      * @generated from rpc io.typestream.grpc.InteractiveSessionService.StartSession
      */
     startSession: {
@@ -22,6 +29,9 @@ export const InteractiveSessionService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Execute a TypeStream DSL program within an existing session.
+     * Returns the initial output; use GetProgramOutput to stream additional results.
+     *
      * @generated from rpc io.typestream.grpc.InteractiveSessionService.RunProgram
      */
     runProgram: {
@@ -31,6 +41,9 @@ export const InteractiveSessionService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Stream additional output from a running program.
+     * Use this after RunProgram when hasMoreOutput is true.
+     *
      * @generated from rpc io.typestream.grpc.InteractiveSessionService.GetProgramOutput
      */
     getProgramOutput: {
@@ -40,6 +53,8 @@ export const InteractiveSessionService = {
       kind: MethodKind.ServerStreaming,
     },
     /**
+     * Get tab-completion suggestions for a partial program at the given cursor position.
+     *
      * @generated from rpc io.typestream.grpc.InteractiveSessionService.CompleteProgram
      */
     completeProgram: {
@@ -49,6 +64,8 @@ export const InteractiveSessionService = {
       kind: MethodKind.Unary,
     },
     /**
+     * Stop an interactive session and release its resources.
+     *
      * @generated from rpc io.typestream.grpc.InteractiveSessionService.StopSession
      */
     stopSession: {

@@ -7,6 +7,8 @@ import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialM
 import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
 
 /**
+ * Supported database types for connections.
+ *
  * @generated from enum io.typestream.grpc.DatabaseType
  */
 export enum DatabaseType {
@@ -33,6 +35,8 @@ proto3.util.setEnumType(DatabaseType, "io.typestream.grpc.DatabaseType", [
 ]);
 
 /**
+ * Health state of a monitored connection.
+ *
  * @generated from enum io.typestream.grpc.ConnectionState
  */
 export enum ConnectionState {
@@ -71,7 +75,7 @@ proto3.util.setEnumType(ConnectionState, "io.typestream.grpc.ConnectionState", [
 ]);
 
 /**
- * Database connection configuration
+ * Database connection configuration including credentials.
  *
  * @generated from message io.typestream.grpc.DatabaseConnectionConfig
  */
@@ -92,7 +96,7 @@ export class DatabaseConnectionConfig extends Message<DatabaseConnectionConfig> 
   databaseType = DatabaseType.DATABASE_TYPE_UNSPECIFIED;
 
   /**
-   * Hostname for server health checks (e.g., "localhost")
+   * Hostname for server health checks (e.g., "localhost").
    *
    * @generated from field: string hostname = 4;
    */
@@ -119,7 +123,7 @@ export class DatabaseConnectionConfig extends Message<DatabaseConnectionConfig> 
   password = "";
 
   /**
-   * Hostname for Kafka Connect connectors (e.g., "postgres" in Docker)
+   * Hostname for Kafka Connect connectors (e.g., "postgres" in Docker).
    *
    * @generated from field: string connector_hostname = 9;
    */
@@ -162,7 +166,7 @@ export class DatabaseConnectionConfig extends Message<DatabaseConnectionConfig> 
 }
 
 /**
- * Connection status (excludes credentials - credentials stay server-side)
+ * Connection health status (excludes credentials — credentials stay server-side).
  *
  * @generated from message io.typestream.grpc.ConnectionStatus
  */
@@ -193,7 +197,7 @@ export class ConnectionStatus extends Message<ConnectionStatus> {
   lastChecked?: Timestamp;
 
   /**
-   * Public config (no password)
+   * Public config (no password).
    *
    * @generated from field: io.typestream.grpc.DatabaseConnectionConfigPublic config = 6;
    */
@@ -233,12 +237,12 @@ export class ConnectionStatus extends Message<ConnectionStatus> {
 }
 
 /**
- * Register connection for monitoring
- *
  * @generated from message io.typestream.grpc.RegisterConnectionRequest
  */
 export class RegisterConnectionRequest extends Message<RegisterConnectionRequest> {
   /**
+   * Database connection configuration (including credentials for initial setup).
+   *
    * @generated from field: io.typestream.grpc.DatabaseConnectionConfig connection = 1;
    */
   connection?: DatabaseConnectionConfig;
@@ -286,6 +290,8 @@ export class RegisterConnectionResponse extends Message<RegisterConnectionRespon
   error = "";
 
   /**
+   * Health status of the newly registered connection.
+   *
    * @generated from field: io.typestream.grpc.ConnectionStatus status = 3;
    */
   status?: ConnectionStatus;
@@ -321,12 +327,12 @@ export class RegisterConnectionResponse extends Message<RegisterConnectionRespon
 }
 
 /**
- * Unregister connection
- *
  * @generated from message io.typestream.grpc.UnregisterConnectionRequest
  */
 export class UnregisterConnectionRequest extends Message<UnregisterConnectionRequest> {
   /**
+   * ID of the connection to unregister.
+   *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
@@ -403,8 +409,6 @@ export class UnregisterConnectionResponse extends Message<UnregisterConnectionRe
 }
 
 /**
- * Get all connection statuses
- *
  * @generated from message io.typestream.grpc.GetConnectionStatusesRequest
  */
 export class GetConnectionStatusesRequest extends Message<GetConnectionStatusesRequest> {
@@ -440,6 +444,8 @@ export class GetConnectionStatusesRequest extends Message<GetConnectionStatusesR
  */
 export class GetConnectionStatusesResponse extends Message<GetConnectionStatusesResponse> {
   /**
+   * Health statuses of all registered database connections.
+   *
    * @generated from field: repeated io.typestream.grpc.ConnectionStatus statuses = 1;
    */
   statuses: ConnectionStatus[] = [];
@@ -473,12 +479,12 @@ export class GetConnectionStatusesResponse extends Message<GetConnectionStatuses
 }
 
 /**
- * Test a connection one-shot
- *
  * @generated from message io.typestream.grpc.TestConnectionRequest
  */
 export class TestConnectionRequest extends Message<TestConnectionRequest> {
   /**
+   * Database connection configuration to test (one-shot, not registered).
+   *
    * @generated from field: io.typestream.grpc.DatabaseConnectionConfig connection = 1;
    */
   connection?: DatabaseConnectionConfig;
@@ -526,6 +532,8 @@ export class TestConnectionResponse extends Message<TestConnectionResponse> {
   error = "";
 
   /**
+   * Round-trip latency of the connection test in milliseconds.
+   *
    * @generated from field: int64 latency_ms = 3;
    */
   latencyMs = protoInt64.zero;
@@ -561,48 +569,46 @@ export class TestConnectionResponse extends Message<TestConnectionResponse> {
 }
 
 /**
- * Create JDBC sink connector (server-side credential resolution)
- *
  * @generated from message io.typestream.grpc.CreateJdbcSinkConnectorRequest
  */
 export class CreateJdbcSinkConnectorRequest extends Message<CreateJdbcSinkConnectorRequest> {
   /**
-   * ID of registered connection (server looks up credentials)
+   * ID of a registered connection (server resolves credentials).
    *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
 
   /**
-   * Name for the Kafka Connect connector
+   * Name for the Kafka Connect connector.
    *
    * @generated from field: string connector_name = 2;
    */
   connectorName = "";
 
   /**
-   * Topic(s) to consume from
+   * Kafka topic(s) to consume from.
    *
    * @generated from field: string topics = 3;
    */
   topics = "";
 
   /**
-   * Target database table
+   * Target database table name.
    *
    * @generated from field: string table_name = 4;
    */
   tableName = "";
 
   /**
-   * insert, upsert, or update
+   * Write mode: "insert", "upsert", or "update".
    *
    * @generated from field: string insert_mode = 5;
    */
   insertMode = "";
 
   /**
-   * Comma-separated list of primary key fields (for upsert/update)
+   * Comma-separated primary key fields (required for upsert/update mode).
    *
    * @generated from field: string primary_key_fields = 6;
    */
@@ -656,7 +662,7 @@ export class CreateJdbcSinkConnectorResponse extends Message<CreateJdbcSinkConne
   error = "";
 
   /**
-   * Name of created connector
+   * Name of the created connector.
    *
    * @generated from field: string connector_name = 3;
    */
@@ -693,7 +699,7 @@ export class CreateJdbcSinkConnectorResponse extends Message<CreateJdbcSinkConne
 }
 
 /**
- * Public connection config (excludes sensitive fields like password)
+ * Public database connection config (excludes sensitive fields like password).
  *
  * @generated from message io.typestream.grpc.DatabaseConnectionConfigPublic
  */
@@ -776,7 +782,7 @@ export class DatabaseConnectionConfigPublic extends Message<DatabaseConnectionCo
 }
 
 /**
- * Weaviate connection configuration
+ * Weaviate vector database connection configuration.
  *
  * @generated from message io.typestream.grpc.WeaviateConnectionConfig
  */
@@ -792,14 +798,14 @@ export class WeaviateConnectionConfig extends Message<WeaviateConnectionConfig> 
   name = "";
 
   /**
-   * e.g., "http://localhost:8090"
+   * Weaviate REST API URL (e.g., "http://localhost:8090").
    *
    * @generated from field: string rest_url = 3;
    */
   restUrl = "";
 
   /**
-   * e.g., "localhost:50051"
+   * Weaviate gRPC URL (e.g., "localhost:50051").
    *
    * @generated from field: string grpc_url = 4;
    */
@@ -811,28 +817,28 @@ export class WeaviateConnectionConfig extends Message<WeaviateConnectionConfig> 
   grpcSecured = false;
 
   /**
-   * "NONE" or "API_KEY"
+   * Authentication scheme: "NONE" or "API_KEY".
    *
    * @generated from field: string auth_scheme = 6;
    */
   authScheme = "";
 
   /**
-   * For Weaviate Cloud (server-side only)
+   * API key for Weaviate Cloud (stored server-side only).
    *
    * @generated from field: string api_key = 7;
    */
   apiKey = "";
 
   /**
-   * For Kafka Connect (e.g., "http://weaviate:8080")
+   * REST URL for Kafka Connect (e.g., "http://weaviate:8080").
    *
    * @generated from field: string connector_rest_url = 8;
    */
   connectorRestUrl = "";
 
   /**
-   * For Kafka Connect (e.g., "weaviate:50051")
+   * gRPC URL for Kafka Connect (e.g., "weaviate:50051").
    *
    * @generated from field: string connector_grpc_url = 9;
    */
@@ -875,6 +881,8 @@ export class WeaviateConnectionConfig extends Message<WeaviateConnectionConfig> 
 }
 
 /**
+ * Public Weaviate connection config (excludes API key).
+ *
  * @generated from message io.typestream.grpc.WeaviateConnectionConfigPublic
  */
 export class WeaviateConnectionConfigPublic extends Message<WeaviateConnectionConfigPublic> {
@@ -956,6 +964,8 @@ export class WeaviateConnectionConfigPublic extends Message<WeaviateConnectionCo
 }
 
 /**
+ * Health status of a Weaviate connection.
+ *
  * @generated from message io.typestream.grpc.WeaviateConnectionStatus
  */
 export class WeaviateConnectionStatus extends Message<WeaviateConnectionStatus> {
@@ -1023,12 +1033,12 @@ export class WeaviateConnectionStatus extends Message<WeaviateConnectionStatus> 
 }
 
 /**
- * Register Weaviate connection for monitoring
- *
  * @generated from message io.typestream.grpc.RegisterWeaviateConnectionRequest
  */
 export class RegisterWeaviateConnectionRequest extends Message<RegisterWeaviateConnectionRequest> {
   /**
+   * Weaviate connection configuration (including API key for initial setup).
+   *
    * @generated from field: io.typestream.grpc.WeaviateConnectionConfig connection = 1;
    */
   connection?: WeaviateConnectionConfig;
@@ -1111,8 +1121,6 @@ export class RegisterWeaviateConnectionResponse extends Message<RegisterWeaviate
 }
 
 /**
- * Get all Weaviate connection statuses
- *
  * @generated from message io.typestream.grpc.GetWeaviateConnectionStatusesRequest
  */
 export class GetWeaviateConnectionStatusesRequest extends Message<GetWeaviateConnectionStatusesRequest> {
@@ -1181,22 +1189,26 @@ export class GetWeaviateConnectionStatusesResponse extends Message<GetWeaviateCo
 }
 
 /**
- * Create Weaviate sink connector
- *
  * @generated from message io.typestream.grpc.CreateWeaviateSinkConnectorRequest
  */
 export class CreateWeaviateSinkConnectorRequest extends Message<CreateWeaviateSinkConnectorRequest> {
   /**
+   * ID of a registered Weaviate connection.
+   *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
 
   /**
+   * Name for the Kafka Connect connector.
+   *
    * @generated from field: string connector_name = 2;
    */
   connectorName = "";
 
   /**
+   * Kafka topic(s) to consume from.
+   *
    * @generated from field: string topics = 3;
    */
   topics = "";
@@ -1207,31 +1219,35 @@ export class CreateWeaviateSinkConnectorRequest extends Message<CreateWeaviateSi
   collectionName = "";
 
   /**
-   * NoIdStrategy, KafkaIdStrategy, FieldIdStrategy
+   * Document ID strategy: "NoIdStrategy", "KafkaIdStrategy", or "FieldIdStrategy".
    *
    * @generated from field: string document_id_strategy = 5;
    */
   documentIdStrategy = "";
 
   /**
+   * Field to use as document ID (when using FieldIdStrategy).
+   *
    * @generated from field: string document_id_field = 6;
    */
   documentIdField = "";
 
   /**
-   * NoVectorStrategy, FieldVectorStrategy
+   * Vector strategy: "NoVectorStrategy" or "FieldVectorStrategy".
    *
    * @generated from field: string vector_strategy = 7;
    */
   vectorStrategy = "";
 
   /**
+   * Field containing the vector (when using FieldVectorStrategy).
+   *
    * @generated from field: string vector_field = 8;
    */
   vectorField = "";
 
   /**
-   * Optional: field name for timestamp conversion (empty = no transform)
+   * Optional: field name for timestamp conversion (empty = no transform).
    *
    * @generated from field: string timestamp_field = 9;
    */
@@ -1323,7 +1339,486 @@ export class CreateWeaviateSinkConnectorResponse extends Message<CreateWeaviateS
 }
 
 /**
- * Elasticsearch connection configuration
+ * Qdrant vector database connection configuration.
+ *
+ * @generated from message io.typestream.grpc.QdrantConnectionConfig
+ */
+export class QdrantConnectionConfig extends Message<QdrantConnectionConfig> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * Qdrant REST API URL, used for health checks (e.g., "http://localhost:6333").
+   *
+   * @generated from field: string rest_url = 3;
+   */
+  restUrl = "";
+
+  /**
+   * Qdrant gRPC URL (e.g., "http://localhost:6334").
+   *
+   * @generated from field: string grpc_url = 4;
+   */
+  grpcUrl = "";
+
+  /**
+   * API key for Qdrant Cloud (stored server-side only).
+   *
+   * @generated from field: string api_key = 5;
+   */
+  apiKey = "";
+
+  /**
+   * gRPC URL for Kafka Connect (e.g., "http://qdrant:6334").
+   *
+   * @generated from field: string connector_grpc_url = 6;
+   */
+  connectorGrpcUrl = "";
+
+  constructor(data?: PartialMessage<QdrantConnectionConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.QdrantConnectionConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "rest_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "api_key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "connector_grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): QdrantConnectionConfig {
+    return new QdrantConnectionConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): QdrantConnectionConfig {
+    return new QdrantConnectionConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): QdrantConnectionConfig {
+    return new QdrantConnectionConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: QdrantConnectionConfig | PlainMessage<QdrantConnectionConfig> | undefined, b: QdrantConnectionConfig | PlainMessage<QdrantConnectionConfig> | undefined): boolean {
+    return proto3.util.equals(QdrantConnectionConfig, a, b);
+  }
+}
+
+/**
+ * Public Qdrant connection config (excludes API key).
+ *
+ * @generated from message io.typestream.grpc.QdrantConnectionConfigPublic
+ */
+export class QdrantConnectionConfigPublic extends Message<QdrantConnectionConfigPublic> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string rest_url = 3;
+   */
+  restUrl = "";
+
+  /**
+   * @generated from field: string grpc_url = 4;
+   */
+  grpcUrl = "";
+
+  /**
+   * api_key intentionally excluded
+   *
+   * @generated from field: string connector_grpc_url = 5;
+   */
+  connectorGrpcUrl = "";
+
+  constructor(data?: PartialMessage<QdrantConnectionConfigPublic>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.QdrantConnectionConfigPublic";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "rest_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "connector_grpc_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): QdrantConnectionConfigPublic {
+    return new QdrantConnectionConfigPublic().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): QdrantConnectionConfigPublic {
+    return new QdrantConnectionConfigPublic().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): QdrantConnectionConfigPublic {
+    return new QdrantConnectionConfigPublic().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: QdrantConnectionConfigPublic | PlainMessage<QdrantConnectionConfigPublic> | undefined, b: QdrantConnectionConfigPublic | PlainMessage<QdrantConnectionConfigPublic> | undefined): boolean {
+    return proto3.util.equals(QdrantConnectionConfigPublic, a, b);
+  }
+}
+
+/**
+ * Health status of a Qdrant connection.
+ *
+ * @generated from message io.typestream.grpc.QdrantConnectionStatus
+ */
+export class QdrantConnectionStatus extends Message<QdrantConnectionStatus> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.ConnectionState state = 3;
+   */
+  state = ConnectionState.CONNECTION_STATE_UNSPECIFIED;
+
+  /**
+   * @generated from field: string error = 4;
+   */
+  error = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_checked = 5;
+   */
+  lastChecked?: Timestamp;
+
+  /**
+   * @generated from field: io.typestream.grpc.QdrantConnectionConfigPublic config = 6;
+   */
+  config?: QdrantConnectionConfigPublic;
+
+  constructor(data?: PartialMessage<QdrantConnectionStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.QdrantConnectionStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "state", kind: "enum", T: proto3.getEnumType(ConnectionState) },
+    { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "last_checked", kind: "message", T: Timestamp },
+    { no: 6, name: "config", kind: "message", T: QdrantConnectionConfigPublic },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): QdrantConnectionStatus {
+    return new QdrantConnectionStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): QdrantConnectionStatus {
+    return new QdrantConnectionStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): QdrantConnectionStatus {
+    return new QdrantConnectionStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: QdrantConnectionStatus | PlainMessage<QdrantConnectionStatus> | undefined, b: QdrantConnectionStatus | PlainMessage<QdrantConnectionStatus> | undefined): boolean {
+    return proto3.util.equals(QdrantConnectionStatus, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.RegisterQdrantConnectionRequest
+ */
+export class RegisterQdrantConnectionRequest extends Message<RegisterQdrantConnectionRequest> {
+  /**
+   * Qdrant connection configuration (including API key for initial setup).
+   *
+   * @generated from field: io.typestream.grpc.QdrantConnectionConfig connection = 1;
+   */
+  connection?: QdrantConnectionConfig;
+
+  constructor(data?: PartialMessage<RegisterQdrantConnectionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.RegisterQdrantConnectionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection", kind: "message", T: QdrantConnectionConfig },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterQdrantConnectionRequest {
+    return new RegisterQdrantConnectionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterQdrantConnectionRequest {
+    return new RegisterQdrantConnectionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterQdrantConnectionRequest {
+    return new RegisterQdrantConnectionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterQdrantConnectionRequest | PlainMessage<RegisterQdrantConnectionRequest> | undefined, b: RegisterQdrantConnectionRequest | PlainMessage<RegisterQdrantConnectionRequest> | undefined): boolean {
+    return proto3.util.equals(RegisterQdrantConnectionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.RegisterQdrantConnectionResponse
+ */
+export class RegisterQdrantConnectionResponse extends Message<RegisterQdrantConnectionResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * @generated from field: io.typestream.grpc.QdrantConnectionStatus status = 3;
+   */
+  status?: QdrantConnectionStatus;
+
+  constructor(data?: PartialMessage<RegisterQdrantConnectionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.RegisterQdrantConnectionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "status", kind: "message", T: QdrantConnectionStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterQdrantConnectionResponse {
+    return new RegisterQdrantConnectionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterQdrantConnectionResponse {
+    return new RegisterQdrantConnectionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterQdrantConnectionResponse {
+    return new RegisterQdrantConnectionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterQdrantConnectionResponse | PlainMessage<RegisterQdrantConnectionResponse> | undefined, b: RegisterQdrantConnectionResponse | PlainMessage<RegisterQdrantConnectionResponse> | undefined): boolean {
+    return proto3.util.equals(RegisterQdrantConnectionResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.GetQdrantConnectionStatusesRequest
+ */
+export class GetQdrantConnectionStatusesRequest extends Message<GetQdrantConnectionStatusesRequest> {
+  constructor(data?: PartialMessage<GetQdrantConnectionStatusesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GetQdrantConnectionStatusesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetQdrantConnectionStatusesRequest {
+    return new GetQdrantConnectionStatusesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetQdrantConnectionStatusesRequest {
+    return new GetQdrantConnectionStatusesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetQdrantConnectionStatusesRequest {
+    return new GetQdrantConnectionStatusesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetQdrantConnectionStatusesRequest | PlainMessage<GetQdrantConnectionStatusesRequest> | undefined, b: GetQdrantConnectionStatusesRequest | PlainMessage<GetQdrantConnectionStatusesRequest> | undefined): boolean {
+    return proto3.util.equals(GetQdrantConnectionStatusesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.GetQdrantConnectionStatusesResponse
+ */
+export class GetQdrantConnectionStatusesResponse extends Message<GetQdrantConnectionStatusesResponse> {
+  /**
+   * @generated from field: repeated io.typestream.grpc.QdrantConnectionStatus statuses = 1;
+   */
+  statuses: QdrantConnectionStatus[] = [];
+
+  constructor(data?: PartialMessage<GetQdrantConnectionStatusesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.GetQdrantConnectionStatusesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "statuses", kind: "message", T: QdrantConnectionStatus, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetQdrantConnectionStatusesResponse {
+    return new GetQdrantConnectionStatusesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetQdrantConnectionStatusesResponse {
+    return new GetQdrantConnectionStatusesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetQdrantConnectionStatusesResponse {
+    return new GetQdrantConnectionStatusesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetQdrantConnectionStatusesResponse | PlainMessage<GetQdrantConnectionStatusesResponse> | undefined, b: GetQdrantConnectionStatusesResponse | PlainMessage<GetQdrantConnectionStatusesResponse> | undefined): boolean {
+    return proto3.util.equals(GetQdrantConnectionStatusesResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.CreateQdrantSinkConnectorRequest
+ */
+export class CreateQdrantSinkConnectorRequest extends Message<CreateQdrantSinkConnectorRequest> {
+  /**
+   * ID of a registered Qdrant connection.
+   *
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = "";
+
+  /**
+   * Name for the Kafka Connect connector.
+   *
+   * @generated from field: string connector_name = 2;
+   */
+  connectorName = "";
+
+  /**
+   * Kafka topic(s) to consume from.
+   *
+   * @generated from field: string topics = 3;
+   */
+  topics = "";
+
+  /**
+   * Target Qdrant collection name.
+   *
+   * @generated from field: string collection_name = 4;
+   */
+  collectionName = "";
+
+  constructor(data?: PartialMessage<CreateQdrantSinkConnectorRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateQdrantSinkConnectorRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "connection_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "topics", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "collection_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateQdrantSinkConnectorRequest {
+    return new CreateQdrantSinkConnectorRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateQdrantSinkConnectorRequest {
+    return new CreateQdrantSinkConnectorRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateQdrantSinkConnectorRequest {
+    return new CreateQdrantSinkConnectorRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateQdrantSinkConnectorRequest | PlainMessage<CreateQdrantSinkConnectorRequest> | undefined, b: CreateQdrantSinkConnectorRequest | PlainMessage<CreateQdrantSinkConnectorRequest> | undefined): boolean {
+    return proto3.util.equals(CreateQdrantSinkConnectorRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message io.typestream.grpc.CreateQdrantSinkConnectorResponse
+ */
+export class CreateQdrantSinkConnectorResponse extends Message<CreateQdrantSinkConnectorResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string error = 2;
+   */
+  error = "";
+
+  /**
+   * @generated from field: string connector_name = 3;
+   */
+  connectorName = "";
+
+  constructor(data?: PartialMessage<CreateQdrantSinkConnectorResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "io.typestream.grpc.CreateQdrantSinkConnectorResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "connector_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateQdrantSinkConnectorResponse {
+    return new CreateQdrantSinkConnectorResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateQdrantSinkConnectorResponse {
+    return new CreateQdrantSinkConnectorResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateQdrantSinkConnectorResponse {
+    return new CreateQdrantSinkConnectorResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateQdrantSinkConnectorResponse | PlainMessage<CreateQdrantSinkConnectorResponse> | undefined, b: CreateQdrantSinkConnectorResponse | PlainMessage<CreateQdrantSinkConnectorResponse> | undefined): boolean {
+    return proto3.util.equals(CreateQdrantSinkConnectorResponse, a, b);
+  }
+}
+
+/**
+ * Elasticsearch connection configuration.
  *
  * @generated from message io.typestream.grpc.ElasticsearchConnectionConfig
  */
@@ -1339,28 +1834,28 @@ export class ElasticsearchConnectionConfig extends Message<ElasticsearchConnecti
   name = "";
 
   /**
-   * e.g., "http://localhost:9200"
+   * Elasticsearch URL (e.g., "http://localhost:9200").
    *
    * @generated from field: string connection_url = 3;
    */
   connectionUrl = "";
 
   /**
-   * Optional: for authentication
+   * Optional: username for authentication.
    *
    * @generated from field: string username = 4;
    */
   username = "";
 
   /**
-   * Optional: for authentication
+   * Optional: password for authentication.
    *
    * @generated from field: string password = 5;
    */
   password = "";
 
   /**
-   * For Kafka Connect (e.g., "http://elasticsearch:9200")
+   * URL for Kafka Connect (e.g., "http://elasticsearch:9200").
    *
    * @generated from field: string connector_url = 6;
    */
@@ -1400,6 +1895,8 @@ export class ElasticsearchConnectionConfig extends Message<ElasticsearchConnecti
 }
 
 /**
+ * Public Elasticsearch connection config (excludes password).
+ *
  * @generated from message io.typestream.grpc.ElasticsearchConnectionConfigPublic
  */
 export class ElasticsearchConnectionConfigPublic extends Message<ElasticsearchConnectionConfigPublic> {
@@ -1463,6 +1960,8 @@ export class ElasticsearchConnectionConfigPublic extends Message<ElasticsearchCo
 }
 
 /**
+ * Health status of an Elasticsearch connection.
+ *
  * @generated from message io.typestream.grpc.ElasticsearchConnectionStatus
  */
 export class ElasticsearchConnectionStatus extends Message<ElasticsearchConnectionStatus> {
@@ -1530,12 +2029,12 @@ export class ElasticsearchConnectionStatus extends Message<ElasticsearchConnecti
 }
 
 /**
- * Register Elasticsearch connection for monitoring
- *
  * @generated from message io.typestream.grpc.RegisterElasticsearchConnectionRequest
  */
 export class RegisterElasticsearchConnectionRequest extends Message<RegisterElasticsearchConnectionRequest> {
   /**
+   * Elasticsearch connection configuration (including password for initial setup).
+   *
    * @generated from field: io.typestream.grpc.ElasticsearchConnectionConfig connection = 1;
    */
   connection?: ElasticsearchConnectionConfig;
@@ -1618,8 +2117,6 @@ export class RegisterElasticsearchConnectionResponse extends Message<RegisterEla
 }
 
 /**
- * Get all Elasticsearch connection statuses
- *
  * @generated from message io.typestream.grpc.GetElasticsearchConnectionStatusesRequest
  */
 export class GetElasticsearchConnectionStatusesRequest extends Message<GetElasticsearchConnectionStatusesRequest> {
@@ -1688,47 +2185,53 @@ export class GetElasticsearchConnectionStatusesResponse extends Message<GetElast
 }
 
 /**
- * Create Elasticsearch sink connector
- *
  * @generated from message io.typestream.grpc.CreateElasticsearchSinkConnectorRequest
  */
 export class CreateElasticsearchSinkConnectorRequest extends Message<CreateElasticsearchSinkConnectorRequest> {
   /**
+   * ID of a registered Elasticsearch connection.
+   *
    * @generated from field: string connection_id = 1;
    */
   connectionId = "";
 
   /**
+   * Name for the Kafka Connect connector.
+   *
    * @generated from field: string connector_name = 2;
    */
   connectorName = "";
 
   /**
+   * Kafka topic(s) to consume from.
+   *
    * @generated from field: string topics = 3;
    */
   topics = "";
 
   /**
+   * Target Elasticsearch index name.
+   *
    * @generated from field: string index_name = 4;
    */
   indexName = "";
 
   /**
-   * RECORD_KEY, TOPIC_PARTITION_OFFSET
+   * Document ID strategy: "RECORD_KEY" or "TOPIC_PARTITION_OFFSET".
    *
    * @generated from field: string document_id_strategy = 5;
    */
   documentIdStrategy = "";
 
   /**
-   * INSERT, UPSERT
+   * Write method: "INSERT" or "UPSERT".
    *
    * @generated from field: string write_method = 6;
    */
   writeMethod = "";
 
   /**
-   * IGNORE, DELETE, FAIL
+   * Behavior on null values: "IGNORE", "DELETE", or "FAIL".
    *
    * @generated from field: string behavior_on_null_values = 7;
    */

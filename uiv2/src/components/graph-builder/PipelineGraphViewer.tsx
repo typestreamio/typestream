@@ -61,6 +61,7 @@ const nodeIcons: Record<string, React.ReactNode> = {
   textExtractor: <TextFieldsIcon fontSize="small" sx={{ color: 'info.main' }} />,
   embeddingGenerator: <DataObjectIcon fontSize="small" sx={{ color: 'info.main' }} />,
   openAiTransformer: <SmartToyIcon fontSize="small" sx={{ color: 'primary.main' }} />,
+  qdrantSink: <DataArrayIcon fontSize="small" sx={{ color: 'success.main' }} />,
   default: <DataObjectIcon fontSize="small" sx={{ color: 'grey.500' }} />,
 };
 
@@ -73,6 +74,7 @@ const nodeTitles: Record<string, string> = {
   textExtractor: 'Text Extractor',
   embeddingGenerator: 'Embedding Generator',
   openAiTransformer: 'AI Transformer',
+  qdrantSink: 'Qdrant Sink',
   default: 'Node',
 };
 
@@ -170,6 +172,7 @@ const viewerNodeTypes: NodeTypes = {
   textExtractor: (props: { data: ViewerNodeData }) => <ViewerNode {...props} type="textExtractor" />,
   embeddingGenerator: (props: { data: ViewerNodeData }) => <ViewerNode {...props} type="embeddingGenerator" />,
   openAiTransformer: (props: { data: ViewerNodeData }) => <ViewerNode {...props} type="openAiTransformer" />,
+  qdrantSink: (props: { data: ViewerNodeData }) => <ViewerNode {...props} type="qdrantSink" />,
   default: (props: { data: ViewerNodeData }) => <ViewerNode {...props} type="default" />,
 };
 

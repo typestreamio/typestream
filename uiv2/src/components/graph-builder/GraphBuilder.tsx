@@ -188,6 +188,16 @@ export function GraphBuilder() {
         vectorField: dragData.vectorField || '',
         timestampField: dragData.timestampField || '',
       };
+    } else if (type === 'qdrantSink') {
+      // QdrantSink node - only non-sensitive fields (credentials resolved server-side)
+      return {
+        connectionId: dragData.connectionId || '',
+        connectionName: dragData.connectionName || '',
+        collectionName: dragData.collectionName || '',
+        idField: dragData.idField || 'id',
+        vectorField: dragData.vectorField || '',
+        payloadFields: dragData.payloadFields || '',
+      };
     } else if (type === 'elasticsearchSink') {
       // ElasticsearchSink node - only non-sensitive fields (credentials resolved server-side)
       return {
@@ -362,7 +372,7 @@ export function GraphBuilder() {
 
   const handleCreateJob = async () => {
     setCreateError(null);
-    const { graph, dbSinkConfigs, weaviateSinkConfigs, elasticsearchSinkConfigs } = serializeGraphWithSinks(nodes, edges);
+    const { graph, dbSinkConfigs, weaviateSinkConfigs, elasticsearchSinkConfigs, qdrantSinkConfigs } = serializeGraphWithSinks(nodes, edges);
 
     // Single consolidated request - server handles both job + connectors atomically
     const request = new CreateJobFromGraphRequest({
@@ -371,6 +381,7 @@ export function GraphBuilder() {
       dbSinkConfigs,  // Server creates connectors and rolls back on failure
       weaviateSinkConfigs,  // Server creates Weaviate connectors and rolls back on failure
       elasticsearchSinkConfigs,  // Server creates Elasticsearch connectors and rolls back on failure
+      qdrantSinkConfigs,  // Server creates Qdrant connectors and rolls back on failure
     });
 
     createJob.mutate(request, {
@@ -404,7 +415,15 @@ export function GraphBuilder() {
       return data.indexName && data.indexName.trim().length > 0;
     });
 
-  const canCreate = nodes.length > 0 && allWeaviateSinksValid && allElasticsearchSinksValid;
+  // Validate that all Qdrant sink nodes have required fields
+  const allQdrantSinksValid = nodes
+    .filter((node) => node.type === 'qdrantSink')
+    .every((node) => {
+      const data = node.data as { collectionName?: string };
+      return data.collectionName && data.collectionName.trim().length > 0;
+    });
+
+  const canCreate = nodes.length > 0 && allWeaviateSinksValid && allElasticsearchSinksValid && allQdrantSinksValid;
 
   return (
     <Box sx={{ display: 'flex', height: '100%', gap: 2, minHeight: 0 }}>

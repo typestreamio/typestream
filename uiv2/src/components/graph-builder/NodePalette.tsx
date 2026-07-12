@@ -18,7 +18,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSinkConnections, useWeaviateSinkConnections, useElasticsearchSinkConnections, type Connection, type WeaviateConnection, type ElasticsearchConnection } from '../../hooks/useConnections';
+import { useSinkConnections, useWeaviateSinkConnections, useElasticsearchSinkConnections, useQdrantSinkConnections, type Connection, type WeaviateConnection, type ElasticsearchConnection, type QdrantConnection } from '../../hooks/useConnections';
 import { usePostgresTables } from '../../hooks/usePostgresTables';
 import { useListOpenAIModels } from '../../hooks/useListOpenAIModels';
 
@@ -133,6 +133,26 @@ function WeaviateSinkItem({ connection, onAdd }: { connection: WeaviateConnectio
   );
 }
 
+function QdrantSinkItem({ connection, onAdd }: { connection: QdrantConnection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
+  return (
+    <PaletteItem
+      type="qdrantSink"
+      label={connection.name}
+      icon={<HubIcon fontSize="small" color="error" />}
+      data={{
+        // Only pass non-sensitive data - credentials stay server-side
+        connectionId: connection.id,
+        connectionName: connection.name,
+        collectionName: '',
+        idField: 'id',
+        vectorField: '',
+        payloadFields: '',
+      }}
+      onAdd={onAdd}
+    />
+  );
+}
+
 function ElasticsearchSinkItem({ connection, onAdd }: { connection: ElasticsearchConnection; onAdd?: (type: string, data?: Record<string, unknown>) => void }) {
   return (
     <PaletteItem
@@ -161,6 +181,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   const navigate = useNavigate();
   const { data: connections } = useSinkConnections();
   const { data: weaviateConnections } = useWeaviateSinkConnections();
+  const { data: qdrantConnections } = useQdrantSinkConnections();
   const { data: elasticsearchConnections } = useElasticsearchSinkConnections();
   const { postgresConnections, tables: postgresTables } = usePostgresTables();
   const { data: openAiModels } = useListOpenAIModels();
@@ -304,6 +325,27 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
             fullWidth
           >
             Add Weaviate
+          </Button>
+        </Box>
+      )}
+
+      {qdrantConnections && qdrantConnections.length > 0 ? (
+        qdrantConnections.map((conn) => (
+          <QdrantSinkItem key={conn.id} connection={conn} onAdd={onAddNode} />
+        ))
+      ) : (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            No Qdrant connections
+          </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/connections/qdrant/new')}
+            fullWidth
+          >
+            Add Qdrant
           </Button>
         </Box>
       )}

@@ -21,13 +21,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Result state after applying a pipeline.
 type PipelineState int32
 
 const (
 	PipelineState_PIPELINE_STATE_UNSPECIFIED PipelineState = 0
-	PipelineState_CREATED                    PipelineState = 1
-	PipelineState_UPDATED                    PipelineState = 2
-	PipelineState_UNCHANGED                  PipelineState = 3
+	// Pipeline was newly created.
+	PipelineState_CREATED PipelineState = 1
+	// Pipeline was updated with new configuration.
+	PipelineState_UPDATED PipelineState = 2
+	// Pipeline configuration has not changed.
+	PipelineState_UNCHANGED PipelineState = 3
 )
 
 // Enum value maps for PipelineState.
@@ -73,14 +77,19 @@ func (PipelineState) EnumDescriptor() ([]byte, []int) {
 	return file_pipeline_proto_rawDescGZIP(), []int{0}
 }
 
+// Action that would be taken for a pipeline in a plan.
 type PipelineAction int32
 
 const (
 	PipelineAction_PIPELINE_ACTION_UNSPECIFIED PipelineAction = 0
-	PipelineAction_CREATE                      PipelineAction = 1
-	PipelineAction_UPDATE                      PipelineAction = 2
-	PipelineAction_NO_CHANGE                   PipelineAction = 3
-	PipelineAction_DELETE                      PipelineAction = 4
+	// Pipeline does not exist and would be created.
+	PipelineAction_CREATE PipelineAction = 1
+	// Pipeline exists and would be updated.
+	PipelineAction_UPDATE PipelineAction = 2
+	// Pipeline exists and has not changed.
+	PipelineAction_NO_CHANGE PipelineAction = 3
+	// Pipeline exists on server but is not in the plan, so it would be deleted.
+	PipelineAction_DELETE PipelineAction = 4
 )
 
 // Enum value maps for PipelineAction.
@@ -128,13 +137,17 @@ func (PipelineAction) EnumDescriptor() ([]byte, []int) {
 	return file_pipeline_proto_rawDescGZIP(), []int{1}
 }
 
+// Metadata describing a pipeline definition.
 type PipelineMetadata struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Version     string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// Unique name identifying this pipeline.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Version string for tracking changes (e.g., "v1", "2024-01-15").
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// Human-readable description of what this pipeline does.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 }
 
@@ -196,8 +209,10 @@ type ValidatePipelineRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Metadata *PipelineMetadata              `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Graph    *job_service.UserPipelineGraph `protobuf:"bytes,2,opt,name=graph,proto3" json:"graph,omitempty"`
+	// Pipeline metadata (name, version, description).
+	Metadata *PipelineMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	// The pipeline graph to validate.
+	Graph *job_service.UserPipelineGraph `protobuf:"bytes,2,opt,name=graph,proto3" json:"graph,omitempty"`
 }
 
 func (x *ValidatePipelineRequest) Reset() {
@@ -251,8 +266,11 @@ type ValidatePipelineResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Valid    bool     `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	Errors   []string `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	// Whether the pipeline is valid.
+	Valid bool `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
+	// Validation errors (pipeline cannot be applied).
+	Errors []string `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	// Validation warnings (pipeline can be applied but may have issues).
 	Warnings []string `protobuf:"bytes,3,rep,name=warnings,proto3" json:"warnings,omitempty"`
 }
 
@@ -314,8 +332,10 @@ type ApplyPipelineRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Metadata *PipelineMetadata              `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Graph    *job_service.UserPipelineGraph `protobuf:"bytes,2,opt,name=graph,proto3" json:"graph,omitempty"`
+	// Pipeline metadata (name, version, description).
+	Metadata *PipelineMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	// The pipeline graph to deploy.
+	Graph *job_service.UserPipelineGraph `protobuf:"bytes,2,opt,name=graph,proto3" json:"graph,omitempty"`
 }
 
 func (x *ApplyPipelineRequest) Reset() {
@@ -369,10 +389,14 @@ type ApplyPipelineResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Success bool          `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	JobId   string        `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
-	Error   string        `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	State   PipelineState `protobuf:"varint,4,opt,name=state,proto3,enum=io.typestream.grpc.PipelineState" json:"state,omitempty"`
+	// Whether the apply operation succeeded.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// ID of the created or updated job.
+	JobId string `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	// Error message if the apply failed.
+	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	// Whether the pipeline was created, updated, or unchanged.
+	State PipelineState `protobuf:"varint,4,opt,name=state,proto3,enum=io.typestream.grpc.PipelineState" json:"state,omitempty"`
 }
 
 func (x *ApplyPipelineResponse) Reset() {
@@ -473,19 +497,28 @@ func (*ListPipelinesRequest) Descriptor() ([]byte, []int) {
 	return file_pipeline_proto_rawDescGZIP(), []int{5}
 }
 
+// Information about a registered pipeline and its running job.
 type PipelineInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name        string                         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Version     string                         `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	Description string                         `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	JobId       string                         `protobuf:"bytes,4,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
-	JobState    job_service.JobState           `protobuf:"varint,5,opt,name=job_state,json=jobState,proto3,enum=io.typestream.grpc.JobState" json:"job_state,omitempty"`
-	AppliedAt   int64                          `protobuf:"varint,6,opt,name=applied_at,json=appliedAt,proto3" json:"applied_at,omitempty"`
-	Graph       *job_service.PipelineGraph     `protobuf:"bytes,7,opt,name=graph,proto3" json:"graph,omitempty"`
-	UserGraph   *job_service.UserPipelineGraph `protobuf:"bytes,8,opt,name=user_graph,json=userGraph,proto3" json:"user_graph,omitempty"`
+	// Pipeline name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Pipeline version.
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// Pipeline description.
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	// ID of the underlying job.
+	JobId string `protobuf:"bytes,4,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	// Current state of the underlying job.
+	JobState job_service.JobState `protobuf:"varint,5,opt,name=job_state,json=jobState,proto3,enum=io.typestream.grpc.JobState" json:"job_state,omitempty"`
+	// Unix timestamp (milliseconds) when this pipeline was last applied.
+	AppliedAt int64 `protobuf:"varint,6,opt,name=applied_at,json=appliedAt,proto3" json:"applied_at,omitempty"`
+	// Internal pipeline graph (compiler representation).
+	Graph *job_service.PipelineGraph `protobuf:"bytes,7,opt,name=graph,proto3" json:"graph,omitempty"`
+	// User-facing pipeline graph as originally submitted.
+	UserGraph *job_service.UserPipelineGraph `protobuf:"bytes,8,opt,name=user_graph,json=userGraph,proto3" json:"user_graph,omitempty"`
 }
 
 func (x *PipelineInfo) Reset() {
@@ -581,6 +614,7 @@ type ListPipelinesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// All registered pipelines.
 	Pipelines []*PipelineInfo `protobuf:"bytes,1,rep,name=pipelines,proto3" json:"pipelines,omitempty"`
 }
 
@@ -628,6 +662,7 @@ type DeletePipelineRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Name of the pipeline to delete.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
@@ -675,8 +710,10 @@ type DeletePipelineResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Error   string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	// Whether the delete operation succeeded.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// Error message if the delete failed.
+	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
 }
 
 func (x *DeletePipelineResponse) Reset() {
@@ -725,13 +762,16 @@ func (x *DeletePipelineResponse) GetError() string {
 	return ""
 }
 
+// A pipeline definition included in a plan request.
 type PipelinePlan struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Metadata *PipelineMetadata              `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Graph    *job_service.UserPipelineGraph `protobuf:"bytes,2,opt,name=graph,proto3" json:"graph,omitempty"`
+	// Pipeline metadata (name, version, description).
+	Metadata *PipelineMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	// The pipeline graph to plan.
+	Graph *job_service.UserPipelineGraph `protobuf:"bytes,2,opt,name=graph,proto3" json:"graph,omitempty"`
 }
 
 func (x *PipelinePlan) Reset() {
@@ -785,6 +825,7 @@ type PlanPipelinesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Pipeline definitions to plan against current state.
 	Pipelines []*PipelinePlan `protobuf:"bytes,1,rep,name=pipelines,proto3" json:"pipelines,omitempty"`
 }
 
@@ -827,15 +868,20 @@ func (x *PlanPipelinesRequest) GetPipelines() []*PipelinePlan {
 	return nil
 }
 
+// Result for a single pipeline in a plan response.
 type PipelinePlanResult struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name           string         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Action         PipelineAction `protobuf:"varint,2,opt,name=action,proto3,enum=io.typestream.grpc.PipelineAction" json:"action,omitempty"`
-	CurrentVersion string         `protobuf:"bytes,3,opt,name=current_version,json=currentVersion,proto3" json:"current_version,omitempty"`
-	NewVersion     string         `protobuf:"bytes,4,opt,name=new_version,json=newVersion,proto3" json:"new_version,omitempty"`
+	// Pipeline name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Action that would be taken.
+	Action PipelineAction `protobuf:"varint,2,opt,name=action,proto3,enum=io.typestream.grpc.PipelineAction" json:"action,omitempty"`
+	// Current version on the server (empty if pipeline is new).
+	CurrentVersion string `protobuf:"bytes,3,opt,name=current_version,json=currentVersion,proto3" json:"current_version,omitempty"`
+	// New version from the plan (empty if pipeline would be deleted).
+	NewVersion string `protobuf:"bytes,4,opt,name=new_version,json=newVersion,proto3" json:"new_version,omitempty"`
 }
 
 func (x *PipelinePlanResult) Reset() {
@@ -903,8 +949,10 @@ type PlanPipelinesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Plan results for each pipeline.
 	Results []*PipelinePlanResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
-	Errors  []string              `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	// Errors encountered during planning.
+	Errors []string `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
 }
 
 func (x *PlanPipelinesResponse) Reset() {

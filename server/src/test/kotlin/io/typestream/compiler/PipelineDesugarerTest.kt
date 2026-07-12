@@ -103,6 +103,55 @@ internal class PipelineDesugarerTest {
         assertThat(tableMat.tableMaterialized.aggregationType).isEqualTo("latest")
     }
 
+    @Test
+    fun `qdrantSink desugars to envelope and sink`() {
+        val userGraph = userGraph(
+            nodes = listOf(
+                kafkaSourceNode("src-1", "/local/topics/help_articles", Job.Encoding.AVRO),
+                qdrantSinkNode(
+                    "sink-1",
+                    connectionId = "dev-qdrant",
+                    collectionName = "help_articles",
+                    idField = "id",
+                    vectorField = "embedding",
+                    payloadFields = "title,body"
+                )
+            ),
+            edges = listOf(edge("src-1", "sink-1"))
+        )
+
+        val result = PipelineDesugarer.desugar(userGraph)
+
+        // Should have 3 nodes: StreamSource + QdrantEnvelope + Sink
+        assertThat(result.graph.nodesList).hasSize(3)
+
+        val envelope = result.graph.nodesList.find { it.hasQdrantEnvelope() }
+        assertThat(envelope).isNotNull
+        assertThat(envelope!!.id).isEqualTo("sink-1-envelope")
+        assertThat(envelope.qdrantEnvelope.collectionName).isEqualTo("help_articles")
+        assertThat(envelope.qdrantEnvelope.idField).isEqualTo("id")
+        assertThat(envelope.qdrantEnvelope.vectorField).isEqualTo("embedding")
+        assertThat(envelope.qdrantEnvelope.payloadFields).isEqualTo("title,body")
+
+        val sink = result.graph.nodesList.find { it.hasSink() }
+        assertThat(sink).isNotNull
+        assertThat(sink!!.id).isEqualTo("sink-1")
+        assertThat(sink.sink.output.path).startsWith("/dev/kafka/local/topics/qdrant-sink-sink-1-")
+
+        // User edge is redirected to the envelope; an internal edge connects envelope -> sink
+        assertThat(result.graph.edgesList).hasSize(2)
+        assertThat(result.graph.edgesList.any { it.fromId == "src-1" && it.toId == "sink-1-envelope" }).isTrue()
+        assertThat(result.graph.edgesList.any { it.fromId == "sink-1-envelope" && it.toId == "sink-1" }).isTrue()
+
+        // Sink config is extracted with the intermediate topic matching the sink path
+        assertThat(result.qdrantSinkConfigs).hasSize(1)
+        val config = result.qdrantSinkConfigs[0]
+        assertThat(config.nodeId).isEqualTo("sink-1")
+        assertThat(config.connectionId).isEqualTo("dev-qdrant")
+        assertThat(config.collectionName).isEqualTo("help_articles")
+        assertThat(sink.sink.output.path).isEqualTo("/dev/kafka/local/topics/${config.intermediateTopic}")
+    }
+
     // --- Helper methods ---
 
     private fun kafkaSourceNode(id: String, topicPath: String, encoding: Job.Encoding): Job.UserPipelineNode =
@@ -130,6 +179,26 @@ internal class PipelineDesugarerTest {
                     .setAggregationType(aggregationType)
                     .setEnableWindowing(enableWindowing)
                     .setWindowSizeSeconds(windowSizeSeconds)
+            )
+            .build()
+
+    private fun qdrantSinkNode(
+        id: String,
+        connectionId: String,
+        collectionName: String,
+        idField: String,
+        vectorField: String,
+        payloadFields: String
+    ): Job.UserPipelineNode =
+        Job.UserPipelineNode.newBuilder()
+            .setId(id)
+            .setQdrantSink(
+                Job.QdrantSinkNode.newBuilder()
+                    .setConnectionId(connectionId)
+                    .setCollectionName(collectionName)
+                    .setIdField(idField)
+                    .setVectorField(vectorField)
+                    .setPayloadFields(payloadFields)
             )
             .build()
 

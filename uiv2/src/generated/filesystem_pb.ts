@@ -12,11 +12,15 @@ import { Encoding } from "./job_pb.js";
  */
 export class MountRequest extends Message<MountRequest> {
   /**
+   * Identifier for the user session.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
 
   /**
+   * Configuration string for the data source to mount (e.g., connection details).
+   *
    * @generated from field: string config = 2;
    */
   config = "";
@@ -55,11 +59,15 @@ export class MountRequest extends Message<MountRequest> {
  */
 export class MountResponse extends Message<MountResponse> {
   /**
+   * Whether the mount operation succeeded.
+   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
+   * Error message if the mount failed.
+   *
    * @generated from field: string error = 3;
    */
   error = "";
@@ -98,11 +106,15 @@ export class MountResponse extends Message<MountResponse> {
  */
 export class UnmountRequest extends Message<UnmountRequest> {
   /**
+   * Identifier for the user session.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
 
   /**
+   * The endpoint path of the mounted data source to remove.
+   *
    * @generated from field: string endpoint = 2;
    */
   endpoint = "";
@@ -141,11 +153,15 @@ export class UnmountRequest extends Message<UnmountRequest> {
  */
 export class UnmountResponse extends Message<UnmountResponse> {
   /**
+   * Whether the unmount operation succeeded.
+   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
+   * Error message if the unmount failed.
+   *
    * @generated from field: string error = 3;
    */
   error = "";
@@ -184,11 +200,15 @@ export class UnmountResponse extends Message<UnmountResponse> {
  */
 export class LsRequest extends Message<LsRequest> {
   /**
+   * Identifier for the user session.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
 
   /**
+   * Virtual filesystem path to list (e.g., "/local/topics").
+   *
    * @generated from field: string path = 2;
    */
   path = "";
@@ -223,15 +243,21 @@ export class LsRequest extends Message<LsRequest> {
 }
 
 /**
+ * Metadata about a single entry in the virtual filesystem.
+ *
  * @generated from message io.typestream.grpc.FileInfo
  */
 export class FileInfo extends Message<FileInfo> {
   /**
+   * Name of the file or directory.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Data encoding of the topic (only set for topic entries).
+   *
    * @generated from field: io.typestream.grpc.Encoding encoding = 2;
    */
   encoding = Encoding.STRING;
@@ -270,11 +296,15 @@ export class FileInfo extends Message<FileInfo> {
  */
 export class LsResponse extends Message<LsResponse> {
   /**
+   * List of entries at the requested path.
+   *
    * @generated from field: repeated io.typestream.grpc.FileInfo files = 1;
    */
   files: FileInfo[] = [];
 
   /**
+   * Error message if the listing failed.
+   *
    * @generated from field: string error = 2;
    */
   error = "";
@@ -313,12 +343,14 @@ export class LsResponse extends Message<LsResponse> {
  */
 export class GetSchemaRequest extends Message<GetSchemaRequest> {
   /**
+   * Identifier for the user session.
+   *
    * @generated from field: string user_id = 1;
    */
   userId = "";
 
   /**
-   * Topic path
+   * Virtual filesystem path to the topic (e.g., "/local/topics/my-topic").
    *
    * @generated from field: string path = 2;
    */
@@ -358,11 +390,15 @@ export class GetSchemaRequest extends Message<GetSchemaRequest> {
  */
 export class GetSchemaResponse extends Message<GetSchemaResponse> {
   /**
+   * Field names in the topic's schema.
+   *
    * @generated from field: repeated string fields = 1;
    */
   fields: string[] = [];
 
   /**
+   * Error message if schema retrieval failed.
+   *
    * @generated from field: string error = 2;
    */
   error = "";

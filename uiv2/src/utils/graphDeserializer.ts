@@ -55,6 +55,8 @@ function getNodeLabel(pipelineNode: PipelineNode): string {
       return `Embedding (${nodeType.value.textField})`;
     case 'openAiTransformer':
       return `AI Transform (${nodeType.value.model})`;
+    case 'qdrantEnvelope':
+      return `Qdrant (${nodeType.value.collectionName})`;
     default:
       return 'Unknown';
   }
@@ -101,6 +103,10 @@ function getReactFlowNodeType(pipelineNode: PipelineNode): string {
       return 'embeddingGenerator';
     case 'openAiTransformer':
       return 'openAiTransformer';
+    case 'qdrantEnvelope':
+      // Display the envelope as the Qdrant sink node (the trailing generic sink
+      // renders as the intermediate Kafka topic, like the other connector sinks)
+      return 'qdrantSink';
     default:
       // For nodes that don't have a direct UI mapping, use a generic display
       return 'default';
@@ -152,6 +158,15 @@ function extractNodeData(pipelineNode: PipelineNode): Record<string, unknown> {
         prompt: nodeType.value.prompt,
         outputField: nodeType.value.outputField || 'ai_response',
         model: nodeType.value.model || 'gpt-4o-mini',
+      };
+    case 'qdrantEnvelope':
+      return {
+        connectionId: '',
+        connectionName: 'Qdrant',
+        collectionName: nodeType.value.collectionName,
+        idField: nodeType.value.idField || 'id',
+        vectorField: nodeType.value.vectorField || 'embedding',
+        payloadFields: nodeType.value.payloadFields || '',
       };
     default:
       return { label: getNodeLabel(pipelineNode) };
