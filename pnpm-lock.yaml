@@ -107,7 +107,7 @@ importers:
         version: 0.7.53
       '@xyflow/react':
         specifier: ^12.10.0
-        version: 12.10.2(@types/react@19.2.18)(immer@9.0.21)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 12.11.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(immer@9.0.21)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.2.0
         version: 19.2.8
@@ -2964,14 +2964,21 @@ packages:
   '@xtuc/long@4.2.2':
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
 
-  '@xyflow/react@12.10.2':
-    resolution: {integrity: sha512-CgIi6HwlcHXwlkTpr0fxLv/0sRVNZ8IdwKLzzeCscaYBwpvfcH1QFOCeaTCuEn1FQEs/B8CjnTSjhs8udgmBgQ==}
+  '@xyflow/react@12.11.3':
+    resolution: {integrity: sha512-G3jogHz2GWUtIOkhavUGno2YzY9u6fILIJBttfsBendb0/HWB90JG+sOTAvlIMEwyvq9zgy9V9ZQSwyQjR5QzQ==}
     peerDependencies:
+      '@types/react': '>=17'
+      '@types/react-dom': '>=17'
       react: '>=17'
       react-dom: '>=17'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
 
-  '@xyflow/system@0.0.76':
-    resolution: {integrity: sha512-hvwvnRS1B3REwVDlWexsq7YQaPZeG3/mKo1jv38UmnpWmxihp14bW6VtEOuHEwJX2FvzFw8k77LyKSk/wiZVNA==}
+  '@xyflow/system@0.0.80':
+    resolution: {integrity: sha512-ywc3ZqG91brzWrH1WlwMdIX4goOfrpBy6AbLdVSaof/Xx9l138ijIKRExM6EkMro2F+OImGmSiA/WKcXvKVcfA==}
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -4431,6 +4438,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -12055,18 +12063,20 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
-  '@xyflow/react@12.10.2(@types/react@19.2.18)(immer@9.0.21)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@xyflow/react@12.11.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(immer@9.0.21)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@xyflow/system': 0.0.76
+      '@xyflow/system': 0.0.80
       classcat: 5.0.5
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       zustand: 4.5.7(@types/react@19.2.18)(immer@9.0.21)(react@19.2.8)
+    optionalDependencies:
+      '@types/react': 19.2.18
+      '@types/react-dom': 19.2.4(@types/react@19.2.18)
     transitivePeerDependencies:
-      - '@types/react'
       - immer
 
-  '@xyflow/system@0.0.76':
+  '@xyflow/system@0.0.80':
     dependencies:
       '@types/d3-drag': 3.0.7
       '@types/d3-interpolate': 3.0.4
