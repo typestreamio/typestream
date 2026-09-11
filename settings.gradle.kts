@@ -25,7 +25,7 @@ dependencyResolutionManagement {
             version("mockk", "1.14.11")
             version("protobuf", "3.24.2")
             version("rocksdbjni", "6.29.5")
-            version("slf4j", "2.0.18")
+            version("slf4j", "2.0.19")
             version("testcontainers", "2.0.3")
 
             library("avro", "org.apache.avro", "avro").versionRef("avro")
