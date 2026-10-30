@@ -21,7 +21,7 @@ dependencyResolutionManagement {
             version("grpcKotlin", "1.3.1")
             version("kafka", "4.1.1")
             version("kubernetes-client", "6.9.0")
-            version("okhttp", "4.12.0")
+            version("okhttp", "4.12.1")
             version("mockk", "1.14.11")
             version("protobuf", "3.24.2")
             version("rocksdbjni", "6.29.5")
