@@ -104,7 +104,7 @@ importers:
         version: 5.101.4(react@19.2.8)
       '@types/dagre':
         specifier: ^0.7.53
-        version: 0.7.53
+        version: 0.7.54
       '@xyflow/react':
         specifier: ^12.10.0
         version: 12.10.2(@types/react@19.2.18)(immer@9.0.21)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -947,6 +947,10 @@ packages:
 
   '@babel/runtime@7.29.10':
     resolution: {integrity: sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.15':
+    resolution: {integrity: sha512-304gsbbGVmQc+cNGHzwHBlqepYdWLKj3VXCQBGt/EGcV7PUPfKI7kAUNW1FZEOCwlQiLvQjg1JEaAlRQ616h+Q==}
     engines: {node: '>=6.9.0'}
 
   '@babel/runtime@7.29.7':
@@ -2631,8 +2635,8 @@ packages:
   '@types/d3@7.4.3':
     resolution: {integrity: sha512-lZXZ9ckh5R8uiFVt8ogUNf+pIrK4EsWrx2Np75WvF/eTpJ0FMHNhjXk8CKEx/+gpHbNQyJWehbFaTvqmHWB3ww==}
 
-  '@types/dagre@0.7.53':
-    resolution: {integrity: sha512-f4gkWqzPZvYmKhOsDnhq/R8mO4UMcKdxZo+i5SCkOU1wvGeHJeUXGIHeE9pnwGyPMDof1Vx5ZQo4nxpeg2TTVQ==}
+  '@types/dagre@0.7.54':
+    resolution: {integrity: sha512-QjcRY+adGbYvBFS7cwv5txhVIwX1XXIUswWl+kSQTbI6NjgZydrZkEKX/etzVd7i+bCsCb40Z/xlBY5eoFuvWQ==}
 
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
@@ -6980,8 +6984,8 @@ packages:
   react-error-overlay@6.1.0:
     resolution: {integrity: sha512-SN/U6Ytxf1QGkw/9ve5Y+NxBbZM6Ht95tuXNMKs8EJyFa/Vy/+Co3stop3KBHARfn/giv+Lj1uUnTfOJ3moFEQ==}
 
-  react-fast-compare@3.2.2:
-    resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
+  react-fast-compare@3.2.4:
+    resolution: {integrity: sha512-YbkgZfjvuokdt6zR8Oki8Bt4QXAZim/9HKSUr5J23GVyX2o8sYD/JlKSFrJvEFIPjotWvkGY7DgUS+udyr8cEw==}
 
   react-github-btn@1.4.0:
     resolution: {integrity: sha512-lV4FYClAfjWnBfv0iNlJUGhamDgIq6TayD0kPZED6VzHWdpcHmPfsYOZ/CFwLfPv4Zp+F4m8QKTj0oy2HjiGXg==}
@@ -9356,6 +9360,8 @@ snapshots:
 
   '@babel/runtime@7.29.10': {}
 
+  '@babel/runtime@7.29.15': {}
+
   '@babel/runtime@7.29.7': {}
 
   '@babel/template@7.28.6':
@@ -11313,12 +11319,12 @@ snapshots:
 
   '@slorber/react-helmet-async@1.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@babel/runtime': 7.29.10
+      '@babel/runtime': 7.29.15
       invariant: 2.2.4
       prop-types: 15.8.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-fast-compare: 3.2.2
+      react-fast-compare: 3.2.4
       shallowequal: 1.1.0
 
   '@slorber/remark-comment@1.0.0':
@@ -11641,7 +11647,7 @@ snapshots:
       '@types/d3-transition': 3.0.9
       '@types/d3-zoom': 3.0.8
 
-  '@types/dagre@0.7.53': {}
+  '@types/dagre@0.7.54': {}
 
   '@types/debug@4.1.12':
     dependencies:
@@ -16840,7 +16846,7 @@ snapshots:
 
   react-error-overlay@6.1.0: {}
 
-  react-fast-compare@3.2.2: {}
+  react-fast-compare@3.2.4: {}
 
   react-github-btn@1.4.0(react@19.2.8):
     dependencies:
